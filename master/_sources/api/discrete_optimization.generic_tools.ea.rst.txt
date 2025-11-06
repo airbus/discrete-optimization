@@ -1,0 +1,53 @@
+discrete\_optimization.generic\_tools.ea package
+================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.ea.alternating\_ga module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.ea.alternating_ga
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.ea.deap\_wrappers module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.ea.deap_wrappers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.ea.ga module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.ea.ga
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.ea.ga\_tools module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.ea.ga_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.ea.nsga module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.ea.nsga
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.ea
+   :members:
+   :show-inheritance:
+   :undoc-members:

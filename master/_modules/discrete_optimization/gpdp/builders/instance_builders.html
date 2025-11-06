@@ -1,0 +1,889 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.gpdp.builders.instance_builders &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.gpdp.builders.instance_builders</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.gpdp.builders.instance_builders</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.spatial.distance</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">discrete_optimization.tsp.parser</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tsp_parser</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">discrete_optimization.vrp.parser</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vrp_parser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.gpdp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Edge</span><span class="p">,</span> <span class="n">GpdpProblem</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">ProxyClass</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+        <span class="s2">&quot;You need to install scikit-learn &quot;</span>
+        <span class="s2">&quot;to call create_selective_tsp() and create_pickup_and_delivery()&quot;</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="create_selective_tsp">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.create_selective_tsp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_selective_tsp</span><span class="p">(</span>
+    <span class="n">nb_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span> <span class="n">nb_vehicles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nb_clusters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a random orienteering/selective TSP problem</span>
+<span class="sd">    :param nb_nodes: number of nodes to consider in the network (excluding the origin/target of vehicles)</span>
+<span class="sd">    :param nb_vehicles: number of vehicles to consider</span>
+<span class="sd">    :param nb_clusters: number of cluster of nodes.</span>
+<span class="sd">    :return: a gpdp model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">number_vehicle</span> <span class="o">=</span> <span class="n">nb_vehicles</span>
+    <span class="n">nb_nodes_transportation</span> <span class="o">=</span> <span class="n">nb_nodes</span>
+    <span class="c1"># non dummy nodes</span>
+    <span class="n">nodes_transportation</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_transportation</span><span class="p">))</span>
+    <span class="c1"># we stack the origin nodes after</span>
+    <span class="n">nodes_origin</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="c1"># and destination nodes too</span>
+    <span class="n">nodes_target</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">number_vehicle</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">list_pickup_deliverable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">origin_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">target_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">number_vehicle</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="c1"># we don&#39;t include resources neither capacities</span>
+    <span class="n">resources_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">capacities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">resources_flow_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_transportation</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">resources_flow_edges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Edge</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_transportation</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_transportation</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span>
+    <span class="p">}</span>
+
+    <span class="c1"># real number of nodes in the problem definition</span>
+    <span class="n">nb_nodes_real</span> <span class="o">=</span> <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">number_vehicle</span>
+    <span class="c1"># we sample random 2D coordinates</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">nb_nodes_real</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">coordinates</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">40</span>
+    <span class="n">distance_delta</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">cdist</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">)</span>
+    <span class="n">distance_delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distance_delta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+    <span class="n">distance_delta_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="p">{</span><span class="n">j</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_real</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_real</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">time_delta_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="p">{</span><span class="n">j</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">distance_delta_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">distance_delta_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">distance_delta_dict</span>
+    <span class="p">}</span>
+
+    <span class="n">nb_clusters</span> <span class="o">=</span> <span class="n">nb_clusters</span>
+    <span class="c1"># compute clusters based on geographical positions.</span>
+    <span class="n">kmeans</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">nb_clusters</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">labels_</span>
+    <span class="n">coordinates_2d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">coordinates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="p">}</span>
+    <span class="n">clusters_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_real</span><span class="p">)}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">clusters_dict</span><span class="p">:</span>
+        <span class="n">clusters_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">):</span>
+        <span class="n">clusters_dict</span><span class="p">[</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+        <span class="n">clusters_dict</span><span class="p">[</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+        <span class="n">number_vehicle</span><span class="o">=</span><span class="n">number_vehicle</span><span class="p">,</span>
+        <span class="n">nodes_transportation</span><span class="o">=</span><span class="n">nodes_transportation</span><span class="p">,</span>
+        <span class="n">nodes_origin</span><span class="o">=</span><span class="n">nodes_origin</span><span class="p">,</span>
+        <span class="n">nodes_target</span><span class="o">=</span><span class="n">nodes_target</span><span class="p">,</span>
+        <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">list_pickup_deliverable</span><span class="p">,</span>
+        <span class="n">origin_vehicle</span><span class="o">=</span><span class="n">origin_vehicle</span><span class="p">,</span>
+        <span class="n">target_vehicle</span><span class="o">=</span><span class="n">target_vehicle</span><span class="p">,</span>
+        <span class="n">resources_set</span><span class="o">=</span><span class="n">resources_set</span><span class="p">,</span>
+        <span class="n">capacities</span><span class="o">=</span><span class="n">capacities</span><span class="p">,</span>
+        <span class="n">resources_flow_edges</span><span class="o">=</span><span class="n">resources_flow_edges</span><span class="p">,</span>
+        <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">resources_flow_node</span><span class="p">,</span>
+        <span class="n">distance_delta</span><span class="o">=</span><span class="n">distance_delta_dict</span><span class="p">,</span>
+        <span class="n">time_delta</span><span class="o">=</span><span class="n">time_delta_dict</span><span class="p">,</span>
+        <span class="n">coordinates_2d</span><span class="o">=</span><span class="n">coordinates_2d</span><span class="p">,</span>
+        <span class="n">clusters_dict</span><span class="o">=</span><span class="n">clusters_dict</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_pickup_and_delivery">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.create_pickup_and_delivery">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_pickup_and_delivery</span><span class="p">(</span>
+    <span class="n">number_of_vehicles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">number_of_node</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">include_cluster</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">nb_clusters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">include_pickup</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">fraction_of_pickup_deliver</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.125</span><span class="p">,</span>
+    <span class="n">pickup_per_cluster</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+    <span class="n">number_vehicle</span> <span class="o">=</span> <span class="n">number_of_vehicles</span>
+    <span class="n">nb_nodes_transportation</span> <span class="o">=</span> <span class="n">number_of_node</span>
+    <span class="n">nodes_transportation</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_transportation</span><span class="p">))</span>
+    <span class="n">nodes_origin</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="c1"># and destination nodes too</span>
+    <span class="n">nodes_target</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">number_vehicle</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">list_pickup_deliverable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">origin_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">target_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="n">number_vehicle</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="n">all_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes_transportation</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">number_vehicle</span><span class="p">))</span>
+    <span class="n">resources_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">capacities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">{}}</span>
+    <span class="n">resources_flow_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">all_nodes</span><span class="p">}</span>
+    <span class="n">resources_flow_edges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Edge</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">all_nodes</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">all_nodes</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span>
+    <span class="p">}</span>
+
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_nodes</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">coordinates_2d</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">coordinates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="p">}</span>
+
+    <span class="n">distance_delta</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">cdist</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">)</span>
+    <span class="n">distance_delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distance_delta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+    <span class="n">distance_delta_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="p">{</span><span class="n">j</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">all_nodes</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">all_nodes</span>
+    <span class="p">}</span>
+    <span class="n">time_delta_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="p">{</span><span class="n">j</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">distance_delta_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">distance_delta_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">distance_delta_dict</span>
+    <span class="p">}</span>
+
+    <span class="n">clusters_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">all_nodes</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">include_cluster</span><span class="p">:</span>
+        <span class="n">nb_clusters</span> <span class="o">=</span> <span class="n">nb_clusters</span>
+        <span class="n">kmeans</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">nb_clusters</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">labels_</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">clusters_dict</span><span class="p">:</span>
+            <span class="n">clusters_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">):</span>
+            <span class="n">clusters_dict</span><span class="p">[</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+            <span class="n">clusters_dict</span><span class="p">[</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">list_pickup_deliverable_per_cluster</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">include_pickup</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pickup_per_cluster</span><span class="p">:</span>
+            <span class="n">nodes_possible</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">clusters_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">node_origin</span> <span class="ow">in</span> <span class="n">nodes_origin</span><span class="p">:</span>
+                <span class="n">nodes_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node_origin</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node_target</span> <span class="ow">in</span> <span class="n">nodes_target</span><span class="p">:</span>
+                <span class="n">nodes_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node_target</span><span class="p">)</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes_possible</span><span class="p">)</span> <span class="o">*</span> <span class="n">fraction_of_pickup_deliver</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">k1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">nodes_possible</span><span class="p">))</span>
+                <span class="n">nodes_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span>
+                <span class="n">k2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">nodes_possible</span><span class="p">))</span>
+                <span class="n">nodes_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">k2</span><span class="p">)</span>
+                <span class="n">list_pickup_deliverable</span> <span class="o">+=</span> <span class="p">[([</span><span class="n">k1</span><span class="p">],</span> <span class="p">[</span><span class="n">k2</span><span class="p">])]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cluster_possible</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">clusters_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">cluster_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clusters_dict</span><span class="p">[</span><span class="n">target_vehicle</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_vehicle</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">origin_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">in</span> <span class="n">cluster_possible</span><span class="p">:</span>
+                    <span class="n">cluster_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clusters_dict</span><span class="p">[</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]])</span>
+                <span class="k">if</span> <span class="n">target_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">in</span> <span class="n">cluster_possible</span><span class="p">:</span>
+                    <span class="n">cluster_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clusters_dict</span><span class="p">[</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">j</span><span class="p">]])</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cluster_possible</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">cluster_1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cluster_possible</span><span class="p">))</span>
+                <span class="n">cluster_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">cluster_1</span><span class="p">)</span>
+                <span class="n">cluster_2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cluster_possible</span><span class="p">))</span>
+                <span class="n">cluster_possible</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">cluster_2</span><span class="p">)</span>
+                <span class="n">list_pickup_deliverable_per_cluster</span> <span class="o">+=</span> <span class="p">[([</span><span class="n">cluster_1</span><span class="p">],</span> <span class="p">[</span><span class="n">cluster_2</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+        <span class="n">number_vehicle</span><span class="o">=</span><span class="n">number_vehicle</span><span class="p">,</span>
+        <span class="n">nodes_transportation</span><span class="o">=</span><span class="n">nodes_transportation</span><span class="p">,</span>
+        <span class="n">nodes_origin</span><span class="o">=</span><span class="n">nodes_origin</span><span class="p">,</span>
+        <span class="n">nodes_target</span><span class="o">=</span><span class="n">nodes_target</span><span class="p">,</span>
+        <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">list_pickup_deliverable</span><span class="p">,</span>
+        <span class="n">origin_vehicle</span><span class="o">=</span><span class="n">origin_vehicle</span><span class="p">,</span>
+        <span class="n">target_vehicle</span><span class="o">=</span><span class="n">target_vehicle</span><span class="p">,</span>
+        <span class="n">resources_set</span><span class="o">=</span><span class="n">resources_set</span><span class="p">,</span>
+        <span class="n">capacities</span><span class="o">=</span><span class="n">capacities</span><span class="p">,</span>
+        <span class="n">resources_flow_edges</span><span class="o">=</span><span class="n">resources_flow_edges</span><span class="p">,</span>
+        <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">resources_flow_node</span><span class="p">,</span>
+        <span class="n">distance_delta</span><span class="o">=</span><span class="n">distance_delta_dict</span><span class="p">,</span>
+        <span class="n">time_delta</span><span class="o">=</span><span class="n">time_delta_dict</span><span class="p">,</span>
+        <span class="n">coordinates_2d</span><span class="o">=</span><span class="n">coordinates_2d</span><span class="p">,</span>
+        <span class="n">clusters_dict</span><span class="o">=</span><span class="n">clusters_dict</span><span class="p">,</span>
+        <span class="n">list_pickup_deliverable_per_cluster</span><span class="o">=</span><span class="n">list_pickup_deliverable_per_cluster</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_vrp_and_transform">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.load_vrp_and_transform">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_vrp_and_transform</span><span class="p">(</span><span class="n">index_in_files_available</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">vrp_parser</span><span class="o">.</span><span class="n">get_data_available</span><span class="p">()[</span><span class="n">index_in_files_available</span><span class="p">]</span>
+    <span class="n">vrp_problem</span> <span class="o">=</span> <span class="n">vrp_parser</span><span class="o">.</span><span class="n">parse_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">gpdp</span> <span class="o">=</span> <span class="n">ProxyClass</span><span class="o">.</span><span class="n">from_vrp_to_gpdp</span><span class="p">(</span><span class="n">vrp_problem</span><span class="o">=</span><span class="n">vrp_problem</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gpdp</span></div>
+
+
+
+<div class="viewcode-block" id="load_tsp_and_transform">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.load_tsp_and_transform">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_tsp_and_transform</span><span class="p">(</span><span class="n">index_in_files_available</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+    <span class="n">files_available</span> <span class="o">=</span> <span class="n">tsp_parser</span><span class="o">.</span><span class="n">get_data_available</span><span class="p">()</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">files_available</span><span class="p">[</span><span class="n">index_in_files_available</span><span class="p">]</span>
+    <span class="n">tsp_model</span> <span class="o">=</span> <span class="n">tsp_parser</span><span class="o">.</span><span class="n">parse_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">gpdp</span> <span class="o">=</span> <span class="n">ProxyClass</span><span class="o">.</span><span class="n">from_tsp_to_gpdp</span><span class="p">(</span><span class="n">tsp_model</span><span class="o">=</span><span class="n">tsp_model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gpdp</span></div>
+
+
+
+<div class="viewcode-block" id="create_ortools_example">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.create_ortools_example">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_ortools_example</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build instances from ortools reference guide.&quot;&quot;&quot;</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">456</span><span class="p">,</span> <span class="mi">320</span><span class="p">),</span>  <span class="c1"># location 0 - the depot</span>
+        <span class="p">(</span><span class="mi">228</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># location 1</span>
+        <span class="p">(</span><span class="mi">912</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># location 2</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span>  <span class="c1"># location 3</span>
+        <span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span>  <span class="c1"># location 4</span>
+        <span class="p">(</span><span class="mi">570</span><span class="p">,</span> <span class="mi">160</span><span class="p">),</span>  <span class="c1"># location 5</span>
+        <span class="p">(</span><span class="mi">798</span><span class="p">,</span> <span class="mi">160</span><span class="p">),</span>  <span class="c1"># location 6</span>
+        <span class="p">(</span><span class="mi">342</span><span class="p">,</span> <span class="mi">240</span><span class="p">),</span>  <span class="c1"># location 7</span>
+        <span class="p">(</span><span class="mi">684</span><span class="p">,</span> <span class="mi">240</span><span class="p">),</span>  <span class="c1"># location 8</span>
+        <span class="p">(</span><span class="mi">570</span><span class="p">,</span> <span class="mi">400</span><span class="p">),</span>  <span class="c1"># location 9</span>
+        <span class="p">(</span><span class="mi">912</span><span class="p">,</span> <span class="mi">400</span><span class="p">),</span>  <span class="c1"># location 10</span>
+        <span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">480</span><span class="p">),</span>  <span class="c1"># location 11</span>
+        <span class="p">(</span><span class="mi">228</span><span class="p">,</span> <span class="mi">480</span><span class="p">),</span>  <span class="c1"># location 12</span>
+        <span class="p">(</span><span class="mi">342</span><span class="p">,</span> <span class="mi">560</span><span class="p">),</span>  <span class="c1"># location 13</span>
+        <span class="p">(</span><span class="mi">684</span><span class="p">,</span> <span class="mi">560</span><span class="p">),</span>  <span class="c1"># location 14</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">640</span><span class="p">),</span>  <span class="c1"># location 15</span>
+        <span class="p">(</span><span class="mi">798</span><span class="p">,</span> <span class="mi">640</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coordinates</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;distance_matrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">548</span><span class="p">,</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">696</span><span class="p">,</span>
+            <span class="mi">582</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">662</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">548</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">684</span><span class="p">,</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">696</span><span class="p">,</span>
+            <span class="mi">742</span><span class="p">,</span>
+            <span class="mi">1084</span><span class="p">,</span>
+            <span class="mi">594</span><span class="p">,</span>
+            <span class="mi">480</span><span class="p">,</span>
+            <span class="mi">674</span><span class="p">,</span>
+            <span class="mi">1016</span><span class="p">,</span>
+            <span class="mi">868</span><span class="p">,</span>
+            <span class="mi">1210</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">684</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">992</span><span class="p">,</span>
+            <span class="mi">878</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">810</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">742</span><span class="p">,</span>
+            <span class="mi">400</span><span class="p">,</span>
+            <span class="mi">1278</span><span class="p">,</span>
+            <span class="mi">1164</span><span class="p">,</span>
+            <span class="mi">1130</span><span class="p">,</span>
+            <span class="mi">788</span><span class="p">,</span>
+            <span class="mi">1552</span><span class="p">,</span>
+            <span class="mi">754</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">696</span><span class="p">,</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">992</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">114</span><span class="p">,</span>
+            <span class="mi">650</span><span class="p">,</span>
+            <span class="mi">878</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">844</span><span class="p">,</span>
+            <span class="mi">890</span><span class="p">,</span>
+            <span class="mi">1232</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">628</span><span class="p">,</span>
+            <span class="mi">822</span><span class="p">,</span>
+            <span class="mi">1164</span><span class="p">,</span>
+            <span class="mi">560</span><span class="p">,</span>
+            <span class="mi">1358</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">582</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">878</span><span class="p">,</span>
+            <span class="mi">114</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">764</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">1118</span><span class="p">,</span>
+            <span class="mi">400</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">708</span><span class="p">,</span>
+            <span class="mi">1050</span><span class="p">,</span>
+            <span class="mi">674</span><span class="p">,</span>
+            <span class="mi">1244</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">650</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">228</span><span class="p">,</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">240</span><span class="p">,</span>
+            <span class="mi">582</span><span class="p">,</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">662</span><span class="p">,</span>
+            <span class="mi">628</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">1050</span><span class="p">,</span>
+            <span class="mi">708</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">878</span><span class="p">,</span>
+            <span class="mi">764</span><span class="p">,</span>
+            <span class="mi">228</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">1004</span><span class="p">,</span>
+            <span class="mi">890</span><span class="p">,</span>
+            <span class="mi">856</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">1278</span><span class="p">,</span>
+            <span class="mi">480</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">810</span><span class="p">,</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">342</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">320</span><span class="p">,</span>
+            <span class="mi">662</span><span class="p">,</span>
+            <span class="mi">742</span><span class="p">,</span>
+            <span class="mi">856</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">696</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">844</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">342</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">810</span><span class="p">,</span>
+            <span class="mi">696</span><span class="p">,</span>
+            <span class="mi">662</span><span class="p">,</span>
+            <span class="mi">320</span><span class="p">,</span>
+            <span class="mi">1084</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">742</span><span class="p">,</span>
+            <span class="mi">742</span><span class="p">,</span>
+            <span class="mi">890</span><span class="p">,</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">240</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">342</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">422</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">810</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">1084</span><span class="p">,</span>
+            <span class="mi">400</span><span class="p">,</span>
+            <span class="mi">1232</span><span class="p">,</span>
+            <span class="mi">1118</span><span class="p">,</span>
+            <span class="mi">582</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">342</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">878</span><span class="p">,</span>
+            <span class="mi">764</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">1152</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">502</span><span class="p">,</span>
+            <span class="mi">594</span><span class="p">,</span>
+            <span class="mi">1278</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">400</span><span class="p">,</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">1004</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">810</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">878</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">114</span><span class="p">,</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">650</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">844</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">480</span><span class="p">,</span>
+            <span class="mi">1164</span><span class="p">,</span>
+            <span class="mi">628</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">662</span><span class="p">,</span>
+            <span class="mi">890</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">696</span><span class="p">,</span>
+            <span class="mi">422</span><span class="p">,</span>
+            <span class="mi">764</span><span class="p">,</span>
+            <span class="mi">114</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">674</span><span class="p">,</span>
+            <span class="mi">1130</span><span class="p">,</span>
+            <span class="mi">822</span><span class="p">,</span>
+            <span class="mi">708</span><span class="p">,</span>
+            <span class="mi">628</span><span class="p">,</span>
+            <span class="mi">856</span><span class="p">,</span>
+            <span class="mi">320</span><span class="p">,</span>
+            <span class="mi">662</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">308</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">342</span><span class="p">,</span>
+            <span class="mi">422</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">1016</span><span class="p">,</span>
+            <span class="mi">788</span><span class="p">,</span>
+            <span class="mi">1164</span><span class="p">,</span>
+            <span class="mi">1050</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">662</span><span class="p">,</span>
+            <span class="mi">320</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">650</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">342</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">764</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">776</span><span class="p">,</span>
+            <span class="mi">868</span><span class="p">,</span>
+            <span class="mi">1552</span><span class="p">,</span>
+            <span class="mi">560</span><span class="p">,</span>
+            <span class="mi">674</span><span class="p">,</span>
+            <span class="mi">1050</span><span class="p">,</span>
+            <span class="mi">1278</span><span class="p">,</span>
+            <span class="mi">742</span><span class="p">,</span>
+            <span class="mi">1084</span><span class="p">,</span>
+            <span class="mi">810</span><span class="p">,</span>
+            <span class="mi">1152</span><span class="p">,</span>
+            <span class="mi">274</span><span class="p">,</span>
+            <span class="mi">388</span><span class="p">,</span>
+            <span class="mi">422</span><span class="p">,</span>
+            <span class="mi">764</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">798</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mi">662</span><span class="p">,</span>
+            <span class="mi">1210</span><span class="p">,</span>
+            <span class="mi">754</span><span class="p">,</span>
+            <span class="mi">1358</span><span class="p">,</span>
+            <span class="mi">1244</span><span class="p">,</span>
+            <span class="mi">708</span><span class="p">,</span>
+            <span class="mi">480</span><span class="p">,</span>
+            <span class="mi">856</span><span class="p">,</span>
+            <span class="mi">514</span><span class="p">,</span>
+            <span class="mi">468</span><span class="p">,</span>
+            <span class="mi">354</span><span class="p">,</span>
+            <span class="mi">844</span><span class="p">,</span>
+            <span class="mi">730</span><span class="p">,</span>
+            <span class="mi">536</span><span class="p">,</span>
+            <span class="mi">194</span><span class="p">,</span>
+            <span class="mi">798</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;depot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;pickups_deliveries&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+    <span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;time_matrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+    <span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;time_windows&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>  <span class="c1"># depot</span>
+        <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>  <span class="c1"># 1</span>
+        <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>  <span class="c1"># 2</span>
+        <span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">18</span><span class="p">),</span>  <span class="c1"># 3</span>
+        <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>  <span class="c1"># 4</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>  <span class="c1"># 5</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>  <span class="c1"># 6</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>  <span class="c1"># 7</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>  <span class="c1"># 8</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>  <span class="c1"># 9</span>
+        <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>  <span class="c1"># 10</span>
+        <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>  <span class="c1"># 11</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>  <span class="c1"># 12</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>  <span class="c1"># 13</span>
+        <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>  <span class="c1"># 14</span>
+        <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>  <span class="c1"># 15</span>
+        <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>  <span class="c1"># 16</span>
+    <span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;demands&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;vehicle_capacities&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">]</span>
+    <span class="n">coordinates_reindex</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">coordinates</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;depot&quot;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">])</span>
+    <span class="p">]</span>
+    <span class="n">original_index</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">coordinates</span><span class="p">))]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;depot&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">])</span>
+    <span class="p">]</span>
+    <span class="n">original_index_to_new</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_index</span><span class="p">)):</span>
+        <span class="n">original_index_to_new</span><span class="p">[</span><span class="n">original_index</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">=</span> <span class="n">j</span>
+    <span class="n">number_nodes_non_depot</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">nodes_origin</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+        <span class="nb">range</span><span class="p">(</span><span class="n">number_nodes_non_depot</span><span class="p">,</span> <span class="n">number_nodes_non_depot</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">])</span>
+    <span class="p">)</span>
+    <span class="n">nodes_target</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+        <span class="nb">range</span><span class="p">(</span>
+            <span class="n">number_nodes_non_depot</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">],</span>
+            <span class="n">number_nodes_non_depot</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">nodes_origin_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">nodes_origin</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">])</span>
+    <span class="p">}</span>
+    <span class="n">nodes_target_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">i</span><span class="p">:</span> <span class="n">nodes_target</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">])</span>
+    <span class="p">}</span>
+    <span class="n">distance_delta_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">time_delta_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_index</span><span class="p">)):</span>
+        <span class="n">distance_delta_dict</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">time_delta_dict</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">index_2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_index</span><span class="p">)):</span>
+            <span class="n">distance_delta_dict</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">index_2</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;distance_matrix&quot;</span><span class="p">][</span>
+                <span class="n">original_index</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="p">][</span><span class="n">original_index</span><span class="p">[</span><span class="n">index_2</span><span class="p">]]</span>
+            <span class="n">time_delta_dict</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">index_2</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;time_matrix&quot;</span><span class="p">][</span>
+                <span class="n">original_index</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="p">][</span><span class="n">original_index</span><span class="p">[</span><span class="n">index_2</span><span class="p">]]</span>
+    <span class="n">pickup_and_deliveries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p_d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;pickups_deliveries&quot;</span><span class="p">]:</span>
+        <span class="n">pickup_and_deliveries</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="p">([</span><span class="n">original_index_to_new</span><span class="p">[</span><span class="n">p_d</span><span class="p">[</span><span class="mi">0</span><span class="p">]]],</span> <span class="p">[</span><span class="n">original_index_to_new</span><span class="p">[</span><span class="n">p_d</span><span class="p">[</span><span class="mi">1</span><span class="p">]]])</span>
+        <span class="p">]</span>
+    <span class="n">capacities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">resources_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">]):</span>
+        <span class="n">capacities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;vehicle_capacities&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">])}</span>
+    <span class="n">resources_flow_edges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Edge</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">distance_delta_dict</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">distance_delta_dict</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+    <span class="p">}</span>
+    <span class="n">resources_flow_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_index</span><span class="p">)):</span>
+        <span class="n">resources_flow_nodes</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="o">-</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;demands&quot;</span><span class="p">][</span><span class="n">original_index</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span>
+        <span class="p">}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">nodes_origin_dict</span><span class="p">:</span>
+        <span class="n">resources_flow_nodes</span><span class="p">[</span><span class="n">nodes_origin_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="n">capacities</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;demand&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">nodes_target_dict</span><span class="p">:</span>
+        <span class="n">resources_flow_nodes</span><span class="p">[</span><span class="n">nodes_target_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="n">coordinates_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">coordinates_reindex</span><span class="p">)):</span>
+        <span class="n">coordinates_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">coordinates_reindex</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">time_windows_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_index</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nodes_target</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">time_windows_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;time_windows&quot;</span><span class="p">][</span><span class="n">original_index</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+        <span class="n">number_vehicle</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;num_vehicles&quot;</span><span class="p">],</span>
+        <span class="n">nodes_transportation</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">number_nodes_non_depot</span><span class="p">)),</span>
+        <span class="n">nodes_origin</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">nodes_origin</span><span class="p">),</span>
+        <span class="n">nodes_target</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">nodes_target</span><span class="p">),</span>
+        <span class="n">origin_vehicle</span><span class="o">=</span><span class="n">nodes_origin_dict</span><span class="p">,</span>
+        <span class="n">target_vehicle</span><span class="o">=</span><span class="n">nodes_target_dict</span><span class="p">,</span>
+        <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">pickup_and_deliveries</span><span class="p">,</span>
+        <span class="n">resources_set</span><span class="o">=</span><span class="n">resources_set</span><span class="p">,</span>
+        <span class="n">capacities</span><span class="o">=</span><span class="n">capacities</span><span class="p">,</span>
+        <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">resources_flow_nodes</span><span class="p">,</span>
+        <span class="n">resources_flow_edges</span><span class="o">=</span><span class="n">resources_flow_edges</span><span class="p">,</span>
+        <span class="n">distance_delta</span><span class="o">=</span><span class="n">distance_delta_dict</span><span class="p">,</span>
+        <span class="n">time_delta</span><span class="o">=</span><span class="n">time_delta_dict</span><span class="p">,</span>
+        <span class="n">coordinates_2d</span><span class="o">=</span><span class="n">coordinates_dict</span><span class="p">,</span>
+        <span class="n">time_windows_nodes</span><span class="o">=</span><span class="n">time_windows_nodes</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

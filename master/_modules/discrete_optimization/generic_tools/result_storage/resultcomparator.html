@@ -1,0 +1,370 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.result_storage.resultcomparator &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.result_storage.resultcomparator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.result_storage.resultcomparator</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TupleFitness</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.plot_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_cmap_with_nb_colors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParetoFront</span><span class="p">,</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+    <span class="n">fitness_class</span><span class="p">,</span>
+    <span class="n">plot_pareto_2d</span><span class="p">,</span>
+    <span class="n">result_storage_to_pareto_front</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ResultComparator">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResultComparator</span><span class="p">:</span>
+    <span class="c1"># If test problem is None, then we use the fitnesses from the ResultStorage</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">list_result_storage</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResultStorage</span><span class="p">],</span>
+        <span class="n">result_storage_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">objectives_str</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">objective_weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">test_problems</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Problem</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span> <span class="o">=</span> <span class="n">list_result_storage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result_storage_names</span> <span class="o">=</span> <span class="n">result_storage_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span> <span class="o">=</span> <span class="n">objectives_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objective_weights</span> <span class="o">=</span> <span class="n">objective_weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_problems</span> <span class="o">=</span> <span class="n">test_problems</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reevaluated_results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_problems</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reevaluate_result_storages</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ResultComparator.reevaluate_result_storages">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.reevaluate_result_storages">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reevaluate_result_storages</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_problems</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;self.test_problems cannot be None when calling reevaluate_result_storages().&quot;</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reevaluated_results</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">res</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reevaluated_results</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">res</span><span class="p">)][</span><span class="n">obj</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">scenario</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_problems</span><span class="p">:</span>
+                    <span class="n">best_sol</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">get_best_solution</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">best_sol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                            <span class="s2">&quot;res.get_best_solution() cannot be None &quot;</span>
+                            <span class="s2">&quot;for any res in self.list_result_storage&quot;</span>
+                            <span class="s2">&quot;when calling reevaluate_result_storages().&quot;</span>
+                        <span class="p">)</span>
+                    <span class="n">best_sol</span><span class="o">.</span><span class="n">change_problem</span><span class="p">(</span><span class="n">scenario</span><span class="p">)</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">scenario</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">best_sol</span><span class="p">)[</span><span class="n">obj</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">reevaluated_results</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">res</span><span class="p">)][</span>
+                        <span class="n">obj</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;reevaluated_results: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reevaluated_results</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.plot_distribution_for_objective">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.plot_distribution_for_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_distribution_for_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objective_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Figure</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result_storage_names</span><span class="p">)):</span>
+            <span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reevaluated_results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">objective_str</span><span class="p">],</span>
+                <span class="n">rug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">bins</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reevaluated_results</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">objective_str</span><span class="p">])</span> <span class="o">//</span> <span class="mi">10</span><span class="p">),</span>
+                <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">result_storage_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="n">objective_str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="o">+</span> <span class="s2">&quot; distribution over test instances, for different optimisation approaches&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.print_test_distribution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.print_test_distribution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print_test_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.get_best_by_objective_by_result_storage">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.get_best_by_objective_by_result_storage">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_best_by_objective_by_result_storage</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">objectif_str</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">fitness_class</span><span class="p">]]:</span>
+        <span class="n">obj_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">objectif_str</span><span class="p">)</span>
+        <span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">fitness_class</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)):</span>
+            <span class="n">fit_array</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">cast</span><span class="p">(</span>
+                    <span class="n">TupleFitness</span><span class="p">,</span> <span class="n">fitness</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">vector_fitness</span><span class="p">[</span>  <span class="c1"># indicate to mypy that we are in multiobjective case</span>
+                    <span class="n">obj_index</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">solution</span><span class="p">,</span> <span class="n">fitness</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">]</span>  <span class="c1"># create fit array</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
+                <span class="n">best_fit</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">fit_array</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">best_fit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">fit_array</span><span class="p">)</span>
+
+            <span class="n">best_index</span> <span class="o">=</span> <span class="n">fit_array</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">best_fit</span><span class="p">)</span>
+            <span class="n">best_sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">best_index</span><span class="p">]</span>
+            <span class="n">val</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">result_storage_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">best_sol</span>
+        <span class="k">return</span> <span class="n">val</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.generate_super_pareto">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.generate_super_pareto">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_super_pareto</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParetoFront</span><span class="p">:</span>
+        <span class="n">sols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">rs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">:</span>
+                <span class="n">sols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">mode_optim</span> <span class="o">=</span> <span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mode_optim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mode_optim</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="n">ResultStorage</span><span class="p">(</span><span class="n">mode_optim</span><span class="o">=</span><span class="n">mode_optim</span><span class="p">,</span> <span class="n">list_solution_fits</span><span class="o">=</span><span class="n">sols</span><span class="p">)</span>
+        <span class="n">pareto_store</span> <span class="o">=</span> <span class="n">result_storage_to_pareto_front</span><span class="p">(</span><span class="n">result_storage</span><span class="o">=</span><span class="n">rs</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pareto_store</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.plot_all_2d_paretos_single_plot">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.plot_all_2d_paretos_single_plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_all_2d_paretos_single_plot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">objectives_str</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">objectives_str</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">objecives_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">objectives_index</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">objecives_names</span> <span class="o">=</span> <span class="n">objectives_str</span>
+            <span class="n">objectives_index</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objectives_str</span><span class="p">:</span>
+                <span class="n">obj_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                <span class="n">objectives_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_index</span><span class="p">)</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">get_cmap_with_nb_colors</span><span class="p">(</span>
+            <span class="n">color_map_str</span><span class="o">=</span><span class="s2">&quot;rainbow&quot;</span><span class="p">,</span> <span class="n">nb_colors</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">objecives_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">objecives_names</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)):</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector_fitness</span><span class="p">[</span><span class="n">objectives_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>  <span class="c1"># type: ignore</span>
+                    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">],</span>
+                <span class="n">y</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector_fitness</span><span class="p">[</span><span class="n">objectives_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>  <span class="c1"># type: ignore</span>
+                    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">],</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result_storage_names</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.plot_all_2d_paretos_subplots">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.plot_all_2d_paretos_subplots">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_all_2d_paretos_subplots</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">objectives_str</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Figure</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">objectives_str</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">objectives_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">objectives_index</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">objectives_names</span> <span class="o">=</span> <span class="n">objectives_str</span>
+            <span class="n">objectives_index</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objectives_str</span><span class="p">:</span>
+                <span class="n">obj_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                <span class="n">objectives_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_index</span><span class="p">)</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)</span> <span class="o">/</span> <span class="n">cols</span>
+        <span class="p">)</span>  <span class="c1"># I have to do this to ensure at least 2 rows or else it creates axs with only 1 diumension and it crashes</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="n">axs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">get_cmap_with_nb_colors</span><span class="p">(</span>
+            <span class="n">color_map_str</span><span class="o">=</span><span class="s2">&quot;rainbow&quot;</span><span class="p">,</span> <span class="n">nb_colors</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)),</span> <span class="n">axis</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">)]</span>
+        <span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector_fitness</span><span class="p">[</span><span class="n">objectives_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>  <span class="c1"># type: ignore</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector_fitness</span><span class="p">[</span><span class="n">objectives_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>  <span class="c1"># type: ignore</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_result_storage</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result_storage_names</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.plot_super_pareto">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.plot_super_pareto">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_super_pareto</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">super_pareto</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_super_pareto</span><span class="p">()</span>
+        <span class="n">plot_pareto_2d</span><span class="p">(</span><span class="n">pareto_front</span><span class="o">=</span><span class="n">super_pareto</span><span class="p">,</span> <span class="n">name_axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Pareto front obtained by merging solutions from all result stores&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResultComparator.plot_all_best_by_objective">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.resultcomparator.ResultComparator.plot_all_best_by_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_all_best_by_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objectif_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">obj_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objectives_str</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">objectif_str</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_best_by_objective_by_result_storage</span><span class="p">(</span><span class="n">objectif_str</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector_fitness</span><span class="p">[</span><span class="n">obj_index</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+        <span class="n">y_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">y_pos</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">y_pos</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Comparison on &quot;</span> <span class="o">+</span> <span class="n">objectif_str</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

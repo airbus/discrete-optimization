@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.tsptw.solvers.dp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.tsptw.solvers.dp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.tsptw.solvers.dp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="c1"># Adapted from https://github.com/domain-independent-dp/didp-rs/blob/main/didppy/examples/tsptw.ipynb</span>
+<span class="c1">#</span>
+<span class="c1"># Transition dominance :</span>
+<span class="c1"># from J. Christopher Beck, Ryo Kuroiwa, Jimmy H. M. Lee, Peter J. Stuckey, and Allen Z. Zhong.</span>
+<span class="c1"># Transition Dominance in Domain-Independent Dynamic Programming.</span>
+<span class="c1"># In 31st International Conference on Principles and Practice of Constraint Programming (CP 2025).</span>
+<span class="c1"># Leibniz International Proceedings in Informatics (LIPIcs),</span>
+<span class="c1"># Volume 340, pp. 5:1-5:23, Schloss Dagstuhl – Leibniz-Zentrum für Informatik (2025)</span>
+<span class="c1"># https://doi.org/10.4230/LIPIcs.CP.2025.5</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">didppy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dyn_prog_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">DpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.tsptw.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">TSPTWProblem</span><span class="p">,</span> <span class="n">TSPTWSolution</span>
+
+
+<div class="viewcode-block" id="DpTspTwSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.solvers.html#discrete_optimization.tsptw.solvers.dp.DpTspTwSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DpTspTwSolver</span><span class="p">(</span><span class="n">DpSolver</span><span class="p">):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">TSPTWProblem</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="s2">&quot;add_dominated_transition&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="DpTspTwSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.solvers.html#discrete_optimization.tsptw.solvers.dp.DpTspTwSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">float_cost</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_nodes</span>
+        <span class="n">depot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span>
+        <span class="n">release</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows</span><span class="p">]</span>
+        <span class="n">deadline</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows</span><span class="p">]</span>
+        <span class="n">customer</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+        <span class="c1"># U</span>
+        <span class="n">unvisited</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_set_var</span><span class="p">(</span>
+            <span class="n">object_type</span><span class="o">=</span><span class="n">customer</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span>
+        <span class="p">)</span>
+        <span class="c1"># i</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">customer</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">depot</span><span class="p">)</span>
+        <span class="c1"># t</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_float_resource_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">less_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">travel_time</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_float_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">)</span>
+        <span class="n">transition_time</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_float_state_fun</span><span class="p">(</span>
+                <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">time</span> <span class="o">+</span> <span class="n">travel_time</span><span class="p">[</span><span class="n">location</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">release</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;delta_time_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_nodes</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">:</span>
+            <span class="n">visit</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;visit_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">cost</span><span class="o">=</span><span class="n">transition_time</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">time</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">FloatExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span><span class="n">unvisited</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">j</span><span class="p">)],</span>
+                <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">unvisited</span><span class="p">,</span> <span class="n">unvisited</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">j</span><span class="p">)),</span>
+                    <span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">transition_time</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">id_t</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">visit</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;visit_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;transition&quot;</span><span class="p">:</span> <span class="n">visit</span><span class="p">,</span>
+                <span class="s2">&quot;customer&quot;</span><span class="p">:</span> <span class="n">j</span><span class="p">,</span>
+                <span class="s2">&quot;id_t&quot;</span><span class="p">:</span> <span class="n">id_t</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="n">return_to_depot</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;return&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=</span><span class="n">travel_time</span><span class="p">[</span><span class="n">location</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">FloatExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">time</span> <span class="o">+</span> <span class="n">travel_time</span><span class="p">[</span><span class="n">location</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">]),</span>
+            <span class="p">],</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span><span class="n">unvisited</span><span class="o">.</span><span class="n">is_empty</span><span class="p">(),</span> <span class="n">location</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s2">&quot;return&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;transition&quot;</span><span class="p">:</span> <span class="n">return_to_depot</span><span class="p">,</span>
+            <span class="s2">&quot;customer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">return_to_depot</span><span class="p">)</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">([</span><span class="n">unvisited</span><span class="o">.</span><span class="n">is_empty</span><span class="p">(),</span> <span class="n">location</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_state_constr</span><span class="p">(</span>
+                <span class="o">~</span><span class="n">unvisited</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+                <span class="o">|</span> <span class="p">(</span><span class="n">time</span> <span class="o">+</span> <span class="n">travel_time</span><span class="p">[</span><span class="n">location</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">deadline</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="n">min_to</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_float_table</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">j</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span>
+            <span class="n">min_to</span><span class="p">[</span><span class="n">unvisited</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">(</span><span class="n">location</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">)</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span>
+                <span class="n">min_to</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">],</span> <span class="mi">0</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">min_from</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_float_table</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">j</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span>
+            <span class="n">min_from</span><span class="p">[</span><span class="n">unvisited</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">(</span><span class="n">location</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">)</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span><span class="n">min_from</span><span class="p">[</span><span class="n">location</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;add_dominated_transition&quot;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">cond1</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">transition_time</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+                        <span class="o">&lt;</span> <span class="n">release</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;visit_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;id_t&quot;</span><span class="p">],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;visit_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;id_t&quot;</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">cond1</span><span class="p">],</span>
+                    <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="DpTspTwSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.solvers.html#discrete_optimization.tsptw.solvers.dp.DpTspTwSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TSPTWSolution</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+            <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;customer&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">TSPTWSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">permutation</span><span class="o">=</span><span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

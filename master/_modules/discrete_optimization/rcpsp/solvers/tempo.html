@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.solvers.tempo &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.solvers.tempo</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.solvers.tempo</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FormatEnum</span><span class="p">,</span>
+    <span class="n">TempoSchedulingSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">RcpspSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.rcpsp_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolver</span>
+
+
+<div class="viewcode-block" id="deparse_psplib">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.tempo.deparse_psplib">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">deparse_psplib</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Writes a RcpspProblem object to a string in the .sm file format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem: The RcpspProblem object to write.</span>
+<span class="sd">        **kwargs: Optional keyword arguments for header information like</span>
+<span class="sd">                  &#39;basedata_filename&#39;, &#39;random_seed&#39;, &#39;duedate&#39;, etc.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A string containing the problem data in .sm format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># --- Header ---</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;file with basedata            : </span><span class="si">{</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;basedata_filename&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;generated.bas&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;initial value random generator: </span><span class="si">{</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;random_seed&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">123456789</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="s2">&quot;************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- General Info ---</span>
+    <span class="n">n_jobs</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span>
+    <span class="n">n_renewable</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">)</span>
+    <span class="n">n_non_renewable</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">)</span>
+
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;projects                      :  1</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;jobs (incl. supersource/sink ):  </span><span class="si">{</span><span class="n">n_jobs</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;horizon                       :  </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;RESOURCES</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  - renewable                 :  </span><span class="si">{</span><span class="n">n_renewable</span><span class="si">:</span><span class="s2">&lt;3</span><span class="si">}</span><span class="s2"> R</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  - nonrenewable              :  </span><span class="si">{</span><span class="n">n_non_renewable</span><span class="si">:</span><span class="s2">&lt;3</span><span class="si">}</span><span class="s2"> N</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  - doubly constrained        :  0   D</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="s2">&quot;************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- Project Information ---</span>
+    <span class="c1"># This section has some info not directly in RcpspProblem, so we use defaults.</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;PROJECT INFORMATION:</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;pronr.  #jobs rel.date duedate tardcost  MPM-Time</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;    1     </span><span class="si">{</span><span class="n">n_jobs</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2">      0   </span><span class="si">{</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;duedate&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;7</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tardcost&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;8</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mpm_time&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="s2">&quot;************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- Precedence Relations ---</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;PRECEDENCE RELATIONS:</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;jobnr.    #modes  #successors   successors</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">sorted_tasks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="n">sorted_tasks</span><span class="p">:</span>
+        <span class="n">successors</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">n_successors</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">successors</span><span class="p">)</span>
+        <span class="n">n_modes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">successors_str</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">successors</span><span class="p">))</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">job_id</span><span class="si">:</span><span class="s2">&lt;8</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">n_modes</span><span class="si">:</span><span class="s2">&lt;6</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">n_successors</span><span class="si">:</span><span class="s2">&lt;11</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">successors_str</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="s2">&quot;************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- Requests/Durations ---</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;REQUESTS/DURATIONS:</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">resource_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">header_res</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resource_names</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;jobnr. mode duration  </span><span class="si">{</span><span class="n">header_res</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="s2">&quot;------------------------------------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="n">sorted_tasks_details</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="n">sorted_tasks_details</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">mode_id</span><span class="p">,</span> <span class="n">details</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="n">details</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span>
+            <span class="n">res_usage</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">resource_names</span><span class="p">]</span>
+            <span class="n">res_usage_str</span> <span class="o">=</span> <span class="s2">&quot;    &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">usage</span><span class="si">:</span><span class="s2">&lt;2</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">usage</span> <span class="ow">in</span> <span class="n">res_usage</span><span class="p">)</span>
+            <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">job_id</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">mode_id</span><span class="si">:</span><span class="s2">&lt;4</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2">     </span><span class="si">{</span><span class="n">res_usage_str</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="s2">&quot;************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- Resource Availabilities ---</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;RESOURCEAVAILABILITIES:</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">res_avail_header</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resource_names</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">res_avail_header</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">availabilities</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">])</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">resource_names</span><span class="p">]</span>
+    <span class="n">availabilities_str</span> <span class="o">=</span> <span class="s2">&quot;   &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">availabilities</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">availabilities_str</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="s2">&quot;************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output</span></div>
+
+
+
+<div class="viewcode-block" id="parse_solver_output">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.tempo.parse_solver_output">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_solver_output</span><span class="p">(</span>
+    <span class="n">solver_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">makespan</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">tasks_list_in_output_order</span><span class="p">:</span> <span class="nb">list</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses the solver output string to extract a schedule.</span>
+
+<span class="sd">    It assumes the solver provides start times in a relative coordinate system</span>
+<span class="sd">    that needs to be scaled to the actual makespan. It uses linear scaling</span>
+<span class="sd">    based on the first and last task&#39;s values to map to a [0, makespan] schedule.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        solver_output: The string output from the solver.</span>
+<span class="sd">        makespan: The makespan of the project.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary mapping each task ID to its calculated start time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Use regex to find all occurrences of [num, num]</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\[(-?\d+),\s*(-?\d+)\]&quot;</span><span class="p">,</span> <span class="n">solver_output</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Could not find any schedule information in the solver output.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="c1"># We assume the first value in the pair represents the start time in the</span>
+    <span class="c1"># solver&#39;s relative coordinate system.</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Not enough tasks in solver output to determine schedule.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="n">x_first</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">x_last</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># The solver&#39;s time range for the project.</span>
+    <span class="n">solver_range</span> <span class="o">=</span> <span class="n">x_last</span> <span class="o">-</span> <span class="n">x_first</span>
+
+    <span class="k">if</span> <span class="n">solver_range</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;Warning: Solver output indicates zero duration between first and last task. Cannot scale schedule.&quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># Return a schedule where all tasks start at 0, as there&#39;s no range to scale.</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))}</span>
+
+    <span class="n">schedule</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="c1"># Linearly scale the solver&#39;s start time to the [0, makespan] range.</span>
+        <span class="c1"># Formula: s_i = s_start + (s_end - s_start) * (x_i - x_start) / (x_end - x_start)</span>
+        <span class="c1"># Here, s_start=0, s_end=makespan.</span>
+        <span class="n">scaled_time</span> <span class="o">=</span> <span class="n">makespan</span> <span class="o">*</span> <span class="p">(</span><span class="n">x_i</span> <span class="o">-</span> <span class="n">x_first</span><span class="p">)</span> <span class="o">/</span> <span class="n">solver_range</span>
+        <span class="c1"># Start times are typically integers in these problems.</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">scaled_time</span><span class="p">)</span>
+        <span class="c1"># Task IDs are 1-indexed.</span>
+        <span class="n">task_id</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">schedule</span><span class="p">[</span><span class="n">tasks_list_in_output_order</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">start_time</span>
+
+    <span class="k">return</span> <span class="n">schedule</span></div>
+
+
+
+<div class="viewcode-block" id="TempoRcpspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.tempo.TempoRcpspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TempoRcpspSolver</span><span class="p">(</span><span class="n">TempoSchedulingSolver</span><span class="p">,</span> <span class="n">RcpspSolver</span><span class="p">):</span>
+<div class="viewcode-block" id="TempoRcpspSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.tempo.TempoRcpspSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_format</span> <span class="o">=</span> <span class="n">FormatEnum</span><span class="o">.</span><span class="n">PSPLIB</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tmp_folder_path</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+        <span class="n">sm_format_str</span> <span class="o">=</span> <span class="n">deparse_psplib</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="n">input_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="s2">&quot;input_tmp.txt&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">sm_format_str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span> <span class="o">=</span> <span class="n">input_file</span></div>
+
+
+<div class="viewcode-block" id="TempoRcpspSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.tempo.TempoRcpspSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_to_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">process_stdout</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_to_output</span><span class="p">):</span>
+            <span class="n">dict_</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">path_to_output</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">))</span>
+            <span class="n">rcpsp_schedule</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">source_task</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">dict_</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">dict_</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                <span class="p">},</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dict_</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">])):</span>
+                <span class="n">rcpsp_schedule</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">dict_</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">dict_</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                <span class="p">}</span>
+            <span class="k">return</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">rcpsp_schedule</span><span class="o">=</span><span class="n">rcpsp_schedule</span><span class="p">,</span>
+                <span class="n">rcpsp_modes</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">,</span>
+            <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

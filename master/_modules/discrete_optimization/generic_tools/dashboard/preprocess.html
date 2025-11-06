@@ -1,0 +1,908 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.dashboard.preprocess &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.dashboard.preprocess</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.dashboard.preprocess</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Container</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.groupby</span><span class="w"> </span><span class="kn">import</span> <span class="n">SeriesGroupBy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dashboard.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">StatusSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.study.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CONFIG</span><span class="p">,</span>
+    <span class="n">INSTANCE</span><span class="p">,</span>
+    <span class="n">REASON</span><span class="p">,</span>
+    <span class="n">STATUS</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># data columns</span>
+<span class="n">BOUND</span> <span class="o">=</span> <span class="s2">&quot;bound&quot;</span>
+<span class="n">OBJ</span> <span class="o">=</span> <span class="s2">&quot;obj&quot;</span>
+<span class="n">GAP</span> <span class="o">=</span> <span class="s2">&quot;gap&quot;</span>
+<span class="n">GAP_REL_OBJ</span> <span class="o">=</span> <span class="s2">&quot;gap_rel_obj&quot;</span>
+<span class="n">GAP_REL_BOUND</span> <span class="o">=</span> <span class="s2">&quot;gap_rel_bound&quot;</span>
+<span class="n">GAP_REL_MAX_OBJ_BOUND</span> <span class="o">=</span> <span class="s2">&quot;gap_rel_max_obj_bound&quot;</span>
+<span class="n">FIT</span> <span class="o">=</span> <span class="s2">&quot;fit&quot;</span>
+
+<span class="n">DIST_TO_BEST</span> <span class="o">=</span> <span class="s2">&quot;dist to best&quot;</span>
+<span class="n">DIST_TO_BEST_REL</span> <span class="o">=</span> <span class="s2">&quot;dist rel to best&quot;</span>
+<span class="n">CONVERGENCE_TIME</span> <span class="o">=</span> <span class="s2">&quot;convergence time (s)&quot;</span>
+
+<span class="c1"># available stats</span>
+<span class="n">MEAN</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span>
+<span class="n">MAX</span> <span class="o">=</span> <span class="s2">&quot;max&quot;</span>
+<span class="n">MIN</span> <span class="o">=</span> <span class="s2">&quot;min&quot;</span>
+<span class="n">MEDIAN</span> <span class="o">=</span> <span class="s2">&quot;median&quot;</span>
+<span class="n">QUANTILE</span> <span class="o">=</span> <span class="s2">&quot;quantile&quot;</span>
+<span class="n">map_stat_key2func_df</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">MEAN</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+    <span class="n">MAX</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">max</span><span class="p">,</span>
+    <span class="n">MIN</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">min</span><span class="p">,</span>
+    <span class="n">MEDIAN</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">median</span><span class="p">,</span>
+    <span class="n">QUANTILE</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">quantile</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">map_stat_key2func_sergroupby</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">MEAN</span><span class="p">:</span> <span class="n">SeriesGroupBy</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+    <span class="n">MAX</span><span class="p">:</span> <span class="n">SeriesGroupBy</span><span class="o">.</span><span class="n">max</span><span class="p">,</span>
+    <span class="n">MIN</span><span class="p">:</span> <span class="n">SeriesGroupBy</span><span class="o">.</span><span class="n">min</span><span class="p">,</span>
+    <span class="n">MEDIAN</span><span class="p">:</span> <span class="n">SeriesGroupBy</span><span class="o">.</span><span class="n">median</span><span class="p">,</span>
+    <span class="n">QUANTILE</span><span class="p">:</span> <span class="n">SeriesGroupBy</span><span class="o">.</span><span class="n">quantile</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># new metadata keys for empty xps</span>
+<span class="n">I_RUN_LABEL</span> <span class="o">=</span> <span class="s2">&quot;attempt&quot;</span>
+
+<span class="n">TIMEOUT_REASON</span> <span class="o">=</span> <span class="s2">&quot;Probably due to a timeout.&quot;</span>
+
+
+<div class="viewcode-block" id="drop_empty_results">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.drop_empty_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_empty_results</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">df</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="extract_empty_xps_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_empty_xps_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_empty_xps_metadata</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">empty_xps_attrs</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">metadata_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">empty_xps_attrs</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">,</span> <span class="n">INSTANCE</span><span class="p">,</span> <span class="n">I_RUN_LABEL</span><span class="p">,</span> <span class="n">STATUS</span><span class="p">,</span> <span class="n">REASON</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">metadata_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">metadata_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">REASON</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">REASON</span><span class="p">]</span> <span class="o">=</span> <span class="n">TIMEOUT_REASON</span>
+    <span class="n">metadata_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">STATUS</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">STATUS</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">st</span><span class="p">:</span> <span class="n">st</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metadata_df</span></div>
+
+
+
+<div class="viewcode-block" id="normalize_results">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.normalize_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_results</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">config_store</span><span class="p">:</span> <span class="n">ConfigStore</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># add all configs beforehand to ensure name&lt;-&gt;config bijection</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">config_store</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;For each result df, df.attrs[&#39;config&#39;] must be either a dictionary &quot;</span>
+                <span class="s2">&quot;or a string representing its name.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="c1"># normalize each result one by one</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">normalize_df</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">config_store</span><span class="o">=</span><span class="n">config_store</span><span class="p">)</span>
+
+    <span class="c1"># compute an attempt number</span>
+    <span class="n">n_runs_by_config_instance</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">],</span> <span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="n">I_RUN_LABEL</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_runs_by_config_instance</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">n_runs_by_config_instance</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="normalize_df">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.normalize_df">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_df</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">config_store</span><span class="p">:</span> <span class="n">ConfigStore</span><span class="p">,</span> <span class="n">timedelta_unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">normalize_metadata</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">,</span> <span class="n">config_store</span><span class="o">=</span><span class="n">config_store</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># -&gt; timedeltaindex</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">):</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">TimedeltaIndex</span><span class="p">):</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">timedelta_unit</span><span class="p">)</span>
+    <span class="c1"># -&gt; total_seconds</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_pytimedelta</span><span class="p">()]</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time (s)&quot;</span>
+    <span class="c1"># drop columns full of NaNs</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># no more columns =&gt; on vide la dataframe</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="normalize_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.normalize_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">config_store</span><span class="p">:</span> <span class="n">ConfigStore</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># status</span>
+    <span class="k">if</span> <span class="n">STATUS</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="n">STATUS</span><span class="p">]</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="n">STATUS</span><span class="p">],</span> <span class="n">StatusSolver</span><span class="p">):</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="n">STATUS</span><span class="p">]</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="n">STATUS</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+    <span class="c1"># config -&gt; config name</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">config_name</span> <span class="o">=</span> <span class="n">config_store</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">config_name</span> <span class="o">=</span> <span class="n">config</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;For each result df, df.attrs[&#39;config&#39;] must be either a dictionary &quot;</span>
+            <span class="s2">&quot;or a string representing its name.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">metadata</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_name</span></div>
+
+
+
+<div class="viewcode-block" id="compute_extra_metrics">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.compute_extra_metrics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_extra_metrics</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">compute_extra_metrics_df</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_extra_metrics_df">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.compute_extra_metrics_df">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_extra_metrics_df</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># gap</span>
+    <span class="k">if</span> <span class="n">GAP</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">OBJ</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="n">BOUND</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">GAP</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">OBJ</span><span class="p">]</span> <span class="o">-</span> <span class="n">df</span><span class="p">[</span><span class="n">BOUND</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+
+    <span class="c1"># gap relative</span>
+    <span class="k">if</span> <span class="n">GAP</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">GAP_REL_OBJ</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">OBJ</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">GAP_REL_OBJ</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">GAP</span><span class="p">]</span> <span class="o">/</span> <span class="n">df</span><span class="p">[</span><span class="n">OBJ</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">GAP_REL_BOUND</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">BOUND</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">GAP_REL_BOUND</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">GAP</span><span class="p">]</span> <span class="o">/</span> <span class="n">df</span><span class="p">[</span><span class="n">BOUND</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">GAP_REL_OBJ</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">OBJ</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="n">BOUND</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">GAP_REL_MAX_OBJ_BOUND</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">GAP</span><span class="p">]</span> <span class="o">/</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="n">OBJ</span><span class="p">,</span> <span class="n">BOUND</span><span class="p">]]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+                    <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="extract_instances">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_instances">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_instances</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="extract_configs">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_configs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_configs</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="extract_instances_with_sol_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_instances_with_sol_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_instances_with_sol_by_config</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="n">instances_with_sol_by_config</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">instances_with_sol_by_config</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">instances_with_sol_by_config</span></div>
+
+
+
+<div class="viewcode-block" id="extract_nb_xps_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_nb_xps_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_nb_xps_by_config</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="n">nb_xps_by_config</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">nb_xps_by_config</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">nb_xps_by_config</span></div>
+
+
+
+<div class="viewcode-block" id="extract_nb_xps_w_n_wo_sol_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_nb_xps_w_n_wo_sol_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_nb_xps_w_n_wo_sol_by_config</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">instances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+    <span class="n">subresults</span> <span class="o">=</span> <span class="n">filter_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">configs</span><span class="o">=</span><span class="n">configs</span><span class="p">,</span> <span class="n">instances</span><span class="o">=</span><span class="n">instances</span><span class="p">)</span>
+
+    <span class="n">nb_xps_by_config</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">nb_xps_wo_sol_by_config</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">subresults</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span>
+        <span class="n">nb_xps_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">nb_xps_wo_sol_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">nb_xps_by_config</span><span class="p">,</span> <span class="n">nb_xps_wo_sol_by_config</span></div>
+
+
+
+<div class="viewcode-block" id="extract_metrics">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_metrics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_metrics</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metrics</span></div>
+
+
+
+<div class="viewcode-block" id="filter_results">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.filter_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_results</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">configs</span><span class="p">:</span> <span class="n">Container</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">instances</span><span class="p">:</span> <span class="n">Container</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">df</span>
+        <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span>
+        <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]</span> <span class="ow">in</span> <span class="n">instances</span> <span class="ow">and</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span> <span class="ow">in</span> <span class="n">configs</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="clip_df">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.clip_df">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clip_df</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">clip_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="c1"># copy</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="n">df</span> <span class="o">&gt;</span> <span class="n">clip_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">NA</span>
+    <span class="n">df</span><span class="p">[</span><span class="n">df</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">clip_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">NA</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+
+<div class="viewcode-block" id="clip_results">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.clip_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clip_results</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">clip_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">clip_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">clip_value</span><span class="o">=</span><span class="n">clip_value</span><span class="p">)</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="get_experiment_name">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.get_experiment_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_experiment_name</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> <span class="n">with_run_nb</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">with_run_nb</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]</span><span class="si">}</span><span class="s2"> #</span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">I_RUN_LABEL</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="get_status_str">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.get_status_str">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_status_str</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">STATUS</span><span class="p">]</span><span class="o">.</span><span class="n">value</span></div>
+
+
+
+<div class="viewcode-block" id="has_multiple_runs">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.has_multiple_runs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">has_multiple_runs</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">I_RUN_LABEL</span><span class="p">]</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="get_stat_name">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.get_stat_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_stat_name</span><span class="p">(</span><span class="n">stat</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">stat</span> <span class="o">==</span> <span class="n">QUANTILE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stat</span></div>
+
+
+
+<div class="viewcode-block" id="aggregate_results_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.aggregate_results_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">aggregate_results_config</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">results_config</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span> <span class="o">==</span> <span class="n">config</span><span class="p">]</span>
+    <span class="n">instances_config</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">],</span> <span class="n">run</span><span class="p">)</span> <span class="k">for</span> <span class="n">run</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results_config</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="n">results_config</span><span class="p">,</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">join</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">,</span>
+            <span class="n">keys</span><span class="o">=</span><span class="n">instances_config</span><span class="p">,</span>
+            <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;instance&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>  <span class="c1"># increasing time</span>
+        <span class="o">.</span><span class="n">ffill</span><span class="p">()</span>  <span class="c1"># replace nan by previous value (as instances do not share same timescale)</span>
+        <span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">level</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">future_stack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># pre-stack to speed-up stat computation</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="aggregate_results_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.aggregate_results_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">aggregate_results_by_config</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">configs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">aggregate_results_config</span><span class="p">(</span><span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="compute_stat_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.compute_stat_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_stat_by_config</span><span class="p">(</span>
+    <span class="n">results_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+    <span class="n">stat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">MEAN</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">instances</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_xp_proportion</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">compute_stat_from_df_config</span><span class="p">(</span>
+            <span class="n">df_config</span><span class="p">,</span>
+            <span class="n">stat</span><span class="o">=</span><span class="n">stat</span><span class="p">,</span>
+            <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+            <span class="n">instances</span><span class="o">=</span><span class="n">instances</span><span class="p">,</span>
+            <span class="n">min_xp_proportion</span><span class="o">=</span><span class="n">min_xp_proportion</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">config</span><span class="p">,</span> <span class="n">df_config</span> <span class="ow">in</span> <span class="n">results_by_config</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_config</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="compute_stat_from_df_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.compute_stat_from_df_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_stat_from_df_config</span><span class="p">(</span>
+    <span class="n">df_config</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">stat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">MEAN</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">instances</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_xp_proportion</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># &lt;-- ADD THIS PARAMETER</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">instances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># intersection with instances present in df_config (some could be missing for a given config)</span>
+        <span class="n">df_config_instances</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df_config</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s2">&quot;instance&quot;</span><span class="p">))</span>
+        <span class="n">instances</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">instances</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">df_config_instances</span><span class="p">]</span>
+        <span class="c1"># filter data according to instances</span>
+        <span class="n">df_config</span> <span class="o">=</span> <span class="n">df_config</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">instances</span><span class="p">]</span>
+        <span class="c1"># no remaining instances? =&gt; empty result</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_config</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">empty_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([])</span>
+            <span class="n">empty_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">df_config</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">empty_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">df_config</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">empty_df</span>
+    <span class="c1"># function used to aggregate</span>
+    <span class="n">stat_func</span> <span class="o">=</span> <span class="n">map_stat_key2func_df</span><span class="p">[</span><span class="n">stat</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">stat_func</span> <span class="ow">is</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">quantile</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="c1"># 1. Perform the aggregation (pandas ignores NaNs by default)</span>
+    <span class="n">df_agg</span> <span class="o">=</span> <span class="n">stat_func</span><span class="p">(</span><span class="n">df_config</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># 2. Count non-NaN values for each timestamp to check our threshold</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">df_config</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">nb_total_exp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_config</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">thresh</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nb_total_exp</span> <span class="o">*</span> <span class="n">min_xp_proportion</span><span class="p">)</span>
+
+    <span class="c1"># We should require at least 1 data point if the proportion is not exactly 0</span>
+    <span class="k">if</span> <span class="n">min_xp_proportion</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">thresh</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">thresh</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># 3. Mask the aggregated result where the count of data points is below the threshold</span>
+    <span class="n">df_agg_masked</span> <span class="o">=</span> <span class="n">df_agg</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">counts</span> <span class="o">&gt;=</span> <span class="n">thresh</span><span class="p">)</span>
+
+    <span class="c1"># 4. Unstack the final result</span>
+    <span class="n">df_stat</span> <span class="o">=</span> <span class="n">df_agg_masked</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">df_stat</span></div>
+
+
+
+<div class="viewcode-block" id="extract_optimal_fit_by_instance">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_optimal_fit_by_instance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_optimal_fit_by_instance</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="n">optimal_fit_by_instance</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">STATUS</span><span class="p">]</span> <span class="o">==</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span>
+            <span class="n">optimal_fit_by_instance</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">FIT</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">optimal_fit_by_instance</span></div>
+
+
+
+<div class="viewcode-block" id="extract_solvetimes_wo_status_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_solvetimes_wo_status_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_solvetimes_wo_status_by_config</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">optimal_fit_by_instance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+    <span class="n">solvetimes_by_config</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]</span> <span class="ow">in</span> <span class="n">optimal_fit_by_instance</span>
+            <span class="ow">and</span> <span class="n">FIT</span> <span class="ow">in</span> <span class="n">df</span>
+            <span class="ow">and</span> <span class="n">df</span><span class="p">[</span><span class="n">FIT</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">optimal_fit_by_instance</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]]</span>
+        <span class="p">):</span>
+            <span class="n">solvetime</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span>
+            <span class="n">solvetimes_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solvetime</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">solvetimes_by_config</span></div>
+
+
+
+<div class="viewcode-block" id="extract_solvetimes_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_solvetimes_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_solvetimes_by_config</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+    <span class="n">solvetimes_by_config</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">STATUS</span><span class="p">]</span> <span class="o">==</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span>
+            <span class="n">solvetime</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span>
+            <span class="n">solvetimes_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solvetime</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">solvetimes_by_config</span></div>
+
+
+
+<div class="viewcode-block" id="convert_solvetimes2nbsolvedinstances">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.convert_solvetimes2nbsolvedinstances">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_solvetimes2nbsolvedinstances</span><span class="p">(</span>
+    <span class="n">solvetimes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">time_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;nb of solved instances&quot;</span>
+    <span class="n">ser</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">solvetimes</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">solvetimes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))},</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ser</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">time_label</span>
+    <span class="k">return</span> <span class="n">ser</span></div>
+
+
+
+<div class="viewcode-block" id="extract_nbsolvedinstances_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_nbsolvedinstances_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_nbsolvedinstances_by_config</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">_extract_nbsolvedinstances_by_config_from_solvetimes</span><span class="p">(</span>
+        <span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">,</span>
+        <span class="n">solvetimes_by_config</span><span class="o">=</span><span class="n">extract_solvetimes_by_config</span><span class="p">(</span><span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="extract_nbsolvedinstances_wo_status_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.extract_nbsolvedinstances_wo_status_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_nbsolvedinstances_wo_status_by_config</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+    <span class="n">optimal_fit_by_instance</span> <span class="o">=</span> <span class="n">extract_optimal_fit_by_instance</span><span class="p">(</span><span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_extract_nbsolvedinstances_by_config_from_solvetimes</span><span class="p">(</span>
+        <span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">,</span>
+        <span class="n">solvetimes_by_config</span><span class="o">=</span><span class="n">extract_solvetimes_wo_status_by_config</span><span class="p">(</span>
+            <span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">,</span> <span class="n">optimal_fit_by_instance</span><span class="o">=</span><span class="n">optimal_fit_by_instance</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_nbsolvedinstances_by_config_from_solvetimes</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">solvetimes_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">time_label</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">time_label</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">convert_solvetimes2nbsolvedinstances</span><span class="p">(</span><span class="n">solvetimes</span><span class="p">,</span> <span class="n">time_label</span><span class="o">=</span><span class="n">time_label</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">config</span><span class="p">,</span> <span class="n">solvetimes</span> <span class="ow">in</span> <span class="n">solvetimes_by_config</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="convert_nb2percentage_solvedinstances">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.convert_nb2percentage_solvedinstances">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_nb2percentage_solvedinstances</span><span class="p">(</span>
+    <span class="n">ser</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+    <span class="n">n_xps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="n">ser</span> <span class="o">=</span> <span class="n">ser</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">/</span> <span class="n">n_xps</span>
+    <span class="n">ser</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">% o</span><span class="s2">f solved instances&quot;</span>
+    <span class="k">return</span> <span class="n">ser</span></div>
+
+
+
+<div class="viewcode-block" id="convert_nb2percentage_solvedinstances_by_config">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.convert_nb2percentage_solvedinstances_by_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_nb2percentage_solvedinstances_by_config</span><span class="p">(</span>
+    <span class="n">nbsolvedinstances_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
+    <span class="n">n_xps_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">convert_nb2percentage_solvedinstances</span><span class="p">(</span>
+            <span class="n">ser</span><span class="p">,</span> <span class="n">n_xps</span><span class="o">=</span><span class="n">n_xps_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">config</span><span class="p">,</span> <span class="n">ser</span> <span class="ow">in</span> <span class="n">nbsolvedinstances_by_config</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="construct_summary_nbsolved_instances">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.construct_summary_nbsolved_instances">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_summary_nbsolved_instances</span><span class="p">(</span>
+    <span class="n">nbsolvedinstances_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
+    <span class="n">nb_xps_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Container</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">configs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">configs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nb_xps_by_config</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">nbsolvedinstances_by_config</span><span class="p">:</span>
+            <span class="n">nbsolvedinstances</span> <span class="o">=</span> <span class="n">nbsolvedinstances_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nbsolvedinstances</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">config</span><span class="p">,</span> <span class="n">nbsolvedinstances</span><span class="p">,</span> <span class="n">nb_xps_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+        <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;config&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;# solved xps&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;# xps&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="construct_summary_metric_agg">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.construct_summary_metric_agg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_summary_metric_agg</span><span class="p">(</span>
+    <span class="n">stat_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+    <span class="n">nb_xps_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">nb_xps_wo_sol_by_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">configs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">configs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">stat_by_config</span><span class="p">)</span>
+    <span class="n">index_config</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">CONFIG</span><span class="p">)</span>
+    <span class="n">df_stat</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">stat_by_config</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_stat</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">stat_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">if</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">stat_by_config</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">stat_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">metrics</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span>
+    <span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index_config</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">metrics</span><span class="p">)</span>
+    <span class="n">df_summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">(</span><span class="n">nb_xps_wo_sol_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">),</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">index_config</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;# no sol&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">(</span><span class="n">nb_xps_by_config</span><span class="p">[</span><span class="n">config</span><span class="p">]</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">),</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">index_config</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;# xps&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">df</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">df_summary</span></div>
+
+
+
+<div class="viewcode-block" id="compute_best_metrics_by_xp">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.compute_best_metrics_by_xp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_best_metrics_by_xp</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">empty_ser</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">metrics</span><span class="p">)</span>
+    <span class="n">df_best_metric_by_xp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">(</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">rename</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="n">empty_ser</span><span class="o">.</span><span class="n">rename</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span>
+        <span class="p">),</span>
+        <span class="n">columns</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">df_best_metric_by_xp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="n">CONFIG</span><span class="p">,</span> <span class="n">INSTANCE</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df_best_metric_by_xp</span></div>
+
+
+
+<div class="viewcode-block" id="compute_convergence_time_by_xp">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.compute_convergence_time_by_xp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_convergence_time_by_xp</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">empty_ser</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">metrics</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">lambda_</span><span class="p">(</span><span class="n">ser</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ser</span><span class="p">[</span><span class="n">ser</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ser</span><span class="p">[</span><span class="n">ser</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+
+    <span class="n">df_convergence_time_by_xp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">df</span> <span class="o">==</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ser</span><span class="p">:</span> <span class="n">lambda_</span><span class="p">(</span><span class="n">ser</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">rename</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="n">empty_ser</span><span class="o">.</span><span class="n">rename</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">INSTANCE</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span>
+        <span class="p">),</span>
+        <span class="n">columns</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">df_convergence_time_by_xp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="n">CONFIG</span><span class="p">,</span> <span class="n">INSTANCE</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df_convergence_time_by_xp</span></div>
+
+
+
+<div class="viewcode-block" id="compute_summary_agg_ranks_and_dist_to_best_metric">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.dashboard.html#discrete_optimization.generic_tools.dashboard.preprocess.compute_summary_agg_ranks_and_dist_to_best_metric">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_summary_agg_ranks_and_dist_to_best_metric</span><span class="p">(</span>
+    <span class="n">df_best_metric_by_xp</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">df_convergence_time_by_xp</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;fit&quot;</span><span class="p">,</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">instances</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">stat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">MEAN</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">minimizing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="c1"># filter configs and instances</span>
+    <span class="k">if</span> <span class="n">configs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">configs</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">instances</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">instances</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">df_best_metric_by_xp</span> <span class="o">=</span> <span class="n">df_best_metric_by_xp</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">configs</span><span class="p">,</span> <span class="n">instances</span><span class="p">),</span> <span class="p">:]</span>
+    <span class="n">df_convergence_time_by_xp</span> <span class="o">=</span> <span class="n">df_convergence_time_by_xp</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">configs</span><span class="p">,</span> <span class="n">instances</span><span class="p">),</span> <span class="p">:]</span>
+    <span class="c1"># select metric</span>
+    <span class="n">ser_best_metric_by_xp</span> <span class="o">=</span> <span class="n">df_best_metric_by_xp</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span>
+    <span class="n">ser_convergence_time_by_xp</span> <span class="o">=</span> <span class="n">df_convergence_time_by_xp</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+        <span class="n">CONVERGENCE_TIME</span>
+    <span class="p">)</span>
+
+    <span class="c1"># get one single value by tuple config x instance</span>
+    <span class="n">ser_best_metric_by_config_instance</span> <span class="o">=</span> <span class="n">ser_best_metric_by_xp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="p">[</span><span class="n">CONFIG</span><span class="p">,</span> <span class="n">INSTANCE</span><span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+    <span class="n">n_configs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ser_best_metric_by_config_instance</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">levels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># ranks for each instance</span>
+    <span class="n">rank_by_config_instance</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ser_best_metric_by_config_instance</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">INSTANCE</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="n">minimizing</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">mapper_rank</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;# </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_configs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)}</span>
+    <span class="n">mapper_rank</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;# failed&quot;</span>
+    <span class="n">rank_counts</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">rank_by_config_instance</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">CONFIG</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">mapper_rank</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># distance to best metric by instance</span>
+    <span class="k">if</span> <span class="n">minimizing</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">compute_best_distance_by_instance</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">compute_best_distance_by_instance</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_dist_to_best_by_instance</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">compute_best_distance_by_instance</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">best</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_dist_to_best_rel_by_instance</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">compute_best_distance_by_instance</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">compute_dist_to_best_by_instance</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">best</span><span class="p">)</span>
+
+    <span class="n">dist_to_best_metric_by_instance</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ser_best_metric_by_xp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">INSTANCE</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">compute_dist_to_best_by_instance</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">DIST_TO_BEST</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">dist_to_best_metric_rel_by_instance</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ser_best_metric_by_xp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">INSTANCE</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">compute_dist_to_best_rel_by_instance</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">DIST_TO_BEST_REL</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># function used to aggregate</span>
+    <span class="n">stat_func</span> <span class="o">=</span> <span class="n">map_stat_key2func_sergroupby</span><span class="p">[</span><span class="n">stat</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">stat_func</span> <span class="ow">is</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">quantile</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="c1"># aggregate</span>
+    <span class="n">dist_to_best_metric_agg</span> <span class="o">=</span> <span class="n">stat_func</span><span class="p">(</span>
+        <span class="n">dist_to_best_metric_by_instance</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">CONFIG</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+    <span class="n">dist_to_best_metric_rel_agg</span> <span class="o">=</span> <span class="n">stat_func</span><span class="p">(</span>
+        <span class="n">dist_to_best_metric_rel_by_instance</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">CONFIG</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+
+    <span class="c1"># convergence time aggregated by config</span>
+    <span class="n">convergence_time_agg</span> <span class="o">=</span> <span class="n">stat_func</span><span class="p">(</span>
+        <span class="n">ser_convergence_time_by_xp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">CONFIG</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+
+    <span class="c1"># concat dist and ranks, and put index as a column</span>
+    <span class="n">df_summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">convergence_time_agg</span><span class="p">,</span>
+            <span class="n">dist_to_best_metric_rel_agg</span><span class="p">,</span>
+            <span class="n">dist_to_best_metric_agg</span><span class="p">,</span>
+            <span class="n">rank_counts</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+    <span class="c1"># df convergence_time vs dist_to_best xp by xp</span>
+    <span class="n">df_by_xp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">ser_convergence_time_by_xp</span><span class="p">,</span>
+            <span class="n">dist_to_best_metric_rel_by_instance</span><span class="p">,</span>
+            <span class="n">dist_to_best_metric_by_instance</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df_summary</span><span class="p">,</span> <span class="n">df_by_xp</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring.solvers.greedy &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring.solvers.greedy</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.coloring.solvers.greedy</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Greedy solvers for coloring problem : binding from networkx library methods.&quot;&quot;&quot;</span>
+
+<span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.coloring.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColoringProblem</span><span class="p">,</span> <span class="n">ColoringSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.coloring.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColoringSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EnumHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">strategies</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;largest_first&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;random_sequential&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;smallest_last&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;independent_set&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;connected_sequential_dfs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;connected_sequential_bfs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;connected_sequential&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;saturation_largest_first&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DSATUR&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="NxGreedyColoringMethod">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy.NxGreedyColoringMethod">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NxGreedyColoringMethod</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">largest_first</span> <span class="o">=</span> <span class="s2">&quot;largest_first&quot;</span>
+    <span class="n">random_sequential</span> <span class="o">=</span> <span class="s2">&quot;random_sequential&quot;</span>
+    <span class="n">smallest_last</span> <span class="o">=</span> <span class="s2">&quot;smallest_last&quot;</span>
+    <span class="n">independent_set</span> <span class="o">=</span> <span class="s2">&quot;independent_set&quot;</span>
+    <span class="n">connected_sequential_dfs</span> <span class="o">=</span> <span class="s2">&quot;connected_sequential_dfs&quot;</span>
+    <span class="n">connected_sequential_bfs</span> <span class="o">=</span> <span class="s2">&quot;connected_sequential_bfs&quot;</span>
+    <span class="n">connected_sequential</span> <span class="o">=</span> <span class="s2">&quot;connected_sequential&quot;</span>
+    <span class="n">saturation_largest_first</span> <span class="o">=</span> <span class="s2">&quot;saturation_largest_first&quot;</span>
+    <span class="n">dsatur</span> <span class="o">=</span> <span class="s2">&quot;DSATUR&quot;</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="s2">&quot;best&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="GreedyColoringSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy.GreedyColoringSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GreedyColoringSolver</span><span class="p">(</span><span class="n">ColoringSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binded solver of networkx heuristics for coloring problem.&quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;strategy&quot;</span><span class="p">,</span>
+            <span class="n">enum</span><span class="o">=</span><span class="n">NxGreedyColoringMethod</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">NxGreedyColoringMethod</span><span class="o">.</span><span class="n">best</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nx_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">to_networkx</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GreedyColoringSolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy.GreedyColoringSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the greedy solver for the given problem.</span>
+
+<span class="sd">        Keyword Args:</span>
+<span class="sd">            strategy (NxGreedyColoringMethod) : one of the method used by networkx to compute coloring solution,</span>
+<span class="sd">                                                or use NXGreedyColoringMethod.best to run each of them and return</span>
+<span class="sd">                                                the best result.</span>
+<span class="sd">            verbose (bool)</span>
+
+
+<span class="sd">        Returns:</span>
+<span class="sd">            results (ResultStorage) : storage of solution found by the greedy solver.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">greedy_strategy</span><span class="p">:</span> <span class="n">NxGreedyColoringMethod</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;strategy&quot;</span><span class="p">]</span>
+        <span class="n">strategy_name</span> <span class="o">=</span> <span class="n">greedy_strategy</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">if</span> <span class="n">strategy_name</span> <span class="o">==</span> <span class="s2">&quot;best&quot;</span><span class="p">:</span>
+            <span class="n">strategies_to_test</span> <span class="o">=</span> <span class="n">strategies</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">strategies_to_test</span> <span class="o">=</span> <span class="p">[</span><span class="n">strategy_name</span><span class="p">]</span>
+        <span class="n">best_solution</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">best_nb_color</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">strategies_to_test</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">colors</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">algorithms</span><span class="o">.</span><span class="n">coloring</span><span class="o">.</span><span class="n">greedy_color</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">nx_graph</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">,</span> <span class="n">interchange</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+                <span class="c1"># number_colors = len(set(list(colors.values())))</span>
+                <span class="n">raw_solution</span> <span class="o">=</span> <span class="p">[</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">]</span>
+                <span class="n">number_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">count_colors</span><span class="p">(</span><span class="n">raw_solution</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">strategy</span><span class="si">}</span><span class="s2"> : number colors : </span><span class="si">{</span><span class="n">number_colors</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">number_colors</span> <span class="o">&lt;</span> <span class="n">best_nb_color</span><span class="p">:</span>
+                    <span class="n">best_solution</span> <span class="o">=</span> <span class="n">raw_solution</span>
+                    <span class="n">best_nb_color</span> <span class="o">=</span> <span class="n">number_colors</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed strategy : </span><span class="si">{</span><span class="n">strategy</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;best found : </span><span class="si">{</span><span class="n">best_nb_color</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">ColoringSolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">best_solution</span><span class="p">,</span> <span class="n">nb_color</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">to_reformated_solution</span><span class="p">()</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Solution found : </span><span class="si">{</span><span class="n">solution</span><span class="p">,</span><span class="w"> </span><span class="n">fit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">([(</span><span class="n">solution</span><span class="p">,</span> <span class="n">fit</span><span class="p">)])</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

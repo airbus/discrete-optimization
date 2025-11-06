@@ -1,0 +1,962 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.cpmpy_tools &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.cpmpy_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.cpmpy_tools</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="c1"># Thanks to Leuven university for the cpmpy library.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">cpmpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverLookup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.expressions.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoolVal</span><span class="p">,</span> <span class="n">Expression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.expressions.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDVarArray</span><span class="p">,</span> <span class="n">_BoolVarImpl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.solvers.ortools</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrtSolutionPrinter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.solvers.solver_interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExitStatus</span><span class="p">,</span> <span class="n">SolverInterface</span><span class="p">,</span> <span class="n">SolverStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_assump_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.tools.explain.mcs</span><span class="w"> </span><span class="kn">import</span> <span class="n">mcs_grow</span><span class="p">,</span> <span class="n">mcs_opt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpmpy.tools.explain.mus</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">mus</span><span class="p">,</span>
+    <span class="n">mus_naive</span><span class="p">,</span>
+    <span class="n">optimal_mus</span><span class="p">,</span>
+    <span class="n">optimal_mus_naive</span><span class="p">,</span>
+    <span class="n">quickxplain</span><span class="p">,</span>
+    <span class="n">quickxplain_naive</span><span class="p">,</span>
+    <span class="n">smus</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSolverSolutionCallback</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSolver</span><span class="p">,</span>
+    <span class="n">ParametersCp</span><span class="p">,</span>
+    <span class="n">SignEnum</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">StatusSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolveEarlyStop</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.unsat_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetaConstraint</span>
+
+<span class="n">map_exitstatus2statussolver</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ExitStatus</span><span class="o">.</span><span class="n">NOT_RUN</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+    <span class="n">ExitStatus</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">,</span>
+    <span class="n">ExitStatus</span><span class="o">.</span><span class="n">FEASIBLE</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span><span class="p">,</span>
+    <span class="n">ExitStatus</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span>
+    <span class="n">ExitStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+    <span class="n">ExitStatus</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="CpmpyExplainUnsatMethod">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpyExplainUnsatMethod">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpmpyExplainUnsatMethod</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">core</span> <span class="o">=</span> <span class="s2">&quot;core&quot;</span>
+    <span class="n">mus</span> <span class="o">=</span> <span class="s2">&quot;mus&quot;</span>
+    <span class="n">quickxplain</span> <span class="o">=</span> <span class="s2">&quot;quickxplain&quot;</span>
+    <span class="n">optimal_mus</span> <span class="o">=</span> <span class="s2">&quot;optimal_mus&quot;</span>
+    <span class="n">smus</span> <span class="o">=</span> <span class="s2">&quot;smus&quot;</span>
+    <span class="n">mus_naive</span> <span class="o">=</span> <span class="s2">&quot;mus_naive&quot;</span>
+    <span class="n">quickxplain_naive</span> <span class="o">=</span> <span class="s2">&quot;quickxplain_naive&quot;</span>
+    <span class="n">optimal_mus_naive</span> <span class="o">=</span> <span class="s2">&quot;optimal_mus_naive&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="get_core_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.get_core_constraints">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_core_constraints</span><span class="p">(</span><span class="n">soft</span><span class="p">,</span> <span class="n">hard</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">soft</span><span class="p">,</span> <span class="n">assump</span><span class="p">)</span> <span class="o">=</span> <span class="n">make_assump_model</span><span class="p">(</span><span class="n">soft</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">cpmpy</span><span class="o">.</span><span class="n">SolverLookup</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;solver&quot;</span><span class="p">,</span> <span class="s2">&quot;ortools&quot;</span><span class="p">),</span> <span class="n">m</span><span class="p">)</span>
+    <span class="c1"># create dictionary from assump to soft</span>
+    <span class="n">dmap</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">assump</span><span class="p">,</span> <span class="n">soft</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">assumptions</span><span class="o">=</span><span class="n">assump</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="s2">&quot;MUS: model must be UNSAT&quot;</span>
+    <span class="n">core</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_core</span><span class="p">())</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">dmap</span><span class="p">[</span><span class="n">avar</span><span class="p">]</span> <span class="k">for</span> <span class="n">avar</span> <span class="ow">in</span> <span class="n">core</span><span class="p">]</span></div>
+
+
+
+<span class="n">map_explainunsatmethod2fun</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">core</span><span class="p">:</span> <span class="n">get_core_constraints</span><span class="p">,</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">mus</span><span class="p">:</span> <span class="n">mus</span><span class="p">,</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">quickxplain</span><span class="p">:</span> <span class="n">quickxplain</span><span class="p">,</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">optimal_mus</span><span class="p">:</span> <span class="n">optimal_mus</span><span class="p">,</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">smus</span><span class="p">:</span> <span class="n">smus</span><span class="p">,</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">mus_naive</span><span class="p">:</span> <span class="n">mus_naive</span><span class="p">,</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">quickxplain_naive</span><span class="p">:</span> <span class="n">quickxplain_naive</span><span class="p">,</span>
+    <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">optimal_mus_naive</span><span class="p">:</span> <span class="n">optimal_mus_naive</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="CpmpyCorrectUnsatMethod">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpyCorrectUnsatMethod">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpmpyCorrectUnsatMethod</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">mcs_opt</span> <span class="o">=</span> <span class="s2">&quot;mcs_opt&quot;</span>
+    <span class="n">mcs_grow</span> <span class="o">=</span> <span class="s2">&quot;mcs_grow&quot;</span></div>
+
+
+
+<span class="n">map_correctunsatmethod2fun</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">CpmpyCorrectUnsatMethod</span><span class="o">.</span><span class="n">mcs_opt</span><span class="p">:</span> <span class="n">mcs_opt</span><span class="p">,</span>
+    <span class="n">CpmpyCorrectUnsatMethod</span><span class="o">.</span><span class="n">mcs_grow</span><span class="p">:</span> <span class="n">mcs_grow</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_CpmpyCbClass</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_solver</span><span class="p">:</span> <span class="s2">&quot;CpmpySolver&quot;</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">callback_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">()</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># end of step callback: stopping?</span>
+        <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="CpmpySolver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpmpySolver</span><span class="p">(</span><span class="n">CpSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic cpmpy solver.&quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cpm_status</span><span class="p">:</span> <span class="n">SolverStatus</span> <span class="o">=</span> <span class="n">SolverStatus</span><span class="p">(</span><span class="s2">&quot;Model&quot;</span><span class="p">)</span>
+    <span class="n">cpm_solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SolverInterface</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">solver_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span> <span class="o">=</span> <span class="s2">&quot;ortools&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span> <span class="o">=</span> <span class="n">solver_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cb_object</span><span class="p">:</span> <span class="n">_CpmpyCbClass</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CpmpySolver.minimize_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.minimize_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">minimize_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.add_bound_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.add_bound_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_bound_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">:</span>
+            <span class="n">cstr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&lt;=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">:</span>
+            <span class="n">cstr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&gt;=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">:</span>
+            <span class="n">cstr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">==</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LESS</span><span class="p">:</span>
+            <span class="n">cstr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&lt;</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span>
+            <span class="n">cstr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&gt;</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">cstr</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.create_callback_function">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.create_callback_function">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_callback_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cb_object</span> <span class="o">=</span> <span class="n">_CpmpyCbClass</span><span class="p">(</span><span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cb_object</span><span class="o">.</span><span class="n">callback_func</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.reset_cpm_solver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.reset_cpm_solver">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_cpm_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset wrapped solver.</span>
+
+<span class="sd">        Call it so that modifications on `self.model` will be taken into account by next call to `self.solve()`.</span>
+<span class="sd">        Else, the cpmpy wrapped solver initialized at first solve will be used and not taken into account model changes.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cpm_solver</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parameters_cp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_cp</span> <span class="o">=</span> <span class="n">ParametersCp</span><span class="o">.</span><span class="n">default_cpsat</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.model must not be None after self.init_model().&quot;</span>
+                <span class="p">)</span>
+        <span class="n">callbacks_list</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">solver_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpm_solver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># this is the first solve call</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cpm_solver</span> <span class="o">=</span> <span class="n">SolverLookup</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">solver_allowed_params</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cpm_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="k">if</span> <span class="s2">&quot;display&quot;</span> <span class="ow">in</span> <span class="n">solver_allowed_params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">solver_kwargs</span><span class="p">[</span><span class="s2">&quot;display&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_callback_function</span><span class="p">(</span>
+                <span class="n">callback</span><span class="o">=</span><span class="n">callbacks_list</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span> <span class="o">==</span> <span class="s2">&quot;exact&quot;</span><span class="p">:</span>
+                <span class="n">solver_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;display&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span> <span class="o">==</span> <span class="s2">&quot;ortools&quot;</span><span class="p">:</span>
+            <span class="n">solver_kwargs</span><span class="p">[</span><span class="s2">&quot;solution_callback&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_OrtoolsCpSatCallbackViaCpmpy</span><span class="p">(</span>
+                <span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">solver_obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cpm_solver</span><span class="p">,</span>
+                <span class="n">callback</span><span class="o">=</span><span class="n">callbacks_list</span><span class="p">,</span>
+                <span class="n">retrieve_stats</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">verbose</span> <span class="o">=</span> <span class="n">solver_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;verbose&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="n">solver_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">num_search_workers</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">nb_process</span>
+                    <span class="k">if</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">multiprocess</span>
+                    <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">log_search_progress</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span> <span class="o">==</span> <span class="s2">&quot;gurobi&quot;</span><span class="p">:</span>
+            <span class="n">solver_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">Threads</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">nb_process</span>
+                    <span class="k">if</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">multiprocess</span>
+                    <span class="k">else</span> <span class="mi">1</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cpm_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit</span><span class="p">,</span> <span class="o">**</span><span class="n">solver_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cpm_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpm_solver</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">map_exitstatus2statussolver</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cpm_status</span><span class="o">.</span><span class="n">exitstatus</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpm_status</span><span class="o">.</span><span class="n">exitstatus</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ExitStatus</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span> <span class="n">ExitStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">]:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">([])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">()</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span>
+                <span class="p">[(</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">)],</span>
+            <span class="p">)</span>
+
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.explain_unsat_meta">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.explain_unsat_meta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">explain_unsat_meta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cpmpy_method</span><span class="p">:</span> <span class="n">CpmpyExplainUnsatMethod</span> <span class="o">=</span> <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">mus</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Explain unsatisfiability of the problem via meta-constraints.</span>
+
+<span class="sd">        Meta-constraints are gathering several finer constraints in order to be more human-readable.</span>
+<span class="sd">        We construct the corresponding cpmpy constraint via `cpmpy.all(meta.constraints)`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            soft: list of soft meta-constraints (that could be removed from model).</span>
+<span class="sd">                Default to the ones returned by `get_default_soft_meta_constraints()`.</span>
+<span class="sd">            hard: list of hard meta-constraints (that have no sense to be removed</span>
+<span class="sd">                like physical facts or modelling choices).</span>
+<span class="sd">                Default to the ones returned by `get_default_hard_meta_constraints()`.</span>
+<span class="sd">            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mus` to be used</span>
+<span class="sd">            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mus.mus`)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            minimal subset of soft meta-constraints leading to unsatisfiability.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            running several times may lead to a different (minimal) subset of meta-constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fine_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">explain_unsat_fine</span>
+        <span class="n">fine_method_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cpmpy_method</span><span class="o">=</span><span class="n">cpmpy_method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_meta_minimal_meta_constraint_set_using_fine_constraint_method</span><span class="p">(</span>
+                <span class="n">fine_method</span><span class="o">=</span><span class="n">fine_method</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard</span><span class="p">,</span> <span class="o">**</span><span class="n">fine_method_kwargs</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.explain_unsat_deduced_meta">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.explain_unsat_deduced_meta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">explain_unsat_deduced_meta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cpmpy_method</span><span class="p">:</span> <span class="n">CpmpyExplainUnsatMethod</span> <span class="o">=</span> <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">mus</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Explain unsatisfiability of the problem via meta-constraints.</span>
+
+<span class="sd">        Meta-constraints are gathering several finer constraints in order to be more human readable.</span>
+<span class="sd">        We compute the minimal subset of fine constraints included in the metaconstraints and deduce</span>
+<span class="sd">        the corresponding meta-constraints impacted.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            soft: list of soft meta-constraints (that could be removed from model).</span>
+<span class="sd">                Default to the ones returned by `get_default_soft_meta_constraints()`.</span>
+<span class="sd">            hard: list of hard meta-constraints (that have no sense to be removed</span>
+<span class="sd">                like physical facts or modelling choices).</span>
+<span class="sd">                Default to the ones returned by `get_default_hard_meta_constraints()`.</span>
+<span class="sd">            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mus` to be used</span>
+<span class="sd">            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mus.mus`)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            subset of soft meta-constraints leading to unsatisfiability (corresponding fine constraints subset being minimal).</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            running several times may lead to a different subset of meta-constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fine_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">explain_unsat_fine</span>
+        <span class="n">fine_method_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cpmpy_method</span><span class="o">=</span><span class="n">cpmpy_method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_deduce_meta_minimal_constraint_set_from_minimal_fine_constraint_set</span><span class="p">(</span>
+                <span class="n">fine_method</span><span class="o">=</span><span class="n">fine_method</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard</span><span class="p">,</span> <span class="o">**</span><span class="n">fine_method_kwargs</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.explain_unsat_fine">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.explain_unsat_fine">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">explain_unsat_fine</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cpmpy_method</span><span class="p">:</span> <span class="n">CpmpyExplainUnsatMethod</span> <span class="o">=</span> <span class="n">CpmpyExplainUnsatMethod</span><span class="o">.</span><span class="n">mus</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Explain unsatisfiability of the problem via fine cpmpy constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            soft: list of soft constraints (that could be removed from model).</span>
+<span class="sd">                Default to the ones returned by `get_default_soft_meta_constraints()`.</span>
+<span class="sd">            hard: list of hard constraints (that have no sense to be removed like physical facts or modelling choices).</span>
+<span class="sd">                Default to the ones returned by `get_default_hard_meta_constraints()`.</span>
+<span class="sd">            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mus` to be used</span>
+<span class="sd">            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mus.mus`)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            subset minimal list of soft constraints leading to unsatisfiability.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            running several times may lead to a different (minimal) subset of constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">==</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;self.solve() must have been run &quot;</span>
+            <span class="s2">&quot;and self.status_solver must be SolverStatus.UNSATISFIABLE&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">soft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">soft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_soft_constraints</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">hard</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">hard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hard_constraints</span><span class="p">()</span>
+        <span class="n">fun</span> <span class="o">=</span> <span class="n">map_explainunsatmethod2fun</span><span class="p">[</span><span class="n">cpmpy_method</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">fun</span><span class="p">(</span><span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.correct_unsat_meta">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.correct_unsat_meta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correct_unsat_meta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cpmpy_method</span><span class="p">:</span> <span class="n">CpmpyCorrectUnsatMethod</span> <span class="o">=</span> <span class="n">CpmpyCorrectUnsatMethod</span><span class="o">.</span><span class="n">mcs_opt</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Correct unsatisfiability of the problem with a minimal set of meta-constraints.</span>
+
+<span class="sd">        Meta-constraints are gathering several finer constraints in order to be more human-readable.</span>
+<span class="sd">        We construct the corresponding cpmpy constraint via `cpmpy.all(meta.constraints)`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            soft: list of soft meta-constraints (that could be removed from model).</span>
+<span class="sd">                Default to the ones returned by `get_default_soft_meta_constraints()`.</span>
+<span class="sd">            hard: list of hard meta-constraints (that have no sense to be removed</span>
+<span class="sd">                like physical facts or modelling choices).</span>
+<span class="sd">                Default to the ones returned by `get_default_hard_meta_constraints()`.</span>
+<span class="sd">            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mcs` to be used</span>
+<span class="sd">            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mcs.mcs_opt`)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            minimal subset of soft meta-constraints leading to unsatisfiability.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            running several times may lead to a different (minimal) subset of meta-constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fine_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">correct_unsat_fine</span>
+        <span class="n">fine_method_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cpmpy_method</span><span class="o">=</span><span class="n">cpmpy_method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_meta_minimal_meta_constraint_set_using_fine_constraint_method</span><span class="p">(</span>
+                <span class="n">fine_method</span><span class="o">=</span><span class="n">fine_method</span><span class="p">,</span>
+                <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">,</span>
+                <span class="n">hard</span><span class="o">=</span><span class="n">hard</span><span class="p">,</span>
+                <span class="n">include_all_trivial_false_constraints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">fine_method_kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.correct_unsat_deduced_meta">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.correct_unsat_deduced_meta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correct_unsat_deduced_meta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cpmpy_method</span><span class="p">:</span> <span class="n">CpmpyCorrectUnsatMethod</span> <span class="o">=</span> <span class="n">CpmpyCorrectUnsatMethod</span><span class="o">.</span><span class="n">mcs_opt</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Correct unsatisfiability of the problem with a set of meta-constraints.</span>
+
+<span class="sd">        Meta-constraints are gathering several finer constraints in order to be more human-readable.</span>
+<span class="sd">        We compute the minimal subset of fine constraints included in the metaconstraints and deduce</span>
+<span class="sd">        the corresponding meta-constraints impacted.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            soft: list of soft meta-constraints (that could be removed from model).</span>
+<span class="sd">                Default to the ones returned by `get_default_soft_meta_constraints()`.</span>
+<span class="sd">            hard: list of hard meta-constraints (that have no sense to be removed</span>
+<span class="sd">                like physical facts or modelling choices).</span>
+<span class="sd">                Default to the ones returned by `get_default_hard_meta_constraints()`.</span>
+<span class="sd">            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mcs` to be used</span>
+<span class="sd">            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mcs.mcs_opt`)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            subset of soft meta-constraints leading to unsatisfiability (corresponding fine constraints subset being minimal).</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            running several times may lead to a different subset of meta-constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fine_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">correct_unsat_fine</span>
+        <span class="n">fine_method_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cpmpy_method</span><span class="o">=</span><span class="n">cpmpy_method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_deduce_meta_minimal_constraint_set_from_minimal_fine_constraint_set</span><span class="p">(</span>
+                <span class="n">fine_method</span><span class="o">=</span><span class="n">fine_method</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard</span><span class="p">,</span> <span class="o">**</span><span class="n">fine_method_kwargs</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.correct_unsat_fine">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.correct_unsat_fine">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correct_unsat_fine</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cpmpy_method</span><span class="p">:</span> <span class="n">CpmpyCorrectUnsatMethod</span> <span class="o">=</span> <span class="n">CpmpyCorrectUnsatMethod</span><span class="o">.</span><span class="n">mcs_opt</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Correct unsatisfiability of the problem with a minimal set of (fine) cpmpy constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            soft: list of soft constraints (that could be removed from model).</span>
+<span class="sd">                Default to the ones returned by `get_default_soft_meta_constraints()`.</span>
+<span class="sd">            hard: list of hard constraints (that have no sense to be removed like physical facts or modelling choices).</span>
+<span class="sd">                Default to the ones returned by `get_default_hard_meta_constraints()`.</span>
+<span class="sd">            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mcs` to be used</span>
+<span class="sd">            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mcs.mcs_opt`)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            subset minimal list of soft constraints leading to unsatisfiability.</span>
+
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">==</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;self.solve() must have been run &quot;</span>
+            <span class="s2">&quot;and self.status_solver must be SolverStatus.UNSATISFIABLE&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">soft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">soft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_soft_constraints</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">hard</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">hard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hard_constraints</span><span class="p">()</span>
+        <span class="n">fun</span> <span class="o">=</span> <span class="n">map_correctunsatmethod2fun</span><span class="p">[</span><span class="n">cpmpy_method</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">fun</span><span class="p">(</span><span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_deduce_meta_minimal_constraint_set_from_minimal_fine_constraint_set</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fine_method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="o">...</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]],</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fine_method:  method used to extract the minimal set of fine constraints</span>
+<span class="sd">            soft: soft meta-constraints</span>
+<span class="sd">            hard: hard meta-constraints</span>
+<span class="sd">            **kwargs: kwargs for fine_method (apart from soft and hard parameters)</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">soft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">soft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_soft_meta_constraints</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">hard</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">hard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hard_meta_constraints</span><span class="p">()</span>
+        <span class="n">soft_normalized</span> <span class="o">=</span> <span class="n">_normalize_metaconstraints</span><span class="p">(</span><span class="n">soft</span><span class="p">)</span>
+        <span class="n">hard_normalized</span> <span class="o">=</span> <span class="n">_normalize_metaconstraints</span><span class="p">(</span><span class="n">hard</span><span class="p">)</span>
+        <span class="n">soft_fine</span> <span class="o">=</span> <span class="n">_convert_normalized_metaconstraints_to_constraints</span><span class="p">(</span><span class="n">soft_normalized</span><span class="p">)</span>
+        <span class="n">hard_fine</span> <span class="o">=</span> <span class="n">_convert_normalized_metaconstraints_to_constraints</span><span class="p">(</span><span class="n">hard_normalized</span><span class="p">)</span>
+        <span class="n">ms_constraints</span> <span class="o">=</span> <span class="n">fine_method</span><span class="p">(</span><span class="n">soft</span><span class="o">=</span><span class="n">soft_fine</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard_fine</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ms_meta_constraints</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ms_constraints</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">meta</span><span class="p">,</span> <span class="n">meta_normalized</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">soft</span><span class="p">,</span> <span class="n">soft_normalized</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">meta_normalized</span><span class="p">):</span>
+                    <span class="n">ms_meta_constraints</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">BoolVal</span><span class="p">):</span>  <span class="c1"># manage False &lt;-&gt; BoolVal(False)</span>
+                    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">meta_normalized</span><span class="p">):</span>
+                        <span class="n">ms_meta_constraints</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">ms_meta_constraints</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_meta_minimal_meta_constraint_set_using_fine_constraint_method</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fine_method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="o">...</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]],</span>
+        <span class="n">soft</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_all_trivial_false_constraints</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fine_method:  method used to extract the minimal set of fine constraints</span>
+<span class="sd">            soft: soft meta-constraints</span>
+<span class="sd">            hard: hard meta-constraints</span>
+<span class="sd">            include_all_trivial_false_constraints: whether to include all trivial False constraints (for mcs) or only</span>
+<span class="sd">                first one (for mus)</span>
+<span class="sd">            **kwargs: kwargs for fine_method (apart from soft and hard parameters)</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">soft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">soft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_soft_meta_constraints</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">hard</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">hard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hard_meta_constraints</span><span class="p">()</span>
+        <span class="n">soft_normalized</span> <span class="o">=</span> <span class="n">_normalize_metaconstraints</span><span class="p">(</span><span class="n">soft</span><span class="p">)</span>
+        <span class="n">hard_normalized</span> <span class="o">=</span> <span class="n">_normalize_metaconstraints</span><span class="p">(</span><span class="n">hard</span><span class="p">)</span>
+        <span class="n">soft_cpmpy</span> <span class="o">=</span> <span class="p">[</span><span class="n">cpmpy</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">soft_normalized</span><span class="p">]</span>
+        <span class="n">hard_cpmpy</span> <span class="o">=</span> <span class="p">[</span><span class="n">cpmpy</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">hard_normalized</span><span class="p">]</span>
+        <span class="c1"># handle trivial False constraints</span>
+        <span class="n">soft_with_trivial_false</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">meta</span> <span class="k">for</span> <span class="n">cstr</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">soft_cpmpy</span><span class="p">,</span> <span class="n">soft</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_trivially_false</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">soft_wo_trivial_false</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">meta</span> <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">soft</span> <span class="k">if</span> <span class="n">meta</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">soft_with_trivial_false</span>
+        <span class="p">]</span>
+        <span class="n">soft_cpmpy_wo_trivial_false</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">cstr</span> <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="n">soft_cpmpy</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">is_trivially_false</span><span class="p">(</span><span class="n">cstr</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">soft_with_trivial_false</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">include_all_trivial_false_constraints</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">soft_with_trivial_false</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># only first meta containing False</span>
+        <span class="n">cstr2meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">soft_cpmpy</span><span class="p">,</span> <span class="n">soft</span><span class="p">))</span>
+        <span class="n">ms_constraints</span> <span class="o">=</span> <span class="n">fine_method</span><span class="p">(</span>
+            <span class="n">soft</span><span class="o">=</span><span class="n">soft_cpmpy_wo_trivial_false</span><span class="p">,</span> <span class="n">hard</span><span class="o">=</span><span class="n">hard_cpmpy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">soft_with_trivial_false</span> <span class="o">+</span> <span class="p">[</span><span class="n">cstr2meta</span><span class="p">[</span><span class="n">cstr</span><span class="p">]</span> <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="n">ms_constraints</span><span class="p">]</span>
+
+<div class="viewcode-block" id="CpmpySolver.get_others_meta_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.get_others_meta_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_others_meta_constraint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">meta_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaCpmpyConstraint</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a meta-constraint gathering all remaining constraints.</span>
+
+<span class="sd">        Create a meta-constraint named &quot;others&quot; containing all model constraints not already</span>
+<span class="sd">        taken into account by the given meta-constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            meta_constraints: meta constraints to consider. By default,</span>
+<span class="sd">                `self.get_soft_meta_constraints() + self.get_hard_meta_constraints()`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a meta constraint gathering remaining constraints</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">meta_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">meta_constraints</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_soft_meta_constraints</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hard_meta_constraints</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="n">solver_constraints</span> <span class="o">=</span> <span class="n">_get_normalized_constraints</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
+        <span class="n">constraints_from_meta</span> <span class="o">=</span> <span class="n">_convert_normalized_metaconstraints_to_constraints</span><span class="p">(</span>
+            <span class="n">_normalize_metaconstraints</span><span class="p">(</span><span class="n">meta_constraints</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">constraints_from_meta_ids</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints_from_meta</span><span class="p">}</span>
+        <span class="n">remaining_constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">solver_constraints</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">constraints_from_meta_ids</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">MetaCpmpyConstraint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;others&quot;</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">remaining_constraints</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.get_soft_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.get_soft_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_soft_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get soft fine constraints defining the internal model.</span>
+
+<span class="sd">        To be used to explain unsatisfiability. See `explain_unsat_fine()`.</span>
+<span class="sd">        Default implementation: all constraints from `self.model`.</span>
+<span class="sd">        To be overriden according to problems.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            default set of soft constraints defining the problem</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">constraints</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.get_hard_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.get_hard_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hard_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get hard fine constraints defining the internal model.</span>
+
+<span class="sd">        To be used to explain unsatisfiability. See `explain_unsat_fine()`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            default set of hard constraints defining the problem</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.get_soft_meta_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.get_soft_meta_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_soft_meta_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get soft meta-constraints defining the internal model.</span>
+
+<span class="sd">        To be used to explain unsatisfiability. See `explain_unsat_meta()`.</span>
+<span class="sd">        Default implementation: all constraints from `self.model`.</span>
+<span class="sd">        To be overriden according to problems.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            default set of soft meta-constraints defining the problem</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;No meta constraints defined for this model.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.get_hard_meta_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.get_hard_meta_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hard_meta_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get hard fine meta-constraints defining the internal model.</span>
+
+<span class="sd">        To be used to explain unsatisfiability. See `explain_unsat_meta()`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            default set of hard meta-constraints defining the problem</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">MetaCpmpyConstraint</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;hard constraints&quot;</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_hard_constraints</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpmpySolver.retrieve_current_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver.retrieve_current_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a do solution from the cpmpy solver internal solution.</span>
+
+<span class="sd">        It will be called after self.model.solve()</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the solution, at do format.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MetaCpmpyConstraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.MetaCpmpyConstraint">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaCpmpyConstraint</span><span class="p">(</span><span class="n">MetaConstraint</span><span class="p">[</span><span class="n">Expression</span><span class="p">]):</span>
+<div class="viewcode-block" id="MetaCpmpyConstraint.normalize">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.MetaCpmpyConstraint.normalize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Split NDVarArray constraints into atomic ones.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">_get_normalized_constraints</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MetaCpmpyConstraint.to_normalized">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.MetaCpmpyConstraint.to_normalized">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_normalized</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaCpmpyConstraint</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new meta constraints with NDVarArray constraints splitted into atomic ones.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">MetaCpmpyConstraint</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">_get_normalized_constraints</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_normalized_constraints</span><span class="p">(</span>
+    <span class="n">original_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]:</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">original_constraints</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">NDVarArray</span><span class="p">):</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">constraints</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_normalized_metaconstraints_to_constraints</span><span class="p">(</span>
+    <span class="n">meta_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">meta_constraints</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">constraints</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_metaconstraints</span><span class="p">(</span>
+    <span class="n">meta_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaCpmpyConstraint</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">meta</span><span class="o">.</span><span class="n">to_normalized</span><span class="p">()</span> <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">meta_constraints</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_OrtoolsCpSatCallbackViaCpmpy</span><span class="p">(</span><span class="n">CpSolverSolutionCallback</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">do_solver</span><span class="p">:</span> <span class="n">CpmpySolver</span><span class="p">,</span>
+        <span class="n">solver_obj</span><span class="p">:</span> <span class="n">SolverInterface</span><span class="p">,</span>
+        <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">,</span>
+        <span class="n">retrieve_stats</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_varmap</span> <span class="o">=</span> <span class="n">solver_obj</span><span class="o">.</span><span class="n">_varmap</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cpm_vars</span> <span class="o">=</span> <span class="n">solver_obj</span><span class="o">.</span><span class="n">user_vars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_stats</span> <span class="o">=</span> <span class="n">retrieve_stats</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">retrieve_stats</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_solution_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_current_solution</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># end of step callback: stopping?</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+                <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">SolveEarlyStop</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.solve() stopped by user callback.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">StopSearch</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">store_current_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Store the cpsat values in the cpm vars, before calling retrieve current solution (taken from</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cpm_vars</span><span class="p">):</span>
+            <span class="c1"># populate values before printing</span>
+            <span class="k">for</span> <span class="n">cpm_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cpm_vars</span><span class="p">:</span>
+                <span class="c1"># it might be an NDVarArray</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cpm_var</span><span class="p">,</span> <span class="s2">&quot;flat&quot;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">cpm_subvar</span> <span class="ow">in</span> <span class="n">cpm_var</span><span class="o">.</span><span class="n">flat</span><span class="p">:</span>
+                        <span class="n">cpm_subvar</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_varmap</span><span class="p">[</span><span class="n">cpm_subvar</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cpm_var</span><span class="p">,</span> <span class="n">_BoolVarImpl</span><span class="p">):</span>
+                    <span class="n">cpm_var</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_varmap</span><span class="p">[</span><span class="n">cpm_var</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cpm_var</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_varmap</span><span class="p">[</span><span class="n">cpm_var</span><span class="p">])</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">()</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_stats</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;bound&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">BestObjectiveBound</span><span class="p">(),</span>
+                    <span class="s2">&quot;obj&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">(),</span>
+                    <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserTime</span><span class="p">(),</span>
+                    <span class="s2">&quot;num_conflicts&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">NumConflicts</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="c1"># update current bound and value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">BestObjectiveBound</span><span class="p">()</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="is_trivially_false">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cpmpy_tools.is_trivially_false">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_trivially_false</span><span class="p">(</span><span class="n">cstr</span><span class="p">:</span> <span class="n">Expression</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a cpmpy constraint is trivially False.</span>
+
+<span class="sd">    This means it is always equal to False.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cstr</span><span class="p">,</span> <span class="n">BoolVal</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cstr</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="n">cstr</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

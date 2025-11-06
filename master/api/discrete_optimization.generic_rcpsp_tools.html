@@ -1,0 +1,378 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_rcpsp_tools package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.generic_rcpsp_tools.solvers package" href="discrete_optimization.generic_rcpsp_tools.solvers.html" />
+    <link rel="prev" title="discrete_optimization.fjsp.solvers package" href="discrete_optimization.fjsp.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_rcpsp_tools package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-generic-rcpsp-tools-package">
+<h1>discrete_optimization.generic_rcpsp_tools package<a class="headerlink" href="#discrete-optimization-generic-rcpsp-tools-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html">discrete_optimization.generic_rcpsp_tools.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#module-discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#module-discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#module-discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.postpro_ls">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.postpro_ls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#module-discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#module-discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#module-discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#module-discrete_optimization.generic_rcpsp_tools.solvers.generic_rcpsp_solver">discrete_optimization.generic_rcpsp_tools.solvers.generic_rcpsp_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.generic_rcpsp_solver.GenericRcpspSolver"><code class="docutils literal notranslate"><span class="pre">GenericRcpspSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.generic_rcpsp_solver.GenericRcpspSolver.problem"><code class="docutils literal notranslate"><span class="pre">GenericRcpspSolver.problem</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#module-discrete_optimization.generic_rcpsp_tools.solvers.gphh">discrete_optimization.generic_rcpsp_tools.solvers.gphh module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.EvaluationGphh"><code class="docutils literal notranslate"><span class="pre">EvaluationGphh</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.EvaluationGphh.PERMUTATION_DISTANCE"><code class="docutils literal notranslate"><span class="pre">EvaluationGphh.PERMUTATION_DISTANCE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.EvaluationGphh.SGS"><code class="docutils literal notranslate"><span class="pre">EvaluationGphh.SGS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum"><code class="docutils literal notranslate"><span class="pre">FeatureEnum</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.ALL_DESCENDANTS"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.ALL_DESCENDANTS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.DUMMY"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.DUMMY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.EARLIEST_FINISH_DATE"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.EARLIEST_FINISH_DATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.EARLIEST_START_DATE"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.EARLIEST_START_DATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.LATEST_FINISH_DATE"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.LATEST_FINISH_DATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.LATEST_START_DATE"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.LATEST_START_DATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.N_PREDECESSORS"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.N_PREDECESSORS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.N_SUCCESSORS"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.N_SUCCESSORS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.RESSOURCE_AVG"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.RESSOURCE_AVG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.RESSOURCE_MAX"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.RESSOURCE_MAX</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.RESSOURCE_MIN"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.RESSOURCE_MIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.RESSOURCE_NZ_MIN"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.RESSOURCE_NZ_MIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.RESSOURCE_REQUIRED"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.RESSOURCE_REQUIRED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.RESSOURCE_TOTAL"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.RESSOURCE_TOTAL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.FeatureEnum.TASK_DURATION"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.TASK_DURATION</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.build_solution"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.build_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.evaluate_heuristic"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.evaluate_heuristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.evaluation_method"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.evaluation_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.init_model"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.init_primitives"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.init_primitives()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.initialize_cpm_data_for_training"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.initialize_cpm_data_for_training()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.params_gphh"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.params_gphh</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.permutation_distance"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.permutation_distance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.pset"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.pset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.reference_permutations"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.reference_permutations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.solve"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.toolbox"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.toolbox</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.training_domains"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.training_domains</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.GphhGenericRcpspSolver.weight"><code class="docutils literal notranslate"><span class="pre">GphhGenericRcpspSolver.weight</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh"><code class="docutils literal notranslate"><span class="pre">ParametersGphh</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.crossover_rate"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.crossover_rate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.deap_verbose"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.deap_verbose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.default"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.default()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.default_for_set_features"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.default_for_set_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.evaluation"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.evaluation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.fast_test"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.fast_test()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.max_tree_depth"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.max_tree_depth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.min_tree_depth"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.min_tree_depth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.ms_default"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.ms_default()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.ms_fast"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.ms_fast()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.mutation_rate"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.mutation_rate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.n_gen"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.n_gen</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.permutation_distance"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.permutation_distance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.pop_size"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.pop_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.set_feature"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.set_feature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.set_primitves"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.set_primitves</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.ParametersGphh.tournament_ratio"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.tournament_ratio</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.PermutationDistance"><code class="docutils literal notranslate"><span class="pre">PermutationDistance</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.PermutationDistance.HAMMING"><code class="docutils literal notranslate"><span class="pre">PermutationDistance.HAMMING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.PermutationDistance.KTD"><code class="docutils literal notranslate"><span class="pre">PermutationDistance.KTD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.PermutationDistance.KTD_HAMMING"><code class="docutils literal notranslate"><span class="pre">PermutationDistance.KTD_HAMMING</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.compute_cpm"><code class="docutils literal notranslate"><span class="pre">compute_cpm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_all_descendants"><code class="docutils literal notranslate"><span class="pre">feature_all_descendants()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_average_resource_requirements"><code class="docutils literal notranslate"><span class="pre">feature_average_resource_requirements()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_efd"><code class="docutils literal notranslate"><span class="pre">feature_efd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_esd"><code class="docutils literal notranslate"><span class="pre">feature_esd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_lfd"><code class="docutils literal notranslate"><span class="pre">feature_lfd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_lsd"><code class="docutils literal notranslate"><span class="pre">feature_lsd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_maximum_resource_requirements"><code class="docutils literal notranslate"><span class="pre">feature_maximum_resource_requirements()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_minimum_resource_requirements"><code class="docutils literal notranslate"><span class="pre">feature_minimum_resource_requirements()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_n_predecessors"><code class="docutils literal notranslate"><span class="pre">feature_n_predecessors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_n_successors"><code class="docutils literal notranslate"><span class="pre">feature_n_successors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_non_zero_minimum_resource_requirements"><code class="docutils literal notranslate"><span class="pre">feature_non_zero_minimum_resource_requirements()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_resource_requirements"><code class="docutils literal notranslate"><span class="pre">feature_resource_requirements()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_task_duration"><code class="docutils literal notranslate"><span class="pre">feature_task_duration()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.feature_total_n_res"><code class="docutils literal notranslate"><span class="pre">feature_total_n_res()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.get_dummy"><code class="docutils literal notranslate"><span class="pre">get_dummy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.get_resource_requirements_across_duration"><code class="docutils literal notranslate"><span class="pre">get_resource_requirements_across_duration()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.if_then_else"><code class="docutils literal notranslate"><span class="pre">if_then_else()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.max_operator"><code class="docutils literal notranslate"><span class="pre">max_operator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.min_operator"><code class="docutils literal notranslate"><span class="pre">min_operator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.gphh.protected_div"><code class="docutils literal notranslate"><span class="pre">protected_div()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#module-discrete_optimization.generic_rcpsp_tools.solvers.ls">discrete_optimization.generic_rcpsp_tools.solvers.ls module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.ls.LsGenericRcpspSolver"><code class="docutils literal notranslate"><span class="pre">LsGenericRcpspSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.ls.LsGenericRcpspSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">LsGenericRcpspSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.ls.LsGenericRcpspSolver.solve"><code class="docutils literal notranslate"><span class="pre">LsGenericRcpspSolver.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.ls.LsSolverType"><code class="docutils literal notranslate"><span class="pre">LsSolverType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.ls.LsSolverType.HC"><code class="docutils literal notranslate"><span class="pre">LsSolverType.HC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#discrete_optimization.generic_rcpsp_tools.solvers.ls.LsSolverType.SA"><code class="docutils literal notranslate"><span class="pre">LsSolverType.SA</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.solvers.html#module-discrete_optimization.generic_rcpsp_tools.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.generic_rcpsp_tools.graph_tools">
+<span id="discrete-optimization-generic-rcpsp-tools-graph-tools-module"></span><h2>discrete_optimization.generic_rcpsp_tools.graph_tools module<a class="headerlink" href="#module-discrete_optimization.generic_rcpsp_tools.graph_tools" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_rcpsp_tools.graph_tools.</span></span><span class="sig-name descname"><span class="pre">GraphRcpsp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_preemptive.PreemptiveRcpspProblem" title="discrete_optimization.rcpsp.problem_preemptive.PreemptiveRcpspProblem"><span class="pre">PreemptiveRcpspProblem</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html#discrete_optimization.rcpsp_multiskill.problem.MultiskillRcpspProblem" title="discrete_optimization.rcpsp_multiskill.problem.MultiskillRcpspProblem"><span class="pre">MultiskillRcpspProblem</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html#discrete_optimization.rcpsp_multiskill.problem.VariantMultiskillRcpspProblem" title="discrete_optimization.rcpsp_multiskill.problem.VariantMultiskillRcpspProblem"><span class="pre">VariantMultiskillRcpspProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphRcpsp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.check_loop">
+<span class="sig-name descname"><span class="pre">check_loop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphRcpsp.check_loop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.check_loop" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.compute_component_in_non_dummy_graph">
+<span class="sig-name descname"><span class="pre">compute_component_in_non_dummy_graph</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphRcpsp.compute_component_in_non_dummy_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.compute_component_in_non_dummy_graph" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_ancestors_activities">
+<span class="sig-name descname"><span class="pre">get_ancestors_activities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphRcpsp.get_ancestors_activities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_ancestors_activities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_descendants_activities">
+<span class="sig-name descname"><span class="pre">get_descendants_activities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphRcpsp.get_descendants_activities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_descendants_activities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_next_activities">
+<span class="sig-name descname"><span class="pre">get_next_activities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphRcpsp.get_next_activities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_next_activities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_pred_activities">
+<span class="sig-name descname"><span class="pre">get_pred_activities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphRcpsp.get_pred_activities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp.get_pred_activities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphSpecialConstraintsRcpsp">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_rcpsp_tools.graph_tools.</span></span><span class="sig-name descname"><span class="pre">GraphSpecialConstraintsRcpsp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_specialized_constraints.SpecialConstraintsPreemptiveRcpspProblem" title="discrete_optimization.rcpsp.problem_specialized_constraints.SpecialConstraintsPreemptiveRcpspProblem"><span class="pre">SpecialConstraintsPreemptiveRcpspProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphSpecialConstraintsRcpsp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphSpecialConstraintsRcpsp" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp" title="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphRcpsp</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphSpecialConstraintsRcpsp.get_neighbors_constraints">
+<span class="sig-name descname"><span class="pre">get_neighbors_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphSpecialConstraintsRcpsp.get_neighbors_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphSpecialConstraintsRcpsp.get_neighbors_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphSpecialConstraintsRcpsp.get_pred_constraints">
+<span class="sig-name descname"><span class="pre">get_pred_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#GraphSpecialConstraintsRcpsp.get_pred_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphSpecialConstraintsRcpsp.get_pred_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.build_graph_rcpsp_object">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_rcpsp_tools.graph_tools.</span></span><span class="sig-name descname"><span class="pre">build_graph_rcpsp_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rcpsp_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_preemptive.PreemptiveRcpspProblem" title="discrete_optimization.rcpsp.problem_preemptive.PreemptiveRcpspProblem"><span class="pre">PreemptiveRcpspProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#build_graph_rcpsp_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.build_graph_rcpsp_object" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.graph_tools.build_unrelated_task">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_rcpsp_tools.graph_tools.</span></span><span class="sig-name descname"><span class="pre">build_unrelated_task</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp" title="discrete_optimization.generic_rcpsp_tools.graph_tools.GraphRcpsp"><span class="pre">GraphRcpsp</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/graph_tools.html#build_unrelated_task"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.graph_tools.build_unrelated_task" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_rcpsp_tools.typing">
+<span id="discrete-optimization-generic-rcpsp-tools-typing-module"></span><h2>discrete_optimization.generic_rcpsp_tools.typing module<a class="headerlink" href="#module-discrete_optimization.generic_rcpsp_tools.typing" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.typing.is_instance_any_rcpsp_problem">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_rcpsp_tools.typing.</span></span><span class="sig-name descname"><span class="pre">is_instance_any_rcpsp_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/typing.html#is_instance_any_rcpsp_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.typing.is_instance_any_rcpsp_problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.generic_rcpsp_tools.typing.is_instance_any_rcpsp_solution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_rcpsp_tools.typing.</span></span><span class="sig-name descname"><span class="pre">is_instance_any_rcpsp_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_rcpsp_tools/typing.html#is_instance_any_rcpsp_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_rcpsp_tools.typing.is_instance_any_rcpsp_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_rcpsp_tools">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.generic_rcpsp_tools" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.fjsp.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.fjsp.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.generic_rcpsp_tools.solvers.html" class="btn btn-neutral float-right" title="discrete_optimization.generic_rcpsp_tools.solvers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=30d551ce"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/versions.js?v=dd1a30db"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting started" href="getting_started.html" />
+    <link rel="prev" title="Welcome to discrete-optimization’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#python-3-10-environment">Python 3.10+ environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#with-conda">With conda</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#with-pyenv-venv">With pyenv + venv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#with-uv">With uv</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pip-install-discrete-optimization-library">Pip install discrete-optimization library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optional-dependencies">Optional dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#package-extras">Package extras</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#minizinc-2-8">Minizinc 2.8+</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#linux-command-line">Linux command line</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#macos-command-line">MacOs command line</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#windows-command-line">Windows command line</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#gurobi">Gurobi</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="python-3-10-environment">
+<h2>Python 3.10+ environment<a class="headerlink" href="#python-3-10-environment" title="Link to this heading"></a></h2>
+<p>The use of a virtual environment is recommended, and you will need to ensure that the environment use a Python version
+greater than 3.10.
+This can be achieved for instance either by using <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a>, or by using <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> (or <a class="reference external" href="https://github.com/pyenv-win/pyenv-win">pyenv-win</a> on windows)
+and <a class="reference external" href="https://docs.python.org/fr/3/library/venv.html">venv</a> module, or by using <a class="reference external" href="https://docs.astral.sh/uv/">uv</a>.</p>
+<p>The following examples show how to create a virtual environment with Python version 3.12 with the mentioned methods.</p>
+<section id="with-conda">
+<h3>With conda<a class="headerlink" href="#with-conda" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="k">do</span>-env<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12
+conda<span class="w"> </span>activate<span class="w"> </span><span class="k">do</span>-env
+</pre></div>
+</div>
+</section>
+<section id="with-pyenv-venv">
+<h3>With pyenv + venv<a class="headerlink" href="#with-pyenv-venv" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyenv<span class="w"> </span>install<span class="w"> </span><span class="m">3</span>.12
+pyenv<span class="w"> </span>shell<span class="w"> </span><span class="m">3</span>.12
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span><span class="k">do</span>-venv
+<span class="nb">source</span><span class="w"> </span><span class="k">do</span>-venv/bin/activate<span class="w">  </span><span class="c1"># do-venv\Scripts\activate on windows</span>
+</pre></div>
+</div>
+</section>
+<section id="with-uv">
+<h3>With uv<a class="headerlink" href="#with-uv" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv<span class="w"> </span><span class="k">do</span>-venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<span class="nb">source</span><span class="w"> </span><span class="k">do</span>-venv/bin/activate<span class="w">  </span><span class="c1"># do-venv\Scripts\activate on windows</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="pip-install-discrete-optimization-library">
+<h2>Pip install discrete-optimization library<a class="headerlink" href="#pip-install-discrete-optimization-library" title="Link to this heading"></a></h2>
+<p>Install discrete-optimization with pip:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>discrete-optimization
+</pre></div>
+</div>
+<p>or via the faster <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span></code> if you already installed <a class="reference external" href="https://docs.astral.sh/uv/">uv</a>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>discrete-optimization
+</pre></div>
+</div>
+<p>You can also make full use of uv project management capabilities by using <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">add</span></code>.
+Please refer to uv doc.</p>
+</section>
+<section id="optional-dependencies">
+<h2>Optional dependencies<a class="headerlink" href="#optional-dependencies" title="Link to this heading"></a></h2>
+<section id="package-extras">
+<h3>Package extras<a class="headerlink" href="#package-extras" title="Link to this heading"></a></h3>
+<p>Several extras are available:</p>
+<ul class="simple">
+<li><p><em>gurobi</em>: to use <a class="reference external" href="https://www.gurobi.com/">gurobi</a> based solvers.
+It will install the python api for gurobi with a minimal license which does not allow to use it on “real” models.
+You need to install an appropriate license if you want to make full use of it.</p></li>
+<li><p><em>quantum</em>: to use <a class="reference external" href="https://www.ibm.com/quantum/qiskit">qiskit</a> based solvers.</p></li>
+<li><p><em>toulbar</em>: to use <a class="reference external" href="https://toulbar2.github.io/toulbar2/">pytoulbar2</a> based solvers.</p></li>
+<li><p><em>optuna</em>: to use our utility functions to generate and launch <a class="reference external" href="https://optuna.org/">optuna</a> studies (hyperparameters optimization).</p></li>
+<li><p><em>dashboard</em>: to use the d-o <a class="reference internal" href="dashboard.html"><span class="std std-doc">dashboard</span></a></p></li>
+</ul>
+<p>You can install them all via:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>discrete-optimization<span class="o">[</span>gurobi,<span class="w"> </span>qunatum,<span class="w"> </span>toulbar,<span class="w"> </span>optuna,<span class="w"> </span>dashboard<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="minizinc-2-8">
+<h3>Minizinc 2.8+<a class="headerlink" href="#minizinc-2-8" title="Link to this heading"></a></h3>
+<p>If you want to use discrete-optimization solvers based on <a class="reference external" href="https://www.minizinc.org/">minizinc</a>,
+you need to install it (version greater than 2.8) and update the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> environment variable
+so that it can be found by Python.
+See <a class="reference external" href="https://www.minizinc.org/doc-latest/en/installation.html">minizinc documentation</a> for more details.</p>
+<blockquote>
+<div><p><strong>Tip:</strong> You can easily install minizinc from the command line, which can be useful when on cloud.
+In order to make life easier to cloud users, we reproduce below the necessary lines. Please be careful that this
+is not an official documentation for minizinc and that the following lines can stop working without notice
+as we do not test them automatically.</p>
+</div></blockquote>
+<section id="linux-command-line">
+<h4>Linux command line<a class="headerlink" href="#linux-command-line" title="Link to this heading"></a></h4>
+<p>On a Linux distribution, you can use the bundled <a class="reference external" href="https://www.minizinc.org/doc-latest/en/installation.html#appimage">minizinc AppImage</a>.</p>
+<p>If <a class="reference external" href="https://en.wikipedia.org/wiki/Filesystem_in_Userspace">FUSE</a> is available:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+curl -o minizinc_install/minizinc -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.5/MiniZincIDE-2.8.5-x86_64.AppImage
+chmod +x minizinc_install/minizinc
+export PATH=&quot;$(pwd)/minizinc_install/&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+<p>Else, this is still possible by extracting the files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+cd minizinc_install
+curl -o minizinc.AppImage -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.5/MiniZincIDE-2.8.5-x86_64.AppImage
+chmod +x minizinc.AppImage
+./minizinc.AppImage --appimage-extract
+cd ..
+export LD_LIBRARY_PATH=&quot;$(pwd)/minizinc_install/squashfs-root/usr/lib/&quot;:$LD_LIBRARY_PATH
+export PATH=&quot;$(pwd)/minizinc_install/squashfs-root/usr/bin/&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+</section>
+<section id="macos-command-line">
+<h4>MacOs command line<a class="headerlink" href="#macos-command-line" title="Link to this heading"></a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+curl -o minizinc.dmg -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.5/MiniZincIDE-2.8.5-bundled.dmg
+hdiutil attach minizinc.dmg
+cp -R /Volumes/MiniZinc*/MiniZincIDE.app minizinc_install/.
+export PATH=&quot;$(pwd)/minizinc_install/MiniZincIDE.app/Contents/Resources&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+</section>
+<section id="windows-command-line">
+<h4>Windows command line<a class="headerlink" href="#windows-command-line" title="Link to this heading"></a></h4>
+<p>Works on Windows Server 2022 with bash shell:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+curl -o minizinc_setup.exe -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.5/MiniZincIDE-2.8.5-bundled-setup-win64.exe
+cmd //c &quot;minizinc_setup.exe /verysilent /currentuser /norestart /suppressmsgboxes /sp&quot;
+export PATH=&quot;~/AppData/Local/Programs/MiniZinc&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+</section>
+</section>
+<section id="gurobi">
+<h3>Gurobi<a class="headerlink" href="#gurobi" title="Link to this heading"></a></h3>
+<p>If you want to try solvers using gurobi, install <a class="reference external" href="https://www.gurobi.com/">gurobi</a> with its python binding (gurobipy)
+and an appropriate license.</p>
+<blockquote>
+<div><p><strong>NB</strong>: If you just do <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">gurobipy</span></code>, you get a minimal license which does not allow to use it on “real” models.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to discrete-optimization’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,495 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span><span class="p">,</span> <span class="n">StatusSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+    <span class="n">IntegerHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FormatEnum">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FormatEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">WORKFORCE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">PSPLIB</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">JSP</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">FJSP</span> <span class="o">=</span> <span class="mi">3</span></div>
+
+
+
+<div class="viewcode-block" id="from_format_to_str_arg">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.from_format_to_str_arg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_format_to_str_arg</span><span class="p">(</span><span class="n">format_enum</span><span class="p">:</span> <span class="n">FormatEnum</span><span class="p">):</span>
+    <span class="n">map_</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">FormatEnum</span><span class="o">.</span><span class="n">WORKFORCE</span><span class="p">:</span> <span class="s2">&quot;airbus&quot;</span><span class="p">,</span>
+        <span class="n">FormatEnum</span><span class="o">.</span><span class="n">PSPLIB</span><span class="p">:</span> <span class="s2">&quot;psplib&quot;</span><span class="p">,</span>
+        <span class="n">FormatEnum</span><span class="o">.</span><span class="n">JSP</span><span class="p">:</span> <span class="s2">&quot;jsp&quot;</span><span class="p">,</span>
+        <span class="n">FormatEnum</span><span class="o">.</span><span class="n">FJSP</span><span class="p">:</span> <span class="s2">&quot;fjsp&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">map_</span><span class="p">[</span><span class="n">format_enum</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="parse_solver_log_robust">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.parse_solver_log_robust">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_solver_log_robust</span><span class="p">(</span><span class="n">file_content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses a solver log to analyze multiple, sequential optimization phases with robust transition logic.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        file_content: A string containing the full content of the log file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing:</span>
+<span class="sd">        - A list of pandas DataFrames, one for each optimization phase.</span>
+<span class="sd">        - A list of strings describing the end status of each phase.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Initialization for multiple phases</span>
+    <span class="n">all_phases_data</span> <span class="o">=</span> <span class="p">[[]]</span>
+    <span class="n">phase_statuses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">phase_start_times</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
+
+    <span class="n">last_fit_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+    <span class="n">seen_cpu_times</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="c1"># NEW: Flag to prevent a value-increase trigger immediately after a keyword trigger.</span>
+    <span class="n">just_had_keyword_transition</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">file_content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;objective&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">or</span> <span class="s2">&quot;unit&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">current_cpu</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">current_fit</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">is_transition_keyword</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;limit&quot;</span><span class="p">,</span> <span class="s2">&quot;optimal&quot;</span><span class="p">]:</span>
+                <span class="n">is_transition_keyword</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">current_cpu</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">current_fit</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">current_cpu</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">current_cpu</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">current_cpu</span> <span class="ow">in</span> <span class="n">seen_cpu_times</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">seen_cpu_times</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current_cpu</span><span class="p">)</span>
+
+        <span class="c1"># Determine if a transition should occur, suppressing value-increase check if needed.</span>
+        <span class="n">is_increasing_value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">current_fit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">current_fit</span> <span class="o">&gt;</span> <span class="n">last_fit_value</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">just_had_keyword_transition</span>  <span class="c1"># The important new condition</span>
+        <span class="p">)</span>
+        <span class="n">is_transition</span> <span class="o">=</span> <span class="n">is_transition_keyword</span> <span class="ow">or</span> <span class="n">is_increasing_value</span>
+
+        <span class="k">if</span> <span class="n">is_transition</span><span class="p">:</span>
+            <span class="c1"># A transition terminates the CURRENT phase.</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;unknown_transition&quot;</span>
+            <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;optimal&quot;</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;optimal&quot;</span>
+            <span class="k">elif</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;limit&quot;</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;limit&quot;</span>
+            <span class="k">elif</span> <span class="n">is_increasing_value</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;value_increase&quot;</span>
+            <span class="n">phase_statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+
+            <span class="c1"># Prepare for the NEXT phase.</span>
+            <span class="n">phase_start_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_cpu</span><span class="p">)</span>
+            <span class="n">all_phases_data</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># It&#39;s a regular data point for the current phase.</span>
+            <span class="k">if</span> <span class="n">current_fit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">all_phases_data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">current_cpu</span><span class="p">,</span> <span class="s2">&quot;obj&quot;</span><span class="p">:</span> <span class="n">current_fit</span><span class="p">,</span> <span class="s2">&quot;fit&quot;</span><span class="p">:</span> <span class="n">current_fit</span><span class="p">}</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Update state for the NEXT iteration.</span>
+        <span class="k">if</span> <span class="n">current_fit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">last_fit_value</span> <span class="o">=</span> <span class="n">current_fit</span>
+
+        <span class="c1"># Set the flag for the next line based on whether THIS line was a keyword transition.</span>
+        <span class="k">if</span> <span class="n">is_transition_keyword</span><span class="p">:</span>
+            <span class="n">just_had_keyword_transition</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">just_had_keyword_transition</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># Finalize the last phase after the loop</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">all_phases_data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">all_phases_data</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">phase_start_times</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">phase_statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;finished&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create the final list of DataFrames</span>
+    <span class="n">list_of_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">phase_data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_phases_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">phase_data</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">phase_data</span><span class="p">)</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">phase_start_times</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span> <span class="s2">&quot;obj&quot;</span><span class="p">])</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
+        <span class="n">list_of_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">list_of_dfs</span><span class="p">,</span> <span class="n">phase_statuses</span></div>
+
+
+
+<div class="viewcode-block" id="TempoLogsCallback">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoLogsCallback">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TempoLogsCallback</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="TempoLogsCallback.on_solve_end">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoLogsCallback.on_solve_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_solve_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="s2">&quot;TempoSchedulingSolver&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logs</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">_processed_logs</span></div>
+
+
+<div class="viewcode-block" id="TempoLogsCallback.get_df_metrics">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoLogsCallback.get_df_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_df_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a dataframe indexed by time of the recorded metrics (fitness, bounds...).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">logs</span><span class="p">[</span><span class="n">phase</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TempoSchedulingSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TempoSchedulingSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_lns&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;greedy_runs&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">_input_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FormatEnum</span><span class="p">]</span>
+    <span class="n">_path_to_tempo_executable</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="c1"># Path to the file that is passed to tempo, this will be updated in the init_model() of the solver.</span>
+    <span class="c1"># (specific to each problem)</span>
+    <span class="n">_file_input</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FormatEnum</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">path_to_tempo_executable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_format</span> <span class="o">=</span> <span class="n">input_format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_path_to_tempo_executable</span> <span class="o">=</span> <span class="n">path_to_tempo_executable</span>
+        <span class="k">if</span> <span class="n">path_to_tempo_executable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;TEMPO_PATH&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_path_to_tempo_executable</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;TEMPO_PATH&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raw_logs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_processed_logs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_processed_status</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="TempoSchedulingSolver.get_input_format">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_input_format">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_input_format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_format</span></div>
+
+
+<div class="viewcode-block" id="TempoSchedulingSolver.get_processed_logs">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_processed_logs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_processed_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processed_logs</span></div>
+
+
+<div class="viewcode-block" id="TempoSchedulingSolver.get_processed_status">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_processed_status">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_processed_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processed_status</span></div>
+
+
+<div class="viewcode-block" id="TempoSchedulingSolver.get_tmp_folder_path">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_tmp_folder_path">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tmp_folder_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">this_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">this_folder</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_format</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TempoSchedulingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.retrieve_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span></div>
+
+        <span class="bp">self</span><span class="p">,</span> <span class="n">path_to_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">process_stdout</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="TempoSchedulingSolver.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.init_model">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;For tempo solver, this should transform the python object into some format that tempo can understand.</span>
+<span class="sd">        For now it&#39;s via the creation of a temporary _file_input.&quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="TempoSchedulingSolver.solve">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">use_lns</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_lns&quot;</span><span class="p">]</span>
+        <span class="n">greedy_runs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;greedy_runs&quot;</span><span class="p">]</span>
+        <span class="n">search_limit</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;search_limit&quot;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">callback</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+        <span class="n">output_json_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_tmp_folder_path</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;results_</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">.json&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tmp_folder_path</span><span class="p">()):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tmp_folder_path</span><span class="p">())</span>
+        <span class="c1"># Command to run the external C++ solver</span>
+        <span class="n">path_to_tempo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path_to_tempo_executable</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">path_to_tempo</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">,</span>
+            <span class="s2">&quot;--input-format&quot;</span><span class="p">,</span>
+            <span class="n">from_format_to_str_arg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_format</span><span class="p">),</span>
+            <span class="s2">&quot;--greedy-runs&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">greedy_runs</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">use_lns</span><span class="p">:</span>
+            <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--lns&quot;</span><span class="p">,</span> <span class="s2">&quot;RandomTasks&quot;</span><span class="p">])</span>
+
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="s2">&quot;--search-limit&quot;</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">search_limit</span><span class="p">),</span>
+                <span class="s2">&quot;--time-limit&quot;</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">time_limit</span><span class="p">),</span>
+                <span class="s2">&quot;--save-solution&quot;</span><span class="p">,</span>
+                <span class="n">output_json_file</span><span class="p">,</span>
+                <span class="s2">&quot;--seed&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;42&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">callback</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="c1"># Execute the command and capture stdout and stderr</span>
+            <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="n">command</span><span class="p">,</span>
+                <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Decode stdout/stderr as text</span>
+                <span class="c1"># check=True,  # Raise a CalledProcessError if the command returns a non-zero exit code</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">time_limit</span>
+                <span class="o">+</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># Add some buffer to timeout for the C++ program to finish cleanly</span>
+            <span class="p">)</span>
+            <span class="c1"># Process the captured stdout line by line</span>
+            <span class="n">dfs_s</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="n">parse_solver_log_robust</span><span class="p">(</span><span class="n">file_content</span><span class="o">=</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> status of the optim phases&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Last objective </span><span class="si">{</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;obj&#39;</span><span class="p">]</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">df</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">dfs_s</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">dfs_s</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raw_logs</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_processed_logs</span> <span class="o">=</span> <span class="n">dfs_s</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_processed_status</span> <span class="o">=</span> <span class="n">status</span>
+            <span class="n">result_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">([])</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_solution</span><span class="p">(</span>
+                <span class="n">path_to_output</span><span class="o">=</span><span class="n">output_json_file</span><span class="p">,</span> <span class="n">process_stdout</span><span class="o">=</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">sol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+                <span class="n">result_store</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+            <span class="n">callback</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">result_store</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="c1"># Clean up temporary files after successful execution</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">)</span>
+            <span class="c1"># Return the result storage, potentially including the extracted logs in the &#39;infos&#39; dictionary</span>
+            <span class="c1"># The &#39;infos&#39; dictionary can be used to pass additional data alongside the solution.</span>
+            <span class="k">return</span> <span class="n">result_store</span>
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Handle errors where the subprocess returns a non-zero exit code</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subprocess failed with error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stdout: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stdout</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stderr: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Ensure temporary files are cleaned up even on error</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">)</span>
+            <span class="k">raise</span>  <span class="c1"># Re-raise the exception after logging details</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Catch any other unexpected errors</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;An unexpected error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_input</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">output_json_file</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,181 @@
+# Notebooks
+
+We present here a curated list of notebooks recommended to start with discrete-optimization,
+available in the `notebooks/` folder of the repository.
+
+```{contents}
+---
+depth: 3
+local: true
+---
+```
+
+## Knapsack problem
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/Knapsack%20tutorial.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/Knapsack%20tutorial.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2FKnapsack+tutorial.ipynb)
+
+This is a very common combinatorial optimization problem where you are given a knapsack of a given weight capacity $C$ and a bunch of items with values and weight. The goal is to fill the knapsack with the best aggregated value, respecting the weight constraint.
+
+![knapsack problem illustration](https://upload.wikimedia.org/wikipedia/commons/f/fd/Knapsack.svg "Image from wikipedia: https://commons.wikimedia.org/wiki/File:Knapsack.svg").
+
+We handle here the *0-1 knapsack problem* where each item can only be taken once.
+
+Many different optimization approach can be tested on the combinatorial problem, we'll see a few during the notebook:
+
+- [Greedy heuristic methods](#Greedy-heuristic)
+- [Mixed Integer Linear Programming (MILP)](#Mixed-integer-linear-programming)
+- [Constraint Programming (CP)](#Constraint-Programming)
+- [Large neighborhood search (LNS)](#Large-neighborhood-search), a metaheuristic on top of CP or MILP
+
+## RCPSP tutorials
+
+### Introduction to RCPSP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-1+Introduction.ipynb)
+
+
+What is RCPSP ? (Resource Constrained Project Scheduling Problem)
+
+- $M$ activities or tasks in a project (instance)
+- Precedence constraints: 
+
+    > If activity $j\in[1,M]$ is a successor of activity $i\in[1,M]$, then activity $i$ must be completed before activity $j$ can be started
+
+- Resource constraints: 
+
+    > Each project is assigned a set of K renewable resources where each resource $k$ is available in $R_{k}$ units for the entire duration of the project. Each activity may require one or more of these resources to be completed. While scheduling the activities, the daily resource usage for resource $k$ can not exceed $R_{k}$ units. 
+    
+- Each activity $j$ takes $d_{j}$ time units to complete.
+
+- The overall goal of the problem is usually to minimize the makespan.
+
+Here we focus on *single mode RCPSP with renewable resources*, but there exists also variants of the problem
+- multi-mode: a task can be performed in several ways (modes), with specific duration and resources needs. The choice of the mode is in this case part of the solution.
+- mix of renewable and non-renewable resources.
+
+
+### Solving RCPSP with heuristics
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-2%20Heuristics%20Solving.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-2%20Heuristics%20Solving.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-2+Heuristics+Solving.ipynb)
+
+
+We admit that you followed the following [notebook](RCPSP%20%231%20Introduction.ipynb) that introduced you all the basics for RCPSP Problems, in this notebook we will test two greedy heuristics that builds feasible solution.
+
+### Solving RCPSP with local search/metaheuristics/genetic algorithm
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-3%20Local%20search.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-3%20Local%20search.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-3+Local+search.ipynb)
+
+
+One big family of combinatorial optimisation solver is local search. We include all metaheuristics and genetic algorithm into this simple terminology. 
+
+In general, a local search algorithm explore the solution space by applying local changes to the current set of solutions.
+
+In the case of RCPSP, we have seen in [the first notebook](RCPSP%20%231%20Introduction.ipynb) that we can represent a solution with a priority list of tasks (equivalent to a permutation). 
+Therefore local search algorithms are available on the search space being the ensemble of all permutation of tasks. We can imagine many kind of local changes possible to explore the permutation set.
+
+Local search (LS) algorithms are anytime algorithm, we have access to the current best solution whenever we want to stop the optimisation process. LS can't prove that a solution is optimal but it is rarely an issue in real world applications.
+
+### Solve RCPSP by linear programming: MILP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-4%20Linear%20programming.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-4%20Linear%20programming.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-4+Linear+programming.ipynb)
+
+
+We admit that you followed the [first notebook](RCPSP%20%231%20Introduction.ipynb) that introduced you all the basics for RCPSP Problems, on which we will apply here linear programming.
+
+Linear programming is a paradigm to model optimisation problem where the objective function and constraints are linear in terms of the variables : 
+
+$ y = max_{x}(c^t.x) $
+such that $A.x \leq b $
+
+$x$ can be either floating or integer values, which explains the Mixed Integer Linear Programming denomination.
+
+### Solve RCPSP by constraint programming
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-5%20Constraint%20Programming.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-5%20Constraint%20Programming.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-5+Constraint+Programming.ipynb)
+
+
+One of the main class of methods to solve discrete optimization problem is Constraint programming [(CP)](https://en.wikipedia.org/wiki/Constraint_programming). CP solvers explore the state variables and propagate constraints in a clever way. Using constraint programming, users declaratively state the constraints on the feasible solutions for a set of decision variables. Constraints specify the properties of a solution to be found.
+In discrete-optimization library, [minizinc](https://www.minizinc.org/) declarative language and its [python api](https://minizinc-python.readthedocs.io/en/latest/) is used extensively. However it is quite easy to use other modeling library such as [Cpmpy](https://github.com/CPMpy/cpmpy/tree/master/cpmpy) in the future.
+Some constraint programming models are stored in discrete_optimization/knapsack/minizinc folder.
+
+In this notebook, we'll use the [chuffed](https://github.com/chuffed/chuffed#description) solver which is a state of the art lazy clause solver. 
+
+We assume that you have already been introduced to RCPSP problems thanks to this [notebook](RCPSP%20%231%20Introduction.ipynb).
+
+### Large neighborhood search + CP to solve RCPSP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-6%20Large%20Neighbourhood%20Search%20.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/RCPSP%20tutorials/RCPSP-6%20Large%20Neighbourhood%20Search%20.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-6+Large+Neighbourhood+Search+.ipynb)
+
+LNS is an iterative heuristic method consisting in freezing randomly part of the solutions and optimize the remaining part. Full solution is then rebuilt and hopefully, repeating the process lead to a good solution to the original problem.
+
+
+
+## Advanced
+
+### Callbacks usage
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/z_Advanced/callbacks.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/z_Advanced/callbacks.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2Fz_Advanced%2Fcallbacks.ipynb)
+
+
+When using discrete-optimization to solve a problem, 
+it is possible to execute your own code at various stage of the solving process.
+
+
+To achieve that, you have to
+-  either create your own callback by inheriting from [Callback](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback) base class,
+  and implementing the hooks you need
+- or directly use one of the already implemented ones available in discrete_optimization.generic_tools.callbacks submodules
+  (like
+  [loggers](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.loggers),
+  [early_stoppers](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.early_stoppers),
+  or [optuna](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.optuna)
+  )
+- and put them in `callbacks` argument of `SolverDO.solve()`, as shown in the [API doc](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO.solve).
+
+The main usecases for using a callback are
+- Logging: you need to display more information about what happens during the solving process;
+- Backuping: you need to store a model at an intermediate stage;
+- Early stopping: you want to stop the solving process under your own specific condition, not available in the solver api;
+- [Tuning hyperparameters with Optuna](./optuna.ipynb): you want let Optuna having access to intermediate results so that it can decide whether to drop the current trial.
+  (See dedicated notebook.)
+
+
+### Tuning hyperparameters with Optuna
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/z_Advanced/optuna.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.0/notebooks/z_Advanced/optuna.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.0?labpath=notebooks%2Fz_Advanced%2Foptuna.ipynb)
+
+
+All our solvers have got a lot of hyperparameters.
+And of course, the optimization result can change significantly according to them.
+
+In this notebook, we will see how we can make use of [Optuna](https://optuna.readthedocs.io/en/stable/) to tune them for a given problem (or family of problems).
+
+Some work has been done in the library to ease this tuning:
+
+- main hyperparameters of each solver have been identified, with default values and possible ranges registered;
+- some utility methods have been coded to get default hyperparameters and to make use of optuna hyperparameters auto-suggestion with as little work as possible from the user.
+
+After applying this to tune hyperparameters of a solver, further examples will show you that
+
+- we can also use optuna to select the solver class itself as another meta-hyperparameter;
+- some solvers are meta-solvers having themselves subsolvers as hyperparameters with their own set of hyperparameters, that can also be tuned.
+
+

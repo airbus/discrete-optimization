@@ -1,0 +1,537 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.solvers.lns_lp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.solvers.lns_lp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.solvers.lns_lp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParametersCp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">build_evaluate_function_aggregated</span><span class="p">,</span>
+    <span class="n">get_default_objective_setup</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lns_mip</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GurobiConstraintHandler</span><span class="p">,</span>
+    <span class="n">InitialSolution</span><span class="p">,</span>
+    <span class="n">OrtoolsMathOptConstraintHandler</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lns_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstraintHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ls.local_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModeMutation</span><span class="p">,</span>
+    <span class="n">RestartHandlerLimit</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ls.simulated_annealing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SimulatedAnnealing</span><span class="p">,</span>
+    <span class="n">TemperatureSchedulingFactor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.mutations.mixed_mutation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BasicPortfolioMutation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.mutations.mutation_catalog</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_available_mutations</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">PermutationMutationRcpsp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.cp_mzn</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpMultimodeRcpspSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.lp</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GurobiMultimodeRcpspSolver</span><span class="p">,</span>
+    <span class="n">MathOptMultimodeRcpspSolver</span><span class="p">,</span>
+    <span class="n">MathOptRcpspSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.pile</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GreedyChoice</span><span class="p">,</span>
+    <span class="n">PileCalendarRcpspSolver</span><span class="p">,</span>
+    <span class="n">PileRcpspSolver</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="InitialRcpspMethod">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.InitialRcpspMethod">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InitialRcpspMethod</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">DUMMY</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">PILE</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">PILE_CALENDAR</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">LS</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">GA</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">CP</span> <span class="o">=</span> <span class="mi">5</span></div>
+
+
+
+<div class="viewcode-block" id="InitialRcpspSolution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.InitialRcpspSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InitialRcpspSolution</span><span class="p">(</span><span class="n">InitialSolution</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">ParamsObjectiveFunction</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">initial_method</span><span class="p">:</span> <span class="n">InitialRcpspMethod</span> <span class="o">=</span> <span class="n">InitialRcpspMethod</span><span class="o">.</span><span class="n">PILE</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">params_objective_function</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">get_default_objective_setup</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggreg</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">build_evaluate_function_aggregated</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_method</span> <span class="o">=</span> <span class="n">initial_method</span>
+
+<div class="viewcode-block" id="InitialRcpspSolution.get_starting_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.InitialRcpspSolution.get_starting_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_starting_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_method</span> <span class="o">==</span> <span class="n">InitialRcpspMethod</span><span class="o">.</span><span class="n">PILE</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Compute greedy&quot;</span><span class="p">)</span>
+            <span class="n">greedy_solver</span> <span class="o">=</span> <span class="n">PileRcpspSolver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+            <span class="n">store_solution</span> <span class="o">=</span> <span class="n">greedy_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">greedy_choice</span><span class="o">=</span><span class="n">GreedyChoice</span><span class="o">.</span><span class="n">MOST_SUCCESSORS</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_method</span> <span class="o">==</span> <span class="n">InitialRcpspMethod</span><span class="o">.</span><span class="n">PILE_CALENDAR</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Compute greedy&quot;</span><span class="p">)</span>
+            <span class="n">greedy_solver</span> <span class="o">=</span> <span class="n">PileCalendarRcpspSolver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+            <span class="n">store_solution</span> <span class="o">=</span> <span class="n">greedy_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">greedy_choice</span><span class="o">=</span><span class="n">GreedyChoice</span><span class="o">.</span><span class="n">MOST_SUCCESSORS</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_method</span> <span class="o">==</span> <span class="n">InitialRcpspMethod</span><span class="o">.</span><span class="n">DUMMY</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Compute dummy&quot;</span><span class="p">)</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">()</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="n">store_solution</span> <span class="o">=</span> <span class="n">ResultStorage</span><span class="p">(</span>
+                <span class="n">mode_optim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">sense_function</span><span class="p">,</span>
+                <span class="n">list_solution_fits</span><span class="o">=</span><span class="p">[(</span><span class="n">solution</span><span class="p">,</span> <span class="n">fit</span><span class="p">)],</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_method</span> <span class="o">==</span> <span class="n">InitialRcpspMethod</span><span class="o">.</span><span class="n">CP</span><span class="p">:</span>
+            <span class="n">solver</span> <span class="o">=</span> <span class="n">CpMultimodeRcpspSolver</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">store_solution</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">parameters_cp</span><span class="o">=</span><span class="n">ParametersCp</span><span class="o">.</span><span class="n">default</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_method</span> <span class="o">==</span> <span class="n">InitialRcpspMethod</span><span class="o">.</span><span class="n">LS</span><span class="p">:</span>
+            <span class="n">dummy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">()</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">mutations</span> <span class="o">=</span> <span class="n">get_available_mutations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">dummy</span><span class="p">)</span>
+            <span class="n">list_mutation</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">mutate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">dummy</span><span class="p">,</span> <span class="o">**</span><span class="n">mutate</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">mutate</span> <span class="ow">in</span> <span class="n">mutations</span>
+                <span class="k">if</span> <span class="n">mutate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">PermutationMutationRcpsp</span>
+            <span class="p">]</span>
+            <span class="n">mixed_mutation</span> <span class="o">=</span> <span class="n">BasicPortfolioMutation</span><span class="p">(</span>
+                <span class="n">list_mutation</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">list_mutation</span><span class="p">)))</span>
+            <span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">RestartHandlerLimit</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+            <span class="n">sa</span> <span class="o">=</span> <span class="n">SimulatedAnnealing</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">mutator</span><span class="o">=</span><span class="n">mixed_mutation</span><span class="p">,</span>
+                <span class="n">restart_handler</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+                <span class="n">temperature_handler</span><span class="o">=</span><span class="n">TemperatureSchedulingFactor</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="mf">0.9999</span><span class="p">),</span>
+                <span class="n">mode_mutation</span><span class="o">=</span><span class="n">ModeMutation</span><span class="o">.</span><span class="n">MUTATE</span><span class="p">,</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+                <span class="n">store_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">store_solution</span> <span class="o">=</span> <span class="n">sa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">initial_variable</span><span class="o">=</span><span class="n">dummy</span><span class="p">,</span> <span class="n">nb_iteration_max</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">store_solution</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MathoptFixStartTimeRcpspConstraintHandler">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.MathoptFixStartTimeRcpspConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathoptFixStartTimeRcpspConstraintHandler</span><span class="p">(</span><span class="n">OrtoolsMathOptConstraintHandler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">fraction_fix_start_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fraction_fix_start_time</span> <span class="o">=</span> <span class="n">fraction_fix_start_time</span>
+
+<div class="viewcode-block" id="MathoptFixStartTimeRcpspConstraintHandler.adding_constraint_from_results_store">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.MathoptFixStartTimeRcpspConstraintHandler.adding_constraint_from_results_store">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">MathOptRcpspSolver</span><span class="p">,</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">result_storage_last_iteration</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints to the internal model of a solver based on previous solutions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solver: solver whose internal model is updated</span>
+<span class="sd">            result_storage: all results so far</span>
+<span class="sd">            result_storage_last_iteration: results from last LNS iteration only</span>
+<span class="sd">            **kwargs:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of added constraints</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">nb_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">+</span> <span class="mi">2</span>
+        <span class="n">lns_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_best_solution_from_last_iteration</span><span class="p">(</span>
+            <span class="n">result_storage</span><span class="o">=</span><span class="n">result_storage</span><span class="p">,</span>
+            <span class="n">result_storage_last_iteration</span><span class="o">=</span><span class="n">result_storage_last_iteration</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Starting point</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">set_warm_start</span><span class="p">(</span><span class="n">current_solution</span><span class="p">)</span>
+
+        <span class="c1"># Fix start time for a subset of task.</span>
+        <span class="n">jobs_to_fix</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">),</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fraction_fix_start_time</span> <span class="o">*</span> <span class="n">nb_jobs</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">job_to_fix</span> <span class="ow">in</span> <span class="n">jobs_to_fix</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">solver</span><span class="o">.</span><span class="n">index_time</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">job_to_fix</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span>
+                    <span class="n">lns_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">solver</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                            <span class="n">solver</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">solver</span><span class="o">.</span><span class="n">index_in_var</span><span class="p">[</span><span class="n">job_to_fix</span><span class="p">]][</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lns_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">solver</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                            <span class="n">solver</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">solver</span><span class="o">.</span><span class="n">index_in_var</span><span class="p">[</span><span class="n">job_to_fix</span><span class="p">]][</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">lns_constraints</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MathoptStartTimeIntervalRcpspConstraintHandler">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.MathoptStartTimeIntervalRcpspConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathoptStartTimeIntervalRcpspConstraintHandler</span><span class="p">(</span><span class="n">OrtoolsMathOptConstraintHandler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+        <span class="n">fraction_to_fix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">minus_delta</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">plus_delta</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fraction_to_fix</span> <span class="o">=</span> <span class="n">fraction_to_fix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minus_delta</span> <span class="o">=</span> <span class="n">minus_delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plus_delta</span> <span class="o">=</span> <span class="n">plus_delta</span>
+
+<div class="viewcode-block" id="MathoptStartTimeIntervalRcpspConstraintHandler.adding_constraint_from_results_store">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.MathoptStartTimeIntervalRcpspConstraintHandler.adding_constraint_from_results_store">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">MathOptRcpspSolver</span><span class="p">,</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">result_storage_last_iteration</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints to the internal model of a solver based on previous solutions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solver: solver whose internal model is updated</span>
+<span class="sd">            result_storage: all results so far</span>
+<span class="sd">            result_storage_last_iteration: results from last LNS iteration only</span>
+<span class="sd">            **kwargs:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of added constraints</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lns_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_best_solution_from_last_iteration</span><span class="p">(</span>
+            <span class="n">result_storage</span><span class="o">=</span><span class="n">result_storage</span><span class="p">,</span>
+            <span class="n">result_storage_last_iteration</span><span class="o">=</span><span class="n">result_storage_last_iteration</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Starting point</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">set_warm_start</span><span class="p">(</span><span class="n">current_solution</span><span class="p">)</span>
+        <span class="c1"># Avoid fixing last jobs to allow makespan reduction</span>
+        <span class="n">max_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">last_jobs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+            <span class="k">if</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">max_time</span> <span class="o">-</span> <span class="mi">5</span>
+        <span class="p">]</span>
+        <span class="n">nb_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span>
+        <span class="n">jobs_to_fix</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">),</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fraction_to_fix</span> <span class="o">*</span> <span class="n">nb_jobs</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">lj</span> <span class="ow">in</span> <span class="n">last_jobs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lj</span> <span class="ow">in</span> <span class="n">jobs_to_fix</span><span class="p">:</span>
+                <span class="n">jobs_to_fix</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">lj</span><span class="p">)</span>
+        <span class="c1"># add constraints</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_to_fix</span><span class="p">:</span>
+            <span class="n">start_time_j</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+            <span class="n">min_st</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">start_time_j</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">minus_delta</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">max_st</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start_time_j</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">plus_delta</span><span class="p">,</span> <span class="n">max_time</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">solver</span><span class="o">.</span><span class="n">index_time</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">min_st</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">max_st</span><span class="p">:</span>
+                    <span class="n">lns_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">solver</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                            <span class="n">solver</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">solver</span><span class="o">.</span><span class="n">index_in_var</span><span class="p">[</span><span class="n">job</span><span class="p">]][</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">lns_constraints</span></div>
+</div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_BaseStartTimeIntervalMultimodeRcpspConstraintHandler</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+        <span class="n">fraction_to_fix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">minus_delta</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">plus_delta</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fraction_to_fix</span> <span class="o">=</span> <span class="n">fraction_to_fix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minus_delta</span> <span class="o">=</span> <span class="n">minus_delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plus_delta</span> <span class="o">=</span> <span class="n">plus_delta</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">GurobiMultimodeRcpspSolver</span><span class="p">,</span> <span class="n">MathOptMultimodeRcpspSolver</span><span class="p">],</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">result_storage_last_iteration</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints to the internal model of a solver based on previous solutions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solver: solver whose internal model is updated</span>
+<span class="sd">            result_storage: all results so far</span>
+<span class="sd">            result_storage_last_iteration: results from last LNS iteration only</span>
+<span class="sd">            **kwargs:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of added constraints</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># set a good start: either solver.start_solution or result_storage.best_solution()</span>
+        <span class="n">current_solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_best_solution_from_last_iteration</span><span class="p">(</span>
+            <span class="n">result_storage</span><span class="o">=</span><span class="n">result_storage</span><span class="p">,</span>
+            <span class="n">result_storage_last_iteration</span><span class="o">=</span><span class="n">result_storage_last_iteration</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">start_solution</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">st</span><span class="p">)[</span><span class="s2">&quot;makespan&quot;</span><span class="p">]</span>
+            <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">current_solution</span><span class="p">)[</span><span class="s2">&quot;makespan&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">current_solution</span> <span class="o">=</span> <span class="n">st</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">set_warm_start</span><span class="p">(</span><span class="n">current_solution</span><span class="p">)</span>
+
+        <span class="c1"># add constraints</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">max_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">last_jobs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+            <span class="k">if</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">max_time</span> <span class="o">-</span> <span class="mi">5</span>
+        <span class="p">]</span>
+        <span class="n">nb_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span>
+        <span class="n">jobs_to_fix</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">),</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fraction_to_fix</span> <span class="o">*</span> <span class="n">nb_jobs</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">lj</span> <span class="ow">in</span> <span class="n">last_jobs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lj</span> <span class="ow">in</span> <span class="n">jobs_to_fix</span><span class="p">:</span>
+                <span class="n">jobs_to_fix</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">lj</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_to_fix</span><span class="p">:</span>
+            <span class="n">start_time_j</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+            <span class="n">min_st</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">start_time_j</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">minus_delta</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">max_st</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start_time_j</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">plus_delta</span><span class="p">,</span> <span class="n">max_time</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">solver</span><span class="o">.</span><span class="n">variable_per_task</span><span class="p">[</span><span class="n">job</span><span class="p">]:</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">min_st</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">max_st</span><span class="p">:</span>
+                    <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">constraints</span>
+
+
+<div class="viewcode-block" id="GurobiStartTimeIntervalMultimodeRcpspConstraintHandler">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.GurobiStartTimeIntervalMultimodeRcpspConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiStartTimeIntervalMultimodeRcpspConstraintHandler</span><span class="p">(</span>
+    <span class="n">_BaseStartTimeIntervalMultimodeRcpspConstraintHandler</span><span class="p">,</span> <span class="n">GurobiConstraintHandler</span>
+<span class="p">):</span>
+<div class="viewcode-block" id="GurobiStartTimeIntervalMultimodeRcpspConstraintHandler.adding_constraint_from_results_store">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.GurobiStartTimeIntervalMultimodeRcpspConstraintHandler.adding_constraint_from_results_store">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">GurobiMultimodeRcpspSolver</span><span class="p">,</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">result_storage_last_iteration</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints to the internal model of a solver based on previous solutions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solver: solver whose internal model is updated</span>
+<span class="sd">            result_storage: all results so far</span>
+<span class="sd">            result_storage_last_iteration: results from last LNS iteration only</span>
+<span class="sd">            **kwargs:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of added constraints</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">adding_constraint_from_results_store</span><span class="p">(</span>
+            <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
+            <span class="n">result_storage</span><span class="o">=</span><span class="n">result_storage</span><span class="p">,</span>
+            <span class="n">result_storage_last_iteration</span><span class="o">=</span><span class="n">result_storage_last_iteration</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">constraints</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MathOptStartTimeIntervalMultimodeRcpspConstraintHandler">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.lns_lp.MathOptStartTimeIntervalMultimodeRcpspConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathOptStartTimeIntervalMultimodeRcpspConstraintHandler</span><span class="p">(</span></div>
+
+    <span class="n">_BaseStartTimeIntervalMultimodeRcpspConstraintHandler</span><span class="p">,</span>
+    <span class="n">OrtoolsMathOptConstraintHandler</span><span class="p">,</span>
+<span class="p">):</span> <span class="o">...</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

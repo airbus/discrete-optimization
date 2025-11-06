@@ -1,0 +1,45 @@
+discrete\_optimization.fjsp.solvers package
+===========================================
+
+Submodules
+----------
+
+discrete\_optimization.fjsp.solvers.cpsat module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.fjsp.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.fjsp.solvers.dp module
+---------------------------------------------
+
+.. automodule:: discrete_optimization.fjsp.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.fjsp.solvers.lns\_cpsat module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.fjsp.solvers.lns_cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.fjsp.solvers.optal module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.fjsp.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.fjsp.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

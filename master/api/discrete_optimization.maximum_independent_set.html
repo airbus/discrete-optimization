@@ -1,0 +1,556 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.maximum_independent_set package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.maximum_independent_set.solvers package" href="discrete_optimization.maximum_independent_set.solvers.html" />
+    <link rel="prev" title="discrete_optimization.knapsack.solvers package" href="discrete_optimization.knapsack.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.maximum_independent_set package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-maximum-independent-set-package">
+<h1>discrete_optimization.maximum_independent_set package<a class="headerlink" href="#discrete-optimization-maximum-independent-set-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html">discrete_optimization.maximum_independent_set.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.asp">discrete_optimization.maximum_independent_set.solvers.asp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver"><code class="docutils literal notranslate"><span class="pre">AspMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.build_data_string"><code class="docutils literal notranslate"><span class="pre">AspMisSolver.build_data_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">AspMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">AspMisSolver.retrieve_solution()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.cpsat">discrete_optimization.maximum_independent_set.solvers.cpsat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver"><code class="docutils literal notranslate"><span class="pre">CpSatMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">CpSatMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">CpSatMisSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">CpSatMisSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.decomposition">discrete_optimization.maximum_independent_set.solvers.decomposition module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver"><code class="docutils literal notranslate"><span class="pre">DecomposedMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">DecomposedMisSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.initial_solution"><code class="docutils literal notranslate"><span class="pre">DecomposedMisSolver.initial_solution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.rebuild_sol"><code class="docutils literal notranslate"><span class="pre">DecomposedMisSolver.rebuild_sol()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">DecomposedMisSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.solve"><code class="docutils literal notranslate"><span class="pre">DecomposedMisSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.dp">discrete_optimization.maximum_independent_set.solvers.dp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver"><code class="docutils literal notranslate"><span class="pre">DpMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_any_order"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.init_any_order()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_in_order"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.init_in_order()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.modeling"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.modeling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.nodes_convention"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.nodes_convention</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.problem"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.transitions"><code class="docutils literal notranslate"><span class="pre">DpMisSolver.transitions</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpModeling"><code class="docutils literal notranslate"><span class="pre">DpModeling</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpModeling.ANY_ORDER"><code class="docutils literal notranslate"><span class="pre">DpModeling.ANY_ORDER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.DpModeling.ORDER"><code class="docutils literal notranslate"><span class="pre">DpModeling.ORDER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod"><code class="docutils literal notranslate"><span class="pre">FixedOrderMethod</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod.DEGREE"><code class="docutils literal notranslate"><span class="pre">FixedOrderMethod.DEGREE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod.ORIGINAL_ORDER"><code class="docutils literal notranslate"><span class="pre">FixedOrderMethod.ORIGINAL_ORDER</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.gurobi">discrete_optimization.maximum_independent_set.solvers.gurobi module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver"><code class="docutils literal notranslate"><span class="pre">GurobiMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">GurobiMisSolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">GurobiMisSolver.init_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver"><code class="docutils literal notranslate"><span class="pre">GurobiQuadraticMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">GurobiQuadraticMisSolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.create_vars_node_matrix"><code class="docutils literal notranslate"><span class="pre">GurobiQuadraticMisSolver.create_vars_node_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">GurobiQuadraticMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.vars_node_matrix"><code class="docutils literal notranslate"><span class="pre">GurobiQuadraticMisSolver.vars_node_matrix</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.kamis">discrete_optimization.maximum_independent_set.solvers.kamis module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver"><code class="docutils literal notranslate"><span class="pre">KamisMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">KamisMisSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">KamisMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.solve"><code class="docutils literal notranslate"><span class="pre">KamisMisSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.lns">discrete_optimization.maximum_independent_set.solvers.lns module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler"><code class="docutils literal notranslate"><span class="pre">AllVarsOrtoolsCpSatMisConstraintHandler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">AllVarsOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler.hyperparameters"><code class="docutils literal notranslate"><span class="pre">AllVarsOrtoolsCpSatMisConstraintHandler.hyperparameters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler"><code class="docutils literal notranslate"><span class="pre">DestroyOrtoolsCpSatMisConstraintHandler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">DestroyOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler.hyperparameters"><code class="docutils literal notranslate"><span class="pre">DestroyOrtoolsCpSatMisConstraintHandler.hyperparameters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler"><code class="docutils literal notranslate"><span class="pre">LocalMovesOrtoolsCpSatMisConstraintHandler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">LocalMovesOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler.hyperparameters"><code class="docutils literal notranslate"><span class="pre">LocalMovesOrtoolsCpSatMisConstraintHandler.hyperparameters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler"><code class="docutils literal notranslate"><span class="pre">OrtoolsCpSatMisConstraintHandler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">OrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler.hyperparameters"><code class="docutils literal notranslate"><span class="pre">OrtoolsCpSatMisConstraintHandler.hyperparameters</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.lp">discrete_optimization.maximum_independent_set.solvers.lp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver"><code class="docutils literal notranslate"><span class="pre">BaseLpMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">BaseLpMisSolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">BaseLpMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">BaseLpMisSolver.retrieve_current_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.vars_node"><code class="docutils literal notranslate"><span class="pre">BaseLpMisSolver.vars_node</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver"><code class="docutils literal notranslate"><span class="pre">BaseQuadMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.create_vars_node_matrix"><code class="docutils literal notranslate"><span class="pre">BaseQuadMisSolver.create_vars_node_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">BaseQuadMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.vars_node"><code class="docutils literal notranslate"><span class="pre">BaseQuadMisSolver.vars_node</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.vars_node_matrix"><code class="docutils literal notranslate"><span class="pre">BaseQuadMisSolver.vars_node_matrix</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.mathopt">discrete_optimization.maximum_independent_set.solvers.mathopt module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptMisSolver"><code class="docutils literal notranslate"><span class="pre">MathOptMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptMisSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">MathOptMisSolver.convert_to_variable_values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver"><code class="docutils literal notranslate"><span class="pre">MathOptQuadraticMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">MathOptQuadraticMisSolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver.has_quadratic_objective"><code class="docutils literal notranslate"><span class="pre">MathOptQuadraticMisSolver.has_quadratic_objective</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.mis_solver">discrete_optimization.maximum_independent_set.solvers.mis_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="docutils literal notranslate"><span class="pre">MisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver.problem"><code class="docutils literal notranslate"><span class="pre">MisSolver.problem</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.networkx">discrete_optimization.maximum_independent_set.solvers.networkx module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver"><code class="docutils literal notranslate"><span class="pre">NetworkxMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver.solve"><code class="docutils literal notranslate"><span class="pre">NetworkxMisSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.quantum">discrete_optimization.maximum_independent_set.solvers.quantum module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit"><code class="docutils literal notranslate"><span class="pre">MisQiskit</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit.interpret"><code class="docutils literal notranslate"><span class="pre">MisQiskit.interpret()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit.to_quadratic_program"><code class="docutils literal notranslate"><span class="pre">MisQiskit.to_quadratic_program()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver"><code class="docutils literal notranslate"><span class="pre">QaoaMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">QaoaMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">QaoaMisSolver.retrieve_current_solution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver"><code class="docutils literal notranslate"><span class="pre">VqeMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">VqeMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">VqeMisSolver.retrieve_current_solution()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers.toulbar">discrete_optimization.maximum_independent_set.solvers.toulbar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.toulbar.MisConstraintHandlerToulbar"><code class="docutils literal notranslate"><span class="pre">MisConstraintHandlerToulbar</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.toulbar.MisConstraintHandlerToulbar.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">MisConstraintHandlerToulbar.adding_constraint_from_results_store()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver"><code class="docutils literal notranslate"><span class="pre">ToulbarMisSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">ToulbarMisSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.init_model"><code class="docutils literal notranslate"><span class="pre">ToulbarMisSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">ToulbarMisSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">ToulbarMisSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#module-discrete_optimization.maximum_independent_set.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.parser">
+<span id="discrete-optimization-maximum-independent-set-parser-module"></span><h2>discrete_optimization.maximum_independent_set.parser module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.parser" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.parser.DimacsPrefixes">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.parser.</span></span><span class="sig-name descname"><span class="pre">DimacsPrefixes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/parser.html#DimacsPrefixes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.parser.DimacsPrefixes" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.parser.DimacsPrefixes.COMMENT">
+<span class="sig-name descname"><span class="pre">COMMENT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'c'</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.parser.DimacsPrefixes.COMMENT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.parser.DimacsPrefixes.EDGE">
+<span class="sig-name descname"><span class="pre">EDGE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'e'</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.parser.DimacsPrefixes.EDGE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.parser.DimacsPrefixes.PROBLEM">
+<span class="sig-name descname"><span class="pre">PROBLEM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'p'</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.parser.DimacsPrefixes.PROBLEM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.parser.dimacs_parser">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.parser.</span></span><span class="sig-name descname"><span class="pre">dimacs_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/parser.html#dimacs_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.parser.dimacs_parser" title="Link to this definition"></a></dt>
+<dd><p>From a file in dimacs format, initialise a MisProblem instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> – path to the input file using dimacs format</p>
+</dd>
+</dl>
+<p>See <a class="reference external" href="http://prolland.free.fr/works/research/dsat/dimacs.html">http://prolland.free.fr/works/research/dsat/dimacs.html</a> for reference about dimacs format</p>
+<p>Returns: a MisProblem instance</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.parser.dimacs_parser_nx">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.parser.</span></span><span class="sig-name descname"><span class="pre">dimacs_parser_nx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#discrete_optimization.maximum_independent_set.parser.dimacs_parser_nx" title="Link to this definition"></a></dt>
+<dd><p>From a file in dimacs format, initialise a MisProblem instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> – path to the input file using dimacs format</p>
+</dd>
+</dl>
+<p>See <a class="reference external" href="http://prolland.free.fr/works/research/dsat/dimacs.html">http://prolland.free.fr/works/research/dsat/dimacs.html</a> for reference about dimacs format</p>
+<p>Returns: a MisProblem instance</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.parser.get_data_available">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.parser.</span></span><span class="sig-name descname"><span class="pre">get_data_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_home</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/parser.html#get_data_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.parser.get_data_available" title="Link to this definition"></a></dt>
+<dd><p>Get datasets available for mis.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><dl class="simple">
+<dt>data_folder: folder where datasets for coloring whould be find.</dt><dd><p>If None, we look in “mis” subdirectory of <cite>data_home</cite>.</p>
+</dd>
+<dt>data_home: root directory for all datasets. Is None, set by</dt><dd><p>default to “~/discrete_optimization_data “</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.plot">
+<span id="discrete-optimization-maximum-independent-set-plot-module"></span><h2>discrete_optimization.maximum_independent_set.plot module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.plot" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.plot.plot_mis_graph">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.plot.</span></span><span class="sig-name descname"><span class="pre">plot_mis_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_figure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/plot.html#plot_mis_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.plot.plot_mis_graph" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.plot.plot_mis_solution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.plot.</span></span><span class="sig-name descname"><span class="pre">plot_mis_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_figure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/plot.html#plot_mis_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.plot.plot_mis_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.problem">
+<span id="discrete-optimization-maximum-independent-set-problem-module"></span><h2>discrete_optimization.maximum_independent_set.problem module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.problem" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.problem.</span></span><span class="sig-name descname"><span class="pre">MisProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.graph_api.Graph" title="discrete_optimization.generic_tools.graph_api.Graph"><span class="pre">Graph</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute_aggregate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'size'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem.compute_violation">
+<span class="sig-name descname"><span class="pre">compute_violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem.compute_violation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem.compute_violation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluate a given solution object for the given problem.</p>
+<p>This method should return a dictionnary of KPI, that can be then used for mono or multiobjective optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><em>Solution</em></a>) – the Solution object to evaluate.</p>
+</dd>
+</dl>
+<p>Returns: dictionnary of float kpi for the solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.EncodingRegister" title="discrete_optimization.generic_tools.do_problem.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem.get_attribute_register" title="Link to this definition"></a></dt>
+<dd><p>Returns how the Solution should be encoded.</p>
+<p>Returns (EncodingRegister): content of the encoding of the solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem.get_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_dummy_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem.get_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem.get_dummy_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem.get_objective_register" title="Link to this definition"></a></dt>
+<dd><p>Returns the objective definition.</p>
+<p>Returns (ObjectiveRegister): object defining the objective criteria.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Returns the class implementation of a Solution.</p>
+<p>Returns (class): class object of the given Problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisProblem.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Computes if a solution satisfies or not the constraints of the problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> – the Solution object to check satisfability</p>
+</dd>
+</dl>
+<p>Returns (bool): boolean true if the constraints are fulfilled, false elsewhere.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisSolution">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.problem.</span></span><span class="sig-name descname"><span class="pre">MisSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">chosen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Solution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisSolution.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisSolution.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisSolution.change_problem" title="Link to this definition"></a></dt>
+<dd><p>If relevant to the optimisation problem, change the underlying problem instance for the solution.</p>
+<p>This method can be used to evaluate a solution for different instance of problems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><em>Problem</em></a>) – another problem instance from which the solution can be evaluated</p>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisSolution.copy" title="Link to this definition"></a></dt>
+<dd><p>Deep copy of the solution.</p>
+<p>The copy() function should return a new object containing the same input as the current object,
+that respects the following expected behaviour:
+-y = x.copy()
+-if do some inplace change of y, the changes are not done in x.</p>
+<p>Returns: a new object from which you can manipulate attributes without changing the original object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.problem.MisSolution.lazy_copy">
+<span class="sig-name descname"><span class="pre">lazy_copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/problem.html#MisSolution.lazy_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.problem.MisSolution.lazy_copy" title="Link to this definition"></a></dt>
+<dd><p>This function should return a new object but possibly with mutable attributes from the original objects.</p>
+<p>A typical use of lazy copy is in evolutionary algorithms or genetic algorithm where the use of
+local move don’t need to do a possibly costly deepcopy.</p>
+<p>Returns (Solution): copy (possibly shallow) of the Solution</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers_map">
+<span id="discrete-optimization-maximum-independent-set-solvers-map-module"></span><h2>discrete_optimization.maximum_independent_set.solvers_map module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers_map" title="Link to this heading"></a></h2>
+<p>Utility module to launch different solvers on the maximum independent set problem.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers_map.solve">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers_map.</span></span><span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.maximum_independent_set.solvers.html#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><span class="pre">MisSolver</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers_map.html#solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers_map.solve" title="Link to this definition"></a></dt>
+<dd><p>Solve a mis instance with a given class of solver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method_solver</strong> – class of the solver to use</p></li>
+<li><p><strong>problem</strong> – mis problem instance</p></li>
+<li><p><strong>**args</strong> – specific options of the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: a ResultsStorage objecting obtained by the solver.</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.knapsack.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.knapsack.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.maximum_independent_set.solvers.html" class="btn btn-neutral float-right" title="discrete_optimization.maximum_independent_set.solvers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

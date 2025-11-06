@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.hub_solver package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.generic_tools.hub_solver.optal package" href="discrete_optimization.generic_tools.hub_solver.optal.html" />
+    <link rel="prev" title="discrete_optimization.generic_tools.ea package" href="discrete_optimization.generic_tools.ea.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.hub_solver package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-generic-tools-hub-solver-package">
+<h1>discrete_optimization.generic_tools.hub_solver package<a class="headerlink" href="#discrete-optimization-generic-tools-hub-solver-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html">discrete_optimization.generic_tools.hub_solver.optal package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#module-discrete_optimization.generic_tools.hub_solver.optal.generic_optal">discrete_optimization.generic_tools.hub_solver.optal.generic_optal module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalBasicCallback"><code class="docutils literal notranslate"><span class="pre">OptalBasicCallback</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalBasicCallback.get_df_metrics"><code class="docutils literal notranslate"><span class="pre">OptalBasicCallback.get_df_metrics()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver"><code class="docutils literal notranslate"><span class="pre">OptalSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver.add_bound_constraint"><code class="docutils literal notranslate"><span class="pre">OptalSolver.add_bound_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver.build_command"><code class="docutils literal notranslate"><span class="pre">OptalSolver.build_command()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver.get_output_stats"><code class="docutils literal notranslate"><span class="pre">OptalSolver.get_output_stats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver.init_model"><code class="docutils literal notranslate"><span class="pre">OptalSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver.minimize_variable"><code class="docutils literal notranslate"><span class="pre">OptalSolver.minimize_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">OptalSolver.retrieve_current_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver.solve"><code class="docutils literal notranslate"><span class="pre">OptalSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#module-discrete_optimization.generic_tools.hub_solver.optal.model_collections">discrete_optimization.generic_tools.hub_solver.optal.model_collections module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.FJSP"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.FJSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.JSP"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.JSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.MRCPSP"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.MRCPSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.MSRCPSP"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.MSRCPSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.RCPSP"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.RCPSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.SINGLEMACHINE"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.SINGLEMACHINE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.TSP"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.TSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.TSPTW"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.TSPTW</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.model_collections.DoProblemEnum.WORKFORCE_SCHEDULING"><code class="docutils literal notranslate"><span class="pre">DoProblemEnum.WORKFORCE_SCHEDULING</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#module-discrete_optimization.generic_tools.hub_solver.optal">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html">discrete_optimization.generic_tools.hub_solver.tempo package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#module-discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools">discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum"><code class="docutils literal notranslate"><span class="pre">FormatEnum</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum.FJSP"><code class="docutils literal notranslate"><span class="pre">FormatEnum.FJSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum.JSP"><code class="docutils literal notranslate"><span class="pre">FormatEnum.JSP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum.PSPLIB"><code class="docutils literal notranslate"><span class="pre">FormatEnum.PSPLIB</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum.WORKFORCE"><code class="docutils literal notranslate"><span class="pre">FormatEnum.WORKFORCE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoLogsCallback"><code class="docutils literal notranslate"><span class="pre">TempoLogsCallback</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoLogsCallback.get_df_metrics"><code class="docutils literal notranslate"><span class="pre">TempoLogsCallback.get_df_metrics()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoLogsCallback.on_solve_end"><code class="docutils literal notranslate"><span class="pre">TempoLogsCallback.on_solve_end()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_input_format"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.get_input_format()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_processed_logs"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.get_processed_logs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_processed_status"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.get_processed_status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.get_tmp_folder_path"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.get_tmp_folder_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.init_model"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver.solve"><code class="docutils literal notranslate"><span class="pre">TempoSchedulingSolver.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.from_format_to_str_arg"><code class="docutils literal notranslate"><span class="pre">from_format_to_str_arg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.parse_solver_log_robust"><code class="docutils literal notranslate"><span class="pre">parse_solver_log_robust()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#module-discrete_optimization.generic_tools.hub_solver.tempo">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-discrete_optimization.generic_tools.hub_solver">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.generic_tools.hub_solver" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.generic_tools.ea.html" class="btn btn-neutral float-left" title="discrete_optimization.generic_tools.ea package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.generic_tools.hub_solver.optal.html" class="btn btn-neutral float-right" title="discrete_optimization.generic_tools.hub_solver.optal package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

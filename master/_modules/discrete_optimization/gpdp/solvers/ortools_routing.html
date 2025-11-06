@@ -1,0 +1,1256 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.gpdp.solvers.ortools_routing &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.gpdp.solvers.ortools_routing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.gpdp.solvers.ortools_routing</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ortools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.constraint_solver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">pywrapcp</span><span class="p">,</span>
+    <span class="n">routing_enums_pb2</span><span class="p">,</span>
+    <span class="n">routing_parameters_pb2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.util.optional_boolean_pb2</span><span class="w"> </span><span class="kn">import</span> <span class="n">BOOL_FALSE</span><span class="p">,</span> <span class="n">BOOL_TRUE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">WarmstartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolveEarlyStop</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+    <span class="n">EnumHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.gpdp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GpdpProblem</span><span class="p">,</span>
+    <span class="n">GpdpSolution</span><span class="p">,</span>
+    <span class="n">Node</span><span class="p">,</span>
+    <span class="n">build_matrix_distance</span><span class="p">,</span>
+    <span class="n">build_matrix_time</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.gpdp.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">GpdpSolver</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="NodePosition">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.NodePosition">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NodePosition</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Node position inside a trajectory.</span>
+
+<span class="sd">    Useful e.g. to distinguish between the starting node and ending node</span>
+<span class="sd">    when the trajectory is a loop.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">START</span> <span class="o">=</span> <span class="s2">&quot;start&quot;</span>
+    <span class="n">INTERMEDIATE</span> <span class="o">=</span> <span class="s2">&quot;intermediate&quot;</span>
+    <span class="n">END</span> <span class="o">=</span> <span class="s2">&quot;end&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ParametersCost">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.ParametersCost">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParametersCost</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dimension_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">global_span</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">sum_over_vehicles</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">coefficient_vehicles</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension_name</span> <span class="o">=</span> <span class="n">dimension_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_span</span> <span class="o">=</span> <span class="n">global_span</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_over_vehicles</span> <span class="o">=</span> <span class="n">sum_over_vehicles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_vehicles</span> <span class="o">=</span> <span class="n">coefficient_vehicles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">different_coefficient</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficient_vehicles</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficient_vehicles</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ParametersCost.default">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.ParametersCost.default">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;ParametersCost&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ParametersCost</span><span class="p">(</span>
+            <span class="n">dimension_name</span><span class="o">=</span><span class="s2">&quot;Distance&quot;</span><span class="p">,</span>
+            <span class="n">global_span</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">sum_over_vehicles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">coefficient_vehicles</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="apply_cost">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.apply_cost">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_cost</span><span class="p">(</span>
+    <span class="n">list_parameters_cost</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParametersCost</span><span class="p">],</span> <span class="n">routing</span><span class="p">:</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingModel</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">dimension_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">dimension_name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">list_parameters_cost</span><span class="p">])</span>
+    <span class="n">dimension_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dimension_names</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">list_parameters_cost</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">global_span</span><span class="p">:</span>
+            <span class="n">dimension_dict</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">dimension_name</span><span class="p">]</span><span class="o">.</span><span class="n">SetGlobalSpanCostCoefficient</span><span class="p">(</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">coefficient_vehicles</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">different_coefficient</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">coefficient_vehicles</span><span class="p">)):</span>  <span class="c1"># type: ignore</span>
+                    <span class="n">dimension_dict</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">dimension_name</span><span class="p">]</span><span class="o">.</span><span class="n">SetSpanCostCoefficientForVehicle</span><span class="p">(</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">coefficient_vehicles</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">i</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dimension_dict</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">dimension_name</span><span class="p">]</span><span class="o">.</span><span class="n">SetSpanCostCoefficientForAllVehicles</span><span class="p">(</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">coefficient_vehicles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+                <span class="p">)</span></div>
+
+
+
+<span class="n">LocalSearchMetaheuristic</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span>
+    <span class="n">value</span><span class="o">=</span><span class="s2">&quot;LocalSearchMetaheuristic&quot;</span><span class="p">,</span>
+    <span class="n">names</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">number</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">routing_enums_pb2</span><span class="o">.</span><span class="n">LocalSearchMetaheuristic</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="o">.</span><span class="n">enum_values_by_name</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">},</span>
+    <span class="n">module</span><span class="o">=</span><span class="vm">__name__</span><span class="p">,</span>  <span class="c1"># to avoid pickle issues</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Enumeration of local search meta-heuristic.</span>
+
+<span class="sd">Extracted from ortools Enum-like class.</span>
+<span class="sd">https://developers.google.com/optimization/routing/routing_options#local_search_options</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">FirstSolutionStrategy</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span>
+    <span class="n">value</span><span class="o">=</span><span class="s2">&quot;FirstSolutionStrategy&quot;</span><span class="p">,</span>
+    <span class="n">names</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">number</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">routing_enums_pb2</span><span class="o">.</span><span class="n">FirstSolutionStrategy</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="o">.</span><span class="n">enum_values_by_name</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">},</span>
+    <span class="n">module</span><span class="o">=</span><span class="vm">__name__</span><span class="p">,</span>  <span class="c1"># to avoid pickle issues</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Enumeration of first solution strategies.</span>
+
+<span class="sd">Extracted from ortools Enum-like class.</span>
+<span class="sd">https://developers.google.com/optimization/routing/routing_options#first_solution_strategy</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">if</span> <span class="n">Version</span><span class="p">(</span><span class="n">ortools</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">Version</span><span class="p">(</span><span class="s2">&quot;9.12&quot;</span><span class="p">):</span>
+    <span class="c1"># routing status became a proper enum starting from 9.12</span>
+    <span class="n">RoutingSearchStatus</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">&quot;RoutingSearchStatus&quot;</span><span class="p">,</span>
+        <span class="n">names</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">number</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">routing_enums_pb2</span><span class="o">.</span><span class="n">RoutingSearchStatus</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="o">.</span><span class="n">enum_values_by_name</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">},</span>
+        <span class="n">module</span><span class="o">=</span><span class="vm">__name__</span><span class="p">,</span>  <span class="c1"># to avoid pickle issues</span>
+    <span class="p">)</span>
+    <span class="n">status_description</span> <span class="o">=</span> <span class="p">{</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">status</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">RoutingSearchStatus</span><span class="p">}</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mapping from status integer to description string.</span>
+
+<span class="sd">    This maps the integer returned by routing_model.status to the corresponding string.</span>
+<span class="sd">    https://developers.google.com/optimization/routing/routing_options#search_status</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># status enum was part of RoutingModel class attributes before</span>
+    <span class="n">status_description</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">val</span><span class="p">:</span> <span class="n">key</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingModel</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ROUTING_&quot;</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mapping from status integer to description string.</span>
+
+<span class="sd">    This maps the integer returned by routing_model.status to the corresponding string.</span>
+
+<span class="sd">    We use the attributes of RoutingModel to construct the dictionary.</span>
+<span class="sd">    https://developers.google.com/optimization/routing/routing_options#search_status</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">RoutingSearchStatus</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">&quot;RoutingSearchStatus&quot;</span><span class="p">,</span>
+        <span class="n">names</span><span class="o">=</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">status_description</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="n">module</span><span class="o">=</span><span class="vm">__name__</span><span class="p">,</span>  <span class="c1"># to avoid pickle issues</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="OrtoolsGpdpSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrtoolsGpdpSolver</span><span class="p">(</span><span class="n">GpdpSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;first_solution_strategy&quot;</span><span class="p">,</span>
+            <span class="n">enum</span><span class="o">=</span><span class="n">FirstSolutionStrategy</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">FirstSolutionStrategy</span><span class="o">.</span><span class="n">SAVINGS</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;local_search_metaheuristic&quot;</span><span class="p">,</span>
+            <span class="n">enum</span><span class="o">=</span><span class="n">LocalSearchMetaheuristic</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">LocalSearchMetaheuristic</span><span class="o">.</span><span class="n">GUIDED_LOCAL_SEARCH</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_lns&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_cp&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_cp_sat&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">initial_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GpdpSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initial solution used for warm start.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">,</span>
+        <span class="n">factor_multiplier_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">factor_multiplier_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_distance</span> <span class="o">=</span> <span class="n">factor_multiplier_distance</span>  <span class="c1"># 10**3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">=</span> <span class="n">factor_multiplier_time</span>  <span class="c1"># 10**3</span>
+
+<div class="viewcode-block" id="OrtoolsGpdpSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">include_time_windows</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_time_windows&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">include_time_windows_cluster</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_time_windows_cluster&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">include_cumulative</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_cumulative&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">include_mandatory</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_mandatory&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">include_demand</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_demand&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">include_resource_dimension</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_resource_dimension&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">include_time_dimension</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_time_dimension&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">list_parameters_cost</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parameters_cost&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ParametersCost</span><span class="o">.</span><span class="n">default</span><span class="p">()])</span>
+        <span class="n">one_visit_per_cluster</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;one_visit_per_cluster&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">include_pickup_and_delivery</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_pickup_and_delivery&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">include_pickup_and_delivery_per_cluster</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;include_pickup_and_delivery_per_cluster&quot;</span><span class="p">,</span> <span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">use_matrix</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_matrix&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">include_equilibrate_charge</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_equilibrate_charge&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">hard_equilibrate</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hard_equilibrate&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">use_constant_max_slack_time</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_constant_max_slack_time&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">constant_max_slack_time</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_slack_time&quot;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="n">use_max_slack_time_per_node</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_max_slack_time_per_node&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">max_slack_time_per_node</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;max_slack_time_per_node&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">slack_time_bound_per_node</span>
+        <span class="p">)</span>
+        <span class="n">force_start_cumul_time_zero</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;force_start_cumul_time_zero&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">max_time_per_vehicle</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_time_per_vehicle&quot;</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">)</span>
+        <span class="n">max_distance_per_vehicle</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_distance_per_vehicle&quot;</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">)</span>
+        <span class="n">set_transit_cost_by_default</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;set_transit_cost_by_default&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># use or not the distance callback function to evaluate the cost of each edge.</span>
+        <span class="c1"># Whatever the cost function you want to optimize (via the list_parameters_cost argument),</span>
+        <span class="c1"># these cost are still included in the objective function</span>
+        <span class="n">cost_per_vehicle_used</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cost_per_vehicle_used&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_matrix</span><span class="p">:</span>
+            <span class="n">matrix_distance_int</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;matrix&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">matrix_distance_int</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">matrix_distance</span> <span class="o">=</span> <span class="n">build_matrix_distance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+                <span class="n">matrix_distance_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="n">matrix_distance</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_distance</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">include_time_dimension</span><span class="p">:</span>
+                <span class="n">matrix_time</span> <span class="o">=</span> <span class="n">build_matrix_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+                <span class="n">matrix_time_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="n">matrix_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span>
+                <span class="p">)</span>
+        <span class="n">capacities_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">r</span><span class="p">:</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">capacities</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="n">r</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_set</span>
+        <span class="p">}</span>
+        <span class="c1"># Neg Capacity version :</span>
+        <span class="n">neg_capacity_version</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;neg_capacity_version&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">demands</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">neg_capacity_version</span><span class="p">:</span>
+            <span class="n">demands</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">r</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_flow_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_nodes</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_set</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">demands</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">r</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_flow_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_nodes</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_set</span>
+            <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demands</span> <span class="o">=</span> <span class="n">demands</span>
+        <span class="c1"># Create the routing index manager.</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingIndexManager</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">,</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">)</span>
+            <span class="p">],</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">)</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">routing</span> <span class="o">=</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingModel</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
+        <span class="n">consider_empty_route_cost</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;consider_empty_route_cost&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">consider_empty_route_cost</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Works for &lt;ortools9.2</span>
+                    <span class="n">routing</span><span class="o">.</span><span class="n">ConsiderEmptyRouteCostsForVehicle</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="c1"># Works for &gt;=ortools9.2</span>
+                    <span class="n">routing</span><span class="o">.</span><span class="n">SetVehicleUsedWhenEmpty</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cost_per_vehicle_used</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">):</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">SetFixedCostOfVehicle</span><span class="p">(</span><span class="n">cost_per_vehicle_used</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;routing init&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_matrix</span><span class="p">:</span>
+            <span class="c1"># Create and register a transit callback.</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">distance_callback</span><span class="p">(</span><span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">to_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Returns the distance between the two nodes.&quot;&quot;&quot;</span>
+                <span class="c1"># Convert from routing variable Index to distance matrix NodeIndex.</span>
+                <span class="n">from_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">from_index</span><span class="p">)</span>
+                <span class="n">to_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">to_index</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">matrix_distance_int</span><span class="p">[</span><span class="n">from_node</span><span class="p">,</span> <span class="n">to_node</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Create and register a transit callback.</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">distance_callback</span><span class="p">(</span><span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">to_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Returns the distance between the two nodes.&quot;&quot;&quot;</span>
+                <span class="c1"># Convert from routing variable Index to distance matrix NodeIndex.</span>
+                <span class="n">from_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">from_index</span><span class="p">)</span>
+                <span class="n">to_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">to_index</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_to_index</span><span class="p">[</span><span class="n">from_node</span><span class="p">]</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_to_index</span><span class="p">[</span><span class="n">to_node</span><span class="p">],</span> <span class="mi">1000000000</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">include_equilibrate_charge</span><span class="p">:</span>
+            <span class="n">charge</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">RegisterTransitCallback</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">charge_constraint</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;charge_constraint&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">charge_constraint</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">charge_constraint</span><span class="p">):</span>
+                <span class="n">max_charge</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">charge_constraint</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">charge_constraint</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">max_charge</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">)</span>
+            <span class="n">routing</span><span class="o">.</span><span class="n">AddDimension</span><span class="p">(</span>
+                <span class="n">charge</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>
+                <span class="n">max_charge</span><span class="p">,</span>
+                <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;charge&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">charge_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="s2">&quot;charge&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;charge&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">):</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">End</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">constraint</span> <span class="o">=</span> <span class="n">charge_constraint</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">constraint</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">hard_equilibrate</span><span class="p">:</span>
+                        <span class="n">charge_dimension</span><span class="o">.</span><span class="n">SetCumulVarSoftLowerBound</span><span class="p">(</span>
+                            <span class="n">index</span><span class="p">,</span> <span class="n">constraint</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">100000000</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">charge_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetMin</span><span class="p">(</span><span class="n">constraint</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">constraint</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">hard_equilibrate</span><span class="p">:</span>
+                        <span class="n">charge_dimension</span><span class="o">.</span><span class="n">SetCumulVarSoftUpperBound</span><span class="p">(</span>
+                            <span class="n">index</span><span class="p">,</span> <span class="n">constraint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">100000000</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">charge_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetMax</span><span class="p">(</span><span class="n">constraint</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">transit_distance_callback_index</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">RegisterTransitCallback</span><span class="p">(</span>
+            <span class="n">distance_callback</span>
+        <span class="p">)</span>
+        <span class="c1"># Define cost of each arc.</span>
+        <span class="k">if</span> <span class="n">set_transit_cost_by_default</span><span class="p">:</span>
+            <span class="n">routing</span><span class="o">.</span><span class="n">SetArcCostEvaluatorOfAllVehicles</span><span class="p">(</span><span class="n">transit_distance_callback_index</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Distance callback done&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_resource_dimension</span><span class="p">:</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">ressource_transition</span><span class="p">(</span>
+                <span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                <span class="n">to_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                <span class="n">ressource</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                <span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">,</span>
+                <span class="n">vehicle</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Return the ressource consumption from one node to another.&quot;&quot;&quot;</span>
+                <span class="c1"># Convert from routing variable Index to demands NodeIndex.</span>
+                <span class="n">from_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">from_index</span><span class="p">)</span>
+                <span class="n">to_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">to_index</span><span class="p">)</span>
+                <span class="n">l</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources_flow_edges</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_to_index</span><span class="p">[</span><span class="n">from_node</span><span class="p">],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_to_index</span><span class="p">[</span><span class="n">to_node</span><span class="p">],</span>
+                    <span class="p">),</span>
+                    <span class="p">{</span><span class="n">ressource</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                <span class="p">)[</span><span class="n">ressource</span><span class="p">]</span> <span class="o">+</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources_flow_node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">to_node</span><span class="p">,</span> <span class="p">{</span><span class="n">ressource</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ressource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+
+            <span class="n">demand_callback_index_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">r</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="n">routing</span><span class="o">.</span><span class="n">RegisterTransitCallback</span><span class="p">(</span>
+                        <span class="n">partial</span><span class="p">(</span>
+                            <span class="n">ressource_transition</span><span class="p">,</span>
+                            <span class="n">ressource</span><span class="o">=</span><span class="n">r</span><span class="p">,</span>
+                            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                            <span class="n">vehicle</span><span class="o">=</span><span class="n">v</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">demands</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">demand_callback_index_dict</span><span class="p">:</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddDimensionWithVehicleTransitAndCapacity</span><span class="p">(</span>
+                    <span class="n">demand_callback_index_dict</span><span class="p">[</span><span class="n">r</span><span class="p">],</span>
+                    <span class="mi">0</span><span class="p">,</span>  <span class="c1"># null capacity slack</span>
+                    <span class="n">capacities_dict</span><span class="p">[</span><span class="n">r</span><span class="p">],</span>
+                    <span class="c1"># vehicle maximum capacities</span>
+                    <span class="kc">True</span><span class="p">,</span>  <span class="c1"># start cumul to zero</span>
+                    <span class="s2">&quot;Ressource_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;Ressource_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">include_demand</span><span class="p">:</span>
+            <span class="c1"># Add Capacity constraint.</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">demand_callback</span><span class="p">(</span><span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ressource</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Returns the demand of the node.&quot;&quot;&quot;</span>
+                <span class="c1"># Convert from routing variable Index to demands NodeIndex.</span>
+                <span class="n">from_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">from_index</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">demands</span><span class="p">[</span><span class="n">ressource</span><span class="p">][</span><span class="n">from_node</span><span class="p">])</span>
+
+            <span class="n">demand_callback_index_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">r</span><span class="p">:</span> <span class="n">routing</span><span class="o">.</span><span class="n">RegisterUnaryTransitCallback</span><span class="p">(</span>
+                    <span class="n">partial</span><span class="p">(</span><span class="n">demand_callback</span><span class="p">,</span> <span class="n">ressource</span><span class="o">=</span><span class="n">r</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">demands</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">demand_callback_index_dict</span><span class="p">:</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddDimensionWithVehicleCapacity</span><span class="p">(</span>
+                    <span class="n">demand_callback_index_dict</span><span class="p">[</span><span class="n">r</span><span class="p">],</span>
+                    <span class="mi">0</span><span class="p">,</span>  <span class="c1"># null capacity slack</span>
+                    <span class="n">capacities_dict</span><span class="p">[</span><span class="n">r</span><span class="p">],</span>  <span class="c1"># vehicle maximum capacities</span>
+                    <span class="kc">True</span><span class="p">,</span>  <span class="c1"># start cumul to zero</span>
+                    <span class="s2">&quot;Capacity_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;Capacity_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">one_visit_per_cluster</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">):</span>
+                <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">[</span><span class="n">cluster</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">n</span>
+                    <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span>
+                    <span class="p">}</span>
+                    <span class="ow">and</span> <span class="n">n</span>
+                    <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span>
+                    <span class="p">}</span>
+                <span class="p">]</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddDisjunction</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="mi">1000000000</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Sum</span><span class="p">([</span><span class="n">routing</span><span class="o">.</span><span class="n">ActiveVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span>
+                <span class="p">)</span>
+        <span class="n">slacks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_nodes</span>
+        <span class="p">]</span>
+        <span class="n">max_slack</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">slacks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_constant_max_slack_time</span><span class="p">:</span>
+            <span class="n">max_slack</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_slack</span><span class="p">,</span> <span class="n">constant_max_slack_time</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">use_max_slack_time_per_node</span><span class="p">:</span>
+            <span class="n">max_slack</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">max_slack</span><span class="p">,</span>
+                <span class="nb">max</span><span class="p">([</span><span class="n">max_slack_time_per_node</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">max_slack_time_per_node</span><span class="p">]),</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_time_dimension</span><span class="p">:</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">time_callback</span><span class="p">(</span><span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">to_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Returns the travel time between the two nodes.&quot;&quot;&quot;</span>
+                <span class="c1"># Convert from routing variable Index to time matrix NodeIndex.</span>
+                <span class="n">from_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">from_index</span><span class="p">)</span>
+                <span class="n">to_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">to_index</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">matrix_time_int</span><span class="p">[</span><span class="n">from_node</span><span class="p">,</span> <span class="n">to_node</span><span class="p">]</span>
+
+            <span class="n">transit_time_callback_index</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">RegisterTransitCallback</span><span class="p">(</span><span class="n">time_callback</span><span class="p">)</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="s2">&quot;Time&quot;</span>
+
+            <span class="n">routing</span><span class="o">.</span><span class="n">AddDimension</span><span class="p">(</span>
+                <span class="n">transit_time_callback_index</span><span class="p">,</span>
+                <span class="n">max_slack</span><span class="p">,</span>  <span class="c1"># allow waiting time</span>
+                <span class="n">max_time_per_vehicle</span><span class="p">,</span>  <span class="c1"># maximum time per vehicle</span>
+                <span class="n">force_start_cumul_time_zero</span><span class="p">,</span>  <span class="c1"># force or not  start cumul to zero.</span>
+                <span class="n">time</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span> <span class="o">+=</span> <span class="p">[</span><span class="n">time</span><span class="p">]</span>
+            <span class="n">time_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="n">time_dimension</span><span class="o">.</span><span class="n">SlackVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                    <span class="o">&gt;=</span> <span class="nb">int</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_pickup_and_delivery</span><span class="p">:</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="s2">&quot;Distance&quot;</span>
+            <span class="n">routing</span><span class="o">.</span><span class="n">AddDimension</span><span class="p">(</span>
+                <span class="n">transit_distance_callback_index</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>  <span class="c1"># allow waiting time on this dimension</span>
+                <span class="n">max_distance_per_vehicle</span><span class="p">,</span>  <span class="c1"># maximum distance per vehicle</span>
+                <span class="kc">True</span><span class="p">,</span>  <span class="c1"># force distance cumul to zero.</span>
+                <span class="n">distance</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span> <span class="o">+=</span> <span class="p">[</span><span class="n">distance</span><span class="p">]</span>
+            <span class="n">distance_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">pickup_deliver</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_pickup_deliverable</span><span class="p">:</span>
+                <span class="n">pickup</span> <span class="o">=</span> <span class="n">pickup_deliver</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">deliver</span> <span class="o">=</span> <span class="n">pickup_deliver</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pickup</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deliver</span><span class="p">:</span>
+                        <span class="n">pickup_index</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">p</span><span class="p">])</span>
+                        <span class="n">delivery_index</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">AddPickupAndDelivery</span><span class="p">(</span><span class="n">pickup_index</span><span class="p">,</span> <span class="n">delivery_index</span><span class="p">)</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">routing</span><span class="o">.</span><span class="n">VehicleVar</span><span class="p">(</span><span class="n">pickup_index</span><span class="p">)</span>
+                            <span class="o">==</span> <span class="n">routing</span><span class="o">.</span><span class="n">VehicleVar</span><span class="p">(</span><span class="n">delivery_index</span><span class="p">)</span>
+                        <span class="p">)</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">distance_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">pickup_index</span><span class="p">)</span>
+                            <span class="o">&lt;=</span> <span class="n">distance_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">delivery_index</span><span class="p">)</span>
+                        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_pickup_and_delivery_per_cluster</span><span class="p">:</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="s2">&quot;Distance&quot;</span>
+            <span class="n">routing</span><span class="o">.</span><span class="n">AddDimension</span><span class="p">(</span>
+                <span class="n">transit_distance_callback_index</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>  <span class="c1"># allow waiting time</span>
+                <span class="n">max_distance_per_vehicle</span><span class="p">,</span>  <span class="c1"># maximum time per vehicle</span>
+                <span class="kc">True</span><span class="p">,</span>  <span class="c1"># force start cumul to zero.</span>
+                <span class="n">distance</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span> <span class="o">+=</span> <span class="p">[</span><span class="n">distance</span><span class="p">]</span>
+            <span class="n">distance_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_pickup_deliverable_per_cluster</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;When include_pickup_and_delivery_per_cluster is True, &quot;</span>
+                    <span class="s2">&quot;self.problem.list_pickup_deliverable_per_cluster cannot be None.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">for</span> <span class="n">pickup_deliver</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_pickup_deliverable_per_cluster</span><span class="p">:</span>
+                <span class="n">pickup</span> <span class="o">=</span> <span class="n">pickup_deliver</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">deliver</span> <span class="o">=</span> <span class="n">pickup_deliver</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pickup</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deliver</span><span class="p">:</span>
+                        <span class="n">pp</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+                        <span class="p">]</span>
+                        <span class="n">dd</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+                        <span class="p">]</span>
+                        <span class="n">pickup</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">AddDisjunction</span><span class="p">(</span><span class="n">pp</span><span class="p">)</span>
+                        <span class="n">deliver</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">AddDisjunction</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">AddPickupAndDeliverySets</span><span class="p">(</span><span class="n">pickup</span><span class="p">,</span> <span class="n">deliver</span><span class="p">)</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span>
+                                <span class="p">[</span>
+                                    <span class="n">routing</span><span class="o">.</span><span class="n">ActiveVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                                    <span class="o">*</span> <span class="n">distance_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pp</span>
+                                <span class="p">]</span>
+                                <span class="o">+</span> <span class="p">[</span>
+                                    <span class="o">-</span><span class="n">routing</span><span class="o">.</span><span class="n">ActiveVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                                    <span class="o">*</span> <span class="n">distance_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dd</span>
+                                <span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="o">&lt;</span> <span class="mi">0</span>
+                        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_cumulative</span><span class="p">:</span>
+            <span class="n">starts</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">intervals</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">time_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">set_of_task</span><span class="p">,</span> <span class="n">limit</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">cumulative_constraints</span><span class="p">:</span>
+                <span class="n">list_of_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">set_of_task</span><span class="p">)</span>
+                <span class="n">index_tasks</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">list_of_tasks</span>
+                <span class="p">]</span>
+                <span class="n">time_delta</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">list_of_tasks</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">tdelta</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">index_tasks</span><span class="p">,</span> <span class="n">time_delta</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">starts</span><span class="p">:</span>
+                        <span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                        <span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">IntervalVar</span><span class="p">(</span>
+                            <span class="mi">0</span><span class="p">,</span>
+                            <span class="mi">10000000</span><span class="p">,</span>
+                            <span class="n">tdelta</span><span class="p">,</span>
+                            <span class="n">max_slack</span><span class="p">,</span>
+                            <span class="mi">0</span><span class="p">,</span>
+                            <span class="mi">10000000</span><span class="p">,</span>
+                            <span class="kc">False</span><span class="p">,</span>
+                            <span class="sa">f</span><span class="s2">&quot;interval_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">StartExpr</span><span class="p">()</span> <span class="o">==</span> <span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">EndExpr</span><span class="p">()</span>
+                            <span class="o">==</span> <span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">+</span> <span class="n">time_dimension</span><span class="o">.</span><span class="n">SlackVar</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                        <span class="p">)</span>
+
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">DurationExpr</span><span class="p">()</span>
+                            <span class="o">==</span> <span class="n">time_dimension</span><span class="o">.</span><span class="n">SlackVar</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                        <span class="p">)</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Cumulative</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">intervals</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">index_tasks</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">index_tasks</span><span class="p">],</span>
+                        <span class="n">limit</span><span class="p">,</span>
+                        <span class="s2">&quot;asset_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;cumulative done&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_mandatory</span><span class="p">:</span>
+            <span class="n">mandatory_nodes</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mandatory_node_info</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mandatory_node_info</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="n">n</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span>
+                <span class="p">}</span>
+                <span class="ow">and</span> <span class="n">n</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mandatory_nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddDisjunction</span><span class="p">(</span>
+                    <span class="n">mandatory_nodes</span><span class="p">,</span> <span class="mi">1000000000</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mandatory_nodes</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">routing</span><span class="o">.</span><span class="n">ActiveVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">mandatory_nodes</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">mandatory_nodes</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">other_nodes</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mandatory_node_info</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mandatory_node_info</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="n">n</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span>
+                <span class="p">}</span>
+                <span class="ow">and</span> <span class="n">n</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddDisjunction</span><span class="p">(</span><span class="n">other_nodes</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_nodes</span><span class="p">))</span>
+        <span class="n">include_node_vehicle</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include_node_vehicle&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_node_vehicle</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">node_vehicle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">node_vehicle</span><span class="p">:</span>
+                    <span class="n">routing</span><span class="o">.</span><span class="n">SetAllowedVehiclesForIndex</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">node_vehicle</span><span class="p">[</span><span class="n">n</span><span class="p">],</span>
+                        <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]),</span>
+                    <span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;Time&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span><span class="p">:</span>
+            <span class="n">time_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">):</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddVariableMinimizedByFinalizer</span><span class="p">(</span>
+                    <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">routing</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                <span class="p">)</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddVariableMinimizedByFinalizer</span><span class="p">(</span>
+                    <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">routing</span><span class="o">.</span><span class="n">End</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;Distance&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span><span class="p">:</span>
+            <span class="n">dim</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="s2">&quot;Distance&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">):</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddVariableMinimizedByFinalizer</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">routing</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+                <span class="n">routing</span><span class="o">.</span><span class="n">AddVariableMinimizedByFinalizer</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">routing</span><span class="o">.</span><span class="n">End</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+        <span class="n">origins</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">}</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">include_time_windows</span><span class="p">:</span>
+            <span class="n">time_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">origins</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows_nodes</span><span class="p">:</span>
+                    <span class="n">mini</span><span class="p">,</span> <span class="n">maxi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">SetCumulVarSoftLowerBound</span><span class="p">(</span>
+                            <span class="n">index</span><span class="p">,</span>
+                            <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">mini</span><span class="p">),</span>
+                            <span class="mi">1000000</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">SetCumulVarSoftUpperBound</span><span class="p">(</span>
+                            <span class="n">index</span><span class="p">,</span>
+                            <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">maxi</span><span class="p">),</span>
+                            <span class="mi">1000000</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">SetCumulVarSoftLowerBound</span><span class="p">(</span>
+                            <span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">mini</span><span class="p">,</span> <span class="mi">1000000</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">SetCumulVarSoftUpperBound</span><span class="p">(</span>
+                            <span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">maxi</span><span class="p">,</span> <span class="mi">1000000</span>
+                        <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">vehicle</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">):</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="n">vehicle</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">vehicle</span><span class="p">]</span>
+                    <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows_nodes</span>
+                <span class="p">):</span>
+                    <span class="n">mini</span><span class="p">,</span> <span class="n">maxi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows_nodes</span><span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">vehicle</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetRange</span><span class="p">(</span><span class="n">mini</span><span class="p">,</span> <span class="n">maxi</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetMin</span><span class="p">(</span><span class="n">mini</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetMax</span><span class="p">(</span><span class="n">maxi</span><span class="p">)</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">End</span><span class="p">(</span><span class="n">vehicle</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">vehicle</span><span class="p">]</span>
+                    <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows_nodes</span>
+                <span class="p">):</span>
+                    <span class="n">mini</span><span class="p">,</span> <span class="n">maxi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows_nodes</span><span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">vehicle</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetRange</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">mini</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">maxi</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetMin</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">mini</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">SetMax</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">factor_multiplier_time</span> <span class="o">*</span> <span class="n">maxi</span>
+                        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_time_windows_cluster</span><span class="p">:</span>
+            <span class="n">time_dimension</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">):</span>
+                <span class="n">mini</span><span class="p">,</span> <span class="n">maxi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">time_windows_cluster</span><span class="p">[</span><span class="n">cluster</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+                        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">[</span><span class="n">cluster</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">n</span>
+                        <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span>
+                        <span class="p">}</span>
+                        <span class="ow">and</span> <span class="n">n</span>
+                        <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span>
+                        <span class="p">}</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">mini</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span>
+                                <span class="p">[</span>
+                                    <span class="n">routing</span><span class="o">.</span><span class="n">ActiveVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nodes</span>
+                                <span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="o">&gt;=</span> <span class="n">mini</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">maxi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span>
+                                <span class="p">[</span>
+                                    <span class="n">routing</span><span class="o">.</span><span class="n">ActiveVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="n">time_dimension</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nodes</span>
+                                <span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="o">&lt;=</span> <span class="n">mini</span>
+                        <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;Distance&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span><span class="p">:</span>
+            <span class="n">dimension_name</span> <span class="o">=</span> <span class="s2">&quot;Distance&quot;</span>
+            <span class="n">routing</span><span class="o">.</span><span class="n">AddDimension</span><span class="p">(</span>
+                <span class="n">transit_distance_callback_index</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>  <span class="c1"># no slack</span>
+                <span class="n">max_distance_per_vehicle</span><span class="p">,</span>  <span class="c1"># vehicle maximum travel distance</span>
+                <span class="kc">True</span><span class="p">,</span>  <span class="c1"># start cumul to zero</span>
+                <span class="n">dimension_name</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimension_names</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;Distance&quot;</span><span class="p">]</span>
+        <span class="n">apply_cost</span><span class="p">(</span><span class="n">list_parameters_cost</span><span class="o">=</span><span class="n">list_parameters_cost</span><span class="p">,</span> <span class="n">routing</span><span class="o">=</span><span class="n">routing</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing</span> <span class="o">=</span> <span class="n">routing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_search_parameters</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Routing problem initialized &quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsGpdpSolver.build_search_parameters">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.build_search_parameters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_search_parameters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">routing_parameters_pb2</span><span class="o">.</span><span class="n">RoutingSearchParameters</span><span class="p">:</span>
+        <span class="n">first_solution_strategy</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">FirstSolutionStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span>
+            <span class="s2">&quot;first_solution_strategy&quot;</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first_solution_strategy</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">first_solution_strategy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">first_solution_strategy</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">local_search_metaheuristic</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;local_search_metaheuristic&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">local_search_metaheuristic</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">local_search_metaheuristic</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">local_search_metaheuristic</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">one_visit_per_cluster</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;one_visit_per_cluster&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">use_lns</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_lns&quot;</span><span class="p">]</span>
+        <span class="n">use_cp</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_cp&quot;</span><span class="p">]</span>
+        <span class="n">use_cp_sat</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_cp_sat&quot;</span><span class="p">]</span>
+        <span class="n">search_parameters</span> <span class="o">=</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">DefaultRoutingSearchParameters</span><span class="p">()</span>
+        <span class="n">search_parameters</span><span class="o">.</span><span class="n">first_solution_strategy</span> <span class="o">=</span> <span class="n">first_solution_strategy</span>
+        <span class="n">search_parameters</span><span class="o">.</span><span class="n">local_search_metaheuristic</span> <span class="o">=</span> <span class="n">local_search_metaheuristic</span>
+        <span class="k">if</span> <span class="n">use_lns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">one_visit_per_cluster</span><span class="p">:</span>
+                <span class="n">search_parameters</span><span class="o">.</span><span class="n">local_search_operators</span><span class="o">.</span><span class="n">use_inactive_lns</span> <span class="o">=</span> <span class="n">BOOL_TRUE</span>
+            <span class="n">search_parameters</span><span class="o">.</span><span class="n">local_search_operators</span><span class="o">.</span><span class="n">use_path_lns</span> <span class="o">=</span> <span class="n">BOOL_TRUE</span>
+            <span class="k">if</span> <span class="n">one_visit_per_cluster</span><span class="p">:</span>
+                <span class="n">search_parameters</span><span class="o">.</span><span class="n">local_search_operators</span><span class="o">.</span><span class="n">use_extended_swap_active</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">BOOL_TRUE</span>
+                <span class="p">)</span>
+        <span class="n">search_parameters</span><span class="o">.</span><span class="n">use_cp</span> <span class="o">=</span> <span class="n">BOOL_TRUE</span> <span class="k">if</span> <span class="n">use_cp</span> <span class="k">else</span> <span class="n">BOOL_FALSE</span>
+        <span class="n">search_parameters</span><span class="o">.</span><span class="n">use_cp_sat</span> <span class="o">=</span> <span class="n">BOOL_TRUE</span> <span class="k">if</span> <span class="n">use_cp_sat</span> <span class="k">else</span> <span class="n">BOOL_FALSE</span>
+        <span class="n">search_parameters</span><span class="o">.</span><span class="n">time_limit</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time_limit&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">search_parameters</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsGpdpSolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">search_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="n">routing_parameters_pb2</span><span class="o">.</span><span class="n">RoutingSearchParameters</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">callbacks_list</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">search_parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">search_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span>
+        <span class="n">monitor</span> <span class="o">=</span> <span class="n">RoutingMonitor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callbacks_list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">AddSearchMonitor</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
+        <span class="c1"># warm start?</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;initial_solution&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;initial_solution&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solution2routes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="s2">&quot;initial_solution&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                <span class="ow">and</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;initial_solution&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">initial_sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">ReadAssignmentFromRoutes</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;initial_solution&quot;</span><span class="p">],</span> <span class="kc">True</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;launching with assignment&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">SolveFromAssignmentWithParameters</span><span class="p">(</span>
+                    <span class="n">initial_sol</span><span class="p">,</span> <span class="n">search_parameters</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">SolveWithParameters</span><span class="p">(</span><span class="n">search_parameters</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SolveEarlyStop</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">monitor</span><span class="o">.</span><span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsGpdpSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">GpdpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make the solver warm start from the given solution.</span>
+
+<span class="sd">        Will be ignored if arg `init_solution,` is not None in call to `solve()`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="n">solution</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_solution2routes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">GpdpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">NodeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">trajectories</span><span class="p">[</span><span class="n">vehicle_id</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">node</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">vehicle_id</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">vehicle_id</span><span class="p">],</span>
+                <span class="p">]</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">vehicle_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="RoutingMonitor">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RoutingMonitor</span><span class="p">(</span><span class="n">pywrapcp</span><span class="o">.</span><span class="n">SearchMonitor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_solver</span><span class="p">:</span> <span class="n">OrtoolsGpdpSolver</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">do_solver</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">solver</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">routing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_best_objective</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_counter_limit</span> <span class="o">=</span> <span class="mi">10000000</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RoutingMonitor.AtSolution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.AtSolution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">AtSolution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;New solution found : --Cur objective : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">CostVar</span><span class="p">()</span><span class="o">.</span><span class="n">Max</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">status_description</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">status</span><span class="p">()])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">CostVar</span><span class="p">()</span><span class="o">.</span><span class="n">Max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_best_objective</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_best_objective</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">CostVar</span><span class="p">()</span><span class="o">.</span><span class="n">Max</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_counter</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_counter_limit</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">solver</span><span class="p">()</span><span class="o">.</span><span class="n">FinishCurrentSearch</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># end of step callback: stopping?</span>
+        <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SolveEarlyStop</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.solve() stopped by user callback.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="n">stopping</span></div>
+
+
+<div class="viewcode-block" id="RoutingMonitor.EnterSearch">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.EnterSearch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">EnterSearch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RoutingMonitor.ExitSearch">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.ExitSearch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ExitSearch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RoutingMonitor.retrieve_current_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.retrieve_current_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">vehicle_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span>
+        <span class="n">vehicle_tours</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vehicle_count</span><span class="p">)}</span>
+        <span class="n">dimension_output</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">NodePosition</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dimensions_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">dimension_names</span>
+        <span class="n">dimensions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingDimension</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">r</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">GetDimensionOrDie</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dimensions_names</span>
+        <span class="p">}</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">route_distance</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">vehicle_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vehicle_count</span><span class="p">):</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="n">vehicle_id</span><span class="p">)</span>
+            <span class="n">route_load</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="p">:</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_set</span><span class="p">}</span>
+            <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">IsEnd</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cnt</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">:</span>
+                <span class="n">node_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">node_position</span> <span class="o">=</span> <span class="n">NodePosition</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">node_position</span> <span class="o">=</span> <span class="n">NodePosition</span><span class="o">.</span><span class="n">INTERMEDIATE</span>
+                <span class="n">vehicle_tours</span><span class="p">[</span><span class="n">vehicle_id</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">node_index</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">dimension_output</span><span class="p">[(</span><span class="n">vehicle_id</span><span class="p">,</span> <span class="n">node_index</span><span class="p">,</span> <span class="n">node_position</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="n">r</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="n">dimensions</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">Min</span><span class="p">(),</span>
+                            <span class="n">dimensions</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">Max</span><span class="p">(),</span>
+                            <span class="n">dimensions</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">SlackVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">Value</span><span class="p">(),</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dimensions</span>
+                    <span class="p">}</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">((</span><span class="s2">&quot;1,&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+                    <span class="k">break</span>
+                <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">route_load</span><span class="p">:</span>
+                    <span class="n">route_load</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">node_index</span><span class="p">]</span>
+                <span class="n">previous_index</span> <span class="o">=</span> <span class="n">index</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">NextVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">Value</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">((</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+                    <span class="k">break</span>
+                <span class="n">route_distance</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">GetArcCostForVehicle</span><span class="p">(</span>
+                    <span class="n">previous_index</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">vehicle_id</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">IsEnd</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+                    <span class="n">vehicle_tours</span><span class="p">[</span><span class="n">vehicle_id</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                    <span class="p">]</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">dimension_output</span><span class="p">[</span>
+                            <span class="p">(</span>
+                                <span class="n">vehicle_id</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">index</span><span class="p">),</span>
+                                <span class="n">NodePosition</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="n">r</span><span class="p">:</span> <span class="p">(</span>
+                                <span class="n">dimensions</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">Min</span><span class="p">(),</span>
+                                <span class="n">dimensions</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">CumulVar</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">Max</span><span class="p">(),</span>
+                                <span class="mi">0</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dimensions</span>
+                        <span class="p">}</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">((</span><span class="s2">&quot;2,&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+                        <span class="k">break</span>
+        <span class="n">sol</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+            <span class="nb">dict</span><span class="p">[</span>
+                <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">NodePosition</span><span class="p">],</span>
+                <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+            <span class="p">],</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="nb">float</span><span class="p">,</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">vehicle_tours</span><span class="p">,</span>
+            <span class="n">dimension_output</span><span class="p">,</span>
+            <span class="n">route_distance</span><span class="p">,</span>
+            <span class="n">objective</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">CostVar</span><span class="p">()</span><span class="o">.</span><span class="n">Max</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">gpdp_sol</span> <span class="o">=</span> <span class="n">convert_to_gpdpsolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">sol</span><span class="p">)</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">gpdp_sol</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">gpdp_sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="convert_to_gpdpsolution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.convert_to_gpdpsolution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_to_gpdpsolution</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">,</span>
+    <span class="n">sol</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">NodePosition</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
+        <span class="nb">float</span><span class="p">,</span>
+        <span class="nb">float</span><span class="p">,</span>
+        <span class="nb">float</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpSolution</span><span class="p">:</span>
+    <span class="p">(</span>
+        <span class="n">vehicle_tours</span><span class="p">,</span>
+        <span class="n">dimension_output</span><span class="p">,</span>
+        <span class="n">route_distance</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">,</span>
+        <span class="n">cost</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">sol</span>
+    <span class="n">times</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">trajectories</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">v</span><span class="p">:</span> <span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">[</span><span class="n">nodeindex</span><span class="p">]</span> <span class="k">for</span> <span class="n">nodeindex</span> <span class="ow">in</span> <span class="n">traj</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">traj</span> <span class="ow">in</span> <span class="n">vehicle_tours</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">nodeindex</span><span class="p">,</span> <span class="n">node_position</span><span class="p">),</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">dimension_output</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">[</span><span class="n">nodeindex</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">times</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">node_position</span> <span class="o">!=</span> <span class="n">NodePosition</span><span class="o">.</span><span class="n">START</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;Time&quot;</span> <span class="ow">in</span> <span class="n">output</span><span class="p">:</span>
+                <span class="n">times</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;Time&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">resource_evolution</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">GpdpSolution</span><span class="p">(</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+        <span class="n">trajectories</span><span class="o">=</span><span class="n">trajectories</span><span class="p">,</span>
+        <span class="n">times</span><span class="o">=</span><span class="n">times</span><span class="p">,</span>
+        <span class="n">resource_evolution</span><span class="o">=</span><span class="n">resource_evolution</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.knapsack.solvers.gphh &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.knapsack.solvers.gphh</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.knapsack.solvers.gphh</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deap</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithms</span><span class="p">,</span> <span class="n">creator</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">tools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deap.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fitness</span><span class="p">,</span> <span class="n">Toolbox</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deap.gp</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Primitive</span><span class="p">,</span>
+    <span class="n">PrimitiveSetTyped</span><span class="p">,</span>
+    <span class="n">PrimitiveTree</span><span class="p">,</span>
+    <span class="n">Terminal</span><span class="p">,</span>
+    <span class="n">genHalfAndHalf</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ghh_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">max_operator</span><span class="p">,</span>
+    <span class="n">max_operator_list</span><span class="p">,</span>
+    <span class="n">min_operator</span><span class="p">,</span>
+    <span class="n">min_operator_list</span><span class="p">,</span>
+    <span class="n">protected_div</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FloatHyperparameter</span><span class="p">,</span>
+    <span class="n">IntegerHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.knapsack.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultidimensionalKnapsackProblem</span><span class="p">,</span>
+    <span class="n">MultidimensionalKnapsackSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="FeatureEnum">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.FeatureEnum">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FeatureEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">PROFIT</span> <span class="o">=</span> <span class="s2">&quot;profit&quot;</span>
+    <span class="n">CAPACITIES</span> <span class="o">=</span> <span class="s2">&quot;capacities&quot;</span>
+    <span class="n">RES_CONSUMPTION_ARRAY</span> <span class="o">=</span> <span class="s2">&quot;res_consumption&quot;</span>
+    <span class="n">AVG_RES_CONSUMPTION_DELTA_CAPACITY</span> <span class="o">=</span> <span class="s2">&quot;avg_res_consumption_delta_capacity&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="get_profit">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.get_profit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_profit</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span><span class="p">,</span> <span class="n">item_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">item_index</span><span class="p">]</span><span class="o">.</span><span class="n">value</span></div>
+
+
+
+<div class="viewcode-block" id="get_capacities">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.get_capacities">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_capacities</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">problem</span><span class="o">.</span><span class="n">max_capacities</span></div>
+
+
+
+<div class="viewcode-block" id="get_res_consumption">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.get_res_consumption">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_res_consumption</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span><span class="p">,</span> <span class="n">item_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">item_index</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span></div>
+
+
+
+<div class="viewcode-block" id="get_avg_res_consumption_delta_capacity">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.get_avg_res_consumption_delta_capacity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_avg_res_consumption_delta_capacity</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span><span class="p">,</span> <span class="n">item_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">item_index</span><span class="p">]</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+            <span class="o">/</span> <span class="n">problem</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">))</span>
+        <span class="p">]</span>
+    <span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">)</span></div>
+
+
+
+<span class="n">feature_function_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">FeatureEnum</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">FeatureEnum</span><span class="o">.</span><span class="n">PROFIT</span><span class="p">:</span> <span class="n">get_profit</span><span class="p">,</span>
+    <span class="n">FeatureEnum</span><span class="o">.</span><span class="n">CAPACITIES</span><span class="p">:</span> <span class="n">get_capacities</span><span class="p">,</span>
+    <span class="n">FeatureEnum</span><span class="o">.</span><span class="n">RES_CONSUMPTION_ARRAY</span><span class="p">:</span> <span class="n">get_res_consumption</span><span class="p">,</span>
+    <span class="n">FeatureEnum</span><span class="o">.</span><span class="n">AVG_RES_CONSUMPTION_DELTA_CAPACITY</span><span class="p">:</span> <span class="n">get_avg_res_consumption_delta_capacity</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="ParametersGphh">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.ParametersGphh">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParametersGphh</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">list_feature</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FeatureEnum</span><span class="p">],</span>
+        <span class="n">set_primitves</span><span class="p">:</span> <span class="n">PrimitiveSetTyped</span><span class="p">,</span>
+        <span class="n">tournament_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">pop_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">n_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_tree_depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">max_tree_depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">crossover_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mutation_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">deap_verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_feature</span> <span class="o">=</span> <span class="n">list_feature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_primitves</span> <span class="o">=</span> <span class="n">set_primitves</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tournament_ratio</span> <span class="o">=</span> <span class="n">tournament_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pop_size</span> <span class="o">=</span> <span class="n">pop_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_gen</span> <span class="o">=</span> <span class="n">n_gen</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_tree_depth</span> <span class="o">=</span> <span class="n">min_tree_depth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tree_depth</span> <span class="o">=</span> <span class="n">max_tree_depth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crossover_rate</span> <span class="o">=</span> <span class="n">crossover_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutation_rate</span> <span class="o">=</span> <span class="n">mutation_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deap_verbose</span> <span class="o">=</span> <span class="n">deap_verbose</span>
+
+<div class="viewcode-block" id="ParametersGphh.default">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.ParametersGphh.default">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;ParametersGphh&quot;</span><span class="p">:</span>
+        <span class="n">list_feature</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">FeatureEnum</span><span class="o">.</span><span class="n">PROFIT</span><span class="p">,</span>
+            <span class="n">FeatureEnum</span><span class="o">.</span><span class="n">CAPACITIES</span><span class="p">,</span>
+            <span class="n">FeatureEnum</span><span class="o">.</span><span class="n">AVG_RES_CONSUMPTION_DELTA_CAPACITY</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">pset</span> <span class="o">=</span> <span class="n">PrimitiveSetTyped</span><span class="p">(</span><span class="s2">&quot;main&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="c1"># take profit, list of ressource consumption, avearage delta consumption</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">protected_div</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">max_operator</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">min_operator</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">neg</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">max_operator_list</span><span class="p">,</span> <span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;max_operator_list&quot;</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="n">min_operator_list</span><span class="p">,</span> <span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;min_operator_list&quot;</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mean_list&quot;</span><span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="p">[</span><span class="n">xx</span> <span class="o">-</span> <span class="n">yy</span> <span class="k">for</span> <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)],</span>
+            <span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
+            <span class="nb">list</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sub_list&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">pset</span><span class="o">.</span><span class="n">addPrimitive</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="p">[</span><span class="n">xx</span> <span class="o">+</span> <span class="n">yy</span> <span class="k">for</span> <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)],</span>
+            <span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
+            <span class="nb">list</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;plus_list&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ParametersGphh</span><span class="p">(</span>
+            <span class="n">list_feature</span><span class="o">=</span><span class="n">list_feature</span><span class="p">,</span>
+            <span class="n">set_primitves</span><span class="o">=</span><span class="n">pset</span><span class="p">,</span>
+            <span class="n">tournament_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">pop_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">n_gen</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">min_tree_depth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">max_tree_depth</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+            <span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+            <span class="n">deap_verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GphhKnapsackSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="n">toolbox</span><span class="p">:</span> <span class="n">Toolbox</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">FloatHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tournament_ratio&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.1</span><span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;pop_size&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;min_tree_depth&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;max_tree_depth&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+        <span class="n">FloatHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;crossover_rate&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.7</span><span class="p">),</span>
+        <span class="n">FloatHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;mutation_rate&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;n_gen&quot;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span><span class="p">,</span>
+        <span class="n">training_domains</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MultidimensionalKnapsackProblem</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">weight</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">params_gphh</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersGphh</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">training_domains</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">training_domains</span> <span class="o">=</span> <span class="p">[</span><span class="n">problem</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">training_domains</span> <span class="o">=</span> <span class="n">training_domains</span>
+        <span class="k">if</span> <span class="n">params_gphh</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span> <span class="o">=</span> <span class="n">ParametersGphh</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span> <span class="o">=</span> <span class="n">params_gphh</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_feature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">list_feature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_feature_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_feature</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pset</span><span class="p">:</span> <span class="n">PrimitiveSetTyped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_primitives</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">set_primitves</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">weight</span>
+
+<div class="viewcode-block" id="GphhKnapsackSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tournament_ratio</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;tournament_ratio&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">tournament_ratio</span>
+        <span class="p">)</span>
+        <span class="n">pop_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pop_size&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">pop_size</span><span class="p">)</span>
+        <span class="n">min_tree_depth</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min_tree_depth&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">min_tree_depth</span><span class="p">)</span>
+        <span class="n">max_tree_depth</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_tree_depth&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">max_tree_depth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">tournament_ratio</span> <span class="o">=</span> <span class="n">tournament_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">pop_size</span> <span class="o">=</span> <span class="n">pop_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">min_tree_depth</span> <span class="o">=</span> <span class="n">min_tree_depth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">max_tree_depth</span> <span class="o">=</span> <span class="n">max_tree_depth</span>
+        <span class="n">creator</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;FitnessMin&quot;</span><span class="p">,</span> <span class="n">Fitness</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">,))</span>
+        <span class="n">creator</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;Individual&quot;</span><span class="p">,</span> <span class="n">PrimitiveTree</span><span class="p">,</span> <span class="n">fitness</span><span class="o">=</span><span class="n">creator</span><span class="o">.</span><span class="n">FitnessMin</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span> <span class="o">=</span> <span class="n">Toolbox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;expr&quot;</span><span class="p">,</span>
+            <span class="n">genHalfAndHalf</span><span class="p">,</span>
+            <span class="n">pset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pset</span><span class="p">,</span>
+            <span class="n">min_</span><span class="o">=</span><span class="n">min_tree_depth</span><span class="p">,</span>
+            <span class="n">max_</span><span class="o">=</span><span class="n">max_tree_depth</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;individual&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">initIterate</span><span class="p">,</span> <span class="n">creator</span><span class="o">.</span><span class="n">Individual</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">expr</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;population&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">initRepeat</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">individual</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;compile&quot;</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">compile</span><span class="p">,</span> <span class="n">pset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;evaluate&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_heuristic</span><span class="p">,</span> <span class="n">domains</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">training_domains</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;select&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">selTournament</span><span class="p">,</span> <span class="n">tournsize</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">tournament_ratio</span> <span class="o">*</span> <span class="n">pop_size</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">cxOnePoint</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;expr_mut&quot;</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">genFull</span><span class="p">,</span> <span class="n">min_</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_</span><span class="o">=</span><span class="n">max_tree_depth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;mutate&quot;</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">mutUniform</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">expr_mut</span><span class="p">,</span> <span class="n">pset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pset</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">decorate</span><span class="p">(</span>
+            <span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">staticLimit</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s2">&quot;height&quot;</span><span class="p">),</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">17</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">decorate</span><span class="p">(</span>
+            <span class="s2">&quot;mutate&quot;</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">staticLimit</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s2">&quot;height&quot;</span><span class="p">),</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">17</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">stats_fit</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">Statistics</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ind</span><span class="p">:</span> <span class="n">ind</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">stats_size</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">Statistics</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+        <span class="n">mstats</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">MultiStatistics</span><span class="p">(</span><span class="n">fitness</span><span class="o">=</span><span class="n">stats_fit</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">stats_size</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">n_gen</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_gen&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">n_gen</span><span class="p">)</span>
+        <span class="n">crossover_rate</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;crossover_rate&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">crossover_rate</span><span class="p">)</span>
+        <span class="n">mutation_rate</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mutation_rate&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">mutation_rate</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">n_gen</span> <span class="o">=</span> <span class="n">n_gen</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">crossover_rate</span> <span class="o">=</span> <span class="n">crossover_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">mutation_rate</span> <span class="o">=</span> <span class="n">mutation_rate</span>
+        <span class="n">stats_fit</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">Statistics</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ind</span><span class="p">:</span> <span class="n">ind</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">stats_size</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">Statistics</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+        <span class="n">mstats</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">MultiStatistics</span><span class="p">(</span><span class="n">fitness</span><span class="o">=</span><span class="n">stats_fit</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">stats_size</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">)</span>
+        <span class="n">mstats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+        <span class="n">pop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">population</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">pop_size</span><span class="p">)</span>
+        <span class="n">hof</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">HallOfFame</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hof</span> <span class="o">=</span> <span class="n">hof</span>
+        <span class="n">pop</span><span class="p">,</span> <span class="n">log</span> <span class="o">=</span> <span class="n">algorithms</span><span class="o">.</span><span class="n">eaSimple</span><span class="p">(</span>
+            <span class="n">pop</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="p">,</span>
+            <span class="n">cxpb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">crossover_rate</span><span class="p">,</span>
+            <span class="n">mutpb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">mutation_rate</span><span class="p">,</span>
+            <span class="n">ngen</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_gphh</span><span class="o">.</span><span class="n">n_gen</span><span class="p">,</span>
+            <span class="n">stats</span><span class="o">=</span><span class="n">mstats</span><span class="p">,</span>
+            <span class="n">halloffame</span><span class="o">=</span><span class="n">hof</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_heuristic</span> <span class="o">=</span> <span class="n">hof</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_pop</span> <span class="o">=</span> <span class="n">pop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func_heuristic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">best_heuristic</span><span class="p">)</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_solution</span><span class="p">(</span>
+            <span class="n">domain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">func_heuristic</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">func_heuristic</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span>
+            <span class="p">[(</span><span class="n">solution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">solution</span><span class="p">))],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver.build_result_storage_for_domain">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.build_result_storage_for_domain">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_result_storage_for_domain</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_solution</span><span class="p">(</span>
+            <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">func_heuristic</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">func_heuristic</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span>
+            <span class="p">[(</span><span class="n">solution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_dict</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)))],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver.init_primitives">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.init_primitives">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_primitives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pset</span><span class="p">:</span> <span class="n">PrimitiveSetTyped</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrimitiveSetTyped</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_feature</span><span class="p">)):</span>
+            <span class="n">pset</span><span class="o">.</span><span class="n">renameArguments</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;ARG&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_feature</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">pset</span></div>
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver.build_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.build_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">domain</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span><span class="p">,</span>
+        <span class="n">individual</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">func_heuristic</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultidimensionalKnapsackSolution</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">func_heuristic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">func_heuristic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">individual</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">:</span> <span class="n">MultidimensionalKnapsackProblem</span> <span class="o">=</span> <span class="n">domain</span>
+        <span class="n">raw_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">list_items</span><span class="p">)):</span>
+            <span class="n">input_features</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">feature_function_map</span><span class="p">[</span><span class="n">lf</span><span class="p">](</span><span class="n">problem</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">item_index</span><span class="o">=</span><span class="n">j</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">lf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_feature</span>
+            <span class="p">]</span>
+            <span class="n">output_value</span> <span class="o">=</span> <span class="n">func_heuristic</span><span class="p">(</span><span class="o">*</span><span class="n">input_features</span><span class="p">)</span>
+            <span class="n">raw_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_value</span><span class="p">)</span>
+        <span class="n">sorted_indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">raw_values</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">raw_values</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">current_weight</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">list_taken</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">list_items</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">while</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">current_weight</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">d</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">))</span>
+        <span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_indexes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="n">current_weight</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="o">&lt;=</span> <span class="n">d</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">))</span>
+            <span class="p">):</span>
+                <span class="n">list_taken</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">value</span> <span class="o">+=</span> <span class="n">d</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span><span class="o">.</span><span class="n">value</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">max_capacities</span><span class="p">)):</span>
+                    <span class="n">current_weight</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">current_weight</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="p">)</span>
+            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">MultidimensionalKnapsackSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">list_taken</span><span class="o">=</span><span class="n">list_taken</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">current_weight</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver.evaluate_heuristic">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.evaluate_heuristic">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_heuristic</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">individual</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">domains</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MultidimensionalKnapsackProblem</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">func_heuristic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">individual</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">domain</span> <span class="ow">in</span> <span class="n">domains</span><span class="p">:</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_solution</span><span class="p">(</span>
+                <span class="n">individual</span><span class="o">=</span><span class="n">individual</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">func_heuristic</span><span class="o">=</span><span class="n">func_heuristic</span>
+            <span class="p">)</span>
+            <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_dict</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">))</span>  <span class="c1"># type: ignore # could also be TupleFitness</span>
+            <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">fitness</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vals</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">fitness</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">10</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_complexity</span><span class="p">(</span><span class="n">individual</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver.evaluate_complexity">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.evaluate_complexity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_complexity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">individual</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">all_primitives_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_features_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">individual</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">individual</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Primitive</span><span class="p">):</span>
+                <span class="n">all_primitives_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">individual</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">individual</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Terminal</span><span class="p">):</span>
+                <span class="n">all_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">individual</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">n_operators</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_primitives_list</span><span class="p">)</span>
+        <span class="n">n_features</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_features_list</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">n_operators</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">n_features</span>
+        <span class="k">return</span> <span class="n">val</span></div>
+
+
+<div class="viewcode-block" id="GphhKnapsackSolver.plot_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.gphh.GphhKnapsackSolver.plot_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">best_heuristic</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">drawing</span><span class="o">.</span><span class="n">spring_layout</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+
+        <span class="n">nx</span><span class="o">.</span><span class="n">draw_networkx_nodes</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">nx</span><span class="o">.</span><span class="n">draw_networkx_edges</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">nx</span><span class="o">.</span><span class="n">draw_networkx_labels</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,959 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.workforce.scheduling.solvers.cpsat &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../solvers.html">discrete_optimization.workforce.scheduling.solvers</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.workforce.scheduling.solvers.cpsat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.workforce.scheduling.solvers.cpsat</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSolverSolutionCallback</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">,</span> <span class="n">LinearExprT</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cpsat</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationCpSatSolver</span><span class="p">,</span>
+    <span class="n">SchedulingCpSatSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">WarmstartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+    <span class="n">EnumHyperparameter</span><span class="p">,</span>
+    <span class="n">SubBrick</span><span class="p">,</span>
+    <span class="n">SubBrickHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.commons.fairness_modeling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModelisationDispersion</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.commons.fairness_modeling_ortools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">cumulate_value_per_teams_version_2</span><span class="p">,</span>
+    <span class="n">model_fairness</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.scheduling.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocSchedulingProblem</span><span class="p">,</span>
+    <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">Task</span><span class="p">,</span>
+    <span class="n">UnaryResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.scheduling.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ObjectivesEnum</span><span class="p">,</span>
+    <span class="n">SolverAllocScheduling</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ApproximateBoundAllocScheduling</span><span class="p">,</span>
+    <span class="n">BaseAllocSchedulingLowerBoundProvider</span><span class="p">,</span>
+    <span class="n">BoundResourceViaRelaxedProblem</span><span class="p">,</span>
+    <span class="n">LBoundAllocScheduling</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.scheduling.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">compute_equivalent_teams_scheduling_problem</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AdditionalCPConstraints">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdditionalCPConstraints</span><span class="p">:</span>
+    <span class="c1"># some object to store additional constraint that could arrive on the way.</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">nb_teams_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">team_used_constraint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">set_tasks_ignore_reallocation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">forced_allocation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">adding_margin_on_sequence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        adding_margin_on_sequence: if the boolean flag is active, we want to add margin between</span>
+<span class="sd">        end of a task and start of the next one, with value to the integer value of the tuple.</span>
+<span class="sd">        This trick allow to produce schedule that respects the time transition constraint of the more complex problem</span>
+<span class="sd">        &quot;AllocSchedRoutingProblem&quot; if the margin is an upper bound of possible transition time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_teams_bounds</span> <span class="o">=</span> <span class="n">nb_teams_bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">team_used_constraint</span> <span class="o">=</span> <span class="n">team_used_constraint</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_tasks_ignore_reallocation</span> <span class="o">=</span> <span class="n">set_tasks_ignore_reallocation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forced_allocation</span> <span class="o">=</span> <span class="n">forced_allocation</span>
+        <span class="k">if</span> <span class="n">nb_teams_bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nb_teams_bounds</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">team_used_constraint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">team_used_constraint</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">set_tasks_ignore_reallocation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_tasks_ignore_reallocation</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">forced_allocation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">forced_allocation</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adding_margin_on_sequence</span> <span class="o">=</span> <span class="n">adding_margin_on_sequence</span></div>
+
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CPSatAllocSchedulingSolver</span><span class="p">(</span>
+    <span class="n">SchedulingCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">AllocationCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+    <span class="n">SolverAllocScheduling</span><span class="p">,</span>
+    <span class="n">WarmstartMixin</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;symmbreak_on_used&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;optional_activities&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;modelisation_dispersion&quot;</span><span class="p">,</span>
+            <span class="n">enum</span><span class="o">=</span><span class="n">ModelisationDispersion</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">ModelisationDispersion</span><span class="o">.</span><span class="n">EXACT_MODELING_WITH_IMPLICATION</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;adding_redundant_cumulative&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;add_lower_bound&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">SubBrickHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;lower_bound_method&quot;</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">BoundResourceViaRelaxedProblem</span><span class="p">,</span>
+                <span class="n">LBoundAllocScheduling</span><span class="p">,</span>
+                <span class="n">ApproximateBoundAllocScheduling</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">SubBrick</span><span class="p">(</span>
+                <span class="n">BoundResourceViaRelaxedProblem</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="n">BoundResourceViaRelaxedProblem</span><span class="o">.</span><span class="n">get_default_hyperparameters</span><span class="p">(),</span>
+            <span class="p">),</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;add_lower_bound&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">]),</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span>
+    <span class="n">variables</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+
+    <span class="n">at_most_one_unary_resource_per_task</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.get_task_start_or_end_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_task_start_or_end_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="n">i_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;starts_var&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;ends_var&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">i_task</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.get_task_unary_resource_is_present_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_task_unary_resource_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a 0-1 variable/expression telling if the unary_resource is used for the task.</span>
+
+<span class="sd">        NB: sometimes the given resource is never to be used by a task and the variable has not been created.</span>
+<span class="sd">        The convention is to return 0 in that case.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">i_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="n">i_team</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">teams_to_index</span><span class="p">[</span><span class="n">unary_resource</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">i_task</span><span class="p">][</span><span class="n">i_team</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.implements_lexico_api">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.implements_lexico_api">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">implements_lexico_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.get_lexico_objectives_available">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_lexico_objectives_available">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lexico_objectives_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ObjectivesEnum</span><span class="p">)</span> <span class="k">else</span> <span class="n">obj</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.set_lexico_objective">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_lexico_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_lexico_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ObjectivesEnum</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">_get_variables_obj_key</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">obj</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.add_lexico_constraint">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.add_lexico_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_lexico_constraint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ObjectivesEnum</span><span class="p">],</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">_get_variables_obj_key</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">obj</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">value</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.get_lexico_objective_value">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_lexico_objective_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lexico_objective_value</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ObjectivesEnum</span><span class="p">],</span> <span class="n">res</span><span class="p">:</span> <span class="n">ResultStorage</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">_get_variables_obj_key</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">sol</span><span class="o">.</span><span class="n">_intern_obj</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.set_model_obj_aggregated">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_model_obj_aggregated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_model_obj_aggregated</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">objs_weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ObjectivesEnum</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span>
+            <span class="nb">sum</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">_get_variables_obj_key</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">objs_weights</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_tasks</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">allocation</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_tasks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objs = </span><span class="si">{</span><span class="p">[</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;objs&#39;</span><span class="p">]]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Obj = </span><span class="si">{</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">()</span><span class="si">}</span><span class="s2">, Bound=</span><span class="si">{</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">BestObjectiveBound</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;resched_objs&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;resched_objs&quot;</span><span class="p">]:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Obj :</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Value : </span><span class="si">{</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;resched_objs&#39;</span><span class="p">][</span><span class="n">obj</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_tasks</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]))</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;ends_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]))</span>
+            <span class="n">schedule</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">start</span>
+            <span class="n">schedule</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">end</span>
+            <span class="k">for</span> <span class="n">index_team</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">index_team</span><span class="p">]):</span>
+                    <span class="n">allocation</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_team</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">AllocSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span> <span class="n">allocation</span><span class="o">=</span><span class="n">allocation</span>
+        <span class="p">)</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">_intern_obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">]:</span>
+            <span class="n">sol</span><span class="o">.</span><span class="n">_intern_obj</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">obj</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">ClearHints</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_tasks</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;ends_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="s2">&quot;actually_done&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;actually_done&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">index_team</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="n">index_team</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">index_team</span><span class="p">],</span> <span class="mi">1</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">index_team</span><span class="p">],</span> <span class="mi">0</span>
+                        <span class="p">)</span>
+            <span class="n">team_used</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_teams</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">team_used</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used&quot;</span><span class="p">][</span><span class="n">team</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used&quot;</span><span class="p">][</span><span class="n">team</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;reallocation&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;reallocation&quot;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;is_shifted&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_shifted&quot;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;delta_starts_abs&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;delta_starts_abs&quot;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;max_delta_start&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;max_delta_start&quot;</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;objectives&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MAKESPAN</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MAKESPAN</span><span class="p">],</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])),</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">objectives</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ObjectivesEnum</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">additional_constraints</span><span class="p">:</span> <span class="n">AdditionalCPConstraints</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;additional_constraints&quot;</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">objectives</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">objectives</span> <span class="o">=</span> <span class="p">[</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_TEAMS</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">add_lower_bound</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;add_lower_bound&quot;</span><span class="p">]</span>
+        <span class="n">optional_activities</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;optional_activities&quot;</span><span class="p">]</span>
+        <span class="n">adding_redundant_cumulative</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;adding_redundant_cumulative&quot;</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">starts_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ends_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">is_present_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">interval_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opt_interval_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">st_lb</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_lb_start_window</span><span class="p">(</span><span class="n">t</span><span class="p">)),</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_ub_start_window</span><span class="p">(</span><span class="n">t</span><span class="p">)),</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_lb_end_window</span><span class="p">(</span><span class="n">t</span><span class="p">)),</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_ub_end_window</span><span class="p">(</span><span class="n">t</span><span class="p">)),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">]</span>
+        <span class="n">dur</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">duration_task</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">]</span>
+        <span class="n">key_per_team</span> <span class="o">=</span> <span class="p">{</span><span class="n">j</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">}</span>
+        <span class="n">compatible_teams</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">compatible_teams_index_all_activity</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">additional_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">forced_alloc</span> <span class="o">=</span> <span class="n">additional_constraints</span><span class="o">.</span><span class="n">forced_allocation</span>
+            <span class="k">if</span> <span class="n">forced_alloc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">forced_alloc</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">forced_alloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">compatible_teams</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">forced_alloc</span><span class="p">[</span><span class="n">i</span><span class="p">]}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_tasks</span><span class="p">):</span>
+            <span class="n">starts_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">st_lb</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">ub</span><span class="o">=</span><span class="n">st_lb</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;start_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">ends_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">st_lb</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">ub</span><span class="o">=</span><span class="n">st_lb</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">3</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;end_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">interval_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">starts_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">end</span><span class="o">=</span><span class="n">ends_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">dur</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;interval_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">is_present_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">opt_interval_var</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">index_team</span> <span class="ow">in</span> <span class="n">compatible_teams</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="c1"># same as &quot;allocation_binary&quot; variable in the allocation problem</span>
+                <span class="n">is_present_var</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">index_team</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;alloc_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">index_team</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">opt_interval_var</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">index_team</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewOptionalIntervalVar</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">starts_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="n">end</span><span class="o">=</span><span class="n">ends_var</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="n">size</span><span class="o">=</span><span class="n">dur</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="n">is_present</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">index_team</span><span class="p">],</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;interval_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">index_team</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">key_per_team</span><span class="p">[</span><span class="n">index_team</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">index_team</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">optional_activities</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddExactlyOne</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">is_present_var</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+                <span class="p">)</span>
+                <span class="c1"># else managed later by self.create_actually_done_variables()</span>
+        <span class="c1"># Precedence constraints</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">precedence_constraints</span><span class="p">:</span>
+            <span class="n">i_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">t_suc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">precedence_constraints</span><span class="p">[</span><span class="n">t</span><span class="p">]:</span>
+                <span class="n">i_t_suc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t_suc</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">starts_var</span><span class="p">[</span><span class="n">i_t_suc</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ends_var</span><span class="p">[</span><span class="n">i_t</span><span class="p">])</span>
+
+        <span class="c1"># Same allocation constraints</span>
+        <span class="k">for</span> <span class="n">l_t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">same_allocation</span><span class="p">:</span>
+            <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">tt</span><span class="p">]</span> <span class="k">for</span> <span class="n">tt</span> <span class="ow">in</span> <span class="n">l_t</span><span class="p">]</span>
+            <span class="n">common_teams</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())),</span>
+                <span class="n">indexes</span><span class="p">,</span>
+                <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">common_teams</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddAllowedAssignments</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">],</span>
+                    <span class="p">[</span>
+                        <span class="nb">tuple</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">)),</span>
+                        <span class="nb">tuple</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">)),</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
+            <span class="c1"># Redundant</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">common_teams</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="n">is_present_var</span><span class="p">[</span><span class="n">indexes</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">c</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="n">is_present_var</span><span class="p">[</span><span class="n">indexes</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]][</span><span class="n">c</span><span class="p">]</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># Overlap constraints</span>
+        <span class="k">for</span> <span class="n">index_team</span> <span class="ow">in</span> <span class="n">key_per_team</span><span class="p">:</span>
+            <span class="n">unavailable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">compute_unavailability_calendar</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">[</span><span class="n">index_team</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">fake_tasks_unavailable</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewFixedSizeIntervalVar</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">unavailable</span>
+            <span class="p">]</span>
+            <span class="n">tasks_team</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">opt_interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">key_per_team</span><span class="p">[</span><span class="n">index_team</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fake_tasks_unavailable</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks_team</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                    <span class="n">tasks_team</span> <span class="o">+</span> <span class="n">fake_tasks_unavailable</span><span class="p">,</span>
+                    <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks_team</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">fake_tasks_unavailable</span><span class="p">)),</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks_team</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">additional_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">additional_constraints</span><span class="o">.</span><span class="n">adding_margin_on_sequence</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="ow">and</span> <span class="n">additional_constraints</span><span class="o">.</span><span class="n">adding_margin_on_sequence</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                    <span class="p">):</span>
+                        <span class="n">margin</span> <span class="o">=</span> <span class="n">additional_constraints</span><span class="o">.</span><span class="n">adding_margin_on_sequence</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="c1"># create just additional interval for the &quot;routing&quot; constraint.</span>
+                        <span class="n">intervals</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewOptionalFixedSizeIntervalVar</span><span class="p">(</span>
+                                <span class="n">start</span><span class="o">=</span><span class="n">starts_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+                                <span class="n">size</span><span class="o">=</span><span class="n">dur</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="n">margin</span><span class="p">,</span>
+                                <span class="n">is_present</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+                                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;dummy_longer_task_</span><span class="si">{</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">key_per_team</span><span class="p">[</span><span class="n">index_team</span><span class="p">]</span>
+                        <span class="p">]</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                            <span class="n">intervals</span><span class="o">=</span><span class="n">intervals</span><span class="p">,</span>
+                            <span class="n">demands</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">intervals</span><span class="p">),</span>
+                            <span class="n">capacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+        <span class="c1"># Resource constraints</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">:</span>
+                <span class="n">capa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_capacity</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+                <span class="n">interval_cons</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="n">interval_var</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">resource_consumption</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                            <span class="n">resource</span><span class="p">,</span> <span class="mi">0</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">resource_consumption</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">interval_cons</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">capa</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_cons</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddNoOverlap</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_cons</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                            <span class="n">intervals</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_cons</span><span class="p">],</span>
+                            <span class="n">demands</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_cons</span><span class="p">],</span>
+                            <span class="n">capacity</span><span class="o">=</span><span class="n">capa</span><span class="p">,</span>
+                        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;starts_var&quot;</span><span class="p">:</span> <span class="n">starts_var</span><span class="p">,</span>
+            <span class="s2">&quot;ends_var&quot;</span><span class="p">:</span> <span class="n">ends_var</span><span class="p">,</span>
+            <span class="s2">&quot;is_present_var&quot;</span><span class="p">:</span> <span class="n">is_present_var</span><span class="p">,</span>
+            <span class="s2">&quot;objectives&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;key_per_team&quot;</span><span class="p">:</span> <span class="n">key_per_team</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">optional_activities</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;actually_done&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_actually_done_variables</span><span class="p">()</span>
+        <span class="c1"># Objectives definitions</span>
+        <span class="k">if</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">DELTA_TO_EXISTING_SOLUTION</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s2">&quot;base_solution&quot;</span> <span class="ow">in</span> <span class="n">args</span>
+            <span class="n">sol</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;base_solution&quot;</span><span class="p">]</span>
+            <span class="n">problem</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">problem</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_delta_objectives</span><span class="p">(</span>
+                <span class="n">base_solution</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+                <span class="n">base_problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">additional_constraints</span><span class="o">=</span><span class="n">additional_constraints</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MAKESPAN</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MAKESPAN</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_global_makespan_variable</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_DONE_AC</span> <span class="ow">in</span> <span class="n">objectives</span> <span class="ow">and</span> <span class="n">optional_activities</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span>
+                <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_DONE_AC</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">get_nb_tasks_done_variable</span><span class="p">()</span>
+        <span class="n">used</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_used_variables_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">used</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;symmbreak_on_used&quot;</span><span class="p">]:</span>
+            <span class="n">equivalent_</span> <span class="o">=</span> <span class="n">compute_equivalent_teams_scheduling_problem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">equivalent_</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">ind1</span><span class="p">,</span> <span class="n">ind2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">group</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">group</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddImplication</span><span class="p">(</span><span class="n">used</span><span class="p">[</span><span class="n">ind2</span><span class="p">],</span> <span class="n">used</span><span class="p">[</span><span class="n">ind1</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">used</span><span class="p">[</span><span class="n">ind1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">used</span><span class="p">[</span><span class="n">ind2</span><span class="p">])</span>
+        <span class="n">nb_teams_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nb_unary_resources_used_variable</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_TEAMS</span><span class="p">]</span> <span class="o">=</span> <span class="n">nb_teams_var</span>
+        <span class="k">if</span> <span class="n">adding_redundant_cumulative</span><span class="p">:</span>
+            <span class="c1"># we need to introduce this new variable with positive lower bound</span>
+            <span class="c1"># if we instead directly addCumulative with nb_teams_var, the solver</span>
+            <span class="c1"># does not find a solution anymore (oddly)</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_teams</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;capacity&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">capacity</span> <span class="o">==</span> <span class="n">nb_teams_var</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                <span class="n">intervals</span><span class="o">=</span><span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_var</span><span class="p">],</span>
+                <span class="n">demands</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_var</span><span class="p">],</span>
+                <span class="n">capacity</span><span class="o">=</span><span class="n">capacity</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">add_lower_bound</span><span class="p">:</span>
+            <span class="n">lprovider</span><span class="p">:</span> <span class="n">SubBrick</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;lower_bound_method&quot;</span><span class="p">]</span>
+            <span class="n">t_deb</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+            <span class="n">lbound_provider</span><span class="p">:</span> <span class="n">BaseAllocSchedulingLowerBoundProvider</span> <span class="o">=</span> <span class="n">lprovider</span><span class="o">.</span><span class="n">cls</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span>
+            <span class="p">)</span>
+            <span class="n">bound</span> <span class="o">=</span> <span class="n">lbound_provider</span><span class="o">.</span><span class="n">get_lb_nb_teams</span><span class="p">(</span><span class="o">**</span><span class="n">lprovider</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">t_end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">nb_teams_var</span> <span class="o">&gt;=</span> <span class="n">bound</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_bounds</span> <span class="o">=</span> <span class="n">t_end</span> <span class="o">-</span> <span class="n">t_deb</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bound_teams</span> <span class="o">=</span> <span class="n">bound</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_bound</span> <span class="o">=</span> <span class="n">lbound_provider</span><span class="o">.</span><span class="n">status</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bound_teams</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_bounds</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_bound</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_objective_functions_on_cumul</span><span class="p">(</span><span class="n">objectives</span><span class="o">=</span><span class="n">objectives</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">additional_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_additional_constraints</span><span class="p">(</span>
+                <span class="n">additional_constraint</span><span class="o">=</span><span class="n">additional_constraints</span>
+            <span class="p">)</span>
+        <span class="n">objs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">obj</span> <span class="o">==</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_DONE_AC</span> <span class="ow">and</span> <span class="n">optional_activities</span><span class="p">:</span>
+                <span class="n">objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_DONE_AC</span><span class="p">])</span>
+                <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">100000.0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">obj</span> <span class="o">==</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_TEAMS</span><span class="p">:</span>
+                <span class="n">objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">NB_TEAMS</span><span class="p">])</span>
+                <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">10000.0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">obj</span> <span class="o">==</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MIN_WORKLOAD</span><span class="p">:</span>
+                <span class="n">objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MIN_WORKLOAD</span><span class="p">])</span>
+                <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">obj</span> <span class="o">==</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">DISPERSION</span><span class="p">:</span>
+                <span class="n">objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">DISPERSION</span><span class="p">])</span>
+                <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">obj</span> <span class="o">==</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MAKESPAN</span><span class="p">:</span>
+                <span class="n">objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MAKESPAN</span><span class="p">])</span>
+                <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">obj</span> <span class="o">==</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">DELTA_TO_EXISTING_SOLUTION</span><span class="p">:</span>
+                <span class="n">weights_dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;reallocated&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+                    <span class="s2">&quot;sum_delta_schedule&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="s2">&quot;max_delta_schedule&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s2">&quot;nb_shifted&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">weights_dict</span><span class="p">:</span>
+                    <span class="n">objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;resched_objs&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">])</span>
+                    <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">weights_dict</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;resched_objs&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span>
+                    <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">DELTA_TO_EXISTING_SOLUTION</span>
+                <span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">weights_dict</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;resched_objs&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">weights_dict</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">objs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">objs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objs</span><span class="p">))))</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.add_objective_functions_on_cumul">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.add_objective_functions_on_cumul">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_objective_functions_on_cumul</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">objectives</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ObjectivesEnum</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span>
+    <span class="p">):</span>
+        <span class="n">modelisation_dispersion</span><span class="p">:</span> <span class="n">ModelisationDispersion</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span>
+            <span class="s2">&quot;modelisation_dispersion&quot;</span>
+        <span class="p">]</span>
+        <span class="n">dur</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">duration_task</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">DISPERSION</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+            <span class="n">dict_fairness</span> <span class="o">=</span> <span class="n">model_fairness</span><span class="p">(</span>
+                <span class="n">used_team</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used&quot;</span><span class="p">],</span>
+                <span class="n">allocation_variables</span><span class="o">=</span><span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_tasks</span><span class="p">)</span>
+                <span class="p">],</span>
+                <span class="n">value_per_task</span><span class="o">=</span><span class="n">dur</span><span class="p">,</span>
+                <span class="n">modelisation_dispersion</span><span class="o">=</span><span class="n">modelisation_dispersion</span><span class="p">,</span>
+                <span class="n">cp_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="p">,</span>
+                <span class="n">number_teams</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_teams</span><span class="p">,</span>
+                <span class="n">name_value</span><span class="o">=</span><span class="s2">&quot;workload&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;cumul_workload&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_fairness</span><span class="p">[</span><span class="s2">&quot;cumulated_value&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;min_value_workload&quot;</span> <span class="ow">in</span> <span class="n">dict_fairness</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;min_workload&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_fairness</span><span class="p">[</span><span class="s2">&quot;min_value_workload&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;max_value_workload&quot;</span> <span class="ow">in</span> <span class="n">dict_fairness</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;max_workload&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_fairness</span><span class="p">[</span><span class="s2">&quot;max_value_workload&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">DISPERSION</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_fairness</span><span class="p">[</span>
+                <span class="s2">&quot;obj&quot;</span>
+            <span class="p">]</span>
+        <span class="k">if</span> <span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MIN_WORKLOAD</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+            <span class="n">variables</span> <span class="o">=</span> <span class="n">cumulate_value_per_teams_version_2</span><span class="p">(</span>
+                <span class="n">used_team</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used&quot;</span><span class="p">],</span>
+                <span class="n">allocation_variables</span><span class="o">=</span><span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_tasks</span><span class="p">)</span>
+                <span class="p">],</span>
+                <span class="n">value_per_task</span><span class="o">=</span><span class="n">dur</span><span class="p">,</span>
+                <span class="n">cp_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="p">,</span>
+                <span class="n">number_teams</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_teams</span><span class="p">,</span>
+                <span class="n">name_value</span><span class="o">=</span><span class="s2">&quot;workload_&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">min_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">dur</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;min_value_workload&quot;</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMinEquality</span><span class="p">(</span><span class="n">min_value</span><span class="p">,</span> <span class="n">variables</span><span class="p">[</span><span class="s2">&quot;workload_per_team_nz&quot;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="n">ObjectivesEnum</span><span class="o">.</span><span class="n">MIN_WORKLOAD</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_value</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.set_additional_constraints">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_additional_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_additional_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">additional_constraint</span><span class="p">:</span> <span class="n">AdditionalCPConstraints</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_nb_teams_constraints</span><span class="p">(</span><span class="n">additional_constraint</span><span class="o">=</span><span class="n">additional_constraint</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_team_used_constraint</span><span class="p">(</span><span class="n">additional_constraint</span><span class="o">=</span><span class="n">additional_constraint</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.set_nb_teams_constraints">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_nb_teams_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_nb_teams_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_constraint</span><span class="p">:</span> <span class="n">AdditionalCPConstraints</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">used</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="o">==</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">([</span><span class="n">used</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">used</span><span class="p">])</span>
+                    <span class="o">==</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="nb">sum</span><span class="p">([</span><span class="n">used</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">used</span><span class="p">])</span>
+                        <span class="o">&gt;=</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="nb">sum</span><span class="p">([</span><span class="n">used</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">used</span><span class="p">])</span>
+                        <span class="o">&lt;=</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">nb_teams_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.set_team_used_constraint">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_team_used_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_team_used_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_constraint</span><span class="p">:</span> <span class="n">AdditionalCPConstraints</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">team_used_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">used</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">team_index</span> <span class="ow">in</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">team_used_constraint</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">team_used_constraint</span><span class="p">[</span><span class="n">team_index</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># don&#39;t care for the syntax warning, i want that it only works with booleans</span>
+                    <span class="k">if</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">team_used_constraint</span><span class="p">[</span><span class="n">team_index</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">used</span><span class="p">[</span><span class="n">team_index</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">additional_constraint</span><span class="o">.</span><span class="n">team_used_constraint</span><span class="p">[</span><span class="n">team_index</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">used</span><span class="p">[</span><span class="n">team_index</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.create_delta_objectives">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_delta_objectives">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_delta_objectives</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+        <span class="n">base_problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">,</span>
+        <span class="n">additional_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AdditionalCPConstraints</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">common_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">len_common_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_tasks</span><span class="p">)</span>
+        <span class="n">reallocation_bool</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;realloc_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">common_tasks</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;reallocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reallocation_bool</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;tasks_order_in_reallocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">common_tasks</span>
+        <span class="n">delta_starts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">delta_starts_abs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">is_shifted</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;shifted_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">common_tasks</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_shifted&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_shifted</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_common_tasks</span><span class="p">):</span>
+            <span class="n">tt</span> <span class="o">=</span> <span class="n">common_tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">index_in_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">tt</span><span class="p">]</span>
+            <span class="n">ignore_reallocation</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">additional_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">additional_constraints</span><span class="o">.</span><span class="n">set_tasks_ignore_reallocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">index_in_problem</span>
+                        <span class="ow">in</span> <span class="n">additional_constraints</span><span class="o">.</span><span class="n">set_tasks_ignore_reallocation</span>
+                    <span class="p">):</span>
+                        <span class="n">ignore_reallocation</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="n">index_in_base_problem</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">tt</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">base_solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">index_in_base_problem</span><span class="p">]</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">index_to_team</span>
+            <span class="p">):</span>
+                <span class="n">team_of_base_solution</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">team_of_base_solution</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">[</span>
+                    <span class="n">base_solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">index_in_base_problem</span><span class="p">]</span>
+                <span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">team_of_base_solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">index_team</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">teams_to_index</span><span class="p">[</span><span class="n">team_of_base_solution</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ignore_reallocation</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">index_team</span>
+                        <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">index_in_problem</span><span class="p">]</span>
+                    <span class="p">):</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Problem&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">index_in_problem</span><span class="p">][</span>
+                                <span class="n">index_team</span>
+                            <span class="p">]</span>
+                            <span class="o">==</span> <span class="mi">1</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">reallocation_bool</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">())</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present_var&quot;</span><span class="p">][</span><span class="n">index_in_problem</span><span class="p">][</span>
+                                <span class="n">index_team</span>
+                            <span class="p">]</span>
+                            <span class="o">==</span> <span class="mi">0</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">reallocation_bool</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">reallocation_bool</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="n">delta_starts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">base_solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">index_in_base_problem</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts_var&quot;</span><span class="p">][</span><span class="n">index_in_problem</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">delta_starts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">is_shifted</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">delta_starts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">is_shifted</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">())</span>
+            <span class="n">delta_starts_abs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                    <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;delta_abs_starts_</span><span class="si">{</span><span class="n">index_in_problem</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddAbsEquality</span><span class="p">(</span><span class="n">delta_starts_abs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">delta_starts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;delta_starts_abs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta_starts_abs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;delta_starts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta_starts</span>
+        <span class="n">max_delta_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;max_delta_starts&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;max_delta_start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_delta_start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span><span class="n">max_delta_start</span><span class="p">,</span> <span class="n">delta_starts_abs</span><span class="p">)</span>
+        <span class="n">objs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">reallocation_bool</span><span class="p">)</span>
+        <span class="p">]</span>  <span class="c1"># count the number of changes of team/task allocation</span>
+        <span class="n">objs</span> <span class="o">+=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">delta_starts_abs</span><span class="p">)]</span>  <span class="c1"># sum all absolute shift on the schedule</span>
+        <span class="n">objs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">max_delta_start</span><span class="p">]</span>  <span class="c1"># maximum of absolute shift over all tasks</span>
+        <span class="n">objs</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">is_shifted</span><span class="p">)</span>
+        <span class="p">]</span>  <span class="c1"># Number of task that shifted at least by 1 unit of time.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;resched_objs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;reallocated&quot;</span><span class="p">:</span> <span class="n">objs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;sum_delta_schedule&quot;</span><span class="p">:</span> <span class="n">objs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="s2">&quot;max_delta_schedule&quot;</span><span class="p">:</span> <span class="n">objs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s2">&quot;nb_shifted&quot;</span><span class="p">:</span> <span class="n">objs</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">objs</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.create_used_variables_dict">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_used_variables_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_used_variables_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_used_variables</span><span class="p">()</span>
+        <span class="n">used</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">teams_to_index</span><span class="p">[</span><span class="n">team</span><span class="p">]:</span> <span class="n">used_var</span>
+            <span class="k">for</span> <span class="n">team</span><span class="p">,</span> <span class="n">used_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_variables</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">used</span></div>
+
+
+<div class="viewcode-block" id="CPSatAllocSchedulingSolver.create_actually_done_variables">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.workforce.scheduling.solvers.html#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_actually_done_variables">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_actually_done_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_done_variables</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span> <span class="n">done_var</span>
+            <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">done_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">done_variables</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_variables_obj_key</span><span class="p">(</span>
+    <span class="n">obj</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ObjectivesEnum</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ObjectivesEnum</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ObjectivesEnum</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">obj</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">obj</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

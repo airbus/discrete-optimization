@@ -1,0 +1,1027 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.workforce.scheduling.utils &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.workforce.scheduling.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.workforce.scheduling.utils</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">patches</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.allocation.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AggregateOperator</span><span class="p">,</span>
+    <span class="n">AllocationAdditionalConstraint</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+    <span class="n">TeamAllocationProblemMultiobj</span><span class="p">,</span>
+    <span class="n">TeamAllocationSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.scheduling.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocSchedulingProblem</span><span class="p">,</span>
+    <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">TasksDescription</span><span class="p">,</span>
+    <span class="n">satisfy_detailed</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">this_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="overlap_interval">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.overlap_interval">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">overlap_interval</span><span class="p">(</span><span class="n">interval_1</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">interval_2</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
+    <span class="k">return</span> <span class="n">interval_1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">interval_2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">interval_2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">interval_1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="compute_equivalent_teams_scheduling_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_equivalent_teams_scheduling_problem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_equivalent_teams_scheduling_problem</span><span class="p">(</span>
+    <span class="n">scheduling_problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a list of disjoint set of teams index, that can be considered as indistinguishable</span>
+<span class="sd">    from a solution point of view. Example : in the pure coloring problem all the colors/team are equivalent</span>
+<span class="sd">    In the team allocation problem, due to restricted compatible teams to task, the equivalent class are different</span>
+<span class="sd">    Adaptation from the notebook/test_models.ipynb</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">allowed_teams</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="n">scheduling_problem</span><span class="o">.</span><span class="n">teams_to_index</span><span class="p">[</span><span class="n">team</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">scheduling_problem</span><span class="o">.</span><span class="n">available_team_for_activity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">t</span><span class="p">,</span> <span class="n">scheduling_problem</span><span class="o">.</span><span class="n">team_names</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">scheduling_problem</span><span class="o">.</span><span class="n">tasks_list</span>
+    <span class="p">]</span>
+    <span class="n">equiv_teams</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">all_teams</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">scheduling_problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">)</span>
+    <span class="c1"># for each team t, compute the intersection of teams that can do the same task as t.</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">scheduling_problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">:</span>
+        <span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_teams</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">allowed_teams</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">s</span><span class="p">])</span>
+        <span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">s</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">scheduling_problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">scheduling_problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">[</span><span class="n">s</span><span class="p">]]</span>
+                <span class="o">==</span> <span class="n">scheduling_problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">scheduling_problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">[</span><span class="n">t</span><span class="p">]]</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">equiv_teams</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">et</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">equiv_teams</span><span class="p">[</span><span class="n">et</span><span class="p">]:</span>
+                <span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">et</span><span class="p">)</span>
+    <span class="n">all_symm_teams</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">equiv_teams</span><span class="p">])</span>
+    <span class="n">symm_groups</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">group</span><span class="p">))</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">all_symm_teams</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">symm_groups</span></div>
+
+
+
+<div class="viewcode-block" id="compute_changes_between_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_changes_between_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_changes_between_solution</span><span class="p">(</span>
+    <span class="n">solution_a</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">solution_b</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">problem_a</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">problem_b</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">problem_a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">problem_a</span> <span class="o">=</span> <span class="n">solution_a</span><span class="o">.</span><span class="n">problem</span>
+    <span class="k">if</span> <span class="n">problem_b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">problem_b</span> <span class="o">=</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">problem</span>
+    <span class="k">if</span> <span class="n">problem_a</span> <span class="o">==</span> <span class="n">problem_b</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">compute_changes_between_solution_same_pb</span><span class="p">(</span>
+            <span class="n">solution_a</span><span class="p">,</span> <span class="n">solution_b</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem_a</span>
+        <span class="p">)</span>
+
+    <span class="n">common_activities</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">problem_a</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">problem_b</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)</span>
+    <span class="n">activities</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">common_activities</span><span class="p">]</span>
+    <span class="n">alloc_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">solution_a</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">problem_a</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">a</span><span class="p">]]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">activities</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">alloc_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">solution_b</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">problem_b</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">a</span><span class="p">]]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">activities</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">schedule_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">solution_a</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">problem_a</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">activities</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">schedule_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">solution_b</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">problem_b</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">activities</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">reallocated</span> <span class="o">=</span> <span class="p">(</span><span class="n">alloc_a</span> <span class="o">!=</span> <span class="n">alloc_b</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+    <span class="n">shifted</span> <span class="o">=</span> <span class="p">(</span><span class="n">schedule_a</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">schedule_b</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+    <span class="n">nb_shifted</span> <span class="o">=</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">schedule_a</span> <span class="o">-</span> <span class="n">schedule_b</span>
+    <span class="n">abs_delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">mean_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">abs_delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">sum_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">abs_delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">max_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">abs_delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mean_shift</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">max_shift</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">sum_shift</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># abs_delta = np.abs(delta)</span>
+    <span class="n">details</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;allocs&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">alloc_a</span><span class="p">,</span> <span class="n">alloc_b</span><span class="p">),</span>
+        <span class="s2">&quot;schedules&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">schedule_a</span><span class="p">,</span> <span class="n">schedule_b</span><span class="p">),</span>
+        <span class="s2">&quot;reallocated_index&quot;</span><span class="p">:</span> <span class="n">reallocated</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;reallocated_tasks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">activities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">reallocated</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+        <span class="s2">&quot;nb_reallocated&quot;</span><span class="p">:</span> <span class="n">reallocated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;shifted_index&quot;</span><span class="p">:</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;shifted_tasks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">activities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+        <span class="s2">&quot;shifts&quot;</span><span class="p">:</span> <span class="n">delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;nb_shift&quot;</span><span class="p">:</span> <span class="n">nb_shifted</span><span class="p">,</span>
+        <span class="s2">&quot;mean_shift&quot;</span><span class="p">:</span> <span class="n">mean_shift</span><span class="p">,</span>
+        <span class="s2">&quot;sum_shift&quot;</span><span class="p">:</span> <span class="n">sum_shift</span><span class="p">,</span>
+        <span class="s2">&quot;max_shift&quot;</span><span class="p">:</span> <span class="n">max_shift</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">details</span></div>
+
+
+
+<div class="viewcode-block" id="compute_changes_between_solution_same_pb">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_changes_between_solution_same_pb">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_changes_between_solution_same_pb</span><span class="p">(</span>
+    <span class="n">solution_a</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">solution_b</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">problem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="n">solution_a</span><span class="o">.</span><span class="n">problem</span>
+    <span class="n">reallocated</span> <span class="o">=</span> <span class="p">(</span><span class="n">solution_a</span><span class="o">.</span><span class="n">allocation</span> <span class="o">!=</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">allocation</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+    <span class="n">shifted</span> <span class="o">=</span> <span class="p">(</span><span class="n">solution_a</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+    <span class="n">nb_reallocated</span> <span class="o">=</span> <span class="n">reallocated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nb_shifted</span> <span class="o">=</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">solution_a</span><span class="o">.</span><span class="n">schedule</span> <span class="o">-</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">schedule</span>
+    <span class="n">abs_delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">mean_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">abs_delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">max_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">abs_delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">sum_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">abs_delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mean_shift</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">max_shift</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">sum_shift</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">details</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;allocs&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">solution_a</span><span class="o">.</span><span class="n">allocation</span><span class="p">,</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">allocation</span><span class="p">),</span>
+        <span class="s2">&quot;schedules&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">solution_a</span><span class="o">.</span><span class="n">schedule</span><span class="p">,</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">schedule</span><span class="p">),</span>
+        <span class="s2">&quot;reallocated_index&quot;</span><span class="p">:</span> <span class="n">reallocated</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;reallocated_tasks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">reallocated</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+        <span class="s2">&quot;nb_reallocated&quot;</span><span class="p">:</span> <span class="n">reallocated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;shifted_index&quot;</span><span class="p">:</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;shifted_tasks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">shifted</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+        <span class="s2">&quot;shifts&quot;</span><span class="p">:</span> <span class="n">delta</span><span class="p">[</span><span class="n">shifted</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;nb_shift&quot;</span><span class="p">:</span> <span class="n">nb_shifted</span><span class="p">,</span>
+        <span class="s2">&quot;sum_shift&quot;</span><span class="p">:</span> <span class="n">sum_shift</span><span class="p">,</span>
+        <span class="s2">&quot;mean_shift&quot;</span><span class="p">:</span> <span class="n">mean_shift</span><span class="p">,</span>
+        <span class="s2">&quot;max_shift&quot;</span><span class="p">:</span> <span class="n">max_shift</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">details</span></div>
+
+
+
+<div class="viewcode-block" id="plot_schedule_comparison">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.plot_schedule_comparison">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_schedule_comparison</span><span class="p">(</span>
+    <span class="n">base_solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">updated_solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nice visu to compare 2 schedules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base_allocation</span> <span class="o">=</span> <span class="n">base_solution</span><span class="o">.</span><span class="n">allocation</span>
+    <span class="n">base_schedule</span> <span class="o">=</span> <span class="n">base_solution</span><span class="o">.</span><span class="n">schedule</span>
+
+    <span class="n">updated_allocation</span> <span class="o">=</span> <span class="n">updated_solution</span><span class="o">.</span><span class="n">allocation</span>
+    <span class="n">updated_schedule</span> <span class="o">=</span> <span class="n">updated_solution</span><span class="o">.</span><span class="n">schedule</span>
+
+    <span class="c1"># Create a color map for teams</span>
+    <span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span>
+        <span class="s2">&quot;tab20&quot;</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">number_teams</span>
+    <span class="p">)</span>  <span class="c1"># Using tab20 to assign unique colors for up to 20 teams</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">cmap</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">number_teams</span><span class="p">)]</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">all_teams</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">base_allocation</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">updated_allocation</span><span class="p">)</span>
+    <span class="n">sorted_all_teams</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">all_teams</span><span class="p">))</span>
+    <span class="n">sorted_all_teams</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sorted_all_teams</span><span class="p">]</span>
+    <span class="k">if</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">sorted_all_teams</span><span class="p">:</span>
+        <span class="n">sorted_all_teams</span> <span class="o">=</span> <span class="n">sorted_all_teams</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;Unset&quot;</span><span class="p">]</span>
+    <span class="n">team_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">sorted_all_teams</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">))}</span>
+    <span class="c1"># Iterate over each task</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">base_allocation</span><span class="p">)):</span>
+        <span class="n">team_base</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">base_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">team_updated</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">updated_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">team_base</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">team_base</span> <span class="o">=</span> <span class="s2">&quot;Unset&quot;</span>
+        <span class="k">if</span> <span class="n">team_updated</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">team_updated</span> <span class="o">=</span> <span class="s2">&quot;Unset&quot;</span>
+
+        <span class="n">start_base</span><span class="p">,</span> <span class="n">end_base</span> <span class="o">=</span> <span class="n">base_schedule</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">start_updated</span><span class="p">,</span> <span class="n">end_updated</span> <span class="o">=</span> <span class="n">updated_schedule</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="c1"># Plot updated solution as a rectangle</span>
+        <span class="n">rect_updated</span> <span class="o">=</span> <span class="n">patches</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">start_updated</span><span class="p">,</span> <span class="n">team_to_index</span><span class="p">[</span><span class="n">team_updated</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.4</span><span class="p">),</span>
+            <span class="n">end_updated</span> <span class="o">-</span> <span class="n">start_updated</span><span class="p">,</span>
+            <span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">facecolor</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team_updated</span><span class="p">]],</span>
+            <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+            <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># linestyle=&#39;--&#39;)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect_updated</span><span class="p">)</span>
+
+        <span class="c1"># Draw an arrow from the end of the base task to the start of the updated task</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_updated</span><span class="p">),</span> <span class="n">team_updated</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_base</span><span class="p">),</span> <span class="n">team_base</span><span class="p">):</span>
+            <span class="c1"># Plot base solution as a rectangle</span>
+            <span class="n">rect_base</span> <span class="o">=</span> <span class="n">patches</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">start_base</span><span class="p">,</span> <span class="n">team_to_index</span><span class="p">[</span><span class="n">team_base</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.4</span><span class="p">),</span>
+                <span class="n">end_base</span> <span class="o">-</span> <span class="n">start_base</span><span class="p">,</span>
+                <span class="mf">0.8</span><span class="p">,</span>
+                <span class="n">facecolor</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team_base</span><span class="p">]],</span>
+                <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Team </span><span class="si">{</span><span class="n">team_base</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect_base</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">xy</span><span class="o">=</span><span class="p">((</span><span class="n">start_updated</span> <span class="o">+</span> <span class="n">end_updated</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">team_to_index</span><span class="p">[</span><span class="n">team_updated</span><span class="p">]),</span>
+                <span class="n">xytext</span><span class="o">=</span><span class="p">((</span><span class="n">start_base</span> <span class="o">+</span> <span class="n">end_base</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">team_to_index</span><span class="p">[</span><span class="n">team_base</span><span class="p">]),</span>
+                <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s2">&quot;-&gt;&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Customizing the plot</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Teams&quot;</span><span class="p">)</span>
+    <span class="c1"># min_alloc = min(base_allocation.min(), updated_allocation.min())</span>
+    <span class="c1"># max_alloc = max(base_allocation.max(), updated_allocation.max())</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">)))</span>  <span class="c1"># np.arange(min_alloc, max_alloc+1, 1))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span>
+        <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Team </span><span class="si">{</span><span class="n">sorted_all_teams</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">))]</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Schedule Comparison (Base vs Updated)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Set limits to ensure the rectangles fit well</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span>
+        <span class="nb">min</span><span class="p">(</span><span class="n">base_schedule</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">updated_schedule</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="nb">max</span><span class="p">(</span><span class="n">base_schedule</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">updated_schedule</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># Show the grid for clarity</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="plotly_schedule_comparison">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.plotly_schedule_comparison">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plotly_schedule_comparison</span><span class="p">(</span>
+    <span class="n">base_solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">updated_solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">,</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">,</span>
+    <span class="n">index_team_to_other_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">display</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">additional_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_color_scale</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_color_map_per_task</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">color_map_per_task</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">opacity_map_per_task</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">show_all_changes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">show_change</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">plot_team_breaks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">plot_xticks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">plot_text</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Scheduling Comparison (Base vs Updated)&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nice visu to compare 2 schedules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">opacity_map_per_task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">opacity_map_per_task</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">index_team_to_other_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">index_team_to_other_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_team</span><span class="p">}</span>
+    <span class="n">base_allocation</span> <span class="o">=</span> <span class="n">base_solution</span><span class="o">.</span><span class="n">allocation</span>
+    <span class="n">max_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">base_solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">base_schedule</span> <span class="o">=</span> <span class="n">base_solution</span><span class="o">.</span><span class="n">schedule</span> <span class="o">+</span> <span class="n">problem</span><span class="o">.</span><span class="n">horizon_start_shift</span> <span class="o">//</span> <span class="mi">60</span>
+    <span class="n">updated_schedule</span> <span class="o">=</span> <span class="n">updated_solution</span><span class="o">.</span><span class="n">schedule</span> <span class="o">+</span> <span class="n">problem</span><span class="o">.</span><span class="n">horizon_start_shift</span> <span class="o">//</span> <span class="mi">60</span>
+    <span class="n">min_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">base_schedule</span><span class="p">)</span>
+    <span class="n">base_schedule</span> <span class="o">=</span> <span class="n">base_schedule</span>  <span class="c1"># -min_</span>
+    <span class="n">updated_allocation</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">updated_solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">base_allocation</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">base_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">updated_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">updated_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pc</span>
+
+    <span class="n">colormap</span> <span class="o">=</span> <span class="s2">&quot;Viridis&quot;</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># Example: Normalized float value between 0 and 1</span>
+    <span class="c1"># Extract the color for the given value using the colormap</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
+    <span class="n">all_teams</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">base_allocation</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">updated_allocation</span><span class="p">)</span>
+    <span class="n">sorted_all_teams</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">all_teams</span><span class="p">))</span>
+    <span class="n">sorted_all_teams</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sorted_all_teams</span><span class="p">]</span>
+    <span class="n">indexing</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">index_team_to_other_index</span><span class="p">)</span>
+    <span class="n">indexing</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">sorted_all_teams</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">indexing</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sorted_all_teams</span><span class="p">])</span>
+    <span class="k">if</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">sorted_all_teams</span><span class="p">:</span>
+        <span class="n">sorted_all_teams</span> <span class="o">=</span> <span class="n">sorted_all_teams</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;Unset&quot;</span><span class="p">]</span>
+    <span class="n">team_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">sorted_all_teams</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">))}</span>
+    <span class="c1"># Iterate over each task</span>
+    <span class="k">if</span> <span class="n">use_color_scale</span><span class="p">:</span>
+        <span class="n">colors_</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">sample_colorscale</span><span class="p">(</span>
+            <span class="n">colormap</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="c1"># `value` is between 0 and 1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">colors_</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;green&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">))]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">base_allocation</span><span class="p">)):</span>
+        <span class="n">team_base</span> <span class="o">=</span> <span class="n">indexing</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">base_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span>
+        <span class="n">team_updated</span> <span class="o">=</span> <span class="n">indexing</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">updated_allocation</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span>
+        <span class="k">if</span> <span class="n">team_base</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">team_base</span> <span class="o">=</span> <span class="s2">&quot;Unset&quot;</span>
+        <span class="k">if</span> <span class="n">team_updated</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">team_updated</span> <span class="o">=</span> <span class="s2">&quot;Unset&quot;</span>
+        <span class="n">start_base</span><span class="p">,</span> <span class="n">end_base</span> <span class="o">=</span> <span class="n">base_schedule</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">start_updated</span><span class="p">,</span> <span class="n">end_updated</span> <span class="o">=</span> <span class="n">updated_schedule</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">start_base_ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">start_base</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="n">end_base_ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">end_base</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="n">start_updated_ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">start_updated</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="n">end_updated_ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">end_updated</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="n">start_updated_ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_updated</span> <span class="o">*</span> <span class="mi">60</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="n">end_updated_ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">end_updated</span> <span class="o">*</span> <span class="mi">60</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot updated solution as a rectangle</span>
+        <span class="n">hover</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="s2">&quot;activity_index&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+            <span class="s2">&quot;index_team&quot;</span><span class="p">:</span> <span class="n">team_updated</span><span class="p">,</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start_updated_ts</span><span class="p">,</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">end_updated_ts</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">additional_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="n">additional_info</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">additional_info</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">[</span><span class="n">i</span><span class="p">]]:</span>
+                    <span class="n">hover</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">additional_info</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">hover_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">hover</span><span class="p">:</span>
+            <span class="n">hover_template</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&lt;b&gt;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">:&lt;/b&gt; </span><span class="si">{</span><span class="n">hover</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;br&gt;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;ACTIVITY TYPE&quot;</span> <span class="ow">in</span> <span class="n">hover</span><span class="p">:</span>
+            <span class="n">hover_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="s2">&quot;ACTIVITY TYPE&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;end&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;START LOCATION NAME&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;DESTINATION LOCATION NAME&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Ressourcenname&quot;</span><span class="p">,</span>
+            <span class="p">]:</span>
+                <span class="n">hover_template</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&lt;b&gt;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">:&lt;/b&gt; </span><span class="si">{</span><span class="n">hover</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;br&gt;&quot;</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="p">[(</span><span class="n">end_updated</span> <span class="o">-</span> <span class="n">start_updated</span><span class="p">)],</span>
+                <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team_updated</span><span class="p">]],</span>
+                <span class="n">base</span><span class="o">=</span><span class="n">start_updated</span><span class="p">,</span>
+                <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;h&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">i</span> <span class="k">if</span> <span class="n">plot_text</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">textangle</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="c1"># textfont=dict(size=15, color=&quot;black&quot;),</span>
+                <span class="c1"># textposition=&quot;outside&quot;,</span>
+                <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">colors_</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team_updated</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">use_color_map_per_task</span>
+                    <span class="k">else</span> <span class="n">color_map_per_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span>
+                    <span class="p">),</span>  <span class="c1"># Normalize team index for color mapping</span>
+                    <span class="c1"># colorscale=&quot;rainbow&quot;,  # Use the custom color scale</span>
+                    <span class="n">showscale</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># No color scale bar</span>
+                    <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">1.5</span><span class="p">),</span>
+                    <span class="n">opacity</span><span class="o">=</span><span class="n">opacity_map_per_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="c1"># marker_color=[float(team_to_index[team_updated] / len(team_to_index))],</span>
+                <span class="c1"># marker_colorscale=&quot;rainbow&quot;,</span>
+                <span class="n">hovertemplate</span><span class="o">=</span><span class="n">hover_template</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># Draw an arrow from the end of the base task to the start of the updated task</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_updated</span><span class="p">),</span> <span class="n">team_updated</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_base</span><span class="p">),</span> <span class="n">team_base</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">show_all_changes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">show_change</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+                    <span class="k">continue</span>
+            <span class="c1"># Plot base solution as a rectangle</span>
+            <span class="n">hover</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="s2">&quot;activity_index&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                <span class="s2">&quot;index_team&quot;</span><span class="p">:</span> <span class="n">team_base</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">hover_template</span> <span class="o">=</span> <span class="s2">&quot;&lt;b&gt;Base schedule&lt;/b&gt; &lt;br&gt;&quot;</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">hover</span><span class="p">:</span>
+                <span class="n">hover_template</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&lt;b&gt;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">:&lt;/b&gt; </span><span class="si">{</span><span class="n">hover</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">&lt;br&gt;&quot;</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                    <span class="n">x</span><span class="o">=</span><span class="p">[(</span><span class="n">end_base</span> <span class="o">-</span> <span class="n">start_base</span><span class="p">)],</span>
+                    <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team_base</span><span class="p">]],</span>
+                    <span class="n">base</span><span class="o">=</span><span class="n">start_base</span><span class="p">,</span>
+                    <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;h&quot;</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="c1"># marker_color=[float(team_to_index[team_base]/len(team_to_index))],</span>
+                    <span class="c1"># marker_colorscale=&quot;rainbow&quot;,</span>
+                    <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">color</span><span class="o">=</span><span class="n">colors_</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team_base</span><span class="p">]]</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">use_color_map_per_task</span>
+                        <span class="k">else</span> <span class="n">color_map_per_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span><span class="p">),</span>
+                        <span class="c1"># colorscale=&quot;rainbow&quot;,</span>
+                        <span class="n">opacity</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">hovertemplate</span><span class="o">=</span><span class="n">hover_template</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="c1"># fig.add_annotation(</span>
+            <span class="c1">#     ax=(start_base+end_base)//2,</span>
+            <span class="c1">#     ay=team_to_index[team_base],</span>
+            <span class="c1">#     x=(start_updated+end_updated)//2,</span>
+            <span class="c1">#     y=team_to_index[team_updated],</span>
+            <span class="c1">#     xref=&quot;x&quot;,</span>
+            <span class="c1">#     yref=&quot;y&quot;,</span>
+            <span class="c1">#     axref=&quot;x&quot;,</span>
+            <span class="c1">#     ayref=&quot;y&quot;,</span>
+            <span class="c1">#     showarrow=True,</span>
+            <span class="c1">#     arrowhead=1,</span>
+            <span class="c1">#     # arrowhead=6,  # Larger arrowhead</span>
+            <span class="c1">#     arrowsize=1,  # Increase size of the arrow</span>
+            <span class="c1">#     # arrowwidth=3,  # Thicker arrow line</span>
+            <span class="c1">#     arrowcolor=&quot;darkred&quot;,  # High-contrast arrow color</span>
+            <span class="c1">#     opacity=0.8  # Fully opaque arrow</span>
+            <span class="c1"># )</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                    <span class="n">x</span><span class="o">=</span><span class="p">[</span>
+                        <span class="p">(</span><span class="n">start_base</span> <span class="o">+</span> <span class="n">end_base</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                        <span class="p">(</span><span class="n">start_updated</span> <span class="o">+</span> <span class="n">end_updated</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team_base</span><span class="p">],</span> <span class="n">team_to_index</span><span class="p">[</span><span class="n">team_updated</span><span class="p">]],</span>
+                    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines+markers&quot;</span><span class="p">,</span>
+                    <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkred&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dash</span><span class="o">=</span><span class="s2">&quot;dot&quot;</span><span class="p">),</span>  <span class="c1"># Dotted line</span>
+                    <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">size</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkred&quot;</span>
+                    <span class="p">),</span>  <span class="c1"># , symbol=&quot;arrow-bar-up&quot;)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">plot_team_breaks</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">team_to_index</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">team</span> <span class="o">!=</span> <span class="s2">&quot;Unset&quot;</span><span class="p">:</span>
+                <span class="n">team_</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">team_names</span><span class="p">[</span><span class="n">team</span><span class="p">]</span>
+                <span class="n">slots</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">compute_unavailability_calendar</span><span class="p">(</span><span class="n">team_</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">slot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">max_time</span><span class="p">:</span>
+                        <span class="n">right_side</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">slot</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">max_time</span> <span class="o">+</span> <span class="mi">30</span><span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Slot &quot;</span><span class="p">,</span> <span class="n">slot</span><span class="p">)</span>
+                        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+                            <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                                <span class="n">x</span><span class="o">=</span><span class="p">[(</span><span class="n">right_side</span> <span class="o">-</span> <span class="n">slot</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
+                                <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">team_to_index</span><span class="p">[</span><span class="n">team</span><span class="p">]],</span>
+                                <span class="n">dy</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                                <span class="n">base</span><span class="o">=</span><span class="n">slot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">problem</span><span class="o">.</span><span class="n">horizon_start_shift</span> <span class="o">//</span> <span class="mi">60</span><span class="p">,</span>
+                                <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;h&quot;</span><span class="p">,</span>
+                                <span class="c1"># name=f&quot;Break&quot;,</span>
+                                <span class="c1"># marker_color=[float(team_to_index[team_base]/len(team_to_index))],</span>
+                                <span class="c1"># marker_colorscale=&quot;rainbow&quot;,</span>
+                                <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mf">0.7</span><span class="p">),</span>
+                                <span class="n">hovertemplate</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&lt;b&gt;Break </span><span class="si">{</span><span class="n">team</span><span class="si">}</span><span class="s2">&lt;/b&gt; &lt;br&gt;&quot;</span><span class="p">,</span>
+                                <span class="n">width</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+
+    <span class="n">min_date</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">base_schedule</span><span class="p">))</span>
+    <span class="n">max_date</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">base_schedule</span><span class="p">))</span>
+    <span class="n">tickvals</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_date</span><span class="p">,</span> <span class="n">max_date</span><span class="p">,</span> <span class="p">(</span><span class="n">max_date</span> <span class="o">-</span> <span class="n">min_date</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="c1"># ticktext = [datetime.datetime.fromtimestamp(ts*60).strftime(&#39;%Y-%m-%d %H:%M:%S&#39;) for ts in tickvals]</span>
+    <span class="n">ticktext</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">ts</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">))</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">tickvals</span><span class="p">]</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+        <span class="n">xaxis_title</span><span class="o">=</span><span class="s2">&quot;Timeline&quot;</span><span class="p">,</span>
+        <span class="n">xaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Time&quot;</span><span class="p">,</span>
+            <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>  <span class="c1"># Keep the scale as numeric</span>
+            <span class="n">tickvals</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">tickvals</span><span class="p">),</span>  <span class="c1"># Numeric positions for ticks</span>
+            <span class="n">ticktext</span><span class="o">=</span><span class="n">ticktext</span> <span class="k">if</span> <span class="n">plot_xticks</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Custom labels for the ticks</span>
+            <span class="n">showticklabels</span><span class="o">=</span><span class="n">plot_xticks</span><span class="p">,</span>
+            <span class="c1"># tickformat=&quot;%Y-%m-%d %H:%M:%S&quot;,  # Format tick labels as datetime</span>
+        <span class="p">),</span>
+        <span class="n">yaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Team&quot;</span><span class="p">,</span>
+            <span class="n">tickmode</span><span class="o">=</span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+            <span class="n">tickvals</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">))),</span>
+            <span class="n">ticktext</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sorted_all_teams</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_all_teams</span><span class="p">))],</span>
+        <span class="p">),</span>
+        <span class="n">barmode</span><span class="o">=</span><span class="s2">&quot;overlay&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+        <span class="n">margin</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">l</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">20</span><span class="p">),</span>
+        <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Show line on each teams</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">showgrid</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Vertical line stuff</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span>
+        <span class="n">showgrid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">showspikes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">spikemode</span><span class="o">=</span><span class="s2">&quot;across&quot;</span><span class="p">,</span>
+        <span class="n">spikesnap</span><span class="o">=</span><span class="s2">&quot;cursor&quot;</span><span class="p">,</span>
+        <span class="n">spikecolor</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
+        <span class="n">spikedash</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">,</span>
+        <span class="n">spikethickness</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">showline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="estimate_nb_resource_needed">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.estimate_nb_resource_needed">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimate_nb_resource_needed</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">):</span>
+    <span class="n">horizon</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">horizon</span>
+    <span class="n">estimated_workload</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">)</span>
+    <span class="n">lb_ub</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">get_all_lb_ub</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">:</span>
+        <span class="n">dur</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">duration_task</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">lb_ub</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">lb_ub</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">estimated_workload</span><span class="p">[</span><span class="n">lb_ub</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="n">lb_ub</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">3</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">dur</span> <span class="o">/</span> <span class="n">rng</span>
+    <span class="k">return</span> <span class="n">estimated_workload</span></div>
+
+
+
+<div class="viewcode-block" id="template_violated_constraint">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.template_violated_constraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">template_violated_constraint</span><span class="p">(</span>
+    <span class="n">satisfy_detailed_output</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span> <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">satisfy_detailed_output</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;tag&quot;</span> <span class="ow">in</span> <span class="n">satisfy_detailed_output</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s2">&quot;tag&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;is_not_done&quot;</span><span class="p">:</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s2">&quot;task_index&quot;</span><span class="p">]</span>
+                <span class="k">return</span> <span class="s2">&quot;Task&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="o">+</span> <span class="s2">&quot;is not done&quot;</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;early&quot;</span><span class="p">:</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s2">&quot;task_index&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="s2">&quot;start&quot;</span> <span class="ow">in</span> <span class="n">satisfy_detailed_output</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> is early, starts at </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;start&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;but expected at least </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;expected&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="s2">&quot;end&quot;</span> <span class="ow">in</span> <span class="n">satisfy_detailed_output</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> is early, ends at </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;but expected at least </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;expected&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;late&quot;</span><span class="p">:</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s2">&quot;task_index&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="s2">&quot;start&quot;</span> <span class="ow">in</span> <span class="n">satisfy_detailed_output</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> is late, starts at </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;start&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;but expected at most </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;expected&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="s2">&quot;end&quot;</span> <span class="ow">in</span> <span class="n">satisfy_detailed_output</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> is late, ends at </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;but expected at most </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="s1">&#39;expected&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">satisfy_detailed_output</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;precedence&quot;</span><span class="p">:</span>
+            <span class="n">succ</span> <span class="o">=</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pred</span><span class="si">}</span><span class="s2"> should be done before </span><span class="si">{</span><span class="n">succ</span><span class="si">}</span><span class="s2">, it&#39;s not the case : end of </span><span class="si">{</span><span class="n">pred</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, and start of </span><span class="si">{</span><span class="n">succ</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;same_allocation&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Same allocation constraint is not satisfied for tasks </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;available-team&quot;</span><span class="p">:</span>
+            <span class="n">activity</span> <span class="o">=</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">teams</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">problem</span><span class="o">.</span><span class="n">teams_to_index</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">available_team_for_activity</span><span class="p">[</span><span class="n">activity</span><span class="p">]</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2"> is allocated to </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;while only teams </span><span class="si">{</span><span class="n">teams</span><span class="si">}</span><span class="s2"> can do this task&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;no-overlap&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;overlaps on team </span><span class="si">{</span><span class="n">satisfy_detailed_output</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="natural_explanation_unsat">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.natural_explanation_unsat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">natural_explanation_unsat</span><span class="p">(</span>
+    <span class="n">detailed_output</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]],</span> <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">template_violated_constraint</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">detailed_output</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="natural_explanation_unsat_from_sol">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.natural_explanation_unsat_from_sol">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">natural_explanation_unsat_from_sol</span><span class="p">(</span><span class="n">solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">natural_explanation_unsat</span><span class="p">(</span>
+        <span class="n">detailed_output</span><span class="o">=</span><span class="n">satisfy_detailed</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">solution</span><span class="o">=</span><span class="n">solution</span><span class="p">),</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_precedence_graph">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_precedence_graph">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_precedence_graph</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+    <span class="n">compatible_teams</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">compatible_teams_index_all_activity</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">index_t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">:</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span>
+            <span class="n">index_t</span><span class="p">,</span>
+            <span class="n">activity_name</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task</span><span class="p">[</span><span class="n">index_t</span><span class="p">],</span>
+            <span class="n">compatible_teams</span><span class="o">=</span><span class="n">compatible_teams</span><span class="p">[</span><span class="n">index_t</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">precedence_constraints</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">precedence_constraints</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+            <span class="n">index_succ</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">index_succ</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">graph</span></div>
+
+
+
+<div class="viewcode-block" id="export_scheduling_problem_json">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.export_scheduling_problem_json">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_scheduling_problem_json</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;teams&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">team_names</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">]</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;calendar&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;calendar&quot;</span><span class="p">]:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;calendar&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;calendar&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]]</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;teams_to_index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">teams_to_index</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;tasks_data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">duration_task</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span>
+    <span class="p">}</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;same_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">same_allocation</span><span class="p">]</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;compatible_teams&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="nb">list</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">available_team_for_activity</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">available_team_for_activity</span>
+    <span class="p">}</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;start_window&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="n">problem</span><span class="o">.</span><span class="n">start_window</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">start_window</span><span class="p">}</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;end_window&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="n">problem</span><span class="o">.</span><span class="n">end_window</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">end_window</span><span class="p">}</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;successors&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">succ</span><span class="p">)</span> <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">precedence_constraints</span><span class="p">[</span><span class="n">t</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">precedence_constraints</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+
+<div class="viewcode-block" id="get_working_time_teams">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.get_working_time_teams">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_working_time_teams</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">work_time</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">lb_ub</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">get_all_lb_ub</span><span class="p">()</span>
+    <span class="n">true_ub</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lb_ub</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">:</span>
+        <span class="n">cumul</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">slots</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">team</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">slots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">true_ub</span><span class="p">:</span>
+                <span class="n">cumul</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">slots</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">true_ub</span><span class="p">)</span> <span class="o">-</span> <span class="n">slots</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">work_time</span><span class="p">[</span><span class="n">team</span><span class="p">]</span> <span class="o">=</span> <span class="n">cumul</span>
+    <span class="k">return</span> <span class="n">work_time</span></div>
+
+
+
+<div class="viewcode-block" id="compute_available_teams_per_activities_alloc_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_available_teams_per_activities_alloc_problem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_available_teams_per_activities_alloc_problem</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+    <span class="n">starts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">ends</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">calendars_team</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+<span class="p">):</span>
+    <span class="n">available_team_per_activity</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">starts</span><span class="p">)):</span>
+        <span class="n">available_team_per_activity</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">activities_name</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">st</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">starts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ends</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">calendars_team</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">end</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">calendars_team</span><span class="p">[</span><span class="n">team</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">st</span><span class="p">)]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">available_team_per_activity</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">activities_name</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">team</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">calendars_team</span><span class="p">[</span><span class="n">team</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">end</span><span class="p">)])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">available_team_per_activity</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">activities_name</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">team</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">available_team_per_activity</span></div>
+
+
+
+<div class="viewcode-block" id="build_allocation_problem_from_scheduling">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.build_allocation_problem_from_scheduling">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_allocation_problem_from_scheduling</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">AllocSchedulingSolution</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">problem_alloc</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">multiobjective</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TeamAllocationProblem</span><span class="p">:</span>
+    <span class="n">calendars_team</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span>
+    <span class="c1"># min_d = min([calendars_team[team][0][0] for team in calendars_team if len(calendars_team[team]) &gt;= 1])</span>
+    <span class="c1"># max_d = max([calendars_team[team][-1][1] for team in calendars_team if len(calendars_team[team]) &gt;= 1])</span>
+    <span class="n">calendars_array</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">team</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">+</span> <span class="mi">20</span><span class="p">))</span> <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">calendars_team</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">calendars_team</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="ow">in</span> <span class="n">calendars_team</span><span class="p">[</span><span class="n">team</span><span class="p">]:</span>
+            <span class="n">calendars_array</span><span class="p">[</span><span class="n">team</span><span class="p">][</span><span class="n">min_</span> <span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_</span><span class="p">,</span> <span class="n">calendars_array</span><span class="p">[</span><span class="n">team</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">problem</span><span class="o">.</span><span class="n">original_start</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">])</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">problem</span><span class="o">.</span><span class="n">original_end</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">])</span>
+
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">horizon_start_shift</span>
+
+    <span class="c1"># UPDATE GRAPH ACTIVITY</span>
+    <span class="k">if</span> <span class="n">problem_alloc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">multiobjective</span><span class="p">:</span>
+            <span class="n">problem_alloc</span> <span class="o">=</span> <span class="n">TeamAllocationProblem</span><span class="p">(</span>
+                <span class="n">allocation_additional_constraint</span><span class="o">=</span><span class="n">AllocationAdditionalConstraint</span><span class="p">(</span>
+                    <span class="n">same_allocation</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">same_allocation</span><span class="p">,</span>
+                    <span class="n">allowed_allocation</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">available_team_for_activity</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">calendar_team</span><span class="o">=</span><span class="n">calendars_team</span><span class="p">,</span>
+                <span class="n">schedule_activity</span><span class="o">=</span><span class="p">{</span>
+                    <span class="n">t</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">starts</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]],</span>
+                        <span class="n">ends</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]],</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">original_start</span>
+                <span class="p">},</span>
+                <span class="n">activities_name</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">problem_alloc</span> <span class="o">=</span> <span class="n">TeamAllocationProblemMultiobj</span><span class="p">(</span>
+                <span class="n">allocation_additional_constraint</span><span class="o">=</span><span class="n">AllocationAdditionalConstraint</span><span class="p">(</span>
+                    <span class="n">same_allocation</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">same_allocation</span><span class="p">,</span>
+                    <span class="n">allowed_allocation</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">available_team_for_activity</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">attributes_cumul_activities</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">],</span>
+                <span class="n">objective_doc_cumul_activities</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">ObjectiveDoc</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+                        <span class="n">AggregateOperator</span><span class="o">.</span><span class="n">MAX_MINUS_MIN</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">},</span>
+                <span class="n">calendar_team</span><span class="o">=</span><span class="n">calendars_team</span><span class="p">,</span>
+                <span class="n">schedule_activity</span><span class="o">=</span><span class="p">{</span>
+                    <span class="n">t</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">starts</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]],</span>
+                        <span class="n">ends</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]],</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">original_start</span>
+                <span class="p">},</span>
+                <span class="n">activities_name</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">problem_alloc</span></div>
+
+
+
+<div class="viewcode-block" id="build_scheduling_problem_from_allocation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.build_scheduling_problem_from_allocation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_scheduling_problem_from_allocation</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span> <span class="n">horizon_start_shift</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AllocSchedulingProblem</span><span class="p">:</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">allocation_additional_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;same_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">same_allocation</span>
+
+    <span class="k">return</span> <span class="n">AllocSchedulingProblem</span><span class="p">(</span>
+        <span class="n">team_names</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">teams_name</span><span class="p">,</span>
+        <span class="n">calendar_team</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+        <span class="n">horizon_start_shift</span><span class="o">=</span><span class="n">horizon_start_shift</span><span class="p">,</span>
+        <span class="n">tasks_list</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">activities_name</span><span class="p">,</span>
+        <span class="n">tasks_data</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">t</span><span class="p">:</span> <span class="n">TasksDescription</span><span class="p">(</span>
+                <span class="n">duration_task</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">activities_name</span>
+        <span class="p">},</span>
+        <span class="n">same_allocation</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">same_allocation</span><span class="p">,</span>
+        <span class="n">precedence_constraints</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">available_team_for_activity</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">start_window</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">end_window</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">original_start</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">t</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">activities_name</span>
+        <span class="p">},</span>
+        <span class="n">original_end</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">t</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">activities_name</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="alloc_solution_to_alloc_sched_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.alloc_solution_to_alloc_sched_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">alloc_solution_to_alloc_sched_solution</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">AllocSchedulingProblem</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">TeamAllocationSolution</span>
+<span class="p">):</span>
+    <span class="n">alloc_problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">problem</span>
+    <span class="n">new_alloc</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">schedule</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+        <span class="n">ind_alloc</span> <span class="o">=</span> <span class="n">alloc_problem</span><span class="o">.</span><span class="n">index_activities_name</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="n">alloc</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">ind_alloc</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">alloc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">alloc</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">new_alloc</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">teams_to_index</span><span class="p">[</span>
+                <span class="n">alloc_problem</span><span class="o">.</span><span class="n">teams_name</span><span class="p">[</span><span class="n">alloc</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="n">schedule</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">original_start</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="n">schedule</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">original_end</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">AllocSchedulingSolution</span><span class="p">(</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span> <span class="n">allocation</span><span class="o">=</span><span class="n">new_alloc</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="binary_calendar">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.binary_calendar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">binary_calendar</span><span class="p">(</span><span class="n">list_available</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="n">calendars_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">horizon</span> <span class="o">+</span> <span class="mi">20</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="ow">in</span> <span class="n">list_available</span><span class="p">:</span>
+        <span class="n">calendars_array</span><span class="p">[</span><span class="n">min_</span> <span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_</span><span class="p">,</span> <span class="n">calendars_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">calendars_array</span></div>
+
+
+
+<div class="viewcode-block" id="get_availability_slots">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.get_availability_slots">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_availability_slots</span><span class="p">(</span><span class="n">calendar_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+    <span class="n">availability_slots</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">start_slot</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendar_matrix</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">calendar_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">start_slot</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>  <span class="c1"># Start of an available block</span>
+            <span class="n">start_slot</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">calendar_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">start_slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>  <span class="c1"># End of an available block</span>
+            <span class="n">availability_slots</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start_slot</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">start_slot</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">start_slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># If the array ends with an available block</span>
+        <span class="n">availability_slots</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start_slot</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">availability_slots</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

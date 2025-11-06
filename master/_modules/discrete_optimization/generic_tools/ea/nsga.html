@@ -1,0 +1,554 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.ea.nsga &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.ea.nsga</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.ea.nsga</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deap</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithms</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">creator</span><span class="p">,</span> <span class="n">tools</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mutation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="p">,</span>
+    <span class="n">build_evaluate_function_aggregated</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span><span class="p">,</span> <span class="n">WarmstartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ea.deap_wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">generic_mutate_wrapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ea.ga</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeapCrossover</span><span class="p">,</span> <span class="n">DeapMutation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+    <span class="n">TupleFitness</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_default_crossovers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_BOOLEAN</span><span class="p">:</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_UNIFORM</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER</span><span class="p">:</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_ONE_POINT</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER_SPECIFIC_ARITY</span><span class="p">:</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_ONE_POINT</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION</span><span class="p">:</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_UNIFORM_PARTIALY_MATCHED</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">_default_mutations</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_BOOLEAN</span><span class="p">:</span> <span class="n">DeapMutation</span><span class="o">.</span><span class="n">MUT_FLIP_BIT</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER</span><span class="p">:</span> <span class="n">DeapMutation</span><span class="o">.</span><span class="n">MUT_UNIFORM_INT</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER_SPECIFIC_ARITY</span><span class="p">:</span> <span class="n">DeapMutation</span><span class="o">.</span><span class="n">MUT_UNIFORM_INT</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION</span><span class="p">:</span> <span class="n">DeapMutation</span><span class="o">.</span><span class="n">MUT_SHUFFLE_INDEXES</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="Nsga">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.ea.html#discrete_optimization.generic_tools.ea.nsga.Nsga">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Nsga</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;NSGA</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem:</span>
+<span class="sd">            the problem to solve</span>
+<span class="sd">        encoding:</span>
+<span class="sd">            name (str) of an encoding registered in the register solution of Problem</span>
+<span class="sd">            or a dictionary of the form {&#39;type&#39;: TypeAttribute, &#39;n&#39;: int} where type refers to a TypeAttribute and n</span>
+<span class="sd">             to the dimension of the problem in this encoding (e.g. length of the vector)</span>
+<span class="sd">            by default, the first encoding in the problem register_solution will be used.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">initial_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Solution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initial solution used for warm start.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">objectives</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+        <span class="n">mutation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Mutation</span><span class="p">,</span> <span class="n">DeapMutation</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">crossover</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DeapCrossover</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pop_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">max_evals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mut_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">crossover_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">deap_verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="s2">&quot;evaluate_from_encoding&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;self.problem shoud define an evaluate_from_encoding()&quot;</span><span class="p">)</span>
+            <span class="c1"># self.problem.evaluate_from_encoding: Callable[[list[int], str], dict[str, float]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pop_size</span> <span class="o">=</span> <span class="n">pop_size</span>
+        <span class="k">if</span> <span class="n">max_evals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_max_evals</span> <span class="o">=</span> <span class="n">max_evals</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_max_evals</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pop_size</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;No value specified for max_evals. Using the default 10*pop_size - This should really be set carefully&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mut_rate</span> <span class="o">=</span> <span class="n">mut_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_crossover_rate</span> <span class="o">=</span> <span class="n">crossover_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_deap_verbose</span> <span class="o">=</span> <span class="n">deap_verbose</span>
+
+        <span class="c1"># set encoding</span>
+        <span class="n">register_solution</span><span class="p">:</span> <span class="n">EncodingRegister</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">get_attribute_register</span><span class="p">()</span>
+        <span class="n">encoding_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># check name specified is in problem register</span>
+            <span class="k">if</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">encoding_name</span> <span class="o">=</span> <span class="n">encoding</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_variable_name</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span>
+                    <span class="n">encoding_name</span>
+                <span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span>
+                    <span class="n">encoding_name</span>
+                <span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span><span class="n">encoding_name</span><span class="p">][</span><span class="s2">&quot;n&quot;</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span>
+                        <span class="n">encoding_name</span>
+                    <span class="p">][</span><span class="s2">&quot;arity&quot;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">arities</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER_SPECIFIC_ARITY</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">arities</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span>
+                        <span class="n">encoding_name</span>
+                    <span class="p">][</span><span class="s2">&quot;arities&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># check there is a type key and a n key</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="s2">&quot;name&quot;</span> <span class="ow">in</span> <span class="n">encoding</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="ow">and</span> <span class="s2">&quot;type&quot;</span> <span class="ow">in</span> <span class="n">encoding</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="ow">and</span> <span class="s2">&quot;n&quot;</span> <span class="ow">in</span> <span class="n">encoding</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="p">):</span>
+                <span class="n">encoding_name</span> <span class="o">=</span> <span class="s2">&quot;custom&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_variable_name</span> <span class="o">=</span> <span class="n">encoding</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">=</span> <span class="n">encoding</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">encoding</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="s2">&quot;arity&quot;</span> <span class="ow">in</span> <span class="n">encoding</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="o">=</span> <span class="n">encoding</span><span class="p">[</span><span class="s2">&quot;arity&quot;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">arities</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="s2">&quot;arities&quot;</span> <span class="ow">in</span> <span class="n">encoding</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">arities</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span>
+                        <span class="n">encoding_name</span>
+                    <span class="p">][</span><span class="s2">&quot;arities&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Erroneous encoding provided as input (encoding name not matching encoding of problem or custom &quot;</span>
+                    <span class="s2">&quot;definition not respecting encoding dict entry format, trying to use default one instead&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">encoding_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="s2">&quot;An encoding of type TypeAttribute should be specified or at least 1 TypeAttribute &quot;</span>
+                    <span class="s2">&quot;should be defined in the RegisterSolution of your Problem&quot;</span>
+                <span class="p">)</span>
+            <span class="n">encoding_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_variable_name</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span>
+                <span class="n">encoding_name</span>
+            <span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span>
+                <span class="n">encoding_name</span>
+            <span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span><span class="n">encoding_name</span><span class="p">][</span><span class="s2">&quot;n&quot;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span><span class="n">encoding_name</span><span class="p">][</span>
+                    <span class="s2">&quot;arity&quot;</span>
+                <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">arities</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER_SPECIFIC_ARITY</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">arities</span> <span class="o">=</span> <span class="n">register_solution</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span><span class="n">encoding_name</span><span class="p">][</span>
+                    <span class="s2">&quot;arities&quot;</span>
+                <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_name</span> <span class="o">=</span> <span class="n">encoding_name</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_BOOLEAN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arities</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Encoding used by the GA: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span><span class="si">}</span><span class="s2"> of length </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objectives</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_objectives</span> <span class="o">=</span> <span class="p">[</span><span class="n">objectives</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_objectives</span> <span class="o">=</span> <span class="n">objectives</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_objective_weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">objective_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">objective_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objective_weights</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objectives</span><span class="p">))</span>
+        <span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Objective weight issue: no weight given or size of weights and objectives lists mismatch. &quot;</span>
+                <span class="s2">&quot;Setting all weights to default 1 value.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_objective_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objectives</span><span class="p">))]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_objective_weights</span> <span class="o">=</span> <span class="n">objective_weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">ParamsObjectiveFunction</span><span class="p">(</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">MULTI_OBJ</span><span class="p">,</span>
+            <span class="n">objectives</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_objectives</span><span class="p">,</span>
+            <span class="n">weights</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_objective_weights</span><span class="p">,</span>
+            <span class="n">sense_function</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">Solution</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Solution</span><span class="p">],</span> <span class="n">TupleFitness</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_dict</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">build_evaluate_function_aggregated</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+
+        <span class="n">nobj</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objectives</span><span class="p">)</span>
+        <span class="n">ref_points</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">uniform_reference_points</span><span class="p">(</span><span class="n">nobj</span><span class="o">=</span><span class="n">nobj</span><span class="p">)</span>
+
+        <span class="c1"># DEAP toolbox setup</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">Toolbox</span><span class="p">()</span>
+
+        <span class="c1"># Define representation</span>
+        <span class="n">creator</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;fitness&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">Fitness</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_objective_weights</span><span class="p">))</span>
+        <span class="n">creator</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="s2">&quot;individual&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="n">fitness</span><span class="o">=</span><span class="n">creator</span><span class="o">.</span><span class="n">fitness</span>
+        <span class="p">)</span>  <span class="c1"># associate the fitness function to the individual type</span>
+
+        <span class="c1"># Create the individuals required by the encoding</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_BOOLEAN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="s2">&quot;bit&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+            <span class="p">)</span>  <span class="c1"># Each element of a solution is a bit (i.e. an int between 0 and 1 incl.)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="s2">&quot;individual&quot;</span><span class="p">,</span>
+                <span class="n">tools</span><span class="o">.</span><span class="n">initRepeat</span><span class="p">,</span>
+                <span class="n">creator</span><span class="o">.</span><span class="n">individual</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">bit</span><span class="p">,</span>
+                <span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
+            <span class="p">)</span>  <span class="c1"># An individual (aka solution) contains n bits</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="s2">&quot;permutation_indices&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="s2">&quot;individual&quot;</span><span class="p">,</span>
+                <span class="n">tools</span><span class="o">.</span><span class="n">initIterate</span><span class="p">,</span>
+                <span class="n">creator</span><span class="o">.</span><span class="n">individual</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">permutation_indices</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;int_val&quot;</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">arity</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="s2">&quot;individual&quot;</span><span class="p">,</span>
+                <span class="n">tools</span><span class="o">.</span><span class="n">initRepeat</span><span class="p">,</span>
+                <span class="n">creator</span><span class="o">.</span><span class="n">individual</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">int_val</span><span class="p">,</span>
+                <span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span> <span class="o">==</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER_SPECIFIC_ARITY</span><span class="p">:</span>
+            <span class="n">gen_idx</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">arity</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">arity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arities</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="s2">&quot;individual&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">initIterate</span><span class="p">,</span> <span class="n">creator</span><span class="o">.</span><span class="n">individual</span><span class="p">,</span> <span class="n">gen_idx</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;population&quot;</span><span class="p">,</span>
+            <span class="n">tools</span><span class="o">.</span><span class="n">initRepeat</span><span class="p">,</span>
+            <span class="nb">list</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">individual</span><span class="p">,</span>
+            <span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pop_size</span><span class="p">,</span>
+        <span class="p">)</span>  <span class="c1"># A population is made of pop_size individuals</span>
+
+        <span class="c1"># Define objective function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="s2">&quot;evaluate&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_problem</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Define crossover</span>
+        <span class="k">if</span> <span class="n">crossover</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">=</span> <span class="n">_default_crossovers</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">=</span> <span class="n">crossover</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">==</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_UNIFORM</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">cxUniform</span><span class="p">,</span> <span class="n">indpb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_crossover_rate</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">==</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_ONE_POINT</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">cxOnePoint</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">==</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_TWO_POINT</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">cxTwoPoint</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">==</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_UNIFORM_PARTIALY_MATCHED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">cxUniformPartialyMatched</span><span class="p">,</span> <span class="n">indpb</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">==</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_ORDERED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">cxOrdered</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover</span> <span class="o">==</span> <span class="n">DeapCrossover</span><span class="o">.</span><span class="n">CX_PARTIALY_MATCHED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;mate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">cxPartialyMatched</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Crossover of specified type not handled!&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Define mutation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mutation</span><span class="p">,</span> <span class="n">DeapMutation</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">mutation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span> <span class="o">=</span> <span class="n">_default_mutations</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding_type</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span> <span class="o">=</span> <span class="n">mutation</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span><span class="p">,</span> <span class="n">Mutation</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="s2">&quot;mutate&quot;</span><span class="p">,</span>
+                <span class="n">generic_mutate_wrapper</span><span class="p">,</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">encoding_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding_variable_name</span><span class="p">,</span>
+                <span class="n">indpb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mut_rate</span><span class="p">,</span>
+                <span class="n">solution_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_solution_type</span><span class="p">(),</span>
+                <span class="n">custom_mutation</span><span class="o">=</span><span class="n">mutation</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span><span class="p">,</span> <span class="n">DeapMutation</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span> <span class="o">==</span> <span class="n">DeapMutation</span><span class="o">.</span><span class="n">MUT_FLIP_BIT</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                    <span class="s2">&quot;mutate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">mutFlipBit</span><span class="p">,</span> <span class="n">indpb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mut_rate</span>
+                <span class="p">)</span>  <span class="c1"># Choice of mutation operator</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span> <span class="o">==</span> <span class="n">DeapMutation</span><span class="o">.</span><span class="n">MUT_SHUFFLE_INDEXES</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                    <span class="s2">&quot;mutate&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">mutShuffleIndexes</span><span class="p">,</span> <span class="n">indpb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mut_rate</span>
+                <span class="p">)</span>  <span class="c1"># Choice of mutation operator</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mutation</span> <span class="o">==</span> <span class="n">DeapMutation</span><span class="o">.</span><span class="n">MUT_UNIFORM_INT</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                    <span class="s2">&quot;mutate&quot;</span><span class="p">,</span>
+                    <span class="n">tools</span><span class="o">.</span><span class="n">mutUniformInt</span><span class="p">,</span>
+                    <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">up</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">arities</span><span class="p">,</span>
+                    <span class="n">indpb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mut_rate</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="c1"># No choice of selection: In NSGA, only 1 selection: Non Dominated Sorted Selection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;select&quot;</span><span class="p">,</span> <span class="n">tools</span><span class="o">.</span><span class="n">selNSGA3</span><span class="p">,</span> <span class="n">ref_points</span><span class="o">=</span><span class="n">ref_points</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Nsga.evaluate_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.ea.html#discrete_optimization.generic_tools.ea.nsga.Nsga.evaluate_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">int_vector</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="n">objective_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate_from_encoding</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+            <span class="n">int_vector</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_variable_name</span>
+        <span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">objective_values</span><span class="p">[</span><span class="n">obj_name</span><span class="p">]</span> <span class="k">for</span> <span class="n">obj_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objectives</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">val</span></div>
+
+
+<div class="viewcode-block" id="Nsga.set_warm_start">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.ea.html#discrete_optimization.generic_tools.ea.nsga.Nsga.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make the solver warm start from the given solution.</span>
+
+<span class="sd">        Will be ignored if arg `initial_variable` is set and not None in call to `solve()`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="n">solution</span></div>
+
+
+<div class="viewcode-block" id="Nsga.create_individual_from_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.ea.html#discrete_optimization.generic_tools.ea.nsga.Nsga.create_individual_from_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_individual_from_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_variable_name</span><span class="p">)</span>
+        <span class="n">newind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">individual</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)):</span>
+            <span class="n">newind</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">ind</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">newind</span></div>
+
+
+<div class="viewcode-block" id="Nsga.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.ea.html#discrete_optimization.generic_tools.ea.nsga.Nsga.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="c1">#  Define the statistics to collect at each generation</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">Statistics</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ind</span><span class="p">:</span> <span class="n">ind</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">logbook</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">Logbook</span><span class="p">()</span>
+        <span class="n">logbook</span><span class="o">.</span><span class="n">header</span> <span class="o">=</span> <span class="s2">&quot;gen&quot;</span><span class="p">,</span> <span class="s2">&quot;evals&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span>
+
+        <span class="c1"># Initialise the population (here at random)</span>
+        <span class="n">pop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">population</span><span class="p">()</span>
+
+        <span class="c1"># manage warm start: set 1 element of the population to the initial_solution</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pop</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_individual_from_solution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span><span class="p">)</span>
+
+        <span class="n">invalid_ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">ind</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">pop</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ind</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">valid</span><span class="p">]</span>
+        <span class="n">fitnesses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">evaluate</span><span class="p">,</span> <span class="n">invalid_ind</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">fit</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">invalid_ind</span><span class="p">,</span> <span class="n">fitnesses</span><span class="p">):</span>
+            <span class="n">ind</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">fit</span>
+
+        <span class="c1"># Compile statistics about the population</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">pop</span><span class="p">)</span>
+        <span class="n">logbook</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">gen</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">evals</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">invalid_ind</span><span class="p">),</span> <span class="o">**</span><span class="n">record</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">logbook</span><span class="o">.</span><span class="n">stream</span><span class="p">)</span>
+
+        <span class="c1"># Begin the generational process</span>
+        <span class="n">ngen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_evals</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pop_size</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ngen: </span><span class="si">{</span><span class="n">ngen</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gen</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ngen</span><span class="p">):</span>
+            <span class="n">offspring</span> <span class="o">=</span> <span class="n">algorithms</span><span class="o">.</span><span class="n">varAnd</span><span class="p">(</span>
+                <span class="n">pop</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crossover_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mut_rate</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Evaluate the individuals with an invalid fitness</span>
+            <span class="n">invalid_ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">ind</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">offspring</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ind</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">valid</span><span class="p">]</span>
+            <span class="n">fitnesses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">evaluate</span><span class="p">,</span> <span class="n">invalid_ind</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">fit</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">invalid_ind</span><span class="p">,</span> <span class="n">fitnesses</span><span class="p">):</span>
+                <span class="n">ind</span><span class="o">.</span><span class="n">fitness</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">fit</span>
+
+            <span class="c1"># Select the next generation population from parents and offspring</span>
+            <span class="n">pop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toolbox</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pop</span> <span class="o">+</span> <span class="n">offspring</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pop_size</span><span class="p">)</span>
+
+            <span class="c1"># Compile statistics about the new population</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">pop</span><span class="p">)</span>
+            <span class="n">logbook</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">gen</span><span class="o">=</span><span class="n">gen</span><span class="p">,</span> <span class="n">evals</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">invalid_ind</span><span class="p">),</span> <span class="o">**</span><span class="n">record</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">logbook</span><span class="o">.</span><span class="n">stream</span><span class="p">)</span>
+
+        <span class="n">sols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">pop</span><span class="p">:</span>
+            <span class="n">s_pure_int</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">s</span><span class="p">]</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding_variable_name</span><span class="p">:</span> <span class="n">s_pure_int</span><span class="p">,</span> <span class="s2">&quot;problem&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">}</span>
+            <span class="n">problem_sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_solution_type</span><span class="p">()(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">fits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">problem_sol</span><span class="p">)</span>
+            <span class="n">sols</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">problem_sol</span><span class="p">,</span> <span class="n">fits</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span><span class="n">sols</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
