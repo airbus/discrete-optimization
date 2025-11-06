@@ -206,6 +206,35 @@ class AllocationCpSatSolver(
 
     """
 
+    @property
+    def subset_tasks_of_interest(self) -> Iterable[Task]:
+        """Subset of tasks of interest used for the objective.
+
+        By default, all tasks.
+
+        """
+        return self.problem.tasks_list
+
+    @property
+    def subset_unaryresources_allowed(self) -> Iterable[UnaryResource]:
+        """Unary resources allowed to solve the problem.
+
+        By default, all unary resources.
+
+        """
+        return self.problem.unary_resources_list
+
+    def get_default_tasks_n_unary_resources(
+        self,
+        tasks: Optional[Iterable[Task]] = None,
+        unary_resources: Optional[Iterable[UnaryResource]] = None,
+    ) -> tuple[Iterable[Task], Iterable[UnaryResource]]:
+        if tasks is None:
+            tasks = self.subset_tasks_of_interest
+        if unary_resources is None:
+            unary_resources = self.subset_unaryresources_allowed
+        return tasks, unary_resources
+
     def init_model(self, **kwargs: Any) -> None:
         """Init cp model and reset stored variables if any."""
         super().init_model(**kwargs)
@@ -237,11 +266,24 @@ class AllocationCpSatSolver(
         return [self.cp_model.add(var == used)]
 
     def add_constraint_on_nb_allocation_changes(
-        self, ref: AllocationSolution[Task, UnaryResource], nb_changes: int
+        self,
+        ref: AllocationSolution[Task, UnaryResource],
+        nb_changes: int,
+        sign: SignEnum = SignEnum.LEQ,
     ) -> list[Any]:
-        tasks, unary_resources = self.get_default_tasks_n_unary_resources()
         self.create_allocation_changes_variables()
         # constraints so that change variables reflect diff to ref
+        constraints = self.add_allocation_changes_constraints(ref=ref)
+        # nb of changes variable
+        var = sum(self.allocation_changes_variables.values())
+        constraints += self.add_bound_constraint(var=var, sign=sign, value=nb_changes)
+        return constraints
+
+    def add_allocation_changes_constraints(
+        self, ref: AllocationSolution[Task, UnaryResource]
+    ) -> list[Any]:
+        """Add and return constraints so that change variables reflect diff to ref."""
+        tasks, unary_resources = self.get_default_tasks_n_unary_resources()
         constraints = []
         for task in tasks:
             for unary_resource in unary_resources:
@@ -268,13 +310,6 @@ class AllocationCpSatSolver(
                             is_present == is_allocated_ref
                         ).only_enforce_if(~allocation_change),
                     ]
-        # nb of changes variable
-        var = sum(
-            self.allocation_changes_variables[(task, unary_resource)]
-            for task in tasks
-            for unary_resource in unary_resources
-        )
-        constraints += [self.cp_model.add(var <= nb_changes)]
         return constraints
 
     def create_allocation_changes_variables(self):
@@ -330,12 +365,12 @@ class AllocationCpSatSolver(
     def create_used_variables(self):
         if not self.used_variables_created:
             self.used_variables = {}
-            for unary_resource in self.problem.unary_resources_list:
+            for unary_resource in self.subset_unaryresources_allowed:
                 used = self.cp_model.new_bool_var(f"used_{unary_resource}")
                 self.used_variables[unary_resource] = used
                 list_is_present_variables = [
                     is_present
-                    for task in self.problem.tasks_list
+                    for task in self.subset_tasks_of_interest
                     # filter out trivial 0's corresponding to incompatible (task, resource)
                     if not (
                         is_a_trivial_zero(
@@ -355,12 +390,12 @@ class AllocationCpSatSolver(
     def create_done_variables(self):
         if not self.done_variables_created:
             self.done_variables = {}
-            for task in self.problem.tasks_list:
+            for task in self.subset_tasks_of_interest:
                 done = self.cp_model.new_bool_var(f"{task}_done")
                 self.done_variables[task] = done
                 list_is_present_variables = [
                     is_present
-                    for unary_resource in self.problem.unary_resources_list
+                    for unary_resource in self.subset_unaryresources_allowed
                     # filter out trivial 0's corresponding to incompatible (task, resource)
                     if not (
                         is_a_trivial_zero(
@@ -467,12 +502,11 @@ class AllocationIntegerModellingCpSatSolver(
         else:
             return [self.cp_model.add(var != unary_resource)]
 
-    def add_constraint_on_nb_allocation_changes(
-        self, ref: AllocationSolution[Task, UnaryResource], nb_changes: int
+    def add_allocation_changes_constraints(
+        self, ref: AllocationSolution[Task, UnaryResource]
     ) -> list[Any]:
+        """Add and return constraints so that change variables reflect diff to ref."""
         tasks, unary_resources = self.get_default_tasks_n_unary_resources()
-        self.create_allocation_changes_variables()
-        # constraints so that change variables reflect diff to ref
         constraints = []
         for task in tasks:
             for unary_resource in unary_resources:
@@ -502,14 +536,6 @@ class AllocationIntegerModellingCpSatSolver(
                         ).only_enforce_if(~allocation_change),
                     ]
                 constraints += subconstraints
-
-        # nb of changes variable
-        var = sum(
-            self.allocation_changes_variables[(task, unary_resource)]
-            for task in tasks
-            for unary_resource in unary_resources
-        )
-        constraints += [self.cp_model.add(var <= nb_changes)]
         return constraints
 
 
@@ -589,16 +615,14 @@ class AllocationBinaryOrIntegerModellingCpSatSolver(
                 )
             )
 
-    def add_constraint_on_nb_allocation_changes(
-        self, ref: AllocationSolution[Task, UnaryResource], nb_changes: int
+    def add_allocation_changes_constraints(
+        self, ref: AllocationSolution[Task, UnaryResource]
     ) -> list[Any]:
         if self.allocation_modelling == AllocationModelling.INTEGER:
-            return super().add_constraint_on_nb_allocation_changes(
-                ref=ref, nb_changes=nb_changes
-            )
+            return super().add_allocation_changes_constraints(ref=ref)
         else:
-            return AllocationCpSatSolver.add_constraint_on_nb_allocation_changes(
-                self, ref=ref, nb_changes=nb_changes
+            return AllocationCpSatSolver.add_allocation_changes_constraints(
+                self, ref=ref
             )
 
 

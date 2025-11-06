@@ -8,11 +8,17 @@ The only constraint is that adjacent vertices should be colored by different col
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 from collections.abc import Hashable
 from typing import Optional, Union
 
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -26,8 +32,11 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.graph_api import Graph
 
+Node = Hashable  # node to color
+Color = int  # color
 
-class ColoringSolution(Solution):
+
+class ColoringSolution(AllocationSolution[Node, Color]):
     """Solution class for graph coloring problem.
 
     The object contains a pointer to the problem instance,
@@ -45,9 +54,11 @@ class ColoringSolution(Solution):
 
     """
 
+    problem: ColoringProblem
+
     def __init__(
         self,
-        problem: Problem,
+        problem: ColoringProblem,
         colors: Optional[Union[list[int], np.ndarray]] = None,
         nb_color: Optional[int] = None,
         nb_violations: Optional[int] = None,
@@ -164,6 +175,10 @@ class ColoringSolution(Solution):
             self.colors = list(self.colors)
         self.problem = new_problem
 
+    def is_allocated(self, task: Node, unary_resource: Color) -> bool:
+        i_task = self.problem.index_nodes_name[task]
+        return self.colors[i_task] == unary_resource
+
 
 def transform_color_values_to_value_precede(color_vector: list[int]) -> list[int]:
     """See method ColoringSolution.to_reformated_solution().
@@ -230,7 +245,7 @@ class ColoringConstraints:
             return set()
 
 
-class ColoringProblem(Problem):
+class ColoringProblem(AllocationProblem[Node, Color]):
     """Coloring problem class implementation.
 
     Attributes:
@@ -267,6 +282,15 @@ class ColoringProblem(Problem):
         self.use_subset = len(self.subset_nodes) < len(self.nodes_name)
         self.constraints_coloring = constraints_coloring
         self.has_constraints_coloring = constraints_coloring is not None
+
+    @property
+    def tasks_list(self) -> list[Node]:
+        return self.nodes_name
+
+    @property
+    def unary_resources_list(self) -> list[Color]:
+        max_nb_colors = self.number_of_nodes
+        return list(range(max_nb_colors))
 
     def is_in_subset_index(self, index: int) -> bool:
         if not self.use_subset:

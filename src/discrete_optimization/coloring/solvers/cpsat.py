@@ -1,26 +1,33 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from collections.abc import Iterable
 from enum import Enum
 from typing import Any, Optional, Union
 
-from ortools.sat.python.cp_model import CpSolverSolutionCallback, IntVar
+from ortools.sat.python.cp_model import CpSolverSolutionCallback, IntVar, LinearExprT
 
-from discrete_optimization.coloring.problem import ColoringSolution
+from discrete_optimization.coloring.problem import (
+    Color,
+    ColoringProblem,
+    ColoringSolution,
+    Node,
+)
 from discrete_optimization.coloring.solvers.starting_solution import (
     WithStartingSolutionColoringSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+    AllocationBinaryOrIntegerModellingCpSatSolver,
+    AllocationModelling,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Problem,
-    Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
 )
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 
 
 class ModelingCpSat(Enum):
@@ -29,7 +36,9 @@ class ModelingCpSat(Enum):
 
 
 class CpSatColoringSolver(
-    OrtoolsCpSatSolver, WithStartingSolutionColoringSolver, WarmstartMixin
+    AllocationBinaryOrIntegerModellingCpSatSolver[Node, Color],
+    WithStartingSolutionColoringSolver,
+    WarmstartMixin,
 ):
     hyperparameters = [
         EnumHyperparameter(
@@ -54,13 +63,17 @@ class CpSatColoringSolver(
             name="symmetry_on_used",
             choices=[True, False],
             default=True,
-            depends_on=("modeling", [ModelingCpSat.INTEGER]),
+            depends_on=("used_variable", [True]),
         ),
     ] + WithStartingSolutionColoringSolver.hyperparameters
 
+    at_most_one_unary_resource_per_task = True
+    problem: ColoringProblem
+    _nb_colors: int
+
     def __init__(
         self,
-        problem: Problem,
+        problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
@@ -69,8 +82,22 @@ class CpSatColoringSolver(
         self.variables: dict[
             str, Union[IntVar, list[IntVar], list[dict[int, IntVar]]]
         ] = {}
+        self._subset_nodes = list(self.problem.subset_nodes)
 
-    def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
+    def get_binary_allocation_variable(
+        self, task: Node, unary_resource: Color
+    ) -> LinearExprT:
+        i_task = self.problem.index_nodes_name[task]
+        i_color = unary_resource
+        return self.variables["colors"][i_task][i_color]
+
+    def get_integer_allocation_variable(self, task: Node) -> LinearExprT:
+        i_task = self.problem.index_nodes_name[task]
+        return self.variables["colors"][i_task]
+
+    def retrieve_solution(
+        self, cpsolvercb: CpSolverSolutionCallback
+    ) -> ColoringSolution:
         if self.modeling == ModelingCpSat.INTEGER:
             return ColoringSolution(
                 problem=self.problem,
@@ -79,7 +106,7 @@ class CpSatColoringSolver(
                     for i in range(len(self.variables["colors"]))
                 ],
             )
-        if self.modeling == ModelingCpSat.BINARY:
+        else:  # ModelingCpSat.BINARY:
             colors = [None for i in range(len(self.variables["colors"]))]
             for i in range(len(self.variables["colors"])):
                 c = next(
@@ -94,6 +121,7 @@ class CpSatColoringSolver(
             return ColoringSolution(problem=self.problem, colors=colors)
 
     def init_model_binary(self, nb_colors: int, **kwargs):
+        self.allocation_modelling = AllocationModelling.BINARY
         super().init_model(**kwargs)
         cp_model = self.cp_model
         allocation_binary = [
@@ -103,6 +131,7 @@ class CpSatColoringSolver(
             }
             for i in range(self.problem.number_of_nodes)
         ]
+        self.variables["colors"] = allocation_binary
         for i in range(len(allocation_binary)):
             cp_model.AddExactlyOne(
                 [allocation_binary[i][j] for j in allocation_binary[i]]
@@ -125,28 +154,25 @@ class CpSatColoringSolver(
                         [allocation_binary[ind1][team], allocation_binary[ind2][team]],
                         [(1, 1)],
                     )
-        used = [cp_model.NewBoolVar(f"used_{j}") for j in range(nb_colors)]
-        if self.problem.use_subset:
-            indexes_subset = self.problem.index_subset_nodes
-        else:
-            indexes_subset = range(len(allocation_binary))
-        for i in indexes_subset:
-            for j in allocation_binary[i]:
-                cp_model.Add(used[j] >= allocation_binary[i][j])
+        used = self.create_used_variables_list()
         cp_model.Minimize(sum(used))
-        self.variables["colors"] = allocation_binary
         self.variables["used"] = used
 
     def init_model_integer(self, nb_colors: int, **kwargs):
+        self.allocation_modelling = AllocationModelling.INTEGER
         used_variable = kwargs["used_variable"]
         value_sequence_chain = kwargs["value_sequence_chain"]
-        symmetry_on_used = kwargs["symmetry_on_used"]
+        if used_variable:
+            symmetry_on_used = kwargs["symmetry_on_used"]
+        else:
+            symmetry_on_used = False
         super().init_model(**kwargs)
         cp_model = self.cp_model
         variables = [
             cp_model.NewIntVar(0, nb_colors - 1, name=f"c_{i}")
             for i in range(self.problem.number_of_nodes)
         ]
+        self.variables["colors"] = variables
         for edge in self.problem.graph.edges:
             ind_0 = self.problem.index_nodes_name[edge[0]]
             ind_1 = self.problem.index_nodes_name[edge[1]]
@@ -169,29 +195,13 @@ class CpSatColoringSolver(
             for k in range(1, len(vars)):
                 cp_model.AddMaxEquality(sliding_max[k], [sliding_max[k - 1], vars[k]])
                 cp_model.Add(sliding_max[k] <= sliding_max[k - 1] + 1)
-        used = [cp_model.NewBoolVar(name=f"used_{c}") for c in range(nb_colors)]
         if used_variable:
-
-            def add_indicator(vars, value, presence_value, model):
-                bool_vars = []
-                for var in vars:
-                    bool_var = model.NewBoolVar("")
-                    model.Add(var == value).OnlyEnforceIf(bool_var)
-                    model.Add(var != value).OnlyEnforceIf(bool_var.Not())
-                    bool_vars.append(bool_var)
-                model.AddMaxEquality(presence_value, bool_vars)
-
-            for j in range(nb_colors):
-                if self.problem.use_subset:
-                    indexes = self.problem.index_subset_nodes
-                    vars = [variables[i] for i in indexes]
-                else:
-                    vars = variables
-                add_indicator(vars, j, used[j], cp_model)
+            used = self.create_used_variables_list()
             if symmetry_on_used:
                 for j in range(nb_colors - 1):
                     cp_model.Add(used[j] >= used[j + 1])
             cp_model.Minimize(sum(used))
+            self.variables["used"] = used
         else:
             nbc = cp_model.NewIntVar(0, nb_colors, name="nbcolors")
             self.variables["nbc"] = nbc
@@ -199,8 +209,6 @@ class CpSatColoringSolver(
                 nbc, [variables[i] for i in self.problem.index_subset_nodes]
             )
             cp_model.Minimize(nbc)
-        self.variables["colors"] = variables
-        self.variables["used"] = used
 
     def set_warm_start(self, solution: ColoringSolution) -> None:
         """Make the solver warm start from the given solution."""
@@ -229,6 +237,9 @@ class CpSatColoringSolver(
             solution = self.get_starting_solution(**args)
             nb_colors = self.problem.count_colors_all_index(solution.colors)
             args["nb_colors"] = min(args.get("nb_colors", nb_colors), nb_colors)
+        # ensure nb_colors <= nb nodes
+        args["nb_colors"] = min(args["nb_colors"], self.problem.number_of_nodes)
+        self._nb_colors = args["nb_colors"]  # store nb colors max
         if modeling == ModelingCpSat.BINARY:
             self.init_model_binary(**args)
         if modeling == ModelingCpSat.INTEGER:
@@ -236,3 +247,19 @@ class CpSatColoringSolver(
         if do_warmstart:
             self.set_warm_start(solution=solution)
         self.modeling = modeling
+
+    @property
+    def subset_tasks_of_interest(self) -> Iterable[Node]:
+        return self.problem.subset_nodes
+
+    @property
+    def subset_unaryresources_allowed(self) -> Iterable[Color]:
+        return range(self._nb_colors)
+
+    def create_used_variables_list(
+        self,
+    ) -> list[IntVar]:
+        self.create_used_variables()
+        return [
+            self.used_variables[color] for color in self.subset_unaryresources_allowed
+        ]
