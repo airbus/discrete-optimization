@@ -72,7 +72,7 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         )
         return [self.cp_model.add(var1 == var2)]
 
-    def get_makespan_var(self) -> IntVar:
+    def _get_makespan_var(self) -> IntVar:
         """Get the makespan variable used to track global makespan."""
         if self._makespan is None:
             self._makespan = self.cp_model.NewIntVar(
@@ -82,7 +82,7 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
             )
         return self._makespan
 
-    def get_subtasks_makespan_var(self) -> IntVar:
+    def _get_subtasks_makespan_var(self) -> IntVar:
         """Get the makespan variable used to track subtasks makespan."""
         if self._subtasks_makespan is None:
             self._subtasks_makespan = self.cp_model.NewIntVar(
@@ -100,7 +100,7 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         # remove previous constraints on makespan variable from cp model
         self.remove_constraints_on_objective()
         # get makespan variable
-        makespan = self.get_makespan_var()
+        makespan = self._get_makespan_var()
         # update those constraints
         self.constraints_on_makespan = [
             self.cp_model.AddMaxEquality(
@@ -117,7 +117,7 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         # remove previous constraints on makespan variable from cp model
         self.remove_constraints_on_objective()
         # get makespan variable
-        makespan = self.get_subtasks_makespan_var()
+        makespan = self._get_subtasks_makespan_var()
         # update those constraints
         self.constraints_on_makespan = [
             self.cp_model.AddMaxEquality(

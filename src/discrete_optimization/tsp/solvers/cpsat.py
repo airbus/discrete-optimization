@@ -3,29 +3,35 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
+from ortools.sat.python.cp_model import IntVar, LinearExprT
+
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+    SchedulingCpSatSolver,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Problem,
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.ortools_cpsat_tools import (
     CpSolverSolutionCallback,
-    OrtoolsCpSatSolver,
 )
-from discrete_optimization.tsp.problem import TspProblem, TspSolution
+from discrete_optimization.tsp.problem import Node, TspProblem, TspSolution
 from discrete_optimization.tsp.solvers import TspSolver
 from discrete_optimization.tsp.utils import build_matrice_distance
 
 logger = logging.getLogger(__name__)
 
 
-class CpSatTspSolver(OrtoolsCpSatSolver, TspSolver, WarmstartMixin):
+class CpSatTspSolver(SchedulingCpSatSolver[Node], TspSolver, WarmstartMixin):
+    problem: TspProblem
+
     def __init__(
         self,
-        problem: Problem,
+        problem: TspProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
@@ -36,6 +42,17 @@ class CpSatTspSolver(OrtoolsCpSatSolver, TspSolver, WarmstartMixin):
             method=self.problem.evaluate_function_indexes,
         )
         self.distance_matrix[self.problem.end_index, self.problem.start_index] = 0
+        self.init_positional_variables = False
+
+    def get_task_start_or_end_variable(
+        self, task: Node, start_or_end: StartOrEnd
+    ) -> LinearExprT:
+        if not self.init_positional_variables:
+            self.create_positional_variables()
+        if start_or_end == StartOrEnd.START:
+            return self.variables["position"][task]
+        else:
+            return self.variables["position"][task] + 1
 
     def set_warm_start(self, solution: TspSolution) -> None:
         """Make the solver warm start from the given solution."""
@@ -123,3 +140,28 @@ class CpSatTspSolver(OrtoolsCpSatSolver, TspSolver, WarmstartMixin):
             )
         model.minimize(sum(obj_vars[i] * obj_coeffs[i] for i in range(len(obj_vars))))
         self.variables["arc_literals"] = arc_literals
+
+    def create_positional_variables(self) -> None:
+        """
+        For each node to visit, stock the index of visit. constrained via the arcs variable.
+        """
+        nodes = self.problem.tasks_list
+        position_var: dict[int, Union[IntVar, int]] = {
+            n: self.cp_model.new_int_var(lb=0, ub=len(nodes) - 1, name=f"position_{n}")
+            for n in nodes
+        }
+        position_var[self.problem.start_index] = -1
+        position_var[self.problem.end_index] = len(nodes)
+        for i, j in self.variables["arc_literals"]:
+            if (
+                j in {self.problem.start_index, self.problem.end_index}
+                or i == self.problem.end_index
+            ):
+                continue
+            (
+                self.cp_model.add(
+                    position_var[j] == position_var[i] + 1
+                ).only_enforce_if(self.variables["arc_literals"][i, j])
+            )
+        self.init_positional_variables = True
+        self.variables["position"] = position_var
