@@ -1627,7 +1627,7 @@ class ConstraintHandlerMultiskillAllocation(BaseSchedulingMznConstraintHandler):
         list_strings += constraint_unit_used_to_tasks(
             tasks_set=set(
                 random.sample(
-                    current_solution.problem.get_tasks_list(),
+                    current_solution.problem.tasks_list,
                     min(
                         int(0.8 * current_solution.problem.n_jobs),
                         current_solution.problem.n_jobs - 1,

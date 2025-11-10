@@ -121,7 +121,7 @@ class AllocSchedulingProblem(
         self.team_names = team_names
         self.calendar_team = realign_calendars(calendar_team)
         self.horizon = horizon
-        self.tasks_list = tasks_list
+        self._tasks_list = tasks_list
         self.tasks_data = tasks_data
         self.same_allocation = same_allocation
         self.precedence_constraints = precedence_constraints
@@ -150,6 +150,10 @@ class AllocSchedulingProblem(
         self.resources_capacity = resources_capacity
         self.horizon_start_shift = horizon_start_shift
         self.compatible_teams_per_activity = self.compatible_teams_all_activity()
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return self._tasks_list
 
     @property
     def unary_resources_list(self) -> list[UnaryResource]:

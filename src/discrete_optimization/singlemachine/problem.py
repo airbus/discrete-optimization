@@ -80,7 +80,6 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
         if not (len(processing_times) == len(weights) == len(due_dates) == num_jobs):
             raise ValueError(f"All lists must contain {num_jobs} elements.")
         self.num_jobs = num_jobs
-        self.tasks_list = list(range(self.num_jobs))
         self.processing_times = processing_times
         self.weights = weights
         self.due_dates = due_dates
@@ -91,6 +90,10 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
             # We still put some dummy values in case we use models considering release...
         else:
             self.has_release = True
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return list(range(self.num_jobs))
 
     def __repr__(self):
         return (
