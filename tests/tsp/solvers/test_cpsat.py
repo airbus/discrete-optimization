@@ -3,10 +3,14 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import pytest
+from pytest_cases import fixture
 
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
@@ -17,17 +21,16 @@ from discrete_optimization.tsp.solvers.lns_cpsat import (
     SubpathTspConstraintHandler,
     TspConstraintHandler,
 )
-from discrete_optimization.tsp.utils import closest_greedy
 
 
-@pytest.mark.parametrize("end_index", [0, 10])
-def test_cpsat_solver(end_index):
-    files = get_data_available()
-    files = [f for f in files if "tsp_100_1" in f]
-    model = parse_file(files[0], start_index=0, end_index=end_index)
-    params_objective_function = get_default_objective_setup(problem=model)
-    solver = CpSatTspSolver(model, params_objective_function=params_objective_function)
+@fixture
+def solver(problem):
+    solver = CpSatTspSolver(problem)
     solver.init_model()
+    return solver
+
+
+def test_cpsat_solver(problem, solver, end_index):
     res = solver.solve(
         callbacks=[
             ObjectiveLogger(
@@ -38,7 +41,7 @@ def test_cpsat_solver(end_index):
     )
     sol, fitness = res.get_best_solution_fit()
     sol: TspSolution
-    assert model.satisfy(sol)
+    assert problem.satisfy(sol)
     assert sol.end_index == end_index
 
     assert len(res) > 2
@@ -55,8 +58,95 @@ def test_cpsat_solver(end_index):
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
     assert res[0][0].permutation == start_solution.permutation
+
+    # test get_start_time, get_end_time
+    for task in problem.tasks_list:
+        sol.get_start_time(task), sol.get_end_time(task)
+
+
+def test_subobjectives(problem, solver):
+    objective = solver.get_global_makespan_variable()
+    solver.minimize_variable(objective)
+    sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
+    solver.solver.ObjectiveValue() == sol.get_max_end_time()
+
+    subtasks = {1, 3}
+    # max end time subtasks
+    objective = solver.get_subtasks_makespan_variable(subtasks)
+    solver.minimize_variable(objective)
+    sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
+    solver.solver.ObjectiveValue() == max(sol.get_end_time(task) for task in subtasks)
+    # sum end time subtasks
+    objective = solver.get_subtasks_sum_end_time_variable(subtasks)
+    solver.minimize_variable(objective)
+    sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
+    solver.solver.ObjectiveValue() == sum(sol.get_end_time(task) for task in subtasks)
+    # sum start time subtasks
+    objective = solver.get_subtasks_sum_start_time_variable(subtasks)
+    solver.minimize_variable(objective)
+    sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
+    solver.solver.ObjectiveValue() == sum(sol.get_start_time(task) for task in subtasks)
+    # max end time
+    objective = solver.get_global_makespan_variable()
+    solver.minimize_variable(objective)
+    sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
+    solver.solver.ObjectiveValue() == sol.get_max_end_time()
+
+
+def test_task_constraint(problem, solver):
+    task = 2
+    start_or_end = StartOrEnd.END
+    sign = SignEnum.LEQ
+    antisign = SignEnum.UP
+    time = 5
+
+    # anti-constraint
+    cstrs = solver.add_constraint_on_task(
+        task=task, start_or_end=start_or_end, sign=antisign, time=time
+    )
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    ).get_best_solution()
+    assert sol.constraint_on_task_satisfied(
+        task=task, start_or_end=start_or_end, sign=antisign, time=time
+    )
+    # constraint
+    solver.remove_constraints(cstrs)
+    cstrs = solver.add_constraint_on_task(
+        task=task, start_or_end=start_or_end, sign=sign, time=time
+    )
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    ).get_best_solution()
+    assert sol.constraint_on_task_satisfied(
+        task=task, start_or_end=start_or_end, sign=sign, time=time
+    )
+
+
+def test_chaining_tasks_constraint(problem, solver):
+    task1 = 1
+    task2 = 3
+
+    # before adding the constraint, not already satisfied
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution()
+    assert not sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
+    # add constraint
+    cstrs = solver.add_constraint_chaining_tasks(task1=task1, task2=task2)
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution()
+    assert sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
+    # remove constraint
+    solver.remove_constraints(cstrs)
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution()
+    assert not sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
 
 
 def test_lns_cpsat_solver():
