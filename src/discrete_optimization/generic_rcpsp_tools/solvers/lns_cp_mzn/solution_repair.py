@@ -84,7 +84,7 @@ def return_pauses_and_active_times(
         SpecialPreemptiveRcpspSolution,
     ],
 ):
-    tasks = model.get_tasks_list()
+    tasks = model.tasks_list
     dictionnary = {}
     for task in tasks:
         starts = solution.get_start_times_list(task)
@@ -179,16 +179,14 @@ def problem_constraints(
         subtasks = subtasks.union(
             set(
                 random.sample(
-                    current_solution.problem.get_tasks_list(),
+                    current_solution.problem.tasks_list,
                     int(0.2 * current_solution.problem.n_jobs) - len(subtasks),
                 )
             )
         )
-    jobs_to_fix = [
-        j for j in current_solution.problem.get_tasks_list() if j not in subtasks
-    ]
+    jobs_to_fix = [j for j in current_solution.problem.tasks_list if j not in subtasks]
     list_strings = []
-    subtasks_2 = current_solution.problem.get_tasks_list()
+    subtasks_2 = current_solution.problem.tasks_list
     string = (
         """
              int: nb_task_problems="""
@@ -370,7 +368,7 @@ def problem_constraints(
         list_strings += constraint_unit_used_to_tasks_preemptive(
             tasks_set=set(
                 random.sample(
-                    current_solution.problem.get_tasks_list(),
+                    current_solution.problem.tasks_list,
                     min(
                         int(0.99 * current_solution.problem.n_jobs),
                         current_solution.problem.n_jobs - 1,

@@ -38,7 +38,7 @@ def compute_resource_consumption(
     if list_resources is None:
         list_resources = rcpsp_problem.resources_list
     consumptions = np.zeros((len(list_resources), makespan + 1))
-    for act_id in rcpsp_problem.get_tasks_list():
+    for act_id in rcpsp_problem.tasks_list:
         for ir in range(len(list_resources)):
             use_ir = rcpsp_problem.mode_details[act_id][modes_dict[act_id]].get(
                 list_resources[ir], 0
@@ -101,7 +101,7 @@ def plot_ressource_view(
     polygons_ax = {i: [] for i in range(len(list_resource))}
     labels_ax = {i: [] for i in range(len(list_resource))}
     sorted_activities = sorted(
-        rcpsp_problem.get_tasks_list(), key=lambda x: rcpsp_sol.get_start_time(x)
+        rcpsp_problem.tasks_list, key=lambda x: rcpsp_sol.get_start_time(x)
     )
     for j in sorted_activities:
         time_starts = rcpsp_sol.get_start_times_list(j)  # rcpsp_schedule[j]["starts"]

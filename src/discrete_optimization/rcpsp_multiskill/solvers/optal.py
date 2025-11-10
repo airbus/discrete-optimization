@@ -104,7 +104,6 @@ class OptalMSRcpspSolver(OptalSolver):
         employee_skill_usage = dict_results["employeeUsageSkill"]
         schedule = {}
         modes_dict = {}
-        tasks = self.problem.get_tasks_list()
         str_to_task = {str(t): t for t in self.problem.tasks_list}
         employee_usage = {}
         for key in start_times:

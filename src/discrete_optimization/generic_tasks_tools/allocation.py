@@ -114,13 +114,16 @@ class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
 
     """
 
-    unary_resources_list: list[UnaryResource]
-    """Available unary resources.
+    @property
+    @abstractmethod
+    def unary_resources_list(self) -> list[UnaryResource]:
+        """Available unary resources.
 
-    It can correspond to employees (rcpsp-multiskill), teams (workforce-scheduling), or
-    a mix of several types.
+        It can correspond to employees (rcpsp-multiskill), teams (workforce-scheduling), or
+        a mix of several types.
 
-    """
+        """
+        ...
 
     _map_unary_resource_to_index: Optional[dict[UnaryResource, int]] = None
 

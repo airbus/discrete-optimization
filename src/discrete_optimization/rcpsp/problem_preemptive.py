@@ -511,9 +511,6 @@ class PreemptiveRcpspProblem(Problem):
             return max(self.resources.get(res, [0]))
         return self.resources.get(res, 0)
 
-    def get_tasks_list(self):
-        return self.tasks_list
-
     def get_modes_dict(self, rcpsp_solution: PreemptiveRcpspSolution):
         return self.build_mode_dict(rcpsp_solution.rcpsp_modes)
 
