@@ -4,8 +4,12 @@
 import logging
 
 import pytest
+from pytest_cases import fixture, param_fixtures
 
 from discrete_optimization.coloring.parser import get_data_available, parse_file
+from discrete_optimization.coloring.problem import (
+    ColoringSolution,
+)
 from discrete_optimization.coloring.solvers.cpsat import (
     CpSatColoringSolver,
     ModelingCpSat,
@@ -13,27 +17,58 @@ from discrete_optimization.coloring.solvers.cpsat import (
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-@pytest.mark.parametrize("modeling", [ModelingCpSat.BINARY, ModelingCpSat.INTEGER])
-def test_cpsat_solver(modeling):
-    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
-    color_problem = parse_file(small_example)
-    solver = CpSatColoringSolver(color_problem)
-    solver.init_model(nb_colors=20, modeling=modeling)
+modeling, value_sequence_chain, used_variable, symmetry_on_used = param_fixtures(
+    "modeling, value_sequence_chain, used_variable, symmetry_on_used",
+    [
+        (ModelingCpSat.BINARY, False, False, False),
+        (ModelingCpSat.INTEGER, False, False, False),
+        (ModelingCpSat.INTEGER, True, False, False),
+        (ModelingCpSat.INTEGER, False, True, False),
+        (ModelingCpSat.INTEGER, False, True, True),
+        (ModelingCpSat.INTEGER, True, True, True),
+    ],
+)
+
+
+@fixture
+def solver(
+    problem,
+    with_coloring_constraint,
+    modeling,
+    value_sequence_chain,
+    used_variable,
+    symmetry_on_used,
+):
+    if with_coloring_constraint and value_sequence_chain:
+        pytest.skip(
+            "chosen coloring constraint not compatible with value_sequence_chain"
+        )
+    init_model_kwargs = dict(
+        nb_colors=20,
+        modeling=modeling,
+        value_sequence_chain=value_sequence_chain,
+        used_variable=used_variable,
+        symmetry_on_used=symmetry_on_used,
+    )
+    solver = CpSatColoringSolver(problem)
+    solver.init_model(**init_model_kwargs)
+    return solver
+
+
+def test_cpsat_solver(problem, solver, start_solution):
     p = ParametersCp.default()
     result_store = solver.solve(parameters_cp=p)
     solution, fit = result_store.get_best_solution_fit()
-    assert color_problem.satisfy(solution)
+    assert problem.satisfy(solution)
 
     # test warm start
-    start_solution = solver.get_starting_solution()
-
     # first solution is not start_solution
     assert result_store[0][0].colors != start_solution.colors
 
@@ -45,6 +80,44 @@ def test_cpsat_solver(modeling):
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
     )
     assert result_store[0][0].colors == start_solution.colors
+
+
+def test_constraint_nb_allocation_changes(problem, solver, start_solution):
+    nb_changes = 3
+    sol: ColoringSolution
+    ref = start_solution
+
+    # force to be away from start_solution
+    constraints = solver.add_constraint_on_nb_allocation_changes(
+        ref=ref, nb_changes=nb_changes, sign=SignEnum.UP
+    )
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution()
+    assert (
+        sol.compute_nb_allocation_changes(
+            ref,
+            tasks=solver.subset_tasks_of_interest,
+            unary_resources=solver.subset_unaryresources_allowed,
+        )
+        > nb_changes
+    )
+
+    solver.remove_constraints(constraints)
+
+    # force to be close to start_solution
+    solver.add_constraint_on_nb_allocation_changes(ref=ref, nb_changes=nb_changes)
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution()
+    assert (
+        sol.compute_nb_allocation_changes(
+            ref,
+            tasks=solver.subset_tasks_of_interest,
+            unary_resources=solver.subset_unaryresources_allowed,
+        )
+        <= nb_changes
+    )
 
 
 def test_cpsat_solver_warmstart_prev():

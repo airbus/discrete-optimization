@@ -27,7 +27,7 @@ def run_cpsat():
     p.nb_process = 16
     res = solver.solve(
         parameters_cp=p,
-        time_limit=20,
+        time_limit=100,
         ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
     sol = res[-1][0]
@@ -64,4 +64,4 @@ def run_cpsat_ws():
 
 
 if __name__ == "__main__":
-    run_cpsat_ws()
+    run_cpsat()

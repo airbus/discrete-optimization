@@ -230,7 +230,6 @@ class CpsatTeamAllocationSolver(
             ModelisationAllocationOrtools.BINARY,
             ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES,
         ]:
-            self.allocation_modelling = AllocationModelling.BINARY
             args["optional_activities"] = (
                 modelisation_allocation
                 == ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
@@ -245,7 +244,6 @@ class CpsatTeamAllocationSolver(
                     ),
                 )
         else:
-            self.allocation_modelling = AllocationModelling.INTEGER
             self.init_model_integer(**args)
             self.key_main_decision_variable = "allocation"
             if "base_solution" in args:
@@ -268,6 +266,7 @@ class CpsatTeamAllocationSolver(
             )
 
     def init_model_integer(self, **kwargs):
+        self.allocation_modelling = AllocationModelling.INTEGER
         super().init_model(**kwargs)
         include_pair_overlap = kwargs["include_pair_overlap"]
         overlapping_advanced = kwargs["overlapping_advanced"]
@@ -324,6 +323,7 @@ class CpsatTeamAllocationSolver(
         self.cp_model.Minimize(self.variables["objs"]["nb_teams"])
 
     def init_model_binary(self, **kwargs):
+        self.allocation_modelling = AllocationModelling.BINARY
         super().init_model(**kwargs)
         optional_activities = kwargs["optional_activities"]
         include_pair_overlap = kwargs["include_pair_overlap"]

@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
@@ -9,6 +11,10 @@ from typing import Any, Optional, Union, cast
 
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     MethodAggregating,
@@ -42,10 +48,16 @@ class Item:
         )
 
 
-class KnapsackSolution(Solution):
+Knapsack = bool  # unary resource type
+KNAPSACK_RESOURCE = True  # single resource "knapsack"
+
+
+class KnapsackSolution(AllocationSolution[Item, Knapsack]):
+    problem: KnapsackProblem
+
     def __init__(
         self,
-        problem: "KnapsackProblem",
+        problem: KnapsackProblem,
         list_taken: list[int],
         value: Optional[float] = None,
         weight: Optional[float] = None,
@@ -55,7 +67,14 @@ class KnapsackSolution(Solution):
         self.weight = weight
         self.list_taken = list_taken
 
-    def copy(self) -> "KnapsackSolution":
+    def is_allocated(self, task: Item, unary_resource: Knapsack) -> bool:
+        if unary_resource == KNAPSACK_RESOURCE:
+            i_item = self.problem.item_to_index_list[task]
+            return self.list_taken[i_item] > 0
+        else:
+            return False
+
+    def copy(self) -> KnapsackSolution:
         return KnapsackSolution(
             problem=self.problem,
             value=self.value,
@@ -63,7 +82,7 @@ class KnapsackSolution(Solution):
             list_taken=list(self.list_taken),
         )
 
-    def lazy_copy(self) -> "KnapsackSolution":
+    def lazy_copy(self) -> KnapsackSolution:
         return KnapsackSolution(
             problem=self.problem,
             value=self.value,
@@ -92,7 +111,7 @@ class KnapsackSolution(Solution):
         )
 
 
-class KnapsackProblem(Problem):
+class KnapsackProblem(AllocationProblem[Item, Knapsack]):
     def __init__(
         self,
         list_items: list[Item],
@@ -108,7 +127,16 @@ class KnapsackProblem(Problem):
         self.index_to_index_list = {
             list_items[i].index: i for i in range(self.nb_items)
         }
+        self.item_to_index_list = {item: i for i, item in enumerate(self.list_items)}
         self.force_recompute_values = force_recompute_values
+
+    @property
+    def unary_resources_list(self) -> list[Knapsack]:
+        return [KNAPSACK_RESOURCE]
+
+    @property
+    def tasks_list(self) -> list[Item]:
+        return self.list_items
 
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {
@@ -274,8 +302,8 @@ class MultidimensionalKnapsackSolution(Solution):
     def __init__(
         self,
         problem: Union[
-            "MultidimensionalKnapsackProblem",
-            "MultiScenarioMultidimensionalKnapsackProblem",
+            MultidimensionalKnapsackProblem,
+            MultiScenarioMultidimensionalKnapsackProblem,
         ],
         list_taken: list[int],
         value: Optional[float] = None,
@@ -286,7 +314,7 @@ class MultidimensionalKnapsackSolution(Solution):
         self.weights = weights
         self.list_taken = list_taken
 
-    def copy(self) -> "MultidimensionalKnapsackSolution":
+    def copy(self) -> MultidimensionalKnapsackSolution:
         return MultidimensionalKnapsackSolution(
             problem=self.problem,
             value=self.value,
@@ -294,7 +322,7 @@ class MultidimensionalKnapsackSolution(Solution):
             list_taken=list(self.list_taken),
         )
 
-    def lazy_copy(self) -> "MultidimensionalKnapsackSolution":
+    def lazy_copy(self) -> MultidimensionalKnapsackSolution:
         return MultidimensionalKnapsackSolution(
             problem=self.problem,
             value=self.value,
@@ -478,7 +506,7 @@ class MultidimensionalKnapsackProblem(Problem):
     def get_solution_type(self) -> type[Solution]:
         return MultidimensionalKnapsackSolution
 
-    def copy(self) -> "MultidimensionalKnapsackProblem":
+    def copy(self) -> MultidimensionalKnapsackProblem:
         return MultidimensionalKnapsackProblem(
             list_items=[deepcopy(x) for x in self.list_items],
             max_capacities=list(self.max_capacities),

@@ -113,6 +113,7 @@ doc = [
 test = [
     "nbmake>=1.5.5",
     "pytest>=8.4.2",
+    "pytest-cases>=3.9.1",
     "pytest-cov>=7.0.0",
     "scikit-learn>=1.6.1",
 ]

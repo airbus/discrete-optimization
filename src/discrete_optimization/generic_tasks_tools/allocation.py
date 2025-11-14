@@ -59,14 +59,20 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
             raise ValueError("We can compare only solutions for same problem.")
 
     def compute_nb_allocation_changes(
-        self, ref: AllocationSolution[Task, UnaryResource]
+        self,
+        ref: AllocationSolution[Task, UnaryResource],
+        tasks: Optional[Iterable[Task]] = None,
+        unary_resources: Optional[Iterable[UnaryResource]] = None,
     ) -> int:
         self._check_same_problem(ref)
+        tasks, unary_resources = self.get_default_tasks_n_unary_resources(
+            tasks, unary_resources
+        )
         return sum(
             self.is_allocated(task=task, unary_resource=unary_resource)
             != ref.is_allocated(task=task, unary_resource=unary_resource)
-            for task in self.problem.tasks_list
-            for unary_resource in self.problem.unary_resources_list
+            for task in tasks
+            for unary_resource in unary_resources
         )
 
     def compute_nb_tasks_done(self) -> int:

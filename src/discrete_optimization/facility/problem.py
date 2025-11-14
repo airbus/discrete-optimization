@@ -16,6 +16,10 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -50,7 +54,7 @@ class Customer:
     location: Point
 
 
-class FacilitySolution(Solution):
+class FacilitySolution(AllocationSolution[Customer, Facility]):
     """Solution object for facility location
 
     Attributes:
@@ -94,8 +98,11 @@ class FacilitySolution(Solution):
         self.facility_for_customers = list(self.facility_for_customers)
         self.dict_details = deepcopy(self.dict_details)
 
+    def is_allocated(self, task: Customer, unary_resource: Facility) -> bool:
+        return self.facility_for_customers[task.index] == unary_resource.index
 
-class FacilityProblem(Problem):
+
+class FacilityProblem(AllocationProblem[Customer, Facility]):
     """Base class for the facility problem.
 
     Attributes:
@@ -118,6 +125,14 @@ class FacilityProblem(Problem):
         self.customer_count = customer_count
         self.facilities = facilities
         self.customers = customers
+
+    @property
+    def unary_resources_list(self) -> list[Facility]:
+        return self.facilities
+
+    @property
+    def tasks_list(self) -> list[Customer]:
+        return self.customers
 
     @abstractmethod
     def evaluate_customer_facility(

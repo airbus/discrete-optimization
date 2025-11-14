@@ -1,0 +1,19 @@
+#  Copyright (c) 2025 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
+from pytest_cases import fixture
+
+from discrete_optimization.knapsack.parser import get_data_available, parse_file
+from discrete_optimization.knapsack.problem import KnapsackProblem
+
+
+@fixture
+def problem() -> KnapsackProblem:
+    file = [f for f in get_data_available() if "ks_30_0" in f][0]
+    return parse_file(file)
+
+
+@fixture
+def start_solution(problem):
+    return problem.get_dummy_solution()
