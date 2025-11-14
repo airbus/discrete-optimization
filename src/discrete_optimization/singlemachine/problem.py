@@ -63,6 +63,10 @@ class WTSolution(SchedulingSolution[Task]):
     def get_start_time(self, task: Task) -> int:
         return self.schedule[task][0]
 
+    def change_problem(self, new_problem: Problem) -> None:
+        assert isinstance(new_problem, WeightedTardinessProblem)
+        self.problem = new_problem
+
 
 class WeightedTardinessProblem(SchedulingProblem[Task]):
     """
