@@ -5,7 +5,7 @@ import os
 import re
 from typing import Optional
 
-from discrete_optimization.datasets import get_data_home
+from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 from discrete_optimization.fjsp.problem import (
     FJobShopProblem,
     Job,
@@ -34,8 +34,8 @@ def get_data_available(
                 os.path.join(data_folder, fold, f)
                 for f in os.listdir(os.path.join(data_folder, fold))
             ]
-    except FileNotFoundError:
-        files = []
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
     return files
 
 

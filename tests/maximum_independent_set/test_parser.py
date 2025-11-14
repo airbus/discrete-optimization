@@ -4,7 +4,12 @@
 
 import os
 
-from discrete_optimization.maximum_independent_set.parser import dimacs_parser
+import pytest
+
+from discrete_optimization.maximum_independent_set.parser import (
+    dimacs_parser,
+    get_data_available,
+)
 
 test_dir = os.path.dirname(__file__)
 
@@ -23,3 +28,10 @@ def test_dimacs_parser_isolated_node():
     assert 0 not in mis_problem.graph_nx
     assert len(mis_problem.graph_nx[11]) > 0
     assert len(mis_problem.graph_nx[12]) == 0
+
+
+def test_no_dataset(fake_data_home):
+    with pytest.raises(
+        FileNotFoundError, match="python -m discrete_optimization.datasets"
+    ):
+        get_data_available()

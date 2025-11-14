@@ -5,7 +5,7 @@
 import os
 from typing import Optional
 
-from discrete_optimization.datasets import get_data_home
+from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 from discrete_optimization.vrp.problem import Customer2D, Customer2DVrpProblem
 
 
@@ -30,8 +30,8 @@ def get_data_available(
             os.path.abspath(os.path.join(data_folder, f))
             for f in os.listdir(data_folder)
         ]
-    except FileNotFoundError:
-        datasets = []
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
     return datasets
 
 

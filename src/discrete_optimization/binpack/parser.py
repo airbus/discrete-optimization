@@ -5,7 +5,7 @@ import os
 from typing import Optional
 
 from discrete_optimization.binpack.problem import BinPackProblem, ItemBinPack
-from discrete_optimization.datasets import get_data_home
+from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 
 
 def get_data_available_bppc(
@@ -30,8 +30,8 @@ def get_data_available_bppc(
             for f in os.listdir(data_folder)
             if "txt" in f
         ]
-    except FileNotFoundError:
-        datasets = []
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
     return datasets
 
 
