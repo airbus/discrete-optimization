@@ -92,7 +92,6 @@ class OptalRcpspSolver(OptalSolver):
         end_times = dict_results["endTimes"]
         rcpsp_schedule = {}
         modes_dict = {}
-        tasks = self.problem.get_tasks_list()
         str_to_task = {str(t): t for t in self.problem.tasks_list}
         for key in start_times:
             rcpsp_schedule[str_to_task[key]] = {

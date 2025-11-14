@@ -187,9 +187,13 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
         )
         self.nb_customers = len(self.customers)
 
-        # For Schedulind and allocation mixin.
-        self.tasks_list = self.customers
-        self.unary_resources_list = list(range(self.nb_vehicles))
+    @property
+    def unary_resources_list(self) -> list[UnaryResource]:
+        return list(range(self.nb_vehicles))
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return self.customers
 
     def get_attribute_register(self) -> EncodingRegister:
         # VRPTW is complex to encode with simple registers.

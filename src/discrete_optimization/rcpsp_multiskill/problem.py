@@ -2014,12 +2014,12 @@ class MultiskillRcpspProblem(
         self.horizon_multiplier = horizon_multiplier
         self.nb_tasks = len(self.mode_details)
         if tasks_list is None:
-            self.tasks_list = list(self.mode_details)
+            self._tasks_list = list(self.mode_details)
         else:
             assert set(tasks_list) == set(self.mode_details), (
                 "tasks_list must contain same ids as mode_details"
             )
-            self.tasks_list = tasks_list
+            self._tasks_list = tasks_list
         if employees_list is None:
             self.employees_list = list(self.employees)
         else:
@@ -2171,6 +2171,10 @@ class MultiskillRcpspProblem(
         self.create_employee_task_compatibility()
         self.update_functions()
 
+    @property
+    def tasks_list(self) -> list[Task]:
+        return self._tasks_list
+
     def create_employee_task_compatibility(self) -> None:
         self.employees_per_skill: dict[str, set[UnaryResource]] = {
             s: {
@@ -2224,9 +2228,6 @@ class MultiskillRcpspProblem(
 
     def get_resource_available(self, res, time):
         return self.resources_availability[res][time]
-
-    def get_tasks_list(self):
-        return self.tasks_list
 
     def get_resource_names(self):
         return self.resources_list

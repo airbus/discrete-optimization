@@ -12,8 +12,11 @@ Task = TypeVar("Task")
 class TasksProblem(Problem, Generic[Task]):
     """Base class for scheduling/allocation problems."""
 
-    tasks_list: list[Task]
-    """List of all tasks to schedule or allocate to."""
+    @property
+    @abstractmethod
+    def tasks_list(self) -> list[Task]:
+        """List of all tasks to schedule or allocate to."""
+        ...
 
 
 class TasksSolution(ABC, Solution, Generic[Task]):

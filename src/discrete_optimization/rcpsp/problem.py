@@ -125,12 +125,12 @@ class RcpspProblem(
         else:
             self.name_task = name_task
         if tasks_list is None:
-            self.tasks_list = list(self.mode_details)
+            self._tasks_list = list(self.mode_details)
         else:
             assert set(tasks_list) == set(self.mode_details), (
                 "tasks_list must contain same ids as mode_details"
             )
-            self.tasks_list = tasks_list
+            self._tasks_list = tasks_list
         self.n_jobs = len(self.mode_details.keys())
         self.n_jobs_non_dummy = self.n_jobs - 2
         self.index_task = {self.tasks_list[i]: i for i in range(self.n_jobs)}
@@ -225,6 +225,10 @@ class RcpspProblem(
         self.fixed_permutation = fixed_permutation
         self.fixed_modes = fixed_modes
 
+    @property
+    def tasks_list(self) -> list[Task]:
+        return self._tasks_list
+
     def get_task_modes(self, task: Task) -> set[int]:
         return set(self.mode_details[task])
 
@@ -261,9 +265,6 @@ class RcpspProblem(
 
     def get_resource_names(self) -> list[str]:
         return self.resources_list
-
-    def get_tasks_list(self) -> list[Hashable]:
-        return self.tasks_list
 
     def get_resource_availability_array(self, res: str) -> list[int]:
         if self.is_varying_resource() and not isinstance(self.resources[res], int):
