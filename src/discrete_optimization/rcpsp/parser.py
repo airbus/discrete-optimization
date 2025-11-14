@@ -6,7 +6,7 @@ import os
 from collections.abc import Hashable
 from typing import Optional, Union
 
-from discrete_optimization.datasets import get_data_home
+from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 from discrete_optimization.rcpsp.problem import RcpspProblem
 
 
@@ -32,8 +32,8 @@ def get_data_available(
             for f in os.listdir(data_folder)
             if f.endswith(".sm") or f.endswith(".mm") or f.endswith(".rcp")
         ]
-    except FileNotFoundError:
-        files = []
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 

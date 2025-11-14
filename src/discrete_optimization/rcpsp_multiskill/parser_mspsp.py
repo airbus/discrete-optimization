@@ -9,7 +9,11 @@ from typing import Optional
 import numpy as np
 import pymzn
 
-from discrete_optimization.datasets import fetch_data_from_mspsplib_repo, get_data_home
+from discrete_optimization.datasets import (
+    ERROR_MSG_MISSING_DATASETS,
+    fetch_data_from_mspsplib_repo,
+    get_data_home,
+)
 from discrete_optimization.rcpsp_multiskill.problem import (
     Employee,
     MultiskillRcpspProblem,
@@ -26,9 +30,6 @@ def get_data_available(
     if data_folder is None:
         data_home = get_data_home(data_home=data_home)
         data_folder = f"{data_home}/MSPSP_Instances"
-        if not os.path.exists(data_folder):
-            logger.info(f"Fetching data from MSPSP_Lib repo")
-            fetch_data_from_mspsplib_repo(data_home)
     try:
         file_paths = {}
         for sub_folder in os.listdir(data_folder):
@@ -44,9 +45,8 @@ def get_data_available(
                 file_paths[sub_folder][subset] = [
                     os.path.join(folder_subset, f) for f in files if f.endswith(".dzn")
                 ]
-    except FileNotFoundError:
-        logger.debug("folder with MSPSP instances not found")
-        file_paths = {}
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
     return file_paths
 
 

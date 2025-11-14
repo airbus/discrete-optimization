@@ -3,19 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import pytest
 
-from discrete_optimization.tsptw.parser import get_data_available
-
-
-def test_parser(problem):
-    print(
-        problem.nb_nodes,
-        problem.distance_matrix,
-        problem.distance_matrix,
-        problem.time_windows,
-        problem.depot_node,
-        problem.customers,
-        problem.nb_customers,
-    )
+from discrete_optimization.vrp.parser import get_data_available
 
 
 def test_no_dataset(fake_data_home):

@@ -5,7 +5,11 @@ import logging
 import os
 from typing import Optional
 
-from discrete_optimization.datasets import fetch_data_from_mslib, get_data_home
+from discrete_optimization.datasets import (
+    ERROR_MSG_MISSING_DATASETS,
+    fetch_data_from_mslib,
+    get_data_home,
+)
 from discrete_optimization.rcpsp_multiskill.problem import (
     Employee,
     MultiskillRcpspProblem,
@@ -29,9 +33,6 @@ def get_data_available(
     if data_folder is None:
         data_home = get_data_home(data_home=data_home)
         data_folder = f"{data_home}/rcpsp_multiskill_mslib"
-    if not os.path.exists(data_folder):
-        logger.info(f"Fetching data from MSLIB webpage.")
-        fetch_data_from_mslib(data_home)
     mslib_folder = data_folder
     subfolders = [
         os.path.join(mslib_folder, "MSLIB1/Instances1"),
@@ -40,16 +41,19 @@ def get_data_available(
         os.path.join(mslib_folder, "MSLIB4/Instances4"),
     ]
     tags = ["MSLIB1", "MSLIB2", "MSLIB3", "MSLIB4"]
-    return {
-        tags[i]: sorted(
-            [
-                os.path.abspath(os.path.join(subfolders[i], f))
-                for f in os.listdir(subfolders[i])
-                if f[-5:] == "msrcp"
-            ]
-        )
-        for i in range(len(tags))
-    }
+    try:
+        return {
+            tags[i]: sorted(
+                [
+                    os.path.abspath(os.path.join(subfolders[i], f))
+                    for f in os.listdir(subfolders[i])
+                    if f[-5:] == "msrcp"
+                ]
+            )
+            for i in range(len(tags))
+        }
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
 
 
 def parse_file(file_path, skill_level_version: bool = True):

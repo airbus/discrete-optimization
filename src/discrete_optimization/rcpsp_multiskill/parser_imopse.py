@@ -5,7 +5,7 @@
 import os
 from typing import Optional
 
-from discrete_optimization.datasets import get_data_home
+from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 from discrete_optimization.rcpsp_multiskill.problem import (
     Employee,
     MultiskillRcpspProblem,
@@ -31,8 +31,8 @@ def get_data_available(
 
     try:
         files = [f for f in os.listdir(data_folder) if f.endswith(".def")]
-    except FileNotFoundError:
-        files = []
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 

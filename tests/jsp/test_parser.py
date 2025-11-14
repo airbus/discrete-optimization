@@ -12,3 +12,10 @@ def test_parser(jsp_file: str):
     model: JobShopProblem = parse_file(file_path=jsp_file)
     assert isinstance(model, JobShopProblem)
     assert model.n_jobs > 0
+
+
+def test_no_dataset(fake_data_home):
+    with pytest.raises(
+        FileNotFoundError, match="python -m discrete_optimization.datasets"
+    ):
+        get_data_available()
