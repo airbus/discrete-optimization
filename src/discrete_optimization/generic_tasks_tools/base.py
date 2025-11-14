@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from abc import abstractmethod
+from typing import Generic, TypeVar
 
-from discrete_optimization.generic_tools.cp_tools import CpSolver, SignEnum
+from discrete_optimization.generic_tools.cp_tools import CpSolver
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 
 Task = TypeVar("Task")
@@ -19,7 +19,7 @@ class TasksProblem(Problem, Generic[Task]):
         ...
 
 
-class TasksSolution(ABC, Solution, Generic[Task]):
+class TasksSolution(Solution, Generic[Task]):
     """Base class for sheduling/allocation solutions."""
 
     problem: TasksProblem[Task]
