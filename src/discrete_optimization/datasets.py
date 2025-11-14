@@ -95,6 +95,13 @@ MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
 
 
+ERROR_MSG_MISSING_DATASETS = (
+    "\nYou probably have not downloaded the needed dataset.\n"
+    "You can do it by using the proper function in discrete_optimization.datasets.\n"
+    'Fetch all datasets used by discrete-optimization with the command "python -m discrete_optimization.datasets".'
+)
+
+
 def get_data_home(data_home: Optional[str] = None) -> str:
     """Return the path of the discrete-optimization data directory.
 
@@ -269,7 +276,7 @@ def fetch_data_from_mspsplib_repo(data_home: Optional[str] = None):
             all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
 
     """
-    #  get the proper data directory
+    # get the proper data directory
     data_home = get_data_home(data_home=data_home)
 
     # download in a temporary file the repo data
@@ -430,7 +437,7 @@ def fetch_data_from_jsplib_repo(data_home: Optional[str] = None):
             all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
 
     """
-    #  get the proper data directory
+    # get the proper data directory
     data_home = get_data_home(data_home=data_home)
 
     # download in a temporary file the repo data
@@ -591,6 +598,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_weighted_tardiness_single_machine(data_home=data_home)
     fetch_data_tsptw(data_home=data_home)
     fetch_data_from_mslib(data_home=data_home)
+    fetch_data_from_mspsplib_repo(data_home)
 
 
 if __name__ == "__main__":

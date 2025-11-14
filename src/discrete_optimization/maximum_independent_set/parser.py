@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import networkx as nx
 
-from discrete_optimization.datasets import get_data_home
+from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.maximum_independent_set.problem import MisProblem
 
@@ -31,8 +31,8 @@ def get_data_available(
             os.path.abspath(os.path.join(data_folder, f))
             for f in os.listdir(data_folder)
         ]
-    except FileNotFoundError:
-        datasets = []
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
     return datasets
 
 
