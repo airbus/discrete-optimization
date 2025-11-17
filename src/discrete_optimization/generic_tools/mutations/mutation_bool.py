@@ -58,7 +58,8 @@ class MutationBitFlip(Mutation):
     def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         indexes = np.where(np.random.random(self.length) <= self.probability_flip)
         move = BitFlipMove(self.attribute, indexes[0])
-        return move.apply_local_move(solution), move
+        sol = solution.lazy_copy()
+        return move.apply_local_move(sol), move
 
     def mutate_and_compute_obj(
         self, solution: Solution
