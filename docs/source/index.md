@@ -33,6 +33,7 @@ caption: Contents
 install
 getting_started
 notebooks
+howto_new_problem_implementation/tutorial_new_problem_or_solver
 dashboard
 api/modules
 contribute
