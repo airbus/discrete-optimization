@@ -10,22 +10,36 @@ from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
     IntVar,
     LinearExpr,
+    LinearExprT,
     ObjLinearExprT,
 )
 
+from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
+from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+    AllocationCpSatSolver,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
-from discrete_optimization.knapsack.problem import KnapsackProblem, KnapsackSolution
+from discrete_optimization.knapsack.problem import (
+    KNAPSACK_RESOURCE,
+    Item,
+    Knapsack,
+    KnapsackProblem,
+    KnapsackSolution,
+)
 from discrete_optimization.knapsack.solvers import KnapsackSolver
 
 logger = logging.getLogger(__name__)
 
 
-class CpSatKnapsackSolver(OrtoolsCpSatSolver, KnapsackSolver, WarmstartMixin):
+class CpSatKnapsackSolver(
+    AllocationCpSatSolver[Item, Knapsack], KnapsackSolver, WarmstartMixin
+):
     def __init__(
         self,
         problem: KnapsackProblem,
@@ -36,6 +50,15 @@ class CpSatKnapsackSolver(OrtoolsCpSatSolver, KnapsackSolver, WarmstartMixin):
             problem=problem, params_objective_function=params_objective_function
         )
         self.variables: dict[str, list[IntVar]] = {}
+
+    def get_task_unary_resource_is_present_variable(
+        self, task: Item, unary_resource: Knapsack
+    ) -> LinearExprT:
+        if unary_resource == KNAPSACK_RESOURCE:
+            i_item = self.problem.item_to_index_list[task]
+            return self.variables["taken"][i_item]
+        else:
+            raise ValueError(f"unary_resource must be {KNAPSACK_RESOURCE}")
 
     def init_model(self, **args: Any) -> None:
         """Init CP model."""

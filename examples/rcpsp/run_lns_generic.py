@@ -12,6 +12,9 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
     TasksConstraintHandler,
 )
+from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
+    NeighborRandom,
+)
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
@@ -56,6 +59,7 @@ def run_lns_generic(problem: RcpspProblem):
     )
     constraint_handler = TasksConstraintHandler(
         problem=problem,
+        neighbor_builder=NeighborRandom(problem=problem, fraction_subproblem=0.1),
         params_constraint_extractor=ParamsConstraintExtractor(
             constraint_to_current_solution_makespan=False,
             margin_rel_to_current_solution_makespan=0.05,

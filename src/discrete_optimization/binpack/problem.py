@@ -1,14 +1,39 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 from collections import defaultdict
 from copy import deepcopy
-from dataclasses import field
+from dataclasses import dataclass, field
 
-from discrete_optimization.generic_tools.do_problem import *
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    EncodingRegister,
+    ModeOptim,
+    ObjectiveDoc,
+    ObjectiveHandling,
+    ObjectiveRegister,
+    Problem,
+    Solution,
+    TypeAttribute,
+    TypeObjective,
+)
+
+logger = logging.getLogger(__name__)
 
 
-class BinPackSolution(Solution):
+Item = int
+BinPack = int
+
+
+class BinPackSolution(AllocationSolution[Item, BinPack], SchedulingSolution[Item]):
     def __init__(self, problem: "BinPackProblem", allocation: list[int]):
         self.problem = problem
         self.allocation = allocation
@@ -18,8 +43,17 @@ class BinPackSolution(Solution):
             problem=self.problem, allocation=deepcopy(self.allocation)
         )
 
-    def change_problem(self, new_problem: "Problem") -> None:
+    def change_problem(self, new_problem: Problem) -> None:
         self.problem = new_problem
+
+    def get_end_time(self, task: Item) -> int:
+        return self.allocation[task] + 1
+
+    def get_start_time(self, task: Item) -> int:
+        return self.allocation[task]
+
+    def is_allocated(self, task: Item, unary_resource: BinPack) -> bool:
+        return self.allocation[task] == unary_resource
 
 
 @dataclass(frozen=True)
@@ -31,7 +65,7 @@ class ItemBinPack:
         return "ind: " + str(self.index) + " weight: " + str(self.weight)
 
 
-class BinPackProblem(Problem):
+class BinPackProblem(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
     def __init__(
         self,
         list_items: list[ItemBinPack],
@@ -63,12 +97,12 @@ class BinPackProblem(Problem):
         for i in range(self.nb_items):
             weight_per_bins[variable.allocation[i]] += self.list_items[i].weight
             if weight_per_bins[variable.allocation[i]] > self.capacity_bin:
-                print("capa")
+                logger.info("capacity not respected ")
                 return False
         if self.has_constraint:
             for i, j in self.incompatible_items:
                 if variable.allocation[i] == variable.allocation[j]:
-                    print("conflict")
+                    logger.info("conflict")
                     return False
         return True
 
@@ -95,3 +129,17 @@ class BinPackProblem(Problem):
                 "penalty": ObjectiveDoc(type=TypeObjective.PENALTY, default_weight=1),
             },
         )
+
+    @property
+    def unary_resources_list(self) -> list[BinPack]:
+        return list(range(self.nb_items))  # max nb of bin packs: 1 per item
+
+    def get_makespan_upper_bound(self) -> int:
+        return self.nb_items
+
+    @property
+    def tasks_list(self) -> list[Item]:
+        return list(range(self.nb_items))
+
+    def get_makespan_lower_bound(self) -> int:
+        return 1

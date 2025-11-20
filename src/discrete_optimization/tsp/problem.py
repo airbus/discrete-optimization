@@ -14,6 +14,10 @@ import numpy as np
 import numpy.typing as npt
 from numba import njit
 
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -26,8 +30,10 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeObjective,
 )
 
+Node = int
 
-class TspSolution(Solution):
+
+class TspSolution(SchedulingSolution[Node]):
     permutation_from0: list[int]
     start_index: int
     end_index: int
@@ -87,6 +93,12 @@ class TspSolution(Solution):
         if self.length is None:
             self.problem.evaluate(self)
 
+    def get_end_time(self, task: Node) -> int:
+        return self.get_start_time(task) + 1
+
+    def get_start_time(self, task: Node) -> int:
+        return self.permutation.index(task)
+
     def copy(self) -> "TspSolution":
         if self.lengths is None:
             lengths = None
@@ -129,7 +141,7 @@ class TspSolution(Solution):
 class Point: ...
 
 
-class TspProblem(Problem):
+class TspProblem(SchedulingProblem[Node]):
     list_points: Sequence[Point]
     np_points: np.ndarray
     node_count: int
@@ -302,6 +314,13 @@ class TspProblem(Problem):
             objective_handling=ObjectiveHandling.SINGLE,
             dict_objective_to_doc=dict_objective,
         )
+
+    def get_makespan_upper_bound(self) -> int:
+        return len(self.ind_in_permutation)
+
+    @property
+    def tasks_list(self) -> list[Node]:
+        return self.ind_in_permutation
 
 
 @dataclass(frozen=True)
