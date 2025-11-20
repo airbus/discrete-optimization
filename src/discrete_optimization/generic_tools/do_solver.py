@@ -6,9 +6,9 @@
 from __future__ import annotations  # see annotations as str
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
@@ -43,12 +43,28 @@ class SolverDO(Hyperparametrizable, ABC):
     problem: Problem
     status_solver: StatusSolver = StatusSolver.UNKNOWN
 
+    aggreg_from_sol: Union[
+        Callable[[Solution], float],
+        Callable[[Solution], TupleFitness],
+    ]
+    """Computes aggregated fitness (or multi-objective depending on ParamsObjectiveFunction) from a solution."""
+
     def __init__(
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
+        """Initialize the solver.
+
+        Args:
+            problem: problem to solve
+            params_objective_function: define the objective to optimize and how to aggregate them
+                (or not aggregate them for multiobjective solvers).
+                By default constructed from `problem.get_objective_register()`.
+            **kwargs:
+
+        """
         self.problem = problem
         (
             self.aggreg_from_sol,
