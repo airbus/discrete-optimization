@@ -2341,9 +2341,6 @@ class MultiskillRcpspProblem(
         makespan = rcpsp_sol.get_end_time(self.sink_task)
         return makespan
 
-    @abstractmethod
-    def evaluate_from_encoding(self, int_vector, encoding_name): ...
-
     def evaluate(self, rcpsp_sol: MultiskillRcpspSolution) -> dict[str, float]:
         obj_makespan = self.evaluate_function(rcpsp_sol)
         d = {"makespan": obj_makespan}

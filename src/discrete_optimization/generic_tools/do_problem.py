@@ -4,8 +4,10 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
@@ -62,7 +64,7 @@ class EncodingRegister:
                 "name": "colors",
                 "type": [TypeAttribute.LIST_INTEGER],
                 "n": self.number_of_nodes,
-                "arrity": self.number_of_nodes,
+                "arity": self.number_of_nodes,
             }
         }
     """
@@ -225,11 +227,11 @@ class ObjectiveRegister:
         return s
 
 
-class Solution:
+class Solution(ABC):
     """Base class for a solution to a Problem."""
 
     @abstractmethod
-    def copy(self) -> "Solution":
+    def copy(self) -> Solution:
         """Deep copy of the solution.
 
         The copy() function should return a new object containing the same input as the current object,
@@ -241,7 +243,7 @@ class Solution:
         """
         ...
 
-    def lazy_copy(self) -> "Solution":
+    def lazy_copy(self) -> Solution:
         """This function should return a new object but possibly with mutable attributes from the original objects.
 
         A typical use of lazy copy is in evolutionary algorithms or genetic algorithm where the use of
@@ -252,7 +254,7 @@ class Solution:
         """
         return self.copy()
 
-    def get_attribute_register(self, problem: "Problem") -> EncodingRegister:
+    def get_attribute_register(self, problem: Problem) -> EncodingRegister:
         """Returns how the Solution is encoded for the Problem.
 
         By default it returns the encoding register of the problem itself. However it can make sense that for the same
@@ -263,7 +265,7 @@ class Solution:
         return problem.get_attribute_register()
 
     @abstractmethod
-    def change_problem(self, new_problem: "Problem") -> None:
+    def change_problem(self, new_problem: Problem) -> None:
         """If relevant to the optimisation problem, change the underlying problem instance for the solution.
 
         This method can be used to evaluate a solution for different instance of problems.
@@ -277,7 +279,7 @@ class Solution:
         ...
 
 
-class Problem:
+class Problem(ABC):
     """Base class for a discrete optimization problem."""
 
     @abstractmethod
