@@ -377,7 +377,6 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
         for cstr in constraints:
             self.model.delete_linear_constraint(cstr)
 
-    @abstractmethod
     def convert_to_variable_values(
         self, solution: Solution
     ) -> dict[mathopt.Variable, float]:
@@ -387,10 +386,10 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
         See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint
         for more information.
 
-        Override it in subclasses to have a proper warm start.
+        Implement it in subclasses to have a proper warm start.
 
         """
-        ...
+        raise NotImplementedError()
 
     def convert_to_dual_values(
         self, solution: Solution
