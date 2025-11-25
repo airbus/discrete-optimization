@@ -64,12 +64,12 @@ class ColoringSolution(AllocationSolution[Node, Color]):
         nb_violations: Optional[int] = None,
     ):
         """Init of ColoringSolution."""
-        self.problem = problem
+        super().__init__(problem=problem)
         self.colors = colors
         self.nb_color = nb_color
         self.nb_violations = nb_violations
 
-    def copy(self) -> "ColoringSolution":
+    def copy(self) -> ColoringSolution:
         """Efficient way of copying a coloring solution without deepcopying unnecessary attribute (problem).
 
         Algorithms can therefore copy this object, modify mutable attributes of interest (i.e colors)
@@ -92,7 +92,7 @@ class ColoringSolution(AllocationSolution[Node, Color]):
             nb_violations=self.nb_violations,
         )
 
-    def lazy_copy(self) -> "ColoringSolution":
+    def lazy_copy(self) -> ColoringSolution:
         """Shallow copy of the coloring solution object.
 
         Examples:
@@ -110,7 +110,7 @@ class ColoringSolution(AllocationSolution[Node, Color]):
             nb_violations=self.nb_violations,
         )
 
-    def to_reformated_solution(self) -> "ColoringSolution":
+    def to_reformated_solution(self) -> ColoringSolution:
         """Computes a new solution where the colors array has a value precede chain (see more details https://www.minizinc.org/doc-2.5.3/en/lib-globals.html#index-62) property.
 
          Examples : [1, 4, 4, 3, 2, 4] doesnt respect the value_precede_chain because 4 appears before 2 and 3.
@@ -162,18 +162,10 @@ class ColoringSolution(AllocationSolution[Node, Color]):
         Returns: None, but change in place the object
 
         """
-        if not isinstance(new_problem, ColoringProblem):
-            raise ValueError(
-                "new_problem must a ColoringProblem for a ColoringSolution."
-            )
-        colors: Optional[Union[list[int], np.ndarray]]
-        if self.colors is None:
-            self.colors = None
-        elif isinstance(self.colors, np.ndarray):
-            self.colors = np.array(self.colors)
-        else:
-            self.colors = list(self.colors)
-        self.problem = new_problem
+        super().change_problem(new_problem=new_problem)
+        # invalidate evaluation
+        self.nb_color = None
+        self.nb_violations = None
 
     def is_allocated(self, task: Node, unary_resource: Color) -> bool:
         i_task = self.problem.index_nodes_name[task]
@@ -338,7 +330,7 @@ class ColoringProblem(AllocationProblem[Node, Color]):
                 variable.nb_violations = self.count_violations(variable)
         return {"nb_colors": variable.nb_color, "nb_violations": variable.nb_violations}
 
-    def satisfy(self, variable: ColoringSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
+    def satisfy(self, variable: ColoringSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
         """Check the color constraint of the solution.
 
         Check for each edges in the graph if the allocated color of the vertices are different.

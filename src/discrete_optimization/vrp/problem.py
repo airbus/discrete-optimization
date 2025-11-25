@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import math
 from abc import abstractmethod
 from collections.abc import Callable, Sequence
@@ -26,7 +28,9 @@ from discrete_optimization.generic_tools.do_problem import (
 
 
 class VrpSolution(Solution):
-    def copy(self) -> "VrpSolution":
+    problem: VrpProblem
+
+    def copy(self) -> VrpSolution:
         return VrpSolution(
             problem=self.problem,
             list_start_index=self.list_start_index,
@@ -37,7 +41,7 @@ class VrpSolution(Solution):
             capacities=deepcopy(self.capacities),
         )
 
-    def lazy_copy(self) -> "VrpSolution":
+    def lazy_copy(self) -> VrpSolution:
         return VrpSolution(
             problem=self.problem,
             list_start_index=self.list_start_index,
@@ -53,7 +57,7 @@ class VrpSolution(Solution):
 
     def __init__(
         self,
-        problem: "VrpProblem",
+        problem: VrpProblem,
         list_start_index: list[int],
         list_end_index: list[int],
         list_paths: list[list[int]],
@@ -61,7 +65,7 @@ class VrpSolution(Solution):
         length: Optional[float] = None,
         lengths: Optional[list[list[float]]] = None,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.list_start_index = list_start_index
         self.list_end_index = list_end_index
         self.list_paths = list_paths
@@ -70,12 +74,10 @@ class VrpSolution(Solution):
         self.capacities = capacities
 
     def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, VrpProblem):
-            raise ValueError("new_problem must a VrpProblem for a VrpSolution.")
-        self.problem = new_problem
-        self.list_paths = deepcopy(self.list_paths)
-        self.lengths = deepcopy(self.lengths)
-        self.capacities = deepcopy(self.capacities)
+        super().change_problem(new_problem=new_problem)
+        self.capacities = None
+        self.length = None
+        self.lengths = None
 
 
 class BasicCustomer:

@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import math
 import random
 from abc import abstractmethod
@@ -44,10 +46,11 @@ class TspSolution(SchedulingSolution[Node]):
     length: Optional[
         float
     ]  # to store the length of the tsp, in case your mutation computes it :)
+    problem: TspProblem
 
     def __init__(
         self,
-        problem: "TspProblem",
+        problem: TspProblem,
         start_index: Optional[int] = None,
         end_index: Optional[int] = None,
         permutation: Optional[list[int]] = None,
@@ -59,11 +62,11 @@ class TspSolution(SchedulingSolution[Node]):
         ] = None,  # to store the length of the tsp, in case your mutation computes it :)
         permutation_from0: Optional[list[int]] = None,
     ):
+        super().__init__(problem=problem)
         if permutation is None and permutation_from0 is None:
             raise ValueError("permutation and permutation_from0 cannot be both None.")
         self.lengths = lengths
         self.length = length
-        self.problem = problem
         if start_index is None:
             self.start_index = problem.start_index
         else:
@@ -90,8 +93,6 @@ class TspSolution(SchedulingSolution[Node]):
         else:
             self.permutation = permutation
             self.permutation_from0 = permutation_from0
-        if self.length is None:
-            self.problem.evaluate(self)
 
     def get_end_time(self, task: Node) -> int:
         return self.get_start_time(task) + 1
@@ -99,7 +100,7 @@ class TspSolution(SchedulingSolution[Node]):
     def get_start_time(self, task: Node) -> int:
         return self.permutation.index(task)
 
-    def copy(self) -> "TspSolution":
+    def copy(self) -> TspSolution:
         if self.lengths is None:
             lengths = None
         else:
@@ -114,7 +115,7 @@ class TspSolution(SchedulingSolution[Node]):
             permutation_from0=list(self.permutation_from0),
         )
 
-    def lazy_copy(self) -> "TspSolution":
+    def lazy_copy(self) -> TspSolution:
         return TspSolution(
             problem=self.problem,
             start_index=self.start_index,
@@ -129,13 +130,10 @@ class TspSolution(SchedulingSolution[Node]):
         return "perm :" + str(self.permutation) + "\nobj=" + str(self.length)
 
     def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, TspProblem):
-            raise ValueError("new_problem must a TspProblem for a TspSolution.")
-        self.problem = new_problem
-        self.permutation = list(self.permutation)
-        if self.lengths is not None:
-            self.lengths = list(self.lengths)
-        self.permutation_from0 = list(self.permutation_from0)
+        super().change_problem(new_problem=new_problem)
+        # invalidate evaluation results
+        self.lengths = None
+        self.length = None
 
 
 class Point: ...
@@ -211,13 +209,14 @@ class TspProblem(SchedulingProblem[Node]):
         objectives = self.evaluate(tsp_sol)
         return objectives
 
-    def evaluate(self, var_tsp: TspSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
-        if None in var_tsp.permutation:
+    def evaluate(self, variable: TspSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
+        if None in variable.permutation:
             return {"length": -1}
-        lengths, obj = self.evaluate_function(var_tsp)
-        var_tsp.length = obj
-        var_tsp.lengths = list(lengths)
-        return {"length": obj}
+        if variable.length is None or variable.lengths is None:
+            lengths, obj = self.evaluate_function(variable)
+            variable.length = obj
+            variable.lengths = list(lengths)
+        return {"length": variable.length}
 
     def satisfy(self, var_tsp: TspSolution) -> bool:  # type: ignore # avoid isinstance checks for efficiency
         if None in var_tsp.permutation:

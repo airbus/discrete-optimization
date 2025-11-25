@@ -230,6 +230,9 @@ class ObjectiveRegister:
 class Solution(ABC):
     """Base class for a solution to a Problem."""
 
+    def __init__(self, problem: Problem):
+        self.problem = problem
+
     @abstractmethod
     def copy(self) -> Solution:
         """Deep copy of the solution.
@@ -264,11 +267,11 @@ class Solution(ABC):
         """
         return problem.get_attribute_register()
 
-    @abstractmethod
     def change_problem(self, new_problem: Problem) -> None:
         """If relevant to the optimisation problem, change the underlying problem instance for the solution.
 
         This method can be used to evaluate a solution for different instance of problems.
+        It should be implemented in child classes when caching subresults depending on the problem.
 
         Args:
             new_problem (Problem): another problem instance from which the solution can be evaluated
@@ -276,7 +279,7 @@ class Solution(ABC):
         Returns: None
 
         """
-        ...
+        self.problem = new_problem
 
 
 class Problem(ABC):

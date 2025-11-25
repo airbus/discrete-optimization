@@ -29,14 +29,11 @@ class JobShopSolution(SchedulingSolution[Task]):
 
     def __init__(self, problem: JobShopProblem, schedule: list[list[tuple[int, int]]]):
         # For each job and sub-job, start and end time given as tuple of int.
-        self.problem = problem
+        super().__init__(problem=problem)
         self.schedule = schedule
 
     def copy(self) -> JobShopSolution:
         return JobShopSolution(problem=self.problem, schedule=self.schedule)
-
-    def change_problem(self, new_problem: JobShopProblem) -> None:
-        self.problem = new_problem
 
     def get_end_time(self, task: Task) -> int:
         j, k = task

@@ -37,14 +37,11 @@ class FJobShopSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
         self, problem: FJobShopProblem, schedule: list[list[tuple[int, int, int, int]]]
     ):
         # For each job and sub-job, start, end time, machine id, and option choice given as tuple of int.
-        self.problem = problem
+        super().__init__(problem=problem)
         self.schedule = schedule
 
     def copy(self) -> FJobShopSolution:
         return FJobShopSolution(problem=self.problem, schedule=self.schedule)
-
-    def change_problem(self, new_problem: FJobShopProblem) -> None:
-        self.problem = new_problem
 
     def get_end_time(self, task: Task) -> int:
         j, k = task

@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from copy import deepcopy
@@ -20,7 +22,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
-    Problem,
     Solution,
     TypeAttribute,
     TypeObjective,
@@ -34,17 +35,16 @@ BinPack = int
 
 
 class BinPackSolution(AllocationSolution[Item, BinPack], SchedulingSolution[Item]):
-    def __init__(self, problem: "BinPackProblem", allocation: list[int]):
-        self.problem = problem
+    problem: BinPackProblem
+
+    def __init__(self, problem: BinPackProblem, allocation: list[int]):
+        super().__init__(problem=problem)
         self.allocation = allocation
 
-    def copy(self) -> "BinPackSolution":
+    def copy(self) -> BinPackSolution:
         return BinPackSolution(
             problem=self.problem, allocation=deepcopy(self.allocation)
         )
-
-    def change_problem(self, new_problem: Problem) -> None:
-        self.problem = new_problem
 
     def get_end_time(self, task: Item) -> int:
         return self.allocation[task] + 1

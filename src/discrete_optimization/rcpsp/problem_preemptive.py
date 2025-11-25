@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 import math
 from collections import defaultdict
@@ -49,23 +51,24 @@ class ScheduleGenerationScheme(Enum):
 
 
 class PreemptiveRcpspSolution(Solution):
-    rcpsp_permutation: Union[list[int], np.array]
+    rcpsp_permutation: Union[list[int], np.ndarray]
     rcpsp_schedule: dict[Hashable, dict[str, list[int]]]
     #  {task_id: {'starts': [start_times], 'ends':  [end_times], 'resources': list_of_resource_ids}
     #   for task_id in self.problem.tasks_list}
     rcpsp_modes: list[int]  # [mode_id[i] for i in range(self.problem.n_jobs_non_dummy)]
-    standardised_permutation: Union[list[int], np.array]
+    standardised_permutation: Union[list[int], np.ndarray]
+    problem: PreemptiveRcpspProblem
 
     def __init__(
         self,
-        problem,
-        rcpsp_permutation=None,
-        rcpsp_schedule=None,
-        rcpsp_modes=None,
-        rcpsp_schedule_feasible=None,
-        standardised_permutation=None,
+        problem: PreemptiveRcpspProblem,
+        rcpsp_permutation: list[int] | np.ndarray | None = None,
+        rcpsp_schedule: dict[Hashable, dict[str, list[int]]] | None = None,
+        rcpsp_modes: list[int] | None = None,
+        rcpsp_schedule_feasible: bool | None = None,
+        standardised_permutation: list[int] | np.ndarray | None = None,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.rcpsp_permutation = rcpsp_permutation
         self.rcpsp_schedule = rcpsp_schedule
         self._schedule_to_recompute = rcpsp_schedule is None

@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from typing import List, Optional
 
 import numpy as np
@@ -26,26 +28,31 @@ Task = int
 
 
 class WTSolution(SchedulingSolution[Task]):
+    problem: WeightedTardinessProblem
+
     def __init__(
         self,
-        problem: "WeightedTardinessProblem",
+        problem: WeightedTardinessProblem,
         schedule: list[tuple[int, int]] = None,
         permutation: list[int] = None,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.schedule = schedule
+        self.permutation = permutation
+        self.compute_schedule_from_permutation()
+
+    def compute_schedule_from_permutation(self):
         if self.schedule is None:
-            assert permutation is not None
+            assert self.permutation is not None
             current_time = 0
             schedule = [None for i in range(self.problem.num_jobs)]
-            for j in permutation:
+            for j in self.permutation:
                 schedule[j] = (
                     current_time,
                     current_time + self.problem.processing_times[j],
                 )
                 current_time = schedule[j][1]
             self.schedule = schedule
-        self.permutation = permutation
 
     def lazy_copy(self) -> "Solution":
         return WTSolution(
@@ -64,8 +71,10 @@ class WTSolution(SchedulingSolution[Task]):
         return self.schedule[task][0]
 
     def change_problem(self, new_problem: Problem) -> None:
-        assert isinstance(new_problem, WeightedTardinessProblem)
-        self.problem = new_problem
+        super().change_problem(new_problem)
+        # invalidate evaluation results
+        self.schedule = None
+        self.compute_schedule_from_permutation()
 
 
 class WeightedTardinessProblem(SchedulingProblem[Task]):

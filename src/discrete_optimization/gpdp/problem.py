@@ -6,6 +6,8 @@
 # The General Pickup and Delivery Problem
 # February 1995 Transportation Science 29(1):17-29
 # https://www.researchgate.net/publication/239063487_The_General_Pickup_and_Delivery_Problem
+from __future__ import annotations
+
 import logging
 from collections.abc import Hashable, KeysView
 from typing import Any, Optional
@@ -37,19 +39,21 @@ Edge = tuple[Node, Node]
 
 
 class GpdpSolution(Solution):
+    problem: GpdpProblem
+
     def __init__(
         self,
-        problem: "GpdpProblem",
+        problem: GpdpProblem,
         trajectories: dict[int, list[Node]],
         times: dict[Node, float],
         resource_evolution: dict[Node, dict[Node, list[int]]],
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.trajectories = trajectories
         self.times = times
         self.resource_evolution = resource_evolution
 
-    def copy(self) -> "GpdpSolution":
+    def copy(self) -> GpdpSolution:
         return GpdpSolution(
             problem=self.problem,
             trajectories=self.trajectories,
@@ -82,11 +86,6 @@ class GpdpSolution(Solution):
             index_d = [self.trajectories[vehicle_d].index(d) for d in deliverable]
             ok = ok and max(index_p) < min(index_d)
             return ok
-
-    def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, GpdpProblem):
-            raise ValueError("new_problem must be a GpdpProblem for GpdpSolution.")
-        self.problem = new_problem
 
 
 class GpdpProblem(Problem):
