@@ -121,9 +121,6 @@ class InequalitySense(Enum):
 class MilpSolver(SolverDO):
     model: Optional[Any]
 
-    @abstractmethod
-    def init_model(self, **kwargs: Any) -> None: ...
-
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         """Retrieve solutions found by internal solver.
 
