@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -20,7 +22,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
-    Solution,
     TypeObjective,
 )
 
@@ -54,15 +55,15 @@ class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryReso
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         return task in self.routes[unary_resource]
 
-    problem: "VRPTWProblem"
+    problem: VRPTWProblem
 
     def __init__(
         self,
-        problem: "VRPTWProblem",
+        problem: VRPTWProblem,
         routes: Optional[List[List[int]]] = None,
         scaling: float = 1.0,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.routes = routes if routes is not None else []
         self.scaling = scaling
         # Detailed schedule (filled by evaluation)
@@ -100,9 +101,7 @@ class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryReso
         return self.copy()
 
     def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, VRPTWProblem):
-            raise ValueError("new_problem must be a VRPTWProblem instance.")
-        self.problem = new_problem
+        super().change_problem(new_problem=new_problem)
         # Invalidate evaluated metrics
         self.arrival_times = {}
         self.start_service_times = {}

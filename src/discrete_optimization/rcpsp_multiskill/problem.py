@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 from abc import abstractmethod
 from collections import defaultdict
@@ -112,6 +114,8 @@ class MultiskillRcpspSolution(
     MultimodeSolution[Task],
     AllocationSolution[Task, UnaryResource],
 ):
+    problem: MultiskillRcpspProblem
+
     def __init__(
         self,
         problem: Problem,
@@ -121,7 +125,7 @@ class MultiskillRcpspSolution(
         ],  # (task: {"start_time": start, "end_time": }}
         employee_usage: dict[Hashable, dict[Hashable, set[str]]],
     ):  # {task: {employee: set(skills})}):
-        self.problem: MultiskillRcpspProblem = problem
+        super().__init__(problem=problem)
         self.modes = modes
         self.schedule = schedule
         self.employee_usage = employee_usage
@@ -154,9 +158,6 @@ class MultiskillRcpspSolution(
             schedule=deepcopy(self.schedule),
             employee_usage=deepcopy(self.employee_usage),
         )
-
-    def change_problem(self, new_problem: Problem):
-        self.problem = new_problem
 
     def get_start_time(self, task):
         return self.schedule[task]["start_time"]
@@ -279,6 +280,8 @@ def schedule_solution_to_variant(solution: MultiskillRcpspSolution):
 
 
 class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
+    problem: VariantMultiskillRcpspProblem
+
     def __init__(
         self,
         problem: Problem,
@@ -512,6 +515,8 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
 
 
 class VariantPreemptiveMultiskillRcpspSolution(PreemptiveMultiskillRcpspSolution):
+    problem: VariantMultiskillRcpspProblem
+
     def __init__(
         self,
         problem: Problem,

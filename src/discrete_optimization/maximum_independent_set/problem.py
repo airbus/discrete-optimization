@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from copy import deepcopy
 from typing import Union
 
@@ -19,8 +21,10 @@ from discrete_optimization.generic_tools.graph_api import Graph
 
 
 class MisSolution(Solution):
-    def __init__(self, problem: "MisProblem", chosen: Union[list, np.ndarray]):
-        self.problem = problem
+    problem: MisProblem
+
+    def __init__(self, problem: MisProblem, chosen: Union[list, np.ndarray]):
+        super().__init__(problem=problem)
         self.chosen = chosen
 
     def __str__(self) -> str:
@@ -38,14 +42,11 @@ class MisSolution(Solution):
             )
         )
 
-    def copy(self) -> Solution:
+    def copy(self) -> MisSolution:
         return MisSolution(problem=self.problem, chosen=deepcopy(self.chosen))
 
-    def lazy_copy(self) -> Solution:
+    def lazy_copy(self) -> MisSolution:
         return MisSolution(problem=self.problem, chosen=self.chosen)
-
-    def change_problem(self, new_problem: "Problem") -> None:
-        self.problem = new_problem
 
 
 class MisProblem(Problem):

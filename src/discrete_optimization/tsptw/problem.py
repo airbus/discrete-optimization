@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -32,16 +34,18 @@ class TSPTWSolution(Solution):
         tw_violation (float): The total violation of time windows (sum of lateness at each node).
     """
 
+    problem: TSPTWProblem
+
     def __init__(
         self,
-        problem: "TSPTWProblem",
+        problem: TSPTWProblem,
         permutation: List[int],
         arrival_times: Optional[Dict[int, float]] = None,
         start_service_times: Optional[Dict[int, float]] = None,
         makespan: Optional[float] = None,
         tw_violation: Optional[float] = None,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.permutation = permutation
         self.arrival_times = arrival_times if arrival_times is not None else {}
         self.start_service_times = (
@@ -50,7 +54,7 @@ class TSPTWSolution(Solution):
         self.makespan = makespan
         self.tw_violation = tw_violation
 
-    def copy(self) -> "TSPTWSolution":
+    def copy(self) -> TSPTWSolution:
         return TSPTWSolution(
             problem=self.problem,
             permutation=list(self.permutation),
@@ -60,7 +64,7 @@ class TSPTWSolution(Solution):
             tw_violation=self.tw_violation,
         )
 
-    def lazy_copy(self) -> "TSPTWSolution":
+    def lazy_copy(self) -> TSPTWSolution:
         return TSPTWSolution(
             problem=self.problem,
             permutation=self.permutation,
@@ -71,9 +75,7 @@ class TSPTWSolution(Solution):
         )
 
     def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, TSPTWProblem):
-            raise ValueError("new_problem must be a TSPTWProblem instance.")
-        self.problem = new_problem
+        super().change_problem(new_problem=new_problem)
         # Invalidate evaluated metrics as they depend on the problem
         self.arrival_times = {}
         self.start_service_times = {}

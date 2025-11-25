@@ -10,6 +10,8 @@ capacity of the facility.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import math
 from abc import abstractmethod
 from copy import deepcopy
@@ -65,24 +67,26 @@ class FacilitySolution(AllocationSolution[Customer, Facility]):
 
     """
 
+    problem: FacilityProblem
+
     def __init__(
         self,
-        problem: Problem,
+        problem: FacilityProblem,
         facility_for_customers: list[int],
         dict_details: Optional[dict[str, Any]] = None,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.facility_for_customers = facility_for_customers
         self.dict_details = dict_details
 
-    def copy(self) -> "FacilitySolution":
+    def copy(self) -> FacilitySolution:
         return FacilitySolution(
             self.problem,
             facility_for_customers=list(self.facility_for_customers),
             dict_details=deepcopy(self.dict_details),
         )
 
-    def lazy_copy(self) -> "FacilitySolution":
+    def lazy_copy(self) -> FacilitySolution:
         return FacilitySolution(
             self.problem,
             facility_for_customers=self.facility_for_customers,
@@ -90,13 +94,9 @@ class FacilitySolution(AllocationSolution[Customer, Facility]):
         )
 
     def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, FacilityProblem):
-            raise ValueError(
-                "new_problem must a FacilityProblem for a FacilitySolution."
-            )
-        self.problem = new_problem
-        self.facility_for_customers = list(self.facility_for_customers)
-        self.dict_details = deepcopy(self.dict_details)
+        super().change_problem(new_problem=new_problem)
+        # invalidate evaluation results
+        self.dict_details = None
 
     def is_allocated(self, task: Customer, unary_resource: Facility) -> bool:
         return self.facility_for_customers[task.index] == unary_resource.index

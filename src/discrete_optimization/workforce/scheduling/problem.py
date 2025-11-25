@@ -27,7 +27,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
-    Problem,
     Solution,
     TypeObjective,
 )
@@ -56,19 +55,16 @@ class AllocSchedulingSolution(
         schedule: np.ndarray,
         allocation: np.ndarray,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.schedule = schedule
         self.allocation = allocation
 
-    def copy(self) -> "Solution":
+    def copy(self) -> Solution:
         return AllocSchedulingSolution(
             problem=self.problem,
             schedule=np.copy(self.schedule),
             allocation=np.copy(self.allocation),
         )
-
-    def change_problem(self, new_problem: "Problem") -> None:
-        self.problem = new_problem
 
     def get_end_time(self, task: Task) -> int:
         i_task = self.problem.tasks_to_index[task]

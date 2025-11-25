@@ -201,27 +201,29 @@ class TeamAllocationSolution(AllocationSolution[Task, UnaryResource]):
         allocation: list[Optional[int]],
         **kwargs,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.allocation = allocation
         self.kpis = kwargs
 
-    def copy(self) -> "Solution":
+    def copy(self) -> Solution:
         return TeamAllocationSolution(
             problem=self.problem, allocation=deepcopy(self.allocation), **self.kpis
         )
 
-    def lazy_copy(self) -> "Solution":
+    def lazy_copy(self) -> Solution:
         return TeamAllocationSolution(
             problem=self.problem, allocation=self.allocation, **self.kpis
         )
-
-    def change_problem(self, new_problem: "Problem") -> None:
-        self.problem = new_problem
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         i_task = self.problem.index_activities_name[task]
         i_team = self.problem.index_teams_name[unary_resource]
         return self.allocation[i_task] == i_team
+
+    def change_problem(self, new_problem: Problem) -> None:
+        super().change_problem(new_problem=new_problem)
+        # invalidate evaluation results
+        self.kpis = None
 
 
 def build_graph_allocation_from_calendar_and_schedule(

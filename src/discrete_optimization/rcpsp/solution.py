@@ -80,7 +80,7 @@ class RcpspSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
         standardised_permutation: Optional[list[int]] = None,
         fast: bool = True,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.rcpsp_schedule_feasible = rcpsp_schedule_feasible
         self.fast = fast
 
@@ -131,8 +131,7 @@ class RcpspSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
         self._schedule_to_recompute = False
 
     def change_problem(self, new_problem: RcpspProblem) -> None:  # type: ignore
-        # set problem
-        self.problem = new_problem
+        super().change_problem(new_problem=new_problem)
         # recompute schedule and standardised permutation with respect to the new problem
         self.generate_schedule_from_permutation_serial_sgs(do_fast=self.fast)
         self.standardised_permutation = self.generate_permutation_from_schedule()

@@ -62,7 +62,7 @@ class KnapsackSolution(AllocationSolution[Item, Knapsack]):
         value: Optional[float] = None,
         weight: Optional[float] = None,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.value = value
         self.weight = weight
         self.list_taken = list_taken
@@ -91,10 +91,10 @@ class KnapsackSolution(AllocationSolution[Item, Knapsack]):
         )
 
     def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, KnapsackProblem):
-            raise ValueError("new_problem must a KnapsackModel for a KnapsackSolution.")
-        self.problem = new_problem
-        self.list_taken = list(self.list_taken)
+        super().change_problem(new_problem=new_problem)
+        # invalidate evaluation results
+        self.value = None
+        self.weight = None
 
     def __str__(self) -> str:
         s = "Value=" + str(self.value) + "\n"
@@ -294,11 +294,15 @@ class MobjKnapsackModel(KnapsackProblem):
             np.array([dict_values["value"], -dict_values["heaviest_item"]]), 2
         )
 
-    def evaluate_mobj(self, solution: KnapsackSolution) -> TupleFitness:  # type: ignore  # avoid isinstance checks for efficiency
+    def evaluate_mobj(self, solution: KnapsackSolution) -> TupleFitness:  # type: ignore  # avoid isinstance checks for efficiency
         return self.evaluate_mobj_from_dict(self.evaluate(solution))
 
 
 class MultidimensionalKnapsackSolution(Solution):
+    problem: (
+        MultidimensionalKnapsackProblem | MultiScenarioMultidimensionalKnapsackProblem
+    )
+
     def __init__(
         self,
         problem: Union[
@@ -309,7 +313,7 @@ class MultidimensionalKnapsackSolution(Solution):
         value: Optional[float] = None,
         weights: Optional[list[float]] = None,
     ):
-        self.problem = problem
+        super().__init__(problem=problem)
         self.value = value
         self.weights = weights
         self.list_taken = list_taken
@@ -331,12 +335,9 @@ class MultidimensionalKnapsackSolution(Solution):
         )
 
     def change_problem(self, new_problem: Problem) -> None:
-        if not isinstance(new_problem, MultidimensionalKnapsackProblem):
-            raise ValueError(
-                "new_problem must a MultidimensionalKnapsack for a KnapsackSolutionMultidimensional."
-            )
-        self.problem = new_problem
-        self.list_taken = list(self.list_taken)
+        super().change_problem(new_problem=new_problem)
+        self.value = None
+        self.weights = None
 
     def __str__(self) -> str:
         s = "Value=" + str(self.value) + "\n"
