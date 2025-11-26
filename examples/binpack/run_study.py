@@ -11,6 +11,8 @@ from discrete_optimization.binpack.parser import (
     get_data_available_bppc,
     parse_bin_packing_constraint_file,
 )
+from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolution
+from discrete_optimization.binpack.solvers.asp import AspBinPackingSolver
 from discrete_optimization.binpack.solvers.cpsat import (
     CpSatBinPackSolver,
     ModelingBinPack,
@@ -37,10 +39,9 @@ from discrete_optimization.generic_tools.study import (
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-
-    study_name = "bppc-study-0"
+    study_name = "bppc-study-big-instance"
     overwrite = True  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
-    instances = [os.path.basename(p) for p in get_data_available_bppc()][:100]
+    time_limit = 30
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     solver_configs = {}
@@ -50,15 +51,16 @@ if __name__ == "__main__":
         for modeling in [ModelingBinPack.SCHEDULING]:  # , ModelingBinPack.BINARY]:
             solver_configs[f"cpsat-proc-{proc}-{modeling.name}"] = SolverConfig(
                 cls=CpSatBinPackSolver,
-                kwargs={
-                    "time_limit": 10,
-                    "upper_bound": 250,
-                    "modeling": modeling,
-                    "ortools_cpsat_solver_kwargs": {"log_search_progress": True},
-                    "parameters_cp": p,
-                },
+                kwargs=dict(
+                    time_limit=time_limit,
+                    modeling=modeling,
+                    ortools_cpsat_solver_kwargs={"log_search_progress": True},
+                    parameters_cp=p,
+                ),
             )
-    solver_configs = {}
+    solver_configs["asp"] = SolverConfig(
+        cls=AspBinPackingSolver, kwargs=dict(time_limit=time_limit)
+    )
     solver_configs["greedy-1"] = SolverConfig(cls=GreedyBinPackSolver, kwargs={})
     solver_configs["greedy-open-evolve"] = SolverConfig(
         cls=GreedyBinPackOpenEvolve, kwargs={}
@@ -71,28 +73,39 @@ if __name__ == "__main__":
             pass
 
     # loop over instances x configs
-    for instance in instances:
+    problems_instance: list[tuple[BinPackProblem, str]] = [
+        (parse_bin_packing_constraint_file(f), f) for f in get_data_available_bppc()
+    ]
+    sorted_instance = sorted(problems_instance, key=lambda x: x[0].nb_items)[-20:]
+    for binpack_problem, instance in sorted_instance:
         for config_name, solver_config in solver_configs.items():
             logging.info(f"###### Instance {instance}, config {config_name} ######\n\n")
-
             try:
-                # init problem
-                file = [f for f in get_data_available_bppc() if instance in f][0]
-                color_problem = parse_bin_packing_constraint_file(file)
-                # init solver
+                # No constraint in this study.
+                binpack_problem.has_constraint = False
+                binpack_problem.incompatible_items = set()
+                greedy = GreedyBinPackSolver(problem=binpack_problem)
+                res = greedy.solve()
+                sol: BinPackProblem = res[-1][0]
+                nb_bins = binpack_problem.evaluate(sol)["nb_bins"]
                 if solver_config.cls == CpSatBinPackSolver:
                     stats_cb = StatsWithBoundsCallback()
-                else:
-                    stats_cb = BasicStatsCallback()
-                solver = solver_config.cls(color_problem, **solver_config.kwargs)
-                solver.init_model(**solver_config.kwargs)
-                # solve
-                result_store = solver.solve(
-                    callbacks=[
+                    callbacks = [
                         stats_cb,
                         NbIterationTracker(step_verbosity_level=logging.INFO),
                         ObjectiveGapStopper(objective_gap_rel=0, objective_gap_abs=0),
-                    ],
+                    ]
+                else:
+                    stats_cb = BasicStatsCallback()
+                    callbacks = [
+                        stats_cb,
+                        NbIterationTracker(step_verbosity_level=logging.INFO),
+                    ]
+                solver = solver_config.cls(binpack_problem, **solver_config.kwargs)
+                solver.init_model(**solver_config.kwargs, upper_bound=nb_bins)
+                # solve
+                result_store = solver.solve(
+                    callbacks=callbacks,
                     **solver_config.kwargs,
                 )
             except Exception as e:
@@ -113,7 +126,7 @@ if __name__ == "__main__":
                 xp_id = database.get_new_experiment_id()
                 xp = Experiment.from_solver_config(
                     xp_id=xp_id,
-                    instance=instance,
+                    instance=os.path.basename(instance),
                     config_name=config_name,
                     solver_config=solver_config,
                     metrics=metrics,
