@@ -20,17 +20,21 @@ class AspBinPackingSolver(AspClingoSolver):
     """Solver based on Answer Set Programming formulation and clingo solver for Bin Packing."""
 
     problem: BinPackProblem
+    upper_bound: int
 
     def init_model(self, **kwargs: Any) -> None:
         # 1. Define the ASP program
         # We assume the number of available bins is at most the number of items (worst case).
+        upper_bound = kwargs.get("upper_bound", self.problem.nb_items)
+        self.upper_bound = upper_bound
         basic_model = """
         % --- Constants provided via string input ---
         % max_capacity: capacity of a bin
         % nb_items: total number of items
+        % nb_bins: number of bins (upper bound)
 
         % --- Domains ---
-        bin(0..nb_items-1).
+        bin(0..nb_bins-1).
 
         % --- Generator: Put every item into exactly one bin ---
         1 { put(I, B) : bin(B) } 1 :- weight(I, _).
@@ -61,8 +65,6 @@ class AspBinPackingSolver(AspClingoSolver):
         """
 
         max_models = kwargs.get("max_models", 1)
-        time_limit = kwargs.get("time_limit", 100)
-
         # Initialize Clingo Control
         # --opt-mode=optN finds optimal models
         self.ctl = clingo.Control(
@@ -99,6 +101,7 @@ class AspBinPackingSolver(AspClingoSolver):
         constants = [
             f"#const max_capacity={max_capacity}.",
             f"#const nb_items={nb_items}.",
+            f"#const nb_bins={self.upper_bound}.",
         ]
 
         # Combine all parts
@@ -118,7 +121,9 @@ class AspBinPackingSolver(AspClingoSolver):
         Parses the Clingo model to construct a BinPackSolution.
         """
         # Extract 'put(I, B)' symbols
-        print("Proven", model.optimality_proven, "current", model.cost)
+        logger.info(
+            f"Proven optimality : {model.optimality_proven}, current objective function {model.cost[0], model.optimality_proven}"
+        )
         symbols = model.symbols(atoms=True)
 
         # Initialize allocation list with -1 or a default value
