@@ -31,16 +31,16 @@ class TypeAttribute(Enum):
     """
 
     LIST_INTEGER = 0
-    LIST_BOOLEAN = 1
+    LIST_BOOLEAN = 1  # sous-classe de LIST_INTEGER
     PERMUTATION = 2
-    PERMUTATION_TSP = 3
-    PERMUTATION_RCPSP = 4
-    SET_INTEGER = 5
-    LIST_BOOLEAN_KNAP = 6
-    LIST_INTEGER_SPECIFIC_ARITY = 7
-    SET_TUPLE_INTEGER = 8
-    VRP_PATHS = 9
-    LIST_FLOATS = 10
+    PERMUTATION_TSP = 3  # sous-classe de PERMUTATION
+    PERMUTATION_RCPSP = 4  # sous-classe de PERMUTATION
+    SET_INTEGER = 5  # pas utilisé
+    LIST_BOOLEAN_KNAP = 6  # sous-classe de LIST_BOOLEAN: attention mutation associee compute un self.attribute mais ensuite choisis en dur de modifié "list_taken" de toute maniere
+    LIST_INTEGER_SPECIFIC_ARITY = 7  # sous-classe de LIST_INTEGER
+    SET_TUPLE_INTEGER = 8  # pas utilisé
+    VRP_PATHS = 9  # cas à part, mais pas utilisé dans catalog => manque ? dans ce cas la mutation doit prendre le nom générique de l'encodage, ici c codé en dur
+    LIST_FLOATS = 10  # pas d'exemple, mais serait une surclasse de list_integers ? utilisé que dans ga (même pas nsga mais on va mettre en commun les 2 gestions d'encodage)
 
 
 class ModeOptim(Enum):
@@ -50,11 +50,21 @@ class ModeOptim(Enum):
     MINIMIZATION = 1
 
 
+@dataclass
+class EncodingType:
+    name: str
+
+
 class EncodingRegister:
-    """Placeholder class where the Solution definition is defined.
+    """List the encoding attributes of a solution.
 
     Attributes:
-        dict_attribute_to_type (dict[str, Any]): specifies the encoding of a solution object.
+        dict_attribute_to_type (dict[str, Any]): specifies the encodings of a solution object.
+            Maps an encoding name to an encoding type.
+            NB: several encoding can target the same attribute (depending on how we see it).
+            For instance, in rcpsp problem, the modes can be seen as an integer list (one by task),
+            each one with the same arity or with a different arity for each task.
+
         User may refer to example in the different implemented problem definition.
 
     Examples:
