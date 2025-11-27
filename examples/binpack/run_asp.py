@@ -10,12 +10,6 @@ from discrete_optimization.binpack.parser import (
 from discrete_optimization.binpack.solvers.asp import AspBinPackingSolver
 from discrete_optimization.binpack.solvers.greedy import (
     GreedyBinPackOpenEvolve,
-    GreedyBinPackSolver,
-)
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.sequential_metasolver import (
-    SequentialMetasolver,
-    SubBrick,
 )
 
 logging.basicConfig(level=logging.INFO)
