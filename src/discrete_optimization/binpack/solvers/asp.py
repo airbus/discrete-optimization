@@ -67,16 +67,32 @@ class AspBinPackingSolver(AspClingoSolver):
         max_models = kwargs.get("max_models", 1)
         # Initialize Clingo Control
         # --opt-mode=optN finds optimal models
-        self.ctl = clingo.Control(
-            ["--warn=no-atom-undefined", f"--models={max_models}", "--opt-mode=optN"]
-        )
-
+        string_data_input = self.build_string_data_input()
+        solution = kwargs.get("solution", None)
+        flags_clingo = [
+            "--warn=no-atom-undefined",
+            "--opt-mode=optN",
+            "--parallel-mode=10",
+        ]
+        if solution is not None:
+            heuristic_str = self.build_heuristic_input(solution)
+            string_data_input += "\n" + heuristic_str
+            flags_clingo.append("--heuristic=Domain")
+        self.ctl = clingo.Control(flags_clingo)
         # Add the logic model
         self.ctl.add("base", [], basic_model)
-
         # Build and add the data facts
-        string_data_input = self.build_string_data_input()
         self.ctl.add("base", [], string_data_input)
+
+    def build_heuristic_input(self, solution: BinPackSolution):
+        str_ = [
+            f"#heuristic put({i}, {solution.allocation[i]}):bin({solution.allocation[i]}). [100000, true]"
+            for i in range(self.problem.nb_items)
+        ]
+        # str_ = [f"put({i}, {solution.allocation[i]}):bin({solution.allocation[i]})." for i in range(self.problem.nb_items)]
+        # str_ = [f"{{put({i}, {solution.allocation[i]}):bin({solution.allocation[i]})}}." for i in range(self.problem.nb_items)]
+        merged_str = "\n".join(str_)
+        return merged_str
 
     def build_string_data_input(self) -> str:
         """
@@ -122,7 +138,7 @@ class AspBinPackingSolver(AspClingoSolver):
         """
         # Extract 'put(I, B)' symbols
         logger.info(
-            f"Proven optimality : {model.optimality_proven}, current objective function {model.cost[0], model.optimality_proven}"
+            f"Proven optimality : {model.optimality_proven}, current objective function {model.cost[0]}"
         )
         symbols = model.symbols(atoms=True)
 
