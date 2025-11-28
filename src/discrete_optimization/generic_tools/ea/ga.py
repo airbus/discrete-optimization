@@ -421,7 +421,7 @@ class Ga(SolverDO, WarmstartMixin):
             self._toolbox.register("select", tools.selStochasticUniversalSampling)
 
     def evaluate_problem(self, int_vector: list[int]) -> tuple[float]:
-        objective_values: dict[str, float] = self.problem.evaluate_from_encoding(  # type: ignore
+        objective_values: dict[str, float] = self.problem.evaluate_from_encoding(
             int_vector, self._encoding_variable_name
         )
         if self._objective_handling == ObjectiveHandling.SINGLE:
