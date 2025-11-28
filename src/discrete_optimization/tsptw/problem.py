@@ -145,7 +145,7 @@ class TSPTWProblem(Problem):
             },
         )
 
-    def evaluate(self, solution: TSPTWSolution) -> Dict[str, float]:
+    def evaluate(self, variable: TSPTWSolution) -> Dict[str, float]:
         """
         Evaluates a solution by calculating the makespan and time window violations.
 
@@ -159,12 +159,12 @@ class TSPTWProblem(Problem):
         # Initialize at depot
         current_node = self.depot_node
         start_service_time = 0.0
-        solution.start_service_times = {current_node: 0.0}
-        solution.arrival_times = {current_node: 0.0}
+        variable.start_service_times = {current_node: 0.0}
+        variable.arrival_times = {current_node: 0.0}
         total_violation = 0.0
 
         # Travel to all customers in the permutation
-        for next_node in solution.permutation:
+        for next_node in variable.permutation:
             dist = self.distance_matrix[current_node, next_node]
             arrival_time = start_service_time + dist
 
@@ -175,8 +175,8 @@ class TSPTWProblem(Problem):
             violation = max(0, start_service_time - latest)
             total_violation += violation
 
-            solution.arrival_times[next_node] = arrival_time
-            solution.start_service_times[next_node] = start_service_time
+            variable.arrival_times[next_node] = arrival_time
+            variable.start_service_times[next_node] = start_service_time
 
             current_node = next_node
 
@@ -190,10 +190,10 @@ class TSPTWProblem(Problem):
         depot_return_violation = max(0, arrival_back_at_depot - latest_depot)
         total_violation += depot_return_violation
 
-        solution.makespan = arrival_back_at_depot
-        solution.tw_violation = total_violation
+        variable.makespan = arrival_back_at_depot
+        variable.tw_violation = total_violation
 
-        return {"makespan": solution.makespan, "tw_violation": -solution.tw_violation}
+        return {"makespan": variable.makespan, "tw_violation": -variable.tw_violation}
 
     def evaluate_from_encoding(
         self, int_vector: List[int], encoding_name: str
@@ -208,10 +208,10 @@ class TSPTWProblem(Problem):
 
         return self.evaluate(sol)
 
-    def satisfy(self, solution: TSPTWSolution) -> bool:
-        if solution.tw_violation is None:
-            self.evaluate(solution)
-        return solution.tw_violation == 0
+    def satisfy(self, variable: TSPTWSolution) -> bool:
+        if variable.tw_violation is None:
+            self.evaluate(variable)
+        return variable.tw_violation == 0
 
     def get_dummy_solution(self) -> TSPTWSolution:
         """Returns a simple, non-random dummy solution (e.g., customers in order)."""

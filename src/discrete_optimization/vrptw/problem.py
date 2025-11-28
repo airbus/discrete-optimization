@@ -229,25 +229,25 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
             },
         )
 
-    def evaluate(self, solution: VRPTWSolution) -> Dict[str, float]:
+    def evaluate(self, variable: VRPTWSolution) -> Dict[str, float]:
         """
         Evaluates a VRPTWSolution.
         Calculates distances, time window violations, and capacity violations.
         """
-        solution.total_distance = 0.0
-        solution.nb_vehicles_used = len(solution.routes)
-        solution.tw_violation = 0.0
-        solution.capacity_violation = 0.0
+        variable.total_distance = 0.0
+        variable.nb_vehicles_used = len(variable.routes)
+        variable.tw_violation = 0.0
+        variable.capacity_violation = 0.0
 
-        solution.arrival_times = {}
-        solution.start_service_times = {}
-        solution.route_loads = []
-        solution.route_distances = []
+        variable.arrival_times = {}
+        variable.start_service_times = {}
+        variable.route_loads = []
+        variable.route_distances = []
 
         depot_ready = self.time_windows[self.depot_node][0]
         depot_due = self.time_windows[self.depot_node][1]
 
-        for v_idx, route in enumerate(solution.routes):
+        for v_idx, route in enumerate(variable.routes):
             if not route:
                 continue
 
@@ -273,7 +273,7 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
             current_time = start_service_time + service
             current_load += self.demands[first_customer]
 
-            solution.tw_violation += max(0, start_service_time - due)
+            variable.tw_violation += max(0, start_service_time - due)
             route_arrivals.append(arrival_time)
             route_starts.append(start_service_time)
             last_node = first_customer
@@ -291,7 +291,7 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
                 current_time = start_service_time + service
                 current_load += self.demands[customer]
 
-                solution.tw_violation += max(0, start_service_time - due)
+                variable.tw_violation += max(0, start_service_time - due)
                 route_arrivals.append(arrival_time)
                 route_starts.append(start_service_time)
                 last_node = customer
@@ -301,32 +301,32 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
             current_dist += dist_to_depot
             arrival_back_at_depot = current_time + dist_to_depot
 
-            solution.tw_violation += max(0, arrival_back_at_depot - depot_due)
+            variable.tw_violation += max(0, arrival_back_at_depot - depot_due)
 
             # Store route-level stats
-            solution.capacity_violation += max(0, current_load - self.vehicle_capacity)
-            solution.total_distance += current_dist
-            solution.arrival_times[v_idx] = route_arrivals
-            solution.start_service_times[v_idx] = route_starts
-            solution.route_loads.append(current_load)
-            solution.route_distances.append(current_dist)
+            variable.capacity_violation += max(0, current_load - self.vehicle_capacity)
+            variable.total_distance += current_dist
+            variable.arrival_times[v_idx] = route_arrivals
+            variable.start_service_times[v_idx] = route_starts
+            variable.route_loads.append(current_load)
+            variable.route_distances.append(current_dist)
 
         return {
-            "nb_vehicles_used": solution.nb_vehicles_used,
-            "total_distance": solution.total_distance,
-            "tw_violation": -solution.tw_violation,
-            "capacity_violation": -solution.capacity_violation,
+            "nb_vehicles_used": variable.nb_vehicles_used,
+            "total_distance": variable.total_distance,
+            "tw_violation": -variable.tw_violation,
+            "capacity_violation": -variable.capacity_violation,
         }
 
-    def satisfy(self, solution: VRPTWSolution) -> bool:
+    def satisfy(self, variable: VRPTWSolution) -> bool:
         # Evaluate if not already done
-        if solution.total_distance == 0.0 and solution.nb_vehicles_used == 0:
-            self.evaluate(solution)
+        if variable.total_distance == 0.0 and variable.nb_vehicles_used == 0:
+            self.evaluate(variable)
 
         return (
-            solution.tw_violation == 0
-            and solution.capacity_violation == 0
-            and solution.nb_vehicles_used <= self.nb_vehicles
+            variable.tw_violation == 0
+            and variable.capacity_violation == 0
+            and variable.nb_vehicles_used <= self.nb_vehicles
         )
 
     def get_dummy_solution(self) -> VRPTWSolution:

@@ -230,17 +230,17 @@ class MutationKnapsack(Mutation):
                 )
             return self.switch_on(variable, come_from_outside=True)
 
-    def mutate(self, variable: KnapsackSolution) -> tuple[KnapsackSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
-        s, m, f = self.mutate_and_compute_obj(variable)
+    def mutate(self, solution: KnapsackSolution) -> tuple[KnapsackSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+        s, m, f = self.mutate_and_compute_obj(solution)
         return s, m
 
     def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
-        self, variable: KnapsackSolution
+        self, solution: KnapsackSolution
     ) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:
-        if variable.weight is None:
-            self.knapsack_problem.evaluate(variable)
+        if solution.weight is None:
+            self.knapsack_problem.evaluate(solution)
         r = random.random()
         if r < 0.8:
-            return self.switch_on(variable)
+            return self.switch_on(solution)
         else:
-            return self.switch_off(variable)
+            return self.switch_off(solution)

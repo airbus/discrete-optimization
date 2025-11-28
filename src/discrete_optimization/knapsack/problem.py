@@ -171,12 +171,12 @@ class KnapsackProblem(AllocationProblem[Item, Knapsack]):
         objectives = self.evaluate(kp_sol)
         return objectives
 
-    def evaluate(self, knapsack_solution: KnapsackSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
-        if knapsack_solution.value is None or self.force_recompute_values:
-            val = self.evaluate_value(knapsack_solution)
+    def evaluate(self, variable: KnapsackSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
+        if variable.value is None or self.force_recompute_values:
+            val = self.evaluate_value(variable)
         else:
-            val = knapsack_solution.value
-        w_violation = self.evaluate_weight_violation(knapsack_solution)
+            val = variable.value
+        w_violation = self.evaluate_weight_violation(variable)
         return {"value": val, "weight_violation": w_violation}
 
     def evaluate_value(self, knapsack_solution: KnapsackSolution) -> float:
@@ -204,10 +204,10 @@ class KnapsackProblem(AllocationProblem[Item, Knapsack]):
     def evaluate_weight_violation(self, knapsack_solution: KnapsackSolution) -> float:
         return max(0.0, knapsack_solution.weight - self.max_capacity)  # type: ignore  # avoid is None check for efficiency
 
-    def satisfy(self, knapsack_solution: KnapsackSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
-        if knapsack_solution.value is None:
-            self.evaluate(knapsack_solution)
-        return knapsack_solution.weight <= self.max_capacity  # type: ignore  # avoid is None check for efficiency
+    def satisfy(self, variable: KnapsackSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
+        if variable.value is None:
+            self.evaluate(variable)
+        return variable.weight <= self.max_capacity  # type: ignore  # avoid is None check for efficiency
 
     def __str__(self) -> str:
         s = (
@@ -277,12 +277,12 @@ class MobjKnapsackModel(KnapsackProblem):
             dict_objective_to_doc=dict_objective,
         )
 
-    def evaluate(self, knapsack_solution: KnapsackSolution) -> dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
-        res = super().evaluate(knapsack_solution)
+    def evaluate(self, variable: KnapsackSolution) -> dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
+        res = super().evaluate(variable)
         heaviest = 0.0
         weight = 0.0
         for i in range(self.nb_items):
-            if knapsack_solution.list_taken[i] == 1:
+            if variable.list_taken[i] == 1:
                 heaviest = max(heaviest, self.list_items[i].weight)
                 weight += self.list_items[i].weight
         res["heaviest_item"] = heaviest
@@ -294,8 +294,8 @@ class MobjKnapsackModel(KnapsackProblem):
             np.array([dict_values["value"], -dict_values["heaviest_item"]]), 2
         )
 
-    def evaluate_mobj(self, solution: KnapsackSolution) -> TupleFitness:  # type: ignore  # avoid isinstance checks for efficiency
-        return self.evaluate_mobj_from_dict(self.evaluate(solution))
+    def evaluate_mobj(self, variable: KnapsackSolution) -> TupleFitness:  # type: ignore  # avoid isinstance checks for efficiency
+        return self.evaluate_mobj_from_dict(self.evaluate(variable))
 
 
 class MultidimensionalKnapsackSolution(Solution):
@@ -428,14 +428,12 @@ class MultidimensionalKnapsackProblem(Problem):
         objectives = self.evaluate(kp_sol)
         return objectives
 
-    def evaluate(
-        self, knapsack_solution: MultidimensionalKnapsackSolution
-    ) -> dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
-        if knapsack_solution.value is None or self.force_recompute_values:
-            val = self.evaluate_value(knapsack_solution)
+    def evaluate(self, variable: MultidimensionalKnapsackSolution) -> dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
+        if variable.value is None or self.force_recompute_values:
+            val = self.evaluate_value(variable)
         else:
-            val = knapsack_solution.value
-        w_violation = self.evaluate_weight_violation(knapsack_solution)
+            val = variable.value
+        w_violation = self.evaluate_weight_violation(variable)
         return {"value": val, "weight_violation": w_violation}
 
     def evaluate_value(
@@ -474,15 +472,15 @@ class MultidimensionalKnapsackProblem(Problem):
             ]
         )
 
-    def satisfy(self, knapsack_solution: MultidimensionalKnapsackSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
-        if knapsack_solution.value is None or knapsack_solution.weights is None:
-            self.evaluate(knapsack_solution)
-            if knapsack_solution.value is None or knapsack_solution.weights is None:
+    def satisfy(self, variable: MultidimensionalKnapsackSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
+        if variable.value is None or variable.weights is None:
+            self.evaluate(variable)
+            if variable.value is None or variable.weights is None:
                 raise RuntimeError(
                     "knapsack_solution.value and knapsack_solution.weights should not be None now."
                 )
         return all(
-            knapsack_solution.weights[j] <= self.max_capacities[j]
+            variable.weights[j] <= self.max_capacities[j]
             for j in range(len(self.max_capacities))
         )
 

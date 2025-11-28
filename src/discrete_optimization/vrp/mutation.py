@@ -502,6 +502,6 @@ class MutationTwoOptVrp(Mutation):
                 self.vrp_problem.evaluate(solution),
             )
 
-    def mutate(self, variable: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
-        v, move, f = self.mutate_and_compute_obj(variable)
+    def mutate(self, solution: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+        v, move, f = self.mutate_and_compute_obj(solution)
         return v, move
