@@ -341,6 +341,21 @@ class Problem(ABC):
         keys = self.get_objective_names()
         return TupleFitness(np.array([dict_values[k] for k in keys]), len(keys))
 
+    def evaluate_from_encoding(self, int_vector: list[int], encoding_name: str):
+        """Evaluate a solution represented by its encoding.
+
+        Necessary to apply a Ga/Nsga solver.
+
+        Args:
+            int_vector: solution attribute seen as a list of integer
+            encoding_name: name of the solution attribute used.
+                Should be an entry of `self.get_attribute_register()`.
+
+        Returns:
+
+        """
+        raise NotImplementedError()
+
     @abstractmethod
     def satisfy(self, variable: Solution) -> bool:
         """Computes if a solution satisfies or not the constraints of the problem.
@@ -389,6 +404,15 @@ class Problem(ABC):
 
     def get_objective_names(self) -> list[str]:
         return self.get_objective_register().get_objective_names()
+
+    def get_dummy_solution(self) -> Solution:
+        """Create a trivial solution for the problem.
+
+        Should satisfy the problem ideally.
+        Does not exist for all kind of problems.
+
+        """
+        raise NotImplementedError()
 
 
 class BaseMethodAggregating(Enum):

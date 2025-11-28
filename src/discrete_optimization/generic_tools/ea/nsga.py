@@ -337,7 +337,7 @@ class Nsga(SolverDO, WarmstartMixin):
         self._toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
     def evaluate_problem(self, int_vector: list[int]) -> tuple[float, ...]:
-        objective_values = self.problem.evaluate_from_encoding(  # type: ignore
+        objective_values = self.problem.evaluate_from_encoding(
             int_vector, self._encoding_variable_name
         )
         val = tuple([objective_values[obj_name] for obj_name in self._objectives])

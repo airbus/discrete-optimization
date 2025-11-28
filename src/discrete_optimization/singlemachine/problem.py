@@ -169,7 +169,7 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
     def get_solution_type(self) -> type[Solution]:
         return WTSolution
 
-    def get_dummy_solution(self):
+    def get_dummy_solution(self) -> WTSolution:
         return WTSolution(problem=self, permutation=list(range(self.num_jobs)))
 
     def get_objective_register(self) -> ObjectiveRegister:
