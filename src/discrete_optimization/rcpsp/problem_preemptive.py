@@ -77,10 +77,7 @@ class PreemptiveRcpspSolution(Solution):
         self.standardised_permutation = standardised_permutation
 
         if self.rcpsp_modes is None:
-            if not self.problem.is_rcpsp_multimode():
-                self.rcpsp_modes = [1 for i in range(self.problem.n_jobs_non_dummy)]
-            else:
-                self.rcpsp_modes = self.problem.fixed_modes
+            self.rcpsp_modes = [1 for i in range(self.problem.n_jobs_non_dummy)]
         if self.rcpsp_permutation is None:
             if self.rcpsp_schedule is not None:
                 self.standardised_permutation = (
