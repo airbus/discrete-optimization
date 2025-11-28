@@ -336,9 +336,9 @@ class RcpspProblem(
         objectives = self.evaluate(rcpsp_sol)
         return objectives
 
-    def evaluate(self, rcpsp_sol: RcpspSolution) -> dict[str, float]:  # type: ignore
+    def evaluate(self, variable: RcpspSolution) -> dict[str, float]:  # type: ignore
         obj_makespan, obj_mean_resource_reserve, penalty = self.evaluate_function(
-            rcpsp_sol
+            variable
         )
         return {
             "makespan": float(obj_makespan),
@@ -346,8 +346,8 @@ class RcpspProblem(
             "constraint_penalty": float(penalty),
         }
 
-    def evaluate_mobj(self, rcpsp_sol: RcpspSolution) -> TupleFitness:  # type: ignore
-        return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
+    def evaluate_mobj(self, variable: RcpspSolution) -> TupleFitness:  # type: ignore
+        return self.evaluate_mobj_from_dict(self.evaluate(variable))
 
     def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         return TupleFitness(
@@ -375,33 +375,33 @@ class RcpspProblem(
     def return_index_task(self, task: Hashable, offset: int = 0) -> int:
         return self.index_task[task] + offset
 
-    def satisfy(self, rcpsp_sol: RcpspSolution) -> bool:  # type: ignore
-        if rcpsp_sol.rcpsp_schedule_feasible is False:
+    def satisfy(self, variable: RcpspSolution) -> bool:  # type: ignore
+        if variable.rcpsp_schedule_feasible is False:
             logger.debug("Schedule flagged as infeasible when generated")
             return False
-        if len(rcpsp_sol.rcpsp_schedule) != self.n_jobs:
+        if len(variable.rcpsp_schedule) != self.n_jobs:
             logger.debug("Missing task in schedule")
         if self.do_special_constraints:
             if not check_solution_with_special_constraints(
                 problem=self,
-                solution=rcpsp_sol,
+                solution=variable,
                 relax_the_start_at_end=self.relax_the_start_at_end,
             ):
                 return False
 
         modes_dict = self.build_mode_dict(
-            rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
+            rcpsp_modes_from_solution=variable.rcpsp_modes
         )
         start_times = [
-            rcpsp_sol.rcpsp_schedule[t]["start_time"] for t in rcpsp_sol.rcpsp_schedule
+            variable.rcpsp_schedule[t]["start_time"] for t in variable.rcpsp_schedule
         ]
         for t in start_times:
             resource_usage = {}
             for res in self.resources_list:
                 resource_usage[res] = 0
-            for act_id in rcpsp_sol.rcpsp_schedule:
-                start = rcpsp_sol.rcpsp_schedule[act_id]["start_time"]
-                end = rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
+            for act_id in variable.rcpsp_schedule:
+                start = variable.rcpsp_schedule[act_id]["start_time"]
+                end = variable.rcpsp_schedule[act_id]["end_time"]
                 mode = modes_dict[act_id]
                 for res in self.resources_list:
                     if start <= t < end:
@@ -413,10 +413,10 @@ class RcpspProblem(
                     logger.debug(
                         [
                             act
-                            for act in rcpsp_sol.rcpsp_schedule
-                            if rcpsp_sol.rcpsp_schedule[act]["start_time"]
+                            for act in variable.rcpsp_schedule
+                            if variable.rcpsp_schedule[act]["start_time"]
                             <= t
-                            < rcpsp_sol.rcpsp_schedule[act]["end_time"]
+                            < variable.rcpsp_schedule[act]["end_time"]
                         ]
                     )
                     logger.debug(
@@ -429,7 +429,7 @@ class RcpspProblem(
         # Check for non-renewable resource violation
         for res in self.non_renewable_resources:
             usage = 0
-            for act_id in rcpsp_sol.rcpsp_schedule:
+            for act_id in variable.rcpsp_schedule:
                 mode = modes_dict[act_id]
                 usage += self.mode_details[act_id][mode][res]
                 if usage > self.get_max_resource_capacity(res):
@@ -441,8 +441,8 @@ class RcpspProblem(
         # Check precedences / successors
         for act_id in list(self.successors.keys()):
             for succ_id in self.successors[act_id]:
-                start_succ = rcpsp_sol.rcpsp_schedule[succ_id]["start_time"]
-                end_pred = rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
+                start_succ = variable.rcpsp_schedule[succ_id]["start_time"]
+                end_pred = variable.rcpsp_schedule[act_id]["end_time"]
                 if start_succ < end_pred:
                     logger.debug(
                         f"Precedence relationship broken: {act_id} end at {end_pred} "

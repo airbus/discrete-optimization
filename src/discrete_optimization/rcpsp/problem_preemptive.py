@@ -572,15 +572,15 @@ class PreemptiveRcpspProblem(Problem):
             return objectives
         return None
 
-    def evaluate(self, rcpsp_sol: PreemptiveRcpspSolution) -> dict[str, float]:
-        obj_makespan, obj_mean_resource_reserve = self.evaluate_function(rcpsp_sol)
+    def evaluate(self, variable: PreemptiveRcpspSolution) -> dict[str, float]:
+        obj_makespan, obj_mean_resource_reserve = self.evaluate_function(variable)
         return {
             "makespan": obj_makespan,
             "mean_resource_reserve": obj_mean_resource_reserve,
         }
 
-    def evaluate_mobj(self, rcpsp_sol: PreemptiveRcpspSolution):
-        return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
+    def evaluate_mobj(self, variable: PreemptiveRcpspSolution):
+        return self.evaluate_mobj_from_dict(self.evaluate(variable))
 
     def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         return TupleFitness(
@@ -609,16 +609,16 @@ class PreemptiveRcpspProblem(Problem):
     def return_index_task(self, task, offset=0):
         return self.index_task[task] + offset
 
-    def satisfy(self, rcpsp_sol: PreemptiveRcpspSolution) -> bool:
-        if rcpsp_sol.rcpsp_schedule_feasible is False:
+    def satisfy(self, variable: PreemptiveRcpspSolution) -> bool:
+        if variable.rcpsp_schedule_feasible is False:
             logger.debug("Schedule flagged as infeasible when generated")
             return False
         else:
             modes_dict = self.build_mode_dict(
-                rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
+                rcpsp_modes_from_solution=variable.rcpsp_modes
             )
             resource_avail_in_time = compute_resource(
-                solution=rcpsp_sol, rcpsp_problem=self
+                solution=variable, rcpsp_problem=self
             )
             for r in resource_avail_in_time:
                 if np.any(resource_avail_in_time[r] < 0):
@@ -626,7 +626,7 @@ class PreemptiveRcpspProblem(Problem):
             # Check for non-renewable resource violation
             for res in self.non_renewable_resources:
                 usage = 0
-                for act_id in rcpsp_sol.rcpsp_schedule:
+                for act_id in variable.rcpsp_schedule:
                     mode = modes_dict[act_id]
                     usage += self.mode_details[act_id][mode][res]
                     if usage > self.resources[res]:
@@ -640,8 +640,8 @@ class PreemptiveRcpspProblem(Problem):
             # Check precedences / successors
             for act_id in self.successors:
                 for succ_id in self.successors[act_id]:
-                    start_succ = rcpsp_sol.rcpsp_schedule[succ_id]["starts"][0]
-                    end_pred = rcpsp_sol.rcpsp_schedule[act_id]["ends"][-1]
+                    start_succ = variable.rcpsp_schedule[succ_id]["starts"][0]
+                    end_pred = variable.rcpsp_schedule[act_id]["ends"][-1]
                     if start_succ < end_pred:
                         logger.debug(
                             f"Precedence relationship broken: {act_id}"

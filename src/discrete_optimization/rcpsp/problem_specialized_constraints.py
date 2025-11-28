@@ -258,8 +258,8 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
             penalty = 0
         return makespan, penalty
 
-    def evaluate(self, rcpsp_sol: PreemptiveRcpspSolution) -> dict[str, float]:
-        obj_makespan, penalty = self.evaluate_function(rcpsp_sol)
+    def evaluate(self, variable: PreemptiveRcpspSolution) -> dict[str, float]:
+        obj_makespan, penalty = self.evaluate_function(variable)
         return {"makespan": obj_makespan, "constraint_penalty": penalty}
 
     def get_objective_register(self) -> ObjectiveRegister:
@@ -275,15 +275,15 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
             dict_objective_to_doc=dict_objective,
         )
 
-    def satisfy(self, rcpsp_sol: PreemptiveRcpspSolution):
+    def satisfy(self, variable: PreemptiveRcpspSolution):
         s = check_solution(
             problem=self,
-            solution=rcpsp_sol,
+            solution=variable,
             relax_the_start_at_end=self.relax_the_start_at_end,
         )
         if not s:
             return s
-        return super().satisfy(rcpsp_sol)
+        return super().satisfy(variable)
 
     def get_dummy_solution(self, random_perm: bool = False):
         rcpsp_permutation = list(range(self.n_jobs_non_dummy))

@@ -2356,8 +2356,8 @@ class MultiskillRcpspProblem(
             d["constraint_penalty"] = penalty
         return d
 
-    def evaluate_mobj(self, rcpsp_sol: MultiskillRcpspSolution):
-        return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
+    def evaluate_mobj(self, variable: MultiskillRcpspSolution):
+        return self.evaluate_mobj_from_dict(self.evaluate(variable))
 
     def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         return TupleFitness(np.array([-dict_values["makespan"]]), 1)

@@ -75,6 +75,7 @@ class VrpSolution(Solution):
 
     def change_problem(self, new_problem: Problem) -> None:
         super().change_problem(new_problem=new_problem)
+        # invalidate evaluation results
         self.capacities = None
         self.length = None
         self.lengths = None

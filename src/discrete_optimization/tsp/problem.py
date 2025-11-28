@@ -218,18 +218,18 @@ class TspProblem(SchedulingProblem[Node]):
             variable.lengths = list(lengths)
         return {"length": variable.length}
 
-    def satisfy(self, var_tsp: TspSolution) -> bool:  # type: ignore # avoid isinstance checks for efficiency
-        if None in var_tsp.permutation:
+    def satisfy(self, variable: TspSolution) -> bool:  # type: ignore # avoid isinstance checks for efficiency
+        if None in variable.permutation:
             return False
         b = (
-            var_tsp.start_index == self.start_index
-            and var_tsp.end_index == self.end_index
+            variable.start_index == self.start_index
+            and variable.end_index == self.end_index
         )
         if not b:
             return False
-        if len(var_tsp.permutation) != self.length_permutation:
+        if len(variable.permutation) != self.length_permutation:
             return False
-        if not all(x in var_tsp.permutation for x in self.ind_in_permutation):
+        if not all(x in variable.permutation for x in self.ind_in_permutation):
             return False
         return True
 
