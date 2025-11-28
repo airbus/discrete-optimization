@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional, Union
@@ -23,26 +23,6 @@ from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
 logger = logging.getLogger(__name__)
 
 
-class TypeAttribute(Enum):
-    """Enum class to specify how are defined the attributes of a Solution.
-
-    This specification will be particularly usefull if you want to give a try to local search algorithms, which will use
-    the information to use the right local moves.
-    """
-
-    LIST_INTEGER = 0
-    LIST_BOOLEAN = 1  # sous-classe de LIST_INTEGER
-    PERMUTATION = 2
-    PERMUTATION_TSP = 3  # sous-classe de PERMUTATION
-    PERMUTATION_RCPSP = 4  # sous-classe de PERMUTATION
-    SET_INTEGER = 5  # pas utilisé
-    LIST_BOOLEAN_KNAP = 6  # sous-classe de LIST_BOOLEAN: attention mutation associee compute un self.attribute mais ensuite choisis en dur de modifié "list_taken" de toute maniere
-    LIST_INTEGER_SPECIFIC_ARITY = 7  # sous-classe de LIST_INTEGER
-    SET_TUPLE_INTEGER = 8  # pas utilisé
-    VRP_PATHS = 9  # cas à part, mais pas utilisé dans catalog => manque ? dans ce cas la mutation doit prendre le nom générique de l'encodage, ici c codé en dur
-    LIST_FLOATS = 10  # pas d'exemple, mais serait une surclasse de list_integers ? utilisé que dans ga (même pas nsga mais on va mettre en commun les 2 gestions d'encodage)
-
-
 class ModeOptim(Enum):
     """Enum class to specify minimization or maximization problems."""
 
@@ -51,11 +31,89 @@ class ModeOptim(Enum):
 
 
 @dataclass
-class EncodingType:
-    name: str
+class AttributeType: ...
 
 
-class EncodingRegister:
+@dataclass
+class Permutation(AttributeType):
+    """Attribute type for permutation."""
+
+    range: Collection[int]
+    """List of integers included in the permutation."""
+
+    @property
+    def length(self):
+        """Nb of elements in the permutation."""
+        return len(self.range)
+
+
+@dataclass
+class ListInteger(AttributeType):
+    """Attribute type for list of integers with variable bounds."""
+
+    length: int  # length of the list
+    lows: list[int]  # lower bound for each element of the list
+    ups: list[int]  # upper bound for each element of the list
+    arities: list[int]  # nb of possible values for each element of the list
+
+    def __init__(
+        self,
+        length: int,
+        lows: list[int] | int = 0,
+        ups: list[int] | int | None = None,
+        arities: list[int] | int | None = None,
+    ):
+        """
+
+        Args:
+            length: length of the list
+            ups: upper bound for each element of the list.
+                If an integer, assumed to be the same for each element.
+                If None, deduced from lows + arities
+            lows: lower bounds for each element of the list.
+                If an integer, assumed to be the same for each element.
+            arities: used only if ups is None (cannot be None at the same time as it).
+                Number of possible values for each element of the list.
+                If an integer, assumed to be the same for each element.
+
+        """
+        self.length = length
+        match lows:
+            case int():
+                self.lows = [lows] * length
+            case _:
+                self.lows = lows
+        match ups:
+            case None:
+                match arities:
+                    case None:
+                        raise ValueError("ups and arities cannot be None together")
+                    case int():
+                        arities_list = [arities] * length
+                    case _:
+                        arities_list = arities
+                self.ups = [
+                    low + arity - 1 for low, arity in zip(self.lows, arities_list)
+                ]
+            case int():
+                self.ups = [ups] * length
+            case _:
+                self.ups = ups
+
+    @property
+    def arities(self):
+        return [up - low + 1 for low, up in zip(self.lows, self.ups)]
+
+
+@dataclass
+class ListBoolean(ListInteger):
+    length: int  # length of the list
+
+    def __init__(self, length: int):
+        super().__init__(length=length, lows=0, ups=1)
+
+
+class EncodingRegister(Mapping[str, AttributeType]):
     """List the encoding attributes of a solution.
 
     Attributes:
@@ -79,35 +137,31 @@ class EncodingRegister:
         }
     """
 
-    dict_attribute_to_type: dict[str, Any]
-
-    def __init__(self, dict_attribute_to_type: dict[str, Any]):
+    def __init__(self, dict_attribute_to_type: dict[str, AttributeType]):
         self.dict_attribute_to_type = dict_attribute_to_type
 
-    def get_types(self) -> list[TypeAttribute]:
-        """Returns all the TypeAttribute that are present in our encoding."""
-        return [
-            t
-            for k in self.dict_attribute_to_type
-            for t in self.dict_attribute_to_type[k].get("type", [])
-        ]
+    def __getitem__(self, key, /):
+        return self.dict_attribute_to_type[key]
+
+    def __len__(self):
+        return len(self.dict_attribute_to_type)
+
+    def __iter__(self):
+        return iter(self.dict_attribute_to_type)
+
+    def get_first_attribute_of_type(
+        self, attribute_type_cls: type[AttributeType]
+    ) -> str:
+        attributes = [k for k, t in self.items() if isinstance(t, attribute_type_cls)]
+        if len(attributes) > 0:
+            return attributes[0]
+        else:
+            raise ValueError(
+                f"The encoding register must have at least one attribute of type {attribute_type_cls}."
+            )
 
     def __str__(self) -> str:
         return "Encoding : " + str(self.dict_attribute_to_type)
-
-    def lower_bound_vector_encoding(self, encoding_name: str) -> list[int]:
-        """Return for an encoding that is of type LIST_INTEGER or associated, the lower bound vector.
-        Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
-        """
-        dict_encoding = self.dict_attribute_to_type[encoding_name]
-        return lower_bound_vector_encoding_from_dict(dict_encoding)
-
-    def upper_bound_vector_encoding(self, encoding_name: str) -> list[int]:
-        """Return for an encoding that is of type LIST_INTEGER or associated, the upper bound vector.
-        Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
-        """
-        dict_encoding = self.dict_attribute_to_type[encoding_name]
-        return upper_bound_vector_encoding_from_dict(dict_encoding)
 
 
 def lower_bound_vector_encoding_from_dict(dict_encoding: dict[str, Any]) -> list[int]:
@@ -267,16 +321,6 @@ class Solution(ABC):
         """
         return self.copy()
 
-    def get_attribute_register(self, problem: Problem) -> EncodingRegister:
-        """Returns how the Solution is encoded for the Problem.
-
-        By default it returns the encoding register of the problem itself. However it can make sense that for the same
-        Problem, you have different Solution class with different encoding.
-
-        Returns (EncodingRegister): content of the encoding of the Solution.
-        """
-        return problem.get_attribute_register()
-
     def change_problem(self, new_problem: Problem) -> None:
         """If relevant to the optimisation problem, change the underlying problem instance for the solution.
 
@@ -368,13 +412,17 @@ class Problem(ABC):
         """
         ...
 
-    @abstractmethod
     def get_attribute_register(self) -> EncodingRegister:
         """Returns how the Solution should be encoded.
 
+        Useful to find automatically available mutations for local search.
+        Used by genetic algorithms Ga and Nsga.
+
+        This needs only to be implemented in child classes when GA or LS solvers are to be used.
+
         Returns (EncodingRegister): content of the encoding of the solution
         """
-        ...
+        raise NotImplementedError()
 
     @abstractmethod
     def get_solution_type(self) -> type[Solution]:

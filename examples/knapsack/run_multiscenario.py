@@ -4,8 +4,6 @@
 
 import logging
 
-import numpy as np
-
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
@@ -18,11 +16,8 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 from discrete_optimization.knapsack.problem import (
@@ -47,13 +42,8 @@ def initialize_multiscenario():
         ),
     )
     solution = multiscenario_model.get_dummy_solution()
-    _, list_mutation = get_available_mutations(multiscenario_model, solution)
-    list_mutation = [
-        mutate[0].build(multiscenario_model, solution, **mutate[1])
-        for mutate in list_mutation
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=multiscenario_model,
     )
     res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(

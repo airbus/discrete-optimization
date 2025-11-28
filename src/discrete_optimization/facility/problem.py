@@ -24,13 +24,13 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
+    ListInteger,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 
@@ -242,14 +242,14 @@ class FacilityProblem(AllocationProblem[Customer, Facility]):
         return d["capacity_constraint_violation"] == 0.0
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = dict()
-        dict_register["facility_for_customers"] = {
-            "name": "facility_for_customers",
-            "type": [TypeAttribute.LIST_INTEGER],
-            "n": self.customer_count,
-            "arity": self.facility_count,
-        }
-        return EncodingRegister(dict_register)
+        return EncodingRegister(
+            {
+                "facility_for_customers": ListInteger(
+                    length=self.customer_count,
+                    arities=self.facility_count,
+                )
+            }
+        )
 
     def get_dummy_solution(self) -> FacilitySolution:
         """Returns Dummy solution (that is not necessary fulfilling the constraints)

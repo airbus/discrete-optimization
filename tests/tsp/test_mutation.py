@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from discrete_optimization.tsp.mutation import MutationSwapTsp
+from discrete_optimization.tsp.mutation import SwapTspMutation
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.problem import compute_length
 
@@ -11,7 +11,7 @@ def test_mutation():
     files = get_data_available()
     files = [f for f in files if "tsp_51_1" in f]
     model = parse_file(files[0])
-    mutation = MutationSwapTsp(model)
+    mutation = SwapTspMutation(model)
     solution = model.get_dummy_solution()
     sol = mutation.mutate_and_compute_obj(solution)
     lengths, obj = compute_length(

@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import numpy as np
 from matplotlib import pyplot as plt
 
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
@@ -16,13 +15,10 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
-)
-from discrete_optimization.tsp.mutation import Mutation2Opt, MutationSwapTsp
+from discrete_optimization.tsp.mutation import SwapTspMutation, TwoOptTspMutation
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.plot import plot_tsp_solution
 
@@ -35,18 +31,15 @@ def run_sa():
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
-    _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000)
-    list_mutation = [
-        mutate[0].build(model, solution, attribute="permutation", **mutate[1])
-        for mutate in list_mutation
-        if mutate[0] in [MutationSwapTsp, Mutation2Opt]
-    ]
-    weight = np.ones(len(list_mutation))
-    mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
+    portfolio_mutation = create_mutations_portfolio_from_problem(
+        problem=model,
+        selected_mutations={SwapTspMutation, TwoOptTspMutation},
+        selected_attributes={"permutation"},
+    )
     sa = SimulatedAnnealing(
         problem=model,
-        mutator=mutate_portfolio,
+        mutator=portfolio_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
             temperature=100, restart_handler=res, coefficient=0.99999

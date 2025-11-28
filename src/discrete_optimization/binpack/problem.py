@@ -18,12 +18,12 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
+    ListInteger,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 
@@ -109,11 +109,10 @@ class BinPackProblem(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
     def get_attribute_register(self) -> EncodingRegister:
         return EncodingRegister(
             dict_attribute_to_type={
-                "allocation": {
-                    "type": TypeAttribute.LIST_INTEGER,
-                    "up": self.nb_items,
-                    "low": 0,
-                }
+                "allocation": ListInteger(
+                    length=self.nb_items,
+                    arities=self.nb_items,  # worse case: a bin per item
+                )
             }
         )
 

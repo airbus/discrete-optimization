@@ -3,114 +3,122 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
-from discrete_optimization.generic_tools.do_mutation import Mutation
+from discrete_optimization.generic_rcpsp_tools.attribute_type import (
+    ListIntegerRcpsp,
+    PermutationRcpsp,
+)
+from discrete_optimization.generic_rcpsp_tools.mutation import (
+    DeadlineRcpspMutation,
+    RcpspMutation,
+)
+from discrete_optimization.generic_tools.do_mutation import (
+    SingleAttributeMutation,
+)
 from discrete_optimization.generic_tools.do_problem import (
+    AttributeType,
+    ListBoolean,
+    ListInteger,
+    Permutation,
     Problem,
-    Solution,
-    TypeAttribute,
 )
-from discrete_optimization.generic_tools.mutations.mutation_bool import MutationBitFlip
+from discrete_optimization.generic_tools.mutations.mutation_bool import BitFlipMutation
 from discrete_optimization.generic_tools.mutations.mutation_integer import (
-    MutationIntegerSpecificArity,
+    IntegerMutation,
 )
-from discrete_optimization.generic_tools.mutations.permutation_mutations import (
-    PermutationPartialShuffleMutation,
-    PermutationShuffleMutation,
-    PermutationSwap,
+from discrete_optimization.generic_tools.mutations.mutation_permutation import (
+    PartialShuffleMutation,
+    ShuffleMutation,
+    SwapMutation,
     TwoOptMutation,
 )
 from discrete_optimization.knapsack.mutation import (
-    KnapsackMutationSingleBitFlip,
-    MutationKnapsack,
+    BitFlipKnapsackMutation,
+    SingleBitFlipKnapsackMutation,
 )
-from discrete_optimization.rcpsp.mutation import (
-    DeadlineMutationRcpsp,
-    PermutationMutationRcpsp,
-)
+from discrete_optimization.knapsack.problem import ListBooleanKnapsack
 from discrete_optimization.tsp.mutation import (
-    Mutation2Opt,
-    Mutation2OptIntersection,
-    MutationSwapTsp,
+    SwapTspMutation,
+    TwoOptIntersectionTspMutation,
+    TwoOptTspMutation,
 )
+from discrete_optimization.tsp.problem import PermutationTsp
 
 logger = logging.getLogger(__name__)
 
-dictionnary_mutation: dict[
-    TypeAttribute, dict[str, tuple[type[Mutation], dict[str, Any]]]
+
+generic_permutation_mutations: dict[
+    str, tuple[type[SingleAttributeMutation], dict[str, Any]]
 ] = {
-    TypeAttribute.PERMUTATION: {
-        "total_shuffle": (PermutationShuffleMutation, {}),
-        "partial_shuffle": (PermutationPartialShuffleMutation, {"proportion": 0.2}),
-        "swap": (PermutationSwap, {"nb_swap": 1}),
-        "2opt_gen": (TwoOptMutation, {}),
-    },
-    TypeAttribute.PERMUTATION_TSP: {
-        "2opt": (Mutation2Opt, {"test_all": False, "nb_test": 200}),
+    "total_shuffle": (ShuffleMutation, {}),
+    "partial_shuffle": (PartialShuffleMutation, {}),
+    "swap": (SwapMutation, {}),
+    "2opt_gen": (TwoOptMutation, {}),
+}
+
+dictionnary_mutation: dict[
+    type[AttributeType], dict[str, tuple[type[SingleAttributeMutation], dict[str, Any]]]
+] = {
+    Permutation: generic_permutation_mutations,
+    PermutationTsp: {
+        "2opt": (TwoOptTspMutation, {"nb_test": 200}),
         "2opt_interection": (
-            Mutation2OptIntersection,
-            {"test_all": False, "nb_test": 200},
+            TwoOptIntersectionTspMutation,
+            {"nb_test": 200},
         ),
-        "swap_tsp": (MutationSwapTsp, {}),
+        "swap_tsp": (SwapTspMutation, {}),
+        **generic_permutation_mutations,
     },
-    TypeAttribute.PERMUTATION_RCPSP: {
+    PermutationRcpsp: {
         "total_shuffle_rcpsp": (
-            PermutationMutationRcpsp,
-            {"other_mutation": PermutationShuffleMutation},
+            RcpspMutation,
+            {"other_mutation_cls": ShuffleMutation},
         ),
         "deadline": (
-            PermutationMutationRcpsp,
-            {"other_mutation": DeadlineMutationRcpsp},
+            RcpspMutation,
+            {"other_mutation_cls": DeadlineRcpspMutation},
         ),
         "partial_shuffle_rcpsp": (
-            PermutationMutationRcpsp,
-            {"proportion": 0.2, "other_mutation": PermutationPartialShuffleMutation},
+            RcpspMutation,
+            {"other_mutation_cls": PartialShuffleMutation},
         ),
         "swap_rcpsp": (
-            PermutationMutationRcpsp,
-            {"nb_swap": 3, "other_mutation": PermutationSwap},
+            RcpspMutation,
+            {"nb_swap": 3, "other_mutation_cls": SwapMutation},
         ),
         "2opt_gen_rcpsp": (
-            PermutationMutationRcpsp,
-            {"other_mutation": TwoOptMutation},
+            RcpspMutation,
+            {"other_mutation_cls": TwoOptMutation},
         ),
     },
-    TypeAttribute.LIST_BOOLEAN: {
-        "bitflip": (MutationBitFlip, {"probability_flip": 0.1})
+    ListBoolean: {"bitflip": (BitFlipMutation, {})},
+    ListBooleanKnapsack: {
+        "bitflip-kp": (BitFlipKnapsackMutation, {}),
+        "singlebitflip-kp": (SingleBitFlipKnapsackMutation, {}),
     },
-    TypeAttribute.LIST_BOOLEAN_KNAP: {
-        "bitflip-kp": (MutationKnapsack, {}),
-        "singlebitflip-kp": (KnapsackMutationSingleBitFlip, {}),
+    ListInteger: {
+        "random_flip": (IntegerMutation, {}),
     },
-    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: {
-        "random_flip": (MutationIntegerSpecificArity, {"probability_flip": 0.1}),
+    ListIntegerRcpsp: {
         "random_flip_modes_rcpsp": (
-            PermutationMutationRcpsp,
-            {"other_mutation": MutationIntegerSpecificArity, "probability_flip": 0.1},
+            RcpspMutation,
+            {"other_mutation_cls": IntegerMutation},
         ),
     },
 }
 
 
 def get_available_mutations(
-    problem: Problem, solution: Optional[Solution] = None
-) -> tuple[
-    dict[TypeAttribute, dict[str, tuple[type[Mutation], dict[str, Any]]]],
-    list[tuple[type[Mutation], dict[str, Any]]],
-]:
-    register = problem.get_attribute_register()
-    present_types = set(register.get_types())
-    mutations: dict[
-        TypeAttribute, dict[str, tuple[type[Mutation], dict[str, Any]]]
-    ] = {}
-    mutations_list: list[tuple[type[Mutation], dict[str, Any]]] = []
-    nb_mutations = 0
-    for pr_type in present_types:
-        if pr_type in dictionnary_mutation:
-            mutations[pr_type] = dictionnary_mutation[pr_type]
-            mutations_list += list(dictionnary_mutation[pr_type].values())
-            nb_mutations += len(dictionnary_mutation[pr_type])
-    logger.debug(f"{nb_mutations} mutation available for your problem")
-    logger.debug(mutations)
-    return mutations, mutations_list
+    problem: Problem,
+) -> list[tuple[type[SingleAttributeMutation], dict[str, Any], str]]:
+    list_mutations = [
+        (mutation_cls, mutation_kwargs, attribute_name)
+        for attribute_name, attribute_type in problem.get_attribute_register().items()
+        if type(attribute_type) in dictionnary_mutation
+        for mutation_name, (mutation_cls, mutation_kwargs) in dictionnary_mutation[
+            type(attribute_type)
+        ].items()
+    ]
+    logger.debug(f"{len(list_mutations)} mutation available for your problem")
+    return list_mutations

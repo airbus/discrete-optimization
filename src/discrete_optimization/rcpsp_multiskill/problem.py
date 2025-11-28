@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import logging
-from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Hashable
 from copy import deepcopy
@@ -16,6 +15,10 @@ from typing import Iterable, Optional, Union
 import numpy as np
 import scipy.stats as ss
 
+from discrete_optimization.generic_rcpsp_tools.attribute_type import (
+    ListIntegerRcpsp,
+    PermutationRcpsp,
+)
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
@@ -38,11 +41,12 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
     TupleFitness,
-    TypeAttribute,
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
-from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp.problem import (
+    RcpspProblem,
+)
 from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
 )
@@ -2685,18 +2689,11 @@ class MultiskillRcpspProblem(
         return MultiskillRcpspSolution
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {
-            "modes": {"name": "modes", "type": [dict[int, int]]},
-            "schedule": {
-                "name": "schedule",
-                "type": [dict[int, dict[str, int]]],
-            },
-            "employee_usage": {
-                "name": "employee_usage",
-                "type": [dict[int, dict[int, set[str]]]],
-            },
-        }
-        return EncodingRegister(dict_register)
+        raise NotImplementedError(
+            "To use local search or genetic algorithms, "
+            "please transform the problem into a VariantMultiskillRcpspProblem "
+            "by using `to_variant_model()` method."
+        )
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
@@ -2827,66 +2824,28 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
         self.fixed_priority_worker_per_task = None
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {}
-        mode_arity = [
+        mode_arities = [
             len(self.mode_details[task]) for task in self.tasks_list_non_dummy
         ]
-        max_number_modes = max(mode_arity)
-        dict_register["priority_list_task"] = {
-            "name": "priority_list_task",
-            "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
-            "range": range(self.n_jobs_non_dummy),
-            "n": self.n_jobs_non_dummy,
-        }
-        dict_register["priority_worker_per_task_perm"] = {
-            "name": "priority_worker_per_task",
-            "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
-            "range": range(self.n_jobs_non_dummy * len(self.employees.keys())),
-            "n": self.n_jobs_non_dummy * len(self.employees.keys()),
-        }
-        dict_register["priority_worker_per_task"] = {
-            "name": "priority_worker_per_task",
-            "type": [list[list[int]]],
-        }
-        dict_register["modes_vector"] = {
-            "name": "modes_vector",
-            "n": self.n_jobs_non_dummy,
-            "arity": max_number_modes,
-            "low": 1,
-            "up": mode_arity,
-            "arities": mode_arity,
-            "type": [
-                TypeAttribute.LIST_INTEGER,
-                TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY,
-            ],
-        }
-
-        dict_register["modes_arity_fix"] = {
-            "name": "modes_vector",
-            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
-            "n": self.n_jobs_non_dummy,
-            "low": 1,
-            "up": mode_arity,
-            "arities": mode_arity,
-        }
-        dict_register["modes_arity_fix_from_0"] = {
-            "name": "modes_vector_from0",
-            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
-            "n": self.n_jobs_non_dummy,
-            "low": 0,
-            "up": [x - 1 for x in mode_arity],
-            "arities": mode_arity,
-        }
-
-        dict_register["schedule"] = {
-            "name": "schedule",
-            "type": [dict[int, dict[str, int]]],
-        }
-        dict_register["employee_usage"] = {
-            "name": "employee_usage",
-            "type": [dict[int, dict[int, set[str]]]],
-        }
-        return EncodingRegister(dict_register)
+        return EncodingRegister(
+            {
+                "priority_list_task": PermutationRcpsp(
+                    range=range(self.n_jobs_non_dummy)
+                ),
+                "priority_worker_per_task": PermutationRcpsp(
+                    range=range(self.n_jobs_non_dummy * len(self.employees.keys()))
+                ),
+                "modes_vector": ListIntegerRcpsp(
+                    length=self.n_jobs_non_dummy,
+                    lows=1,
+                    ups=mode_arities,
+                ),
+                "modes_vector_from0": ListIntegerRcpsp(
+                    length=self.n_jobs_non_dummy,
+                    arities=mode_arities,
+                ),
+            }
+        )
 
     def get_dummy_solution(self, preemptive: Optional[bool] = None):
         preemptive = self.preemptive if preemptive is None else preemptive

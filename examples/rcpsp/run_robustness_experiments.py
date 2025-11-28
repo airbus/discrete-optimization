@@ -26,12 +26,12 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    PermutationMutationRcpsp,
+    RcpspMutation,
     get_available_mutations,
+)
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     result_storage_to_pareto_front,
@@ -134,15 +134,8 @@ def run_cp_multiscenario():
         list_problem=list_rcpsp_problem,
         method_aggregating=MethodAggregating(BaseMethodAggregating.MEAN),
     )
-    _, mutations = get_available_mutations(list_rcpsp_problem[0], dummy)
-    print(mutations)
-    list_mutation = [
-        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
-        for mutate in mutations
-        if mutate[0] == PermutationMutationRcpsp
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     res = RestartHandlerLimit(500)
     simulated_annealing = SimulatedAnnealing(
@@ -186,15 +179,8 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     file_path = files[0]
     rcpsp_problem = parse_file(file_path)
     dummy = rcpsp_problem.get_dummy_solution()
-    _, mutations = get_available_mutations(rcpsp_problem, dummy)
-    print(mutations)
-    list_mutation = [
-        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
-        for mutate in mutations
-        if mutate[0] == PermutationMutationRcpsp
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     res = RestartHandlerLimit(500)
     objectives = ["makespan", "mean_resource_reserve"]
@@ -317,14 +303,8 @@ def local_search_postpro_multiobj_multimode(postpro=True):
 
 def solve_model(model, postpro=True, nb_iteration=500):
     dummy = model.get_dummy_solution()
-    _, mutations = get_available_mutations(model, dummy)
-    list_mutation = [
-        mutate[0].build(model, dummy, **mutate[1])
-        for mutate in mutations
-        if mutate[0] == PermutationMutationRcpsp
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=model, selected_mutations={RcpspMutation}
     )
     res = RestartHandlerLimit(500)
     objectives = ["makespan"]

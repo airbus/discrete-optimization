@@ -13,13 +13,13 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
 )
-from discrete_optimization.knapsack.mutation import MutationKnapsack
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
+)
+from discrete_optimization.knapsack.mutation import BitFlipKnapsackMutation
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 from discrete_optimization.knapsack.problem import KnapsackProblem, MobjKnapsackModel
 
@@ -28,13 +28,7 @@ def test_sa_knapsack():
     model_file = [f for f in get_data_available() if "ks_60_0" in f][0]
     model: KnapsackProblem = parse_file(model_file, force_recompute_values=True)
     solution = model.get_dummy_solution()
-    _, list_mutation = get_available_mutations(model, solution)
-    list_mutation = [
-        mutate[0].build(model, solution, **mutate[1]) for mutate in list_mutation
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
-    )
+    mixed_mutation = create_mutations_portfolio_from_problem(problem=model)
     res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(
         problem=model,
@@ -55,14 +49,8 @@ def test_hc_knapsack_multiobj():
     model: KnapsackProblem = parse_file(model_file, force_recompute_values=True)
     model: MobjKnapsackModel = MobjKnapsackModel.from_knapsack(model)
     solution = model.get_dummy_solution()
-    _, list_mutation = get_available_mutations(model, solution)
-    list_mutation = [
-        mutate[0].build(model, solution, **mutate[1])
-        for mutate in list_mutation
-        if mutate[0] == MutationKnapsack
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=model, selected_mutations={BitFlipKnapsackMutation}
     )
     res = RestartHandlerLimit(3000)
     params_objective_function = get_default_objective_setup(model)

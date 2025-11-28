@@ -9,9 +9,10 @@ from typing import Any, Optional
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,
-    Mutation,
+    SingleAttributeMutation,
 )
 from discrete_optimization.tsp.problem import (
+    PermutationTsp,
     Point2D,
     Point2DTspProblem,
     TspProblem,
@@ -80,35 +81,33 @@ def get_points_index(
     return i_before, i, j, j_after
 
 
-class Mutation2Opt(Mutation):
+class TwoOptTspMutation(SingleAttributeMutation):
+    attribute_type_cls = PermutationTsp
+    attribute_type: PermutationTsp
     node_count: int
     points: Sequence[Point2D]
-
-    @staticmethod
-    def build(
-        problem: Point2DTspProblem, solution: TspSolution, **kwargs
-    ) -> "Mutation2Opt":  # type: ignore # avoid isinstance checks for efficiency
-        return Mutation2Opt(problem, **kwargs)
+    problem: Point2DTspProblem
 
     def __init__(
         self,
-        tsp_model: Point2DTspProblem,
+        problem: Point2DTspProblem,
+        attribute: str | None = None,
         test_all: bool = False,
         nb_test: Optional[int] = None,
         return_only_improvement: bool = False,
         **kwargs: Any,
     ):
-        self.node_count = tsp_model.node_count
-        self.length_permutation = tsp_model.length_permutation
-        self.points = tsp_model.list_points
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
+        self.node_count = problem.node_count
+        self.length_permutation = problem.length_permutation
+        self.points = problem.list_points
         self.test_all = test_all
         if nb_test is None:
             self.nb_test = max(1, self.node_count // 10)
         else:
             self.nb_test = min(nb_test, self.node_count - 1)
-        self.evaluate_function_indexes = tsp_model.evaluate_function_indexes
+        self.evaluate_function_indexes = problem.evaluate_function_indexes
         self.return_only_improvement = return_only_improvement
-        self.tsp_model = tsp_model
 
     def get_points(
         self, it: int, jt: int, variable: TspSolution
@@ -146,7 +145,7 @@ class Mutation2Opt(Mutation):
         self, solution: TspSolution
     ) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if solution.length is None or solution.lengths is None:
-            solution.problem.evaluate(solution)
+            self.problem.evaluate(solution)
             assert solution.length is not None and solution.lengths is not None
         it = random.randint(0, self.length_permutation - 2)
         jt = random.randint(it + 1, self.length_permutation - 1)
@@ -205,7 +204,7 @@ class Mutation2Opt(Mutation):
                 permutation=permut,
                 lengths=lengths,
                 length=fitness,
-                problem=self.tsp_model,
+                problem=self.problem,
             )
             return v, LocalMoveDefault(solution, v), {"length": fitness}
         else:
@@ -220,36 +219,32 @@ class Mutation2Opt(Mutation):
         return v, move
 
 
-class Mutation2OptIntersection(Mutation2Opt):
-    nodeCount: int
-    points: Sequence[Point2D]
-
-    @staticmethod
-    def build(
-        problem: Point2DTspProblem, solution: TspSolution, **kwargs
-    ) -> "Mutation2OptIntersection":  # type: ignore # avoid isinstance checks for efficiency
-        return Mutation2OptIntersection(problem, **kwargs)
-
+class TwoOptIntersectionTspMutation(TwoOptTspMutation):
     def __init__(
         self,
-        tsp_model: Point2DTspProblem,
+        problem: Point2DTspProblem,
+        attribute: str | None = None,
         test_all: bool = True,
         nb_test: Optional[int] = None,
         return_only_improvement: bool = False,
         i_j_pairs: Optional[list[tuple[int, int]]] = None,
         **kwargs: Any,
     ):
-        Mutation2Opt.__init__(
-            self, tsp_model, test_all, nb_test, return_only_improvement
+        super().__init__(
+            problem=problem,
+            attribute=attribute,
+            test_all=test_all,
+            nb_test=nb_test,
+            return_only_improvement=return_only_improvement,
+            **kwargs,
         )
-        self.tsp_model = tsp_model
         self.i_j_pairs = i_j_pairs
 
     def mutate_and_compute_obj(
         self, solution: TspSolution
     ) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if solution.length is None or solution.lengths is None:
-            solution.problem.evaluate(solution)
+            self.problem.evaluate(solution)
             assert solution.length is not None and solution.lengths is not None
         reset_end = True
         ints = find_intersection(
@@ -299,7 +294,7 @@ class Mutation2OptIntersection(Mutation2Opt):
                 permutation=permut,
                 lengths=lengths,
                 length=fitness,
-                problem=self.tsp_model,
+                problem=self.problem,
             )
             return v, LocalMoveDefault(solution, v), {"length": fitness}
         else:
@@ -359,27 +354,20 @@ class SwapTspMove(LocalMove):
         return self.apply_local_move(solution)
 
 
-class MutationSwapTsp(Mutation):
-    @staticmethod
-    def build(
-        problem: TspProblem, solution: TspSolution, **kwargs
-    ) -> "MutationSwapTsp":  # type: ignore # avoid isinstance checks for efficiency
-        return MutationSwapTsp(problem)
+class SwapTspMutation(SingleAttributeMutation):
+    problem: Point2DTspProblem
+    attribute_type_cls = PermutationTsp
+    attribute_type: PermutationTsp
 
-    def __init__(self, tsp_model: TspProblem):
-        self.tsp_model = tsp_model
-        self.length_permutation = tsp_model.length_permutation
+    def __init__(
+        self, problem: TspProblem, attribute: str | None = None, **kwargs: Any
+    ):
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
+        self.length_permutation = problem.length_permutation
 
     def mutate(self, solution: TspSolution) -> tuple[TspSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         i = random.randint(0, self.length_permutation - 3)
         j = random.randint(i + 2, min(self.length_permutation - 1, i + 1 + 4))
-        two_opt_move = SwapTspMove("permutation", self.tsp_model, (i, j))
+        two_opt_move = SwapTspMove(self.attribute, self.problem, (i, j))
         new_sol = two_opt_move.apply_local_move(solution)
         return new_sol, two_opt_move
-
-    def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
-        self, solution: TspSolution
-    ) -> tuple[TspSolution, LocalMove, dict[str, float]]:
-        sol, move = self.mutate(solution)
-        assert sol.length is not None
-        return sol, move, {"length": sol.length}

@@ -8,13 +8,13 @@ import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
+    ListBoolean,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
@@ -109,15 +109,7 @@ class MisProblem(Problem):
         return MisSolution(problem=self, chosen=chosen)
 
     def get_attribute_register(self) -> EncodingRegister:
-        return EncodingRegister(
-            dict_attribute_to_type={
-                "chosen": {
-                    "name": "chosen",
-                    "type": [TypeAttribute.LIST_BOOLEAN],
-                    "n": len(self.nodes),
-                }
-            }
-        )
+        return EncodingRegister({"chosen": ListBoolean(length=self.number_nodes)})
 
     def get_solution_type(self) -> type[Solution]:
         return MisSolution

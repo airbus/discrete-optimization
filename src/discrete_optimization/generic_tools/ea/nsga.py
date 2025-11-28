@@ -18,32 +18,22 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
     Solution,
-    TypeAttribute,
     build_evaluate_function_aggregated,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
-from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation
+from discrete_optimization.generic_tools.ea.ga import (
+    DeapCrossover,
+    DeapMutation,
+    default_crossovers,
+    default_mutations,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,
 )
 
 logger = logging.getLogger(__name__)
-
-_default_crossovers = {
-    TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
-    TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
-    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
-    TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
-}
-
-_default_mutations = {
-    TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
-    TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
-    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
-    TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
-}
 
 
 class Nsga(SolverDO, WarmstartMixin):
@@ -279,7 +269,7 @@ class Nsga(SolverDO, WarmstartMixin):
 
         # Define crossover
         if crossover is None:
-            self._crossover = _default_crossovers[self._encoding_type]
+            self._crossover = default_crossovers[self._encoding_type]
         else:
             self._crossover = crossover
 
@@ -301,7 +291,7 @@ class Nsga(SolverDO, WarmstartMixin):
         # Define mutation
         self._mutation: Union[Mutation, DeapMutation]
         if mutation is None:
-            self._mutation = _default_mutations[self._encoding_type]
+            self._mutation = default_mutations[self._encoding_type]
         else:
             self._mutation = mutation
 

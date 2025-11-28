@@ -14,23 +14,15 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import S
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
 from discrete_optimization.generic_tools.ls.local_search import (
-    ModeMutation,
     RestartHandlerLimit,
 )
-from discrete_optimization.generic_tools.ls.simulated_annealing import (
-    SimulatedAnnealing,
-    TemperatureSchedulingFactor,
-)
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.generic_tools.sequential_metasolver import (
     SequentialMetasolver,
 )
-from discrete_optimization.tsp.mutation import Mutation2Opt, MutationSwapTsp
+from discrete_optimization.tsp.mutation import SwapTspMutation, TwoOptTspMutation
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.plot import plot_tsp_solution
 from discrete_optimization.tsp.solvers.cpsat import CpSatTspSolver
@@ -50,16 +42,6 @@ def run_seq():
     files = [f for f in files if "tsp_1291_1" in f]
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
-    solution = model.get_dummy_solution()
-    _, list_mutation = get_available_mutations(model, solution)
-    res = RestartHandlerLimit(3000)
-    list_mutation = [
-        mutate[0].build(model, solution, attribute="permutation", **mutate[1])
-        for mutate in list_mutation
-        if mutate[0] in [MutationSwapTsp, Mutation2Opt]
-    ]
-    weight = np.ones(len(list_mutation))
-    mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     solver = CpSatTspSolver(model, params_objective_function=params_objective_function)
     solv = SequentialMetasolver(
         problem=model,

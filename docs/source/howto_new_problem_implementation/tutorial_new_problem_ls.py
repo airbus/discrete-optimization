@@ -15,8 +15,8 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    create_mixed_mutation_from_problem_and_solution,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +42,7 @@ solution = MyKnapsackSolution(
 )
 
 # create a mixed mutation that sample one of the available mutations for solution attributes
-mixed_mutation = create_mixed_mutation_from_problem_and_solution(
+mixed_mutation = create_mutations_portfolio_from_problem(
     problem=problem,
     solution=solution,
 )

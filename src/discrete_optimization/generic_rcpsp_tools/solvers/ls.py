@@ -6,8 +6,7 @@ import logging
 from enum import Enum
 from typing import Optional
 
-import numpy as np
-
+from discrete_optimization.generic_rcpsp_tools.mutation import RcpspMutation
 from discrete_optimization.generic_rcpsp_tools.solvers import GenericRcpspSolver
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.callbacks.callback import Callback
@@ -27,13 +26,9 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
-)
-from discrete_optimization.rcpsp.mutation import PermutationMutationRcpsp
 from discrete_optimization.rcpsp.solvers.lns_lp import InitialRcpspMethod
 from discrete_optimization.rcpsp_multiskill.problem import MultiskillRcpspProblem
 from discrete_optimization.rcpsp_multiskill.solvers.lns_lp import (
@@ -94,15 +89,8 @@ class LsGenericRcpspSolver(GenericRcpspSolver):
             sol = init.get_starting_solution()
             dummy = sol.get_best_solution()
         dummy = kwargs.get("init_solution", dummy)
-        _, mutations = get_available_mutations(model, dummy)
-        logger.debug(mutations)
-        list_mutation = [
-            mutate[0].build(model, dummy, **mutate[1])
-            for mutate in mutations
-            if mutate[0] == PermutationMutationRcpsp
-        ]
-        mixed_mutation = BasicPortfolioMutation(
-            list_mutation, np.ones((len(list_mutation)))
+        mixed_mutation = create_mutations_portfolio_from_problem(
+            problem=self.problem, selected_mutations={RcpspMutation}
         )
         res = RestartHandlerLimit(
             nb_iteration_no_improvement=kwargs["nb_iteration_no_improvement"],

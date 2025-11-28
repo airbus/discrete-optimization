@@ -10,6 +10,7 @@ from typing import Any, Union
 
 import numpy as np
 
+from discrete_optimization.generic_rcpsp_tools.mutation import RcpspMutation
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -30,16 +31,15 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
+)
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.mutation import PermutationMutationRcpsp
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solvers.cp_mzn import CpMultimodeRcpspSolver
 from discrete_optimization.rcpsp.solvers.lp import (
@@ -113,14 +113,8 @@ class InitialRcpspSolution(InitialSolution):
             store_solution = solver.solve(parameters_cp=ParametersCp.default())
         elif self.initial_method == InitialRcpspMethod.LS:
             dummy = self.problem.get_dummy_solution()
-            _, mutations = get_available_mutations(self.problem, dummy)
-            list_mutation = [
-                mutate[0].build(self.problem, dummy, **mutate[1])
-                for mutate in mutations
-                if mutate[0] == PermutationMutationRcpsp
-            ]
-            mixed_mutation = BasicPortfolioMutation(
-                list_mutation, np.ones((len(list_mutation)))
+            mixed_mutation = create_mutations_portfolio_from_problem(
+                problem=self.problem, selected_mutations={RcpspMutation}
             )
             res = RestartHandlerLimit(500)
             sa = SimulatedAnnealing(

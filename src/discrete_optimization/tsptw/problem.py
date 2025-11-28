@@ -13,9 +13,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
+    Permutation,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 
@@ -120,16 +120,7 @@ class TSPTWProblem(Problem):
         self.nb_customers = len(self.customers)
 
     def get_attribute_register(self) -> EncodingRegister:
-        return EncodingRegister(
-            {
-                "permutation": {
-                    "name": "permutation",
-                    "type": [TypeAttribute.PERMUTATION],
-                    "n": self.nb_customers,
-                    "arr": self.customers,
-                }
-            }
-        )
+        return EncodingRegister({"permutation": Permutation(range=self.customers)})
 
     def get_objective_register(self) -> ObjectiveRegister:
         return ObjectiveRegister(

@@ -49,7 +49,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
-    TypeAttribute,
     get_default_objective_setup,
 )
 from discrete_optimization.generic_tools.do_solver import StatusSolver

@@ -9,7 +9,7 @@ from discrete_optimization.generic_tools.ea.ga import (
     DeapSelection,
     Ga,
 )
-from discrete_optimization.tsp.mutation import Mutation2Opt
+from discrete_optimization.tsp.mutation import TwoOptTspMutation
 from discrete_optimization.tsp.parser import get_data_available
 from discrete_optimization.tsp.parser import parse_file as tsp_parse_file
 
@@ -39,7 +39,7 @@ def testing_tsp_with_specific_mutation():
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     crossover = DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED
     selection = DeapSelection.SEL_TOURNAMENT
-    mutation = Mutation2Opt(tsp_model=tsp_model, nb_test=200)
+    mutation = TwoOptTspMutation(problem=tsp_model, nb_test=200)
     ga_solver = Ga(
         tsp_model,
         encoding="permutation_from0",

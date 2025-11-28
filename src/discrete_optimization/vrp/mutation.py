@@ -10,11 +10,17 @@ from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,
     Mutation,
+    SingleAttributeMutation,
 )
 
 # Relocate operator
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.vrp.problem import BasicCustomer, VrpProblem, VrpSolution
+from discrete_optimization.vrp.problem import (
+    BasicCustomer,
+    VrpPaths,
+    VrpProblem,
+    VrpSolution,
+)
 
 # https://dial.uclouvain.be/memoire/ucl/fr/object/thesis%3A4615/datastream/PDF_01/
 # view#:~:text=One%20of%20the%20approaches%20that,solution%20and%20iteratively%20improving%20it.
@@ -128,27 +134,27 @@ class RelocateMove(LocalMove):
         return move.apply_local_move(solution)
 
 
-class MutationRelocate(Mutation):
-    @staticmethod
-    def build(  # type: ignore # avoid isinstance checks for efficiency
-        problem: VrpProblem, solution: VrpSolution, **kwargs
-    ) -> "MutationRelocate":
-        return MutationRelocate(problem)
+class RelocateVrpMutation(SingleAttributeMutation):
+    problem: VrpProblem
+    attribute_type_cls = VrpPaths
+    attribute_type: VrpPaths
 
-    def __init__(self, vrp_problem: VrpProblem):
-        self.vrp_problem = vrp_problem
-        self.customer_count = vrp_problem.customer_count
-        self.vehicle_count = vrp_problem.vehicle_count
+    def __init__(
+        self, problem: VrpProblem, attribute: str | None = None, **kwargs: Any
+    ):
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
+        self.customer_count = problem.customer_count
+        self.vehicle_count = problem.vehicle_count
 
     def mutate(self, solution: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         vehicles_used = [
             v
-            for v in range(self.vrp_problem.vehicle_count)
+            for v in range(self.problem.vehicle_count)
             if len(solution.list_paths[v]) > 0
         ]
         some_vehicle = random.choice(vehicles_used)
         some_other_vehicle = random.choice(
-            [v for v in range(self.vrp_problem.vehicle_count) if v != some_vehicle]
+            [v for v in range(self.problem.vehicle_count) if v != some_vehicle]
         )
         index_from = random.choice(range(len(solution.list_paths[some_vehicle])))
         index_to = random.choice(
@@ -162,13 +168,6 @@ class MutationRelocate(Mutation):
         )
         sol = move.apply_local_move(solution)
         return sol, move
-
-    def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
-        self, solution: VrpSolution
-    ) -> tuple[VrpSolution, LocalMove, dict[str, float]]:
-        sol, move = self.mutate(solution)
-        f = self.vrp_problem.evaluate(sol)
-        return sol, move, f
 
 
 class SwapMove(LocalMove):
@@ -283,24 +282,23 @@ class SwapMove(LocalMove):
         return move.apply_local_move(solution)
 
 
-class MutationSwap(Mutation):
-    @staticmethod
-    def build(problem: VrpProblem, solution: VrpSolution, **kwargs) -> "MutationSwap":  # type: ignore # avoid isinstance checks for efficiency
-        return MutationSwap(problem)
+class SwapVrpMutation(SingleAttributeMutation):
+    problem: VrpProblem
+    attribute_type_cls = VrpPaths
+    attribute_type: VrpPaths
 
-    def __init__(self, vrp_problem: VrpProblem):
-        self.vrp_problem = vrp_problem
-        self.customer_count = vrp_problem.customer_count
-        self.vehicle_count = vrp_problem.vehicle_count
+    def __init__(
+        self, problem: VrpProblem, attribute: str | None = None, **kwargs: Any
+    ):
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
+        self.customer_count = problem.customer_count
+        self.vehicle_count = problem.vehicle_count
 
     def mutate(self, solution: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         vehicles_used = [
-            v
-            for v in range(self.vrp_problem.vehicle_count)
-            if len(solution.list_paths[v]) > 0
+            v for v in range(self.vehicle_count) if len(solution.list_paths[v]) > 0
         ]
         some_vehicle = random.choice(vehicles_used)
-        swap = True
         if len(vehicles_used) > 1:
             swap = True
             some_other_vehicle = random.choice(
@@ -308,7 +306,7 @@ class MutationSwap(Mutation):
             )
         else:
             some_other_vehicle = random.choice(
-                [v for v in range(self.vrp_problem.vehicle_count) if v != some_vehicle]
+                [v for v in range(self.vehicle_count) if v != some_vehicle]
             )
             swap = False
         index_from = random.choice(range(len(solution.list_paths[some_vehicle])))
@@ -335,37 +333,28 @@ class MutationSwap(Mutation):
 
         return sol, move
 
-    def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
-        self, solution: VrpSolution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        sol, move = self.mutate(solution)
-        f = self.vrp_problem.evaluate(sol)
-        return sol, move, f
 
-
-class MutationTwoOptVrp(Mutation):
+class TwoOptVrpMutation(Mutation):
     node_count: int
-
-    @staticmethod
-    def build(  # type: ignore # avoid isinstance checks for efficiency
-        problem: VrpProblem, solution: VrpSolution, **kwargs
-    ) -> "MutationTwoOptVrp":
-        return MutationTwoOptVrp(problem, **kwargs)
+    problem: VrpProblem
+    attribute_type_cls = VrpPaths
+    attribute_type: VrpPaths
 
     def __init__(
         self,
-        vrp_problem: VrpProblem,
+        problem: VrpProblem,
+        attribute: str | None = None,
         test_all: bool = False,
         nb_test: Optional[int] = None,
         return_only_improvement: bool = False,
         **kwargs: Any,
     ):
-        self.node_count = vrp_problem.customer_count
-        self.points = vrp_problem.customers
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
+        self.node_count = problem.customer_count
+        self.points = problem.customers
         self.test_all = test_all
-        self.evaluate_function_indexes = vrp_problem.evaluate_function_indexes
+        self.evaluate_function_indexes = problem.evaluate_function_indexes
         self.return_only_improvement = return_only_improvement
-        self.vrp_problem = vrp_problem
         if nb_test is None:
             self.nb_test = max(1, self.node_count // 10)
         else:
@@ -390,8 +379,6 @@ class MutationTwoOptVrp(Mutation):
     def get_points_index(
         self, vehicle: int, it: int, jt: int, variable: VrpSolution
     ) -> tuple[int, int, int, int]:
-        i_before = None
-        j_after = None
         perm = variable.list_paths[vehicle]
         i = perm[it]
         j = perm[jt]
@@ -421,7 +408,7 @@ class MutationTwoOptVrp(Mutation):
             )
         vehicles_used = [
             v
-            for v in range(self.vrp_problem.vehicle_count)
+            for v in range(self.problem.vehicle_count)
             if len(solution.list_paths[v]) > 2
         ]
         some_vehicle = random.choice(vehicles_used)
@@ -492,14 +479,14 @@ class MutationTwoOptVrp(Mutation):
                 ],
                 length=fitness,
                 capacities=solution.capacities,
-                problem=self.vrp_problem,
+                problem=self.problem,
             )
-            return v, LocalMoveDefault(solution, v), self.vrp_problem.evaluate(v)
+            return v, LocalMoveDefault(solution, v), self.problem.evaluate(v)
         else:
             return (
                 solution,
                 LocalMoveDefault(solution, solution),
-                self.vrp_problem.evaluate(solution),
+                self.problem.evaluate(solution),
             )
 
     def mutate(self, solution: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency

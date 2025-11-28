@@ -194,18 +194,6 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
     def tasks_list(self) -> list[Task]:
         return self.customers
 
-    def get_attribute_register(self) -> EncodingRegister:
-        # VRPTW is complex to encode with simple registers.
-        # We'll rely on the Solution object itself for evaluation.
-        return EncodingRegister(
-            {
-                "routes": {
-                    "name": "routes",
-                    "type": [],
-                }
-            }
-        )
-
     def get_objective_register(self) -> ObjectiveRegister:
         return ObjectiveRegister(
             objective_sense=ModeOptim.MINIMIZATION,

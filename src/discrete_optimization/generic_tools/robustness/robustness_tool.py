@@ -13,6 +13,7 @@ import numpy as np
 import numpy.typing as npt
 import seaborn as sns
 
+from discrete_optimization.generic_rcpsp_tools.mutation import RcpspMutation
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
@@ -32,17 +33,16 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
+)
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,
 )
-from discrete_optimization.rcpsp.mutation import PermutationMutationRcpsp
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.problem_robust import AggregRcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
@@ -170,14 +170,8 @@ def solve_model(
     model: Problem, postpro: bool = True, nb_iteration: int = 500
 ) -> ResultStorage:
     dummy: Solution = model.get_dummy_solution()  # type: ignore
-    _, mutations = get_available_mutations(model, dummy)
-    list_mutation = [
-        mutate[0].build(model, dummy, **mutate[1])
-        for mutate in mutations
-        if mutate[0] == PermutationMutationRcpsp
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=model, selected_mutations={RcpspMutation}
     )
 
     objectives = ["makespan"]

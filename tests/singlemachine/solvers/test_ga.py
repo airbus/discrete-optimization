@@ -6,24 +6,17 @@ import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import Ga
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
+)
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 
 
 def test_ga(problem):
-    dummy = problem.get_dummy_solution()
     params = get_default_objective_setup(problem)
-    _, mutations = get_available_mutations(problem, dummy)
-    list_mutation = [
-        mutate[0].build(problem, dummy, **mutate[1]) for mutate in mutations
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
-    )
+    mixed_mutation = create_mutations_portfolio_from_problem(problem=problem)
     ga_solver = Ga(
         problem,
         encoding="permutation",

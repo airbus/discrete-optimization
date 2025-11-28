@@ -17,11 +17,13 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
+    ListBoolean,
+    ListInteger,
     ObjectiveHandling,
     ParamsObjectiveFunction,
+    Permutation,
     Problem,
     Solution,
-    TypeAttribute,
     lower_bound_vector_encoding_from_dict,
     upper_bound_vector_encoding_from_dict,
 )
@@ -63,18 +65,17 @@ class DeapCrossover(Enum):
     CX_PARTIALY_MATCHED = 5  # perm
 
 
-_default_crossovers = {
-    TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
-    TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
-    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
-    TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
+default_crossovers = {
+    ListBoolean: DeapCrossover.CX_UNIFORM,
+    ListInteger: DeapCrossover.CX_ONE_POINT,
+    Permutation: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
 }
 
-_default_mutations = {
-    TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
-    TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
-    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
-    TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
+default_mutations = {
+    ListBoolean: DeapMutation.MUT_FLIP_BIT,
+    ListInteger: DeapMutation.MUT_UNIFORM_INT,
+    Permutation: DeapMutation.MUT_SHUFFLE_INDEXES,
+    # TODO: et pour rcpsp, tsp, ... ??
 }
 
 
@@ -348,7 +349,7 @@ class Ga(SolverDO, WarmstartMixin):
 
         # Define crossover
         if crossover is None:
-            self._crossover = _default_crossovers[self._encoding_type]
+            self._crossover = default_crossovers[self._encoding_type]
         else:
             self._crossover = crossover
 
@@ -370,7 +371,7 @@ class Ga(SolverDO, WarmstartMixin):
         # Define mutation
         self._mutation: Union[Mutation, DeapMutation]
         if mutation is None:
-            self._mutation = _default_mutations[self._encoding_type]
+            self._mutation = default_mutations[self._encoding_type]
         else:
             self._mutation = mutation
 

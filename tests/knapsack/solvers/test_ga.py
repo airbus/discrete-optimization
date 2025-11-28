@@ -4,12 +4,12 @@
 
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import Ga
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    PortfolioMutation,
 )
 from discrete_optimization.knapsack.mutation import (
-    KnapsackMutationSingleBitFlip,
-    MutationKnapsack,
+    BitFlipKnapsackMutation,
+    SingleBitFlipKnapsackMutation,
 )
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 
@@ -32,10 +32,12 @@ def test_ga():
 def test_own_bitflip_kp_mutation():
     files = [f for f in get_data_available() if "ks_60_0" in f]
     knapsack_problem = parse_file(files[0])
-    mutation_1 = KnapsackMutationSingleBitFlip(knapsack_problem)
-    mutation_2 = MutationKnapsack(knapsack_problem)
-    mutation = BasicPortfolioMutation(
-        [mutation_1, mutation_2], weight_mutation=[0.001, 0.5]
+    mutation_1 = SingleBitFlipKnapsackMutation(knapsack_problem)
+    mutation_2 = BitFlipKnapsackMutation(knapsack_problem)
+    mutation = PortfolioMutation(
+        problem=knapsack_problem,
+        list_mutations=[mutation_1, mutation_2],
+        weight_mutations=[0.001, 0.5],
     )
     params_objective_function = get_default_objective_setup(knapsack_problem)
     ga_solver = Ga(

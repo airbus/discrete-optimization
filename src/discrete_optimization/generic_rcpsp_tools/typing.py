@@ -55,6 +55,18 @@ ANY_SOLUTION_MSRCPSP = Union[
     PreemptiveMultiskillRcpspSolution,
     VariantPreemptiveMultiskillRcpspSolution,
 ]
+ANY_SOLUTION_FOR_MUTATION = Union[
+    PreemptiveRcpspSolution,
+    RcpspSolution,
+    VariantMultiskillRcpspSolution,
+    VariantPreemptiveMultiskillRcpspSolution,
+]
+ANY_RCPSP_FOR_MUTATION = Union[
+    RcpspProblem,
+    PreemptiveRcpspProblem,
+    SpecialConstraintsPreemptiveRcpspProblem,
+    VariantMultiskillRcpspProblem,
+]
 
 
 if TYPE_CHECKING:

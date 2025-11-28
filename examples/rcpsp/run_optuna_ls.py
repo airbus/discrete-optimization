@@ -23,32 +23,20 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ParamsObjectiveFunction,
 )
-from discrete_optimization.generic_tools.ls.hill_climber import HillClimberPareto
 from discrete_optimization.generic_tools.ls.local_search import RestartHandlerLimit
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
     ModeMutation,
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    PermutationMutationRcpsp,
-    get_available_mutations,
+    RcpspMutation,
 )
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ParetoFront,
-    plot_pareto_2d,
-    plot_storage_2d,
-    result_storage_to_pareto_front,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
-from discrete_optimization.rcpsp.utils import (
-    plot_resource_individual_gantt,
-    plot_ressource_view,
-)
 
 # for reproducibility of the example
 SEED = 42
@@ -64,14 +52,8 @@ def objective(trial: Trial):
     rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
 
     dummy = rcpsp_problem.get_dummy_solution()
-    _, mutations = get_available_mutations(rcpsp_problem, dummy)
-    list_mutation = [
-        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
-        for mutate in mutations
-        if mutate[0] == PermutationMutationRcpsp
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     objectives = ["makespan"]
     objective_weights = [1]

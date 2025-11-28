@@ -7,14 +7,14 @@ from typing import Any, Optional
 
 import numpy as np
 
-from discrete_optimization.generic_tools.do_mutation import LocalMove, Mutation
+from discrete_optimization.generic_tools.do_mutation import (
+    LocalMove,
+    SingleAttributeMutation,
+)
 from discrete_optimization.generic_tools.do_problem import (
+    ListBoolean,
     Problem,
     Solution,
-    TypeAttribute,
-)
-from discrete_optimization.generic_tools.mutations.mutation_util import (
-    get_attribute_for_type,
 )
 
 
@@ -33,37 +33,23 @@ class BitFlipMove(LocalMove):
         return self.apply_local_move(solution)
 
 
-class MutationBitFlip(Mutation):
-    @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs: Any) -> "MutationBitFlip":
-        return MutationBitFlip(problem, **kwargs)
+class BitFlipMutation(SingleAttributeMutation):
+    attribute_type_cls = ListBoolean
+    attribute_type: ListBoolean
 
     def __init__(
         self,
         problem: Problem,
         attribute: Optional[str] = None,
         probability_flip: float = 0.1,
+        **kwargs: Any,
     ):
-        self.problem = problem
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
         self.probability_flip = probability_flip
-        register = problem.get_attribute_register()
-        if attribute is None:
-            self.attribute = get_attribute_for_type(
-                register, TypeAttribute.LIST_BOOLEAN
-            )
-        else:
-            self.attribute = attribute
-        self.length = register.dict_attribute_to_type[self.attribute]["n"]
+        self.length = self.attribute_type.length
 
     def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         indexes = np.where(np.random.random(self.length) <= self.probability_flip)
         move = BitFlipMove(self.attribute, indexes[0])
         sol = solution.lazy_copy()
         return move.apply_local_move(sol), move
-
-    def mutate_and_compute_obj(
-        self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        s, move = self.mutate(solution)
-        f = self.problem.evaluate(s)
-        return s, move, f

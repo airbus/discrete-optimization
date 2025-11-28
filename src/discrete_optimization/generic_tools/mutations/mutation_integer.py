@@ -8,59 +8,30 @@ from typing import Any, Optional
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,
-    Mutation,
+    SingleAttributeMutation,
 )
 from discrete_optimization.generic_tools.do_problem import (
+    ListInteger,
     Problem,
     Solution,
-    TypeAttribute,
-    lower_bound_vector_encoding_from_dict,
-    upper_bound_vector_encoding_from_dict,
-)
-from discrete_optimization.generic_tools.mutations.mutation_util import (
-    get_attribute_for_type,
 )
 
 
-class MutationIntegerSpecificArity(Mutation):
-    @staticmethod
-    def build(
-        problem: Problem, solution: Solution, **kwargs: Any
-    ) -> "MutationIntegerSpecificArity":
-        return MutationIntegerSpecificArity(
-            problem,
-            attribute=kwargs.get("attribute", None),
-            arities=kwargs.get("arities", None),
-            probability_flip=kwargs.get("probability_flip", 0.1),
-            min_value=kwargs.get("min_value", 1),
-        )
+class IntegerMutation(SingleAttributeMutation):
+    attribute_type_cls = ListInteger
+    attribute_type: ListInteger
 
     def __init__(
         self,
         problem: Problem,
         attribute: Optional[str] = None,
-        arities: Optional[list[int]] = None,
         probability_flip: float = 0.1,
-        min_value: int = 1,
+        **kwargs: Any,
     ):
-        self.problem = problem
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
         self.probability_flip = probability_flip
-        lows = None
-        ups = None
-        register = problem.get_attribute_register()
-        if attribute is None:
-            attribute_key = get_attribute_for_type(
-                register, TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY
-            )
-            self.attribute = register.dict_attribute_to_type[attribute_key]["name"]
-        else:
-            self.attribute = attribute
-        self.lows = lower_bound_vector_encoding_from_dict(
-            register.dict_attribute_to_type[self.attribute]
-        )
-        self.ups = upper_bound_vector_encoding_from_dict(
-            register.dict_attribute_to_type[self.attribute]
-        )
+        self.lows = self.attribute_type.lows
+        self.ups = self.attribute_type.ups
         self.range_arities = [
             list(range(l, up + 1)) for l, up in zip(self.lows, self.ups)
         ]
@@ -75,10 +46,3 @@ class MutationIntegerSpecificArity(Mutation):
                 vector[k] = new_arity
         setattr(s2, self.attribute, vector)
         return s2, LocalMoveDefault(solution, s2)
-
-    def mutate_and_compute_obj(
-        self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        s, m = self.mutate(solution)
-        obj = self.problem.evaluate(s)
-        return s, m, obj

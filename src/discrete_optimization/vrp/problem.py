@@ -15,6 +15,7 @@ import numpy as np
 from numba import njit
 
 from discrete_optimization.generic_tools.do_problem import (
+    AttributeType,
     EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
@@ -22,7 +23,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveRegister,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 
@@ -87,6 +87,12 @@ class BasicCustomer:
         self.demand = demand
 
 
+class VrpPaths(AttributeType):
+    """Specific attribute type for vrp."""
+
+    ...
+
+
 class VrpProblem(Problem):
     customers: Sequence[BasicCustomer]
 
@@ -137,10 +143,7 @@ class VrpProblem(Problem):
         return d["capacity_violation"] == 0
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_encoding = {
-            "list_paths": {"name": "list_paths", "type": [TypeAttribute.VRP_PATHS]}
-        }
-        return EncodingRegister(dict_encoding)
+        return EncodingRegister({"list_paths": VrpPaths()})
 
     def get_solution_type(self) -> type[Solution]:
         return VrpSolution

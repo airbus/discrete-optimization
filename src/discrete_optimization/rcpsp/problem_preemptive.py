@@ -17,6 +17,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
+from discrete_optimization.generic_rcpsp_tools.attribute_type import (
+    ListIntegerRcpsp,
+    PermutationRcpsp,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -26,7 +30,6 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
     TupleFitness,
-    TypeAttribute,
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
@@ -656,32 +659,21 @@ class PreemptiveRcpspProblem(Problem):
         return PreemptiveRcpspSolution
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {
-            "rcpsp_permutation": {
-                "name": "rcpsp_permutation",
-                "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
-                "range": range(self.n_jobs_non_dummy),
-                "n": self.n_jobs_non_dummy,
+        return EncodingRegister(
+            {
+                "rcpsp_permutation": PermutationRcpsp(
+                    range=range(self.n_jobs_non_dummy)
+                ),
+                "rcpsp_modes": ListIntegerRcpsp(
+                    length=self.n_jobs_non_dummy,
+                    lows=1,
+                    ups=[
+                        len(self.mode_details[task])
+                        for task in self.tasks_list_non_dummy
+                    ],
+                ),
             }
-        }
-        max_number_modes = max([len(self.mode_details[x]) for x in self.mode_details])
-        dict_register["rcpsp_modes"] = {
-            "name": "rcpsp_modes",
-            "type": [TypeAttribute.LIST_INTEGER],
-            "n": self.n_jobs_non_dummy,
-            "arity": max_number_modes,
-        }
-        mode_arity = [
-            len(self.mode_details[task]) for task in self.tasks_list_non_dummy
-        ]
-        dict_register["rcpsp_modes_arity_fix"] = {
-            "name": "rcpsp_modes",
-            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
-            "n": self.n_jobs_non_dummy,
-            "arities": mode_arity,
-        }
-
-        return EncodingRegister(dict_register)
+        )
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {

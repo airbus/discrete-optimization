@@ -7,16 +7,16 @@ import random
 import numpy as np
 import pytest
 
+from discrete_optimization.generic_rcpsp_tools.mutation import RcpspMutation
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
 )
-from discrete_optimization.rcpsp.mutation import PermutationMutationRcpsp
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
+)
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpm import CpmRcpspSolver
@@ -322,7 +322,6 @@ def test_ga_warm_started_with_cpm(random_seed):
     files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
-    dummy = rcpsp_problem.get_dummy_solution()
 
     cpm = CpmRcpspSolver(problem=rcpsp_problem)
     cpath = cpm.run_classic_cpm()
@@ -339,14 +338,8 @@ def test_ga_warm_started_with_cpm(random_seed):
 
     print(f"SGS: {fit_sgs}")
 
-    _, mutations = get_available_mutations(rcpsp_problem, dummy)
-    list_mutation = [
-        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
-        for mutate in mutations
-        if mutate[0] == PermutationMutationRcpsp
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     kwargs = dict(
         problem=rcpsp_problem,

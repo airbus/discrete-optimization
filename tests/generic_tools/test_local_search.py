@@ -3,21 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 
 
-import logging
-import os
 import random
-from time import sleep
 
 import numpy as np
 import pytest
 
-from discrete_optimization.generic_tools.callbacks.backup import (
-    PickleBestSolutionBackup,
-)
-from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
-from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
-from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -29,12 +19,12 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    PermutationMutationRcpsp,
+    RcpspMutation,
     get_available_mutations,
+)
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
@@ -58,15 +48,8 @@ def test_sa_warm_start(random_seed):
     rcpsp_problem: RcpspProblem = parse_file(file_path)
     rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
 
-    dummy = rcpsp_problem.get_dummy_solution()
-    _, mutations = get_available_mutations(rcpsp_problem, dummy)
-    list_mutation = [
-        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
-        for mutate in mutations
-        if mutate[0] == PermutationMutationRcpsp
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     objectives = ["makespan"]
     objective_weights = [-1]
