@@ -39,8 +39,11 @@ class RelocateMove(LocalMove):
             or solution.lengths is None
             or solution.capacities is None
         ):
-            raise RuntimeError(
-                "length, lengths, and capacities solution's attributes should not be None at this point."
+            solution.problem.evaluate(solution)
+            assert (
+                solution.length is not None
+                and solution.lengths is not None
+                and solution.capacities is not None
             )
         self.index_from = min(
             [self.index_from, len(solution.list_paths[self.index_vehicle_from]) - 1]
@@ -187,8 +190,11 @@ class SwapMove(LocalMove):
             or solution.lengths is None
             or solution.capacities is None
         ):
-            raise RuntimeError(
-                "length, lengths, and capacities solution's attributes should not be None at this point."
+            solution.problem.evaluate(solution)
+            assert (
+                solution.length is not None
+                and solution.lengths is not None
+                and solution.capacities is not None
             )
         self.index_from = min(
             [self.index_from, len(solution.list_paths[self.index_vehicle_from]) - 1]
@@ -400,26 +406,29 @@ class MutationTwoOptVrp(Mutation):
         return i_before, i, j, j_after
 
     def mutate_and_compute_obj(
-        self, variable: VrpSolution
+        self, solution: VrpSolution
     ) -> tuple[VrpSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if (
-            variable.length is None
-            or variable.lengths is None
-            or variable.capacities is None
+            solution.length is None
+            or solution.lengths is None
+            or solution.capacities is None
         ):
-            raise RuntimeError(
-                "length, lengths, and capacities variable's attributes should not be None at this point."
+            solution.problem.evaluate(solution)
+            assert (
+                solution.length is not None
+                and solution.lengths is not None
+                and solution.capacities is not None
             )
         vehicles_used = [
             v
             for v in range(self.vrp_problem.vehicle_count)
-            if len(variable.list_paths[v]) > 2
+            if len(solution.list_paths[v]) > 2
         ]
         some_vehicle = random.choice(vehicles_used)
-        it = random.randint(0, len(variable.list_paths[some_vehicle]) - 2)
-        jt = random.randint(it + 1, len(variable.list_paths[some_vehicle]) - 1)
+        it = random.randint(0, len(solution.list_paths[some_vehicle]) - 2)
+        jt = random.randint(it + 1, len(solution.list_paths[some_vehicle]) - 1)
         min_change = float("inf")
-        length_permut = len(variable.list_paths[some_vehicle])
+        length_permut = len(solution.list_paths[some_vehicle])
         range_its: Iterable[int] = (
             range(length_permut)
             if self.test_all
@@ -439,7 +448,7 @@ class MutationTwoOptVrp(Mutation):
                 )
             for j in range_jts:
                 i_before, i_, j_, j_after = self.get_points_index(
-                    some_vehicle, i, j, variable
+                    some_vehicle, i, j, solution
                 )
                 change = (
                     self.evaluate_function_indexes(i_before, j_)
@@ -451,46 +460,46 @@ class MutationTwoOptVrp(Mutation):
                     it = i
                     jt = j
                     min_change = change
-        fitness = variable.length + min_change
+        fitness = solution.length + min_change
         i_before, i_, j_, j_after = self.get_points_index(
-            some_vehicle, it, jt, variable
+            some_vehicle, it, jt, solution
         )
         permut = (
-            variable.list_paths[some_vehicle][:it]
-            + variable.list_paths[some_vehicle][it : jt + 1][::-1]
-            + variable.list_paths[some_vehicle][jt + 1 :]
+            solution.list_paths[some_vehicle][:it]
+            + solution.list_paths[some_vehicle][it : jt + 1][::-1]
+            + solution.list_paths[some_vehicle][jt + 1 :]
         )
         lengths = []
         if it > 0:
-            lengths += variable.lengths[some_vehicle][:it]
+            lengths += solution.lengths[some_vehicle][:it]
         lengths += [self.evaluate_function_indexes(i_before, j_)]
-        lengths += variable.lengths[some_vehicle][it + 1 : jt + 1][::-1]
+        lengths += solution.lengths[some_vehicle][it + 1 : jt + 1][::-1]
         lengths += [self.evaluate_function_indexes(i_, j_after)]
         if jt < length_permut - 1:
-            lengths += variable.lengths[some_vehicle][jt + 2 :]
+            lengths += solution.lengths[some_vehicle][jt + 2 :]
 
         if min_change < 0 or not self.return_only_improvement:
             v = VrpSolution(
-                list_start_index=variable.list_start_index,
-                list_end_index=variable.list_end_index,
+                list_start_index=solution.list_start_index,
+                list_end_index=solution.list_end_index,
                 list_paths=[
-                    permut if j == some_vehicle else variable.list_paths[j]
-                    for j in range(len(variable.list_paths))
+                    permut if j == some_vehicle else solution.list_paths[j]
+                    for j in range(len(solution.list_paths))
                 ],
                 lengths=[
-                    lengths if j == some_vehicle else variable.lengths[j]
-                    for j in range(len(variable.lengths))
+                    lengths if j == some_vehicle else solution.lengths[j]
+                    for j in range(len(solution.lengths))
                 ],
                 length=fitness,
-                capacities=variable.capacities,
+                capacities=solution.capacities,
                 problem=self.vrp_problem,
             )
-            return v, LocalMoveDefault(variable, v), self.vrp_problem.evaluate(v)
+            return v, LocalMoveDefault(solution, v), self.vrp_problem.evaluate(v)
         else:
             return (
-                variable,
-                LocalMoveDefault(variable, variable),
-                self.vrp_problem.evaluate(variable),
+                solution,
+                LocalMoveDefault(solution, solution),
+                self.vrp_problem.evaluate(solution),
             )
 
     def mutate(self, variable: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency

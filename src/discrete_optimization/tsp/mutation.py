@@ -143,12 +143,11 @@ class Mutation2Opt(Mutation):
         return i_before, i, j, j_after
 
     def mutate_and_compute_obj(
-        self, variable: TspSolution
+        self, solution: TspSolution
     ) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
-        if variable.length is None or variable.lengths is None:
-            raise RuntimeError(
-                "length and lengths variable's attributes should not be None at this point."
-            )
+        if solution.length is None or solution.lengths is None:
+            solution.problem.evaluate(solution)
+            assert solution.length is not None and solution.lengths is not None
         it = random.randint(0, self.length_permutation - 2)
         jt = random.randint(it + 1, self.length_permutation - 1)
         min_change = float("inf")
@@ -173,7 +172,7 @@ class Mutation2Opt(Mutation):
                     )
                 )
             for j in range_jts:
-                i_before, i_, j_, j_after = self.get_points_index(i, j, variable)
+                i_before, i_, j_, j_after = self.get_points_index(i, j, solution)
                 change = (
                     self.evaluate_function_indexes(i_before, j_)
                     - self.evaluate_function_indexes(i_before, i_)
@@ -184,36 +183,36 @@ class Mutation2Opt(Mutation):
                     it = i
                     jt = j
                     min_change = change
-        fitness = variable.length + min_change
-        i_before, i_, j_, j_after = self.get_points_index(it, jt, variable)
+        fitness = solution.length + min_change
+        i_before, i_, j_, j_after = self.get_points_index(it, jt, solution)
         permut = (
-            variable.permutation[:it]
-            + variable.permutation[it : jt + 1][::-1]
-            + variable.permutation[jt + 1 :]
+            solution.permutation[:it]
+            + solution.permutation[it : jt + 1][::-1]
+            + solution.permutation[jt + 1 :]
         )
         lengths = []
         if it > 0:
-            lengths += variable.lengths[:it]
+            lengths += solution.lengths[:it]
         lengths += [self.evaluate_function_indexes(i_before, j_)]
-        lengths += variable.lengths[it + 1 : jt + 1][::-1]
+        lengths += solution.lengths[it + 1 : jt + 1][::-1]
         lengths += [self.evaluate_function_indexes(i_, j_after)]
         if jt < self.length_permutation - 1:
-            lengths += variable.lengths[jt + 2 :]
+            lengths += solution.lengths[jt + 2 :]
         if min_change < 0 or not self.return_only_improvement:
             v = TspSolution(
-                start_index=variable.start_index,
-                end_index=variable.end_index,
+                start_index=solution.start_index,
+                end_index=solution.end_index,
                 permutation=permut,
                 lengths=lengths,
                 length=fitness,
                 problem=self.tsp_model,
             )
-            return v, LocalMoveDefault(variable, v), {"length": fitness}
+            return v, LocalMoveDefault(solution, v), {"length": fitness}
         else:
             return (
-                variable,
-                LocalMoveDefault(variable, variable),
-                {"length": variable.length},
+                solution,
+                LocalMoveDefault(solution, solution),
+                {"length": solution.length},
             )
 
     def mutate(self, variable: TspSolution) -> tuple[TspSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
@@ -247,26 +246,25 @@ class Mutation2OptIntersection(Mutation2Opt):
         self.i_j_pairs = i_j_pairs
 
     def mutate_and_compute_obj(
-        self, variable: TspSolution
+        self, solution: TspSolution
     ) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
-        if variable.length is None or variable.lengths is None:
-            raise RuntimeError(
-                "length and lengths variable's attributes should not be None at this point."
-            )
+        if solution.length is None or solution.lengths is None:
+            solution.problem.evaluate(solution)
+            assert solution.length is not None and solution.lengths is not None
         reset_end = True
         ints = find_intersection(
-            variable, self.points, nb_tests=min(3000, self.node_count - 2)
+            solution, self.points, nb_tests=min(3000, self.node_count - 2)
         )
         self.i_j_pairs = ints
         if len(self.i_j_pairs) == 0:
             return (
-                variable,
-                LocalMoveDefault(variable, variable),
-                {"length": variable.length},
+                solution,
+                LocalMoveDefault(solution, solution),
+                {"length": solution.length},
             )
         min_change = float("inf")
         for i, j in self.i_j_pairs:
-            i_before, i_, j_, j_after = self.get_points_index(i, j, variable)
+            i_before, i_, j_, j_after = self.get_points_index(i, j, solution)
             change = (
                 self.evaluate_function_indexes(i_before, j_)
                 - self.evaluate_function_indexes(i_before, i_)
@@ -277,38 +275,38 @@ class Mutation2OptIntersection(Mutation2Opt):
                 it = i
                 jt = j
                 min_change = change
-        fitness = variable.length + min_change
-        i_before, i_, j_, j_after = self.get_points_index(it, jt, variable)
+        fitness = solution.length + min_change
+        i_before, i_, j_, j_after = self.get_points_index(it, jt, solution)
         permut = (
-            variable.permutation[:it]
-            + variable.permutation[it : jt + 1][::-1]
-            + variable.permutation[jt + 1 :]
+            solution.permutation[:it]
+            + solution.permutation[it : jt + 1][::-1]
+            + solution.permutation[jt + 1 :]
         )
         lengths = []
         if it > 0:
-            lengths += variable.lengths[:it]
+            lengths += solution.lengths[:it]
         lengths += [self.evaluate_function_indexes(i_before, j_)]
-        lengths += variable.lengths[it + 1 : jt + 1][::-1]
+        lengths += solution.lengths[it + 1 : jt + 1][::-1]
         lengths += [self.evaluate_function_indexes(i_, j_after)]
         if jt < self.length_permutation - 1:
-            lengths += variable.lengths[jt + 2 :]
+            lengths += solution.lengths[jt + 2 :]
         if reset_end:
             self.i_j_pairs = None
         if min_change < 0 or not self.return_only_improvement:
             v = TspSolution(
-                start_index=variable.start_index,
-                end_index=variable.end_index,
+                start_index=solution.start_index,
+                end_index=solution.end_index,
                 permutation=permut,
                 lengths=lengths,
                 length=fitness,
                 problem=self.tsp_model,
             )
-            return v, LocalMoveDefault(variable, v), {"length": fitness}
+            return v, LocalMoveDefault(solution, v), {"length": fitness}
         else:
             return (
-                variable,
-                LocalMoveDefault(variable, variable),
-                {"length": variable.length},
+                solution,
+                LocalMoveDefault(solution, solution),
+                {"length": solution.length},
             )
 
 
@@ -320,9 +318,8 @@ class SwapTspMove(LocalMove):
 
     def apply_local_move(self, solution: TspSolution) -> TspSolution:  # type: ignore # avoid isinstance checks for efficiency
         if solution.length is None or solution.lengths is None:
-            raise RuntimeError(
-                "length and lengths solution's attributes should not be None at this point."
-            )
+            solution.problem.evaluate(solution)
+            assert solution.length is not None and solution.lengths is not None
         current = getattr(solution, self.attribute)
         i1, i2 = self.swap
         v1, v2 = current[i1], current[i2]
@@ -384,8 +381,5 @@ class MutationSwapTsp(Mutation):
         self, solution: TspSolution
     ) -> tuple[TspSolution, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
-        if sol.length is None or sol.lengths is None:
-            raise RuntimeError(
-                "length and lengths sol's attributes should not be None at this point."
-            )
+        assert sol.length is not None
         return sol, move, {"length": sol.length}

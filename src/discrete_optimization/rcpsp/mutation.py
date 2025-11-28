@@ -142,7 +142,7 @@ class DeadlineMutationRcpsp(Mutation):
         if not is_instance_any_rcpsp_solution(solution):
             raise ValueError("solution must be an rcsp solution (of any kind)")
         sol: ANY_SOLUTION
-        sol, move = self.mutate(solution)  #  type: ignore
+        sol, move = self.mutate(solution)  # type: ignore
         obj = self.problem.evaluate(sol)
         return sol, move, obj
 
