@@ -23,13 +23,10 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
-)
-from discrete_optimization.tsp.mutation import Mutation2Opt, MutationSwapTsp
+from discrete_optimization.tsp.mutation import SwapTspMutation, TwoOptTspMutation
 from discrete_optimization.tsp.plot import plot_tsp_solution
 from discrete_optimization.tsp.problem import DistanceMatrixTspProblem, Point2D
 
@@ -1655,19 +1652,15 @@ def run_tsp():
         end_index=len(dict_instance["distance_delta"]) - 1,
     )
     solution = tsp_model.get_random_dummy_solution()
-    _, list_mutation = get_available_mutations(tsp_model, solution)
     res = RestartHandlerLimit(3000)
-    print(list_mutation)
-    list_mutation = [
-        mutate[0].build(tsp_model, solution, attribute="permutation", **mutate[1])
-        for mutate in list_mutation
-        if mutate[0] in [Mutation2Opt, MutationSwapTsp]
-    ]
-    weight = np.ones(len(list_mutation))
-    mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
+    portfolio_mutation = create_mutations_portfolio_from_problem(
+        problem=tsp_model,
+        selected_attributes={"permutation"},
+        selected_mutations={TwoOptTspMutation, SwapTspMutation},
+    )
     sa = SimulatedAnnealing(
         problem=tsp_model,
-        mutator=mutate_portfolio,
+        mutator=portfolio_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
             temperature=10, restart_handler=res, coefficient=0.99999

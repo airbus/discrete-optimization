@@ -21,13 +21,13 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
+    ListInteger,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
@@ -368,17 +368,14 @@ class ColoringProblem(AllocationProblem[Node, Color]):
         Returns: an EncodingRegister specifying the colors attribute.
 
         """
-        dict_register = {
-            "colors": {
-                "name": "colors",
-                "type": [TypeAttribute.LIST_INTEGER],
-                "n": self.number_of_nodes,
-                "arity": self.number_of_nodes,
-                "low": 1,  # integer
-                "up": self.number_of_nodes,  # integer
+        return EncodingRegister(
+            {
+                "colors": ListInteger(
+                    length=self.number_of_nodes,
+                    arities=self.number_of_nodes,  # worse case: a color per node
+                ),
             }
-        }
-        return EncodingRegister(dict_register)
+        )
 
     def get_solution_type(self) -> type[Solution]:
         """Returns the class of a solution instance for ColoringProblem."""

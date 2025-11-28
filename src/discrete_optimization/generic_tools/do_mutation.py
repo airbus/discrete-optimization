@@ -2,10 +2,14 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any
 
-from discrete_optimization.generic_tools.do_problem import Problem, Solution
+from discrete_optimization.generic_tools.do_problem import (
+    AttributeType,
+    Problem,
+    Solution,
+)
 
 
 class LocalMove:
@@ -35,15 +39,38 @@ class LocalMoveDefault(LocalMove):
         return self.prev_solution
 
 
-class Mutation:
-    @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs: Any) -> "Mutation":
-        raise NotImplementedError("Please implement it !")
+class Mutation(ABC):
+    @classmethod
+    def build(cls, problem: Problem, **kwargs: Any) -> "Mutation":
+        return cls(problem=problem, **kwargs)
+
+    def __init__(self, problem: Problem, **kwargs: Any):
+        self.problem = problem
 
     @abstractmethod
     def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]: ...
 
-    @abstractmethod
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]: ...
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
+        sol, move = self.mutate(solution=solution)
+        res = self.problem.evaluate(sol)
+        return sol, move, res
+
+
+class SingleAttributeMutation(Mutation):
+    attribute_type_cls: type[AttributeType]
+
+    def __init__(self, problem, attribute: str | None = None, **kwargs: Any):
+        super().__init__(problem, **kwargs)
+        register = self.problem.get_attribute_register()
+        if attribute is None:
+            self.attribute = register.get_first_attribute_of_type(
+                self.attribute_type_cls
+            )
+        else:
+            self.attribute = attribute
+        self.attribute_type = register[self.attribute]
+
+    def __repr__(self):
+        return f"{type(self).__name__}(attribute='{self.attribute}')"

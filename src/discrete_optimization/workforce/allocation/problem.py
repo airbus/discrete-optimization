@@ -22,13 +22,13 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
+    ListInteger,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
@@ -608,22 +608,15 @@ class TeamAllocationProblem(AllocationProblem[Task, UnaryResource]):
         return True
 
     def get_attribute_register(self) -> EncodingRegister:
-        """Attribute documentation for TeamAllocation object.
-
-        Returns: an EncodingRegister specifying the colors attribute.
-
-        """
-        dict_register = {
-            "allocation": {
-                "name": "allocation",
-                "type": [TypeAttribute.LIST_INTEGER],
-                "n": self.number_of_activity,
-                "arity": self.number_of_teams,
-                "low": 0,  # integer
-                "up": self.number_of_teams - 1,  # integer
+        """Attribute documentation for TeamAllocation object."""
+        return EncodingRegister(
+            {
+                "allocation": ListInteger(
+                    length=self.number_of_activity,
+                    arities=self.number_of_teams,
+                )
             }
-        }
-        return EncodingRegister(dict_register)
+        )
 
     def get_solution_type(self) -> type[Solution]:
         """Returns the class of a solution instance for ColoringProblem."""

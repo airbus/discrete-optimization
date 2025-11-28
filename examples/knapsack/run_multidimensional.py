@@ -22,11 +22,8 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     from_solutions_to_result_storage,
@@ -59,13 +56,8 @@ def run_cp_multidimensional():
 
 def run_ls(multiscenario_model):
     solution = multiscenario_model.get_dummy_solution()
-    _, list_mutation = get_available_mutations(multiscenario_model, solution)
-    list_mutation = [
-        mutate[0].build(multiscenario_model, solution, **mutate[1])
-        for mutate in list_mutation
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
+    mixed_mutation = create_mutations_portfolio_from_problem(
+        problem=multiscenario_model
     )
     res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(

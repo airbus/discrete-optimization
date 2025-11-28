@@ -3,20 +3,20 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,
-    Mutation,
+    SingleAttributeMutation,
 )
-from discrete_optimization.generic_tools.do_problem import Solution, TypeAttribute
-from discrete_optimization.generic_tools.mutations.mutation_util import (
-    get_attribute_for_type,
+from discrete_optimization.knapsack.problem import (
+    KnapsackProblem,
+    KnapsackSolution,
+    ListBooleanKnapsack,
 )
-from discrete_optimization.knapsack.problem import KnapsackProblem, KnapsackSolution
 
 
 class SingleBitFlipMove(LocalMove):
@@ -34,9 +34,13 @@ class SingleBitFlipMove(LocalMove):
         return self.apply_local_move(solution)
 
 
-class KnapsackMutationSingleBitFlip(Mutation):
-    def __init__(self, problem: KnapsackProblem):
-        self.problem = problem
+class SingleBitFlipKnapsackMutation(SingleAttributeMutation):
+    attribute_type_cls = ListBooleanKnapsack
+    attribute_type: ListBooleanKnapsack
+    problem: KnapsackProblem
+
+    def __init__(self, problem, attribute: str | None = "list_taken", **kwargs: Any):
+        super().__init__(problem, attribute, **kwargs)
 
     def mutate(self, solution: KnapsackSolution) -> tuple[KnapsackSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         s, m, f = self.mutate_and_compute_obj(solution)
@@ -64,12 +68,6 @@ class KnapsackMutationSingleBitFlip(Mutation):
         else:
             obj = self.problem.evaluate(solution)
         return new_sol, move, obj
-
-    @staticmethod
-    def build(
-        knapsack_problem: KnapsackProblem, solution: Solution
-    ) -> "KnapsackMutatio.nSingleBitFlip":  # type: ignore # avoid isinstance checks for efficiency
-        return KnapsackMutationSingleBitFlip(knapsack_problem)
 
 
 class BitFlipMoveKP(LocalMove):
@@ -107,19 +105,21 @@ class BitFlipMoveKP(LocalMove):
         return self.apply_local_move(solution)
 
 
-class MutationKnapsack(Mutation):
-    @staticmethod
-    def build(
-        knapsack_problem: KnapsackProblem, solution: Solution
-    ) -> "MutationKnapsack":  # type: ignore # avoid isinstance checks for efficiency
-        return MutationKnapsack(knapsack_problem)
+class BitFlipKnapsackMutation(SingleAttributeMutation):
+    attribute_type_cls = ListBooleanKnapsack
+    attribute_type: ListBooleanKnapsack
+    problem: KnapsackProblem
 
     def __init__(
-        self, knapsack_problem: KnapsackProblem, attribute: Optional[str] = None
+        self,
+        problem: KnapsackProblem,
+        attribute: Optional[str] = "list_taken",
+        **kwargs: Any,
     ):
-        self.knapsack_problem = knapsack_problem
-        self.nb_items = knapsack_problem.nb_items
-        self.list_items = knapsack_problem.list_items
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
+
+        self.nb_items = problem.nb_items
+        self.list_items = problem.list_items
         self.profit_per_capacity = [
             self.list_items[i].value / self.list_items[i].weight
             for i in range(self.nb_items)
@@ -127,13 +127,6 @@ class MutationKnapsack(Mutation):
         self.sum = np.sum(self.profit_per_capacity)
         self.profit_per_capacity /= self.sum
         self.sorted_by_utility = np.argsort(self.profit_per_capacity)
-        if attribute is None:
-            register = knapsack_problem.get_attribute_register()
-            self.attribute = get_attribute_for_type(
-                register, TypeAttribute.LIST_BOOLEAN
-            )
-        else:
-            self.attribute = attribute
 
     def switch_on(
         self, variable: KnapsackSolution, come_from_outside: bool = False
@@ -146,15 +139,14 @@ class MutationKnapsack(Mutation):
             i
             for i in range(self.nb_items)
             if variable.list_taken[i] == 0
-            and variable.weight + self.list_items[i].weight
-            <= self.knapsack_problem.max_capacity
+            and variable.weight + self.list_items[i].weight <= self.problem.max_capacity
         ]
         if len(not_used) > 0:
             proba = np.array([self.profit_per_capacity[i] for i in not_used])
             proba = proba / np.sum(proba)
-            index = np.random.choice(not_used, size=1, p=proba)[0]
+            index = int(np.random.choice(not_used, size=1, p=proba)[0])
             move = BitFlipMoveKP(
-                self.attribute, problem=self.knapsack_problem, list_index_flip=[index]
+                self.attribute, problem=self.problem, list_index_flip=[index]
             )
             sol = move.apply_local_move(variable)
             if sol.weight is None or sol.value is None:
@@ -168,7 +160,7 @@ class MutationKnapsack(Mutation):
                 {
                     "value": sol.value,
                     "weight_violation": max(
-                        0.0, sol.weight - self.knapsack_problem.max_capacity
+                        0.0, sol.weight - self.problem.max_capacity
                     ),
                 },
             )
@@ -180,7 +172,7 @@ class MutationKnapsack(Mutation):
                     {
                         "value": variable.value,
                         "weight_violation": max(
-                            0.0, variable.weight - self.knapsack_problem.max_capacity
+                            0.0, variable.weight - self.problem.max_capacity
                         ),
                     },
                 )
@@ -197,9 +189,9 @@ class MutationKnapsack(Mutation):
         if len(used) > 0:
             proba = np.array([1 / self.profit_per_capacity[i] for i in used])
             proba = proba / np.sum(proba)
-            index = np.random.choice(used, size=1, p=proba)[0]
+            index = int(np.random.choice(used, size=1, p=proba)[0])
             move = BitFlipMoveKP(
-                self.attribute, problem=self.knapsack_problem, list_index_flip=[index]
+                self.attribute, problem=self.problem, list_index_flip=[index]
             )
             sol = move.apply_local_move(variable)
             if sol.weight is None or sol.value is None:
@@ -212,7 +204,7 @@ class MutationKnapsack(Mutation):
                 {
                     "value": sol.value,
                     "weight_violation": max(
-                        0.0, sol.weight - self.knapsack_problem.max_capacity
+                        0.0, sol.weight - self.problem.max_capacity
                     ),
                 },
             )
@@ -224,7 +216,7 @@ class MutationKnapsack(Mutation):
                     {
                         "value": variable.value,
                         "weight_violation": max(
-                            0.0, variable.weight - self.knapsack_problem.max_capacity
+                            0.0, variable.weight - self.problem.max_capacity
                         ),
                     },
                 )
@@ -238,7 +230,7 @@ class MutationKnapsack(Mutation):
         self, solution: KnapsackSolution
     ) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:
         if solution.weight is None:
-            self.knapsack_problem.evaluate(solution)
+            self.problem.evaluate(solution)
         r = random.random()
         if r < 0.8:
             return self.switch_on(solution)

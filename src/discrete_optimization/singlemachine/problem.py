@@ -17,10 +17,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
-    ParamsObjectiveFunction,
+    Permutation,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 
@@ -155,15 +154,7 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
 
     def get_attribute_register(self) -> EncodingRegister:
         return EncodingRegister(
-            dict_attribute_to_type={
-                "schedule": {"n": self.num_jobs},
-                "permutation": {
-                    "type": [TypeAttribute.PERMUTATION],
-                    "n": self.num_jobs,
-                    "name": "permutation",
-                    "range": range(self.num_jobs),
-                },
-            }
+            {"permutation": Permutation(range=range(self.num_jobs))}
         )
 
     def get_solution_type(self) -> type[Solution]:

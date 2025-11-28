@@ -8,15 +8,29 @@ from typing import Any, Optional, Union
 
 import numpy as np
 
-from discrete_optimization.generic_tools.do_mutation import LocalMove, Mutation
+from discrete_optimization.generic_tools.do_mutation import (
+    LocalMove,
+    SingleAttributeMutation,
+)
 from discrete_optimization.generic_tools.do_problem import (
+    Permutation,
     Problem,
     Solution,
-    TypeAttribute,
 )
-from discrete_optimization.generic_tools.mutations.mutation_util import (
-    get_attribute_for_type,
-)
+
+
+class _BasePermutationMutation(SingleAttributeMutation):
+    """Base class for permutation mutations."""
+
+    attribute_type_cls = Permutation
+    attribute_type: Permutation
+
+    def __init__(
+        self, problem: Problem, attribute: Optional[str] = None, **kwargs: Any
+    ):
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
+        self.range_shuffle = self.attribute_type.range
+        self.length = len(self.range_shuffle)
 
 
 class ShuffleMove(LocalMove):
@@ -39,23 +53,11 @@ class ShuffleMove(LocalMove):
         return solution
 
 
-class PermutationShuffleMutation(Mutation):
-    @staticmethod
-    def build(
-        problem: Problem, solution: Solution, **kwargs: Any
-    ) -> "PermutationShuffleMutation":
-        return PermutationShuffleMutation(problem, solution)
-
+class ShuffleMutation(_BasePermutationMutation):
     def __init__(
-        self, problem: Problem, solution: Solution, attribute: Optional[str] = None
+        self, problem: Problem, attribute: Optional[str] = None, **kwargs: Any
     ):
-        self.problem = problem
-        register = solution.get_attribute_register(problem)
-        if attribute is None:
-            self.attribute = get_attribute_for_type(register, TypeAttribute.PERMUTATION)
-        else:
-            self.attribute = attribute
-        self.range_shuffle = register.dict_attribute_to_type[self.attribute]["range"]
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
         self.range_int = list(range(len(self.range_shuffle)))
 
     def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
@@ -69,40 +71,16 @@ class PermutationShuffleMutation(Mutation):
             ShuffleMove(self.attribute, new_permutation=new, prev_permutation=previous),
         )
 
-    def mutate_and_compute_obj(
-        self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        sol, move = self.mutate(solution)
-        obj = self.problem.evaluate(sol)
-        return sol, move, obj
 
-
-class PermutationPartialShuffleMutation(Mutation):
-    @staticmethod
-    def build(
-        problem: Problem, solution: Solution, **kwargs: Any
-    ) -> "PermutationPartialShuffleMutation":
-        return PermutationPartialShuffleMutation(
-            problem,
-            solution,
-            attribute=kwargs.get("attribute", None),
-            proportion=kwargs.get("proportion", 0.3),
-        )
-
+class PartialShuffleMutation(_BasePermutationMutation):
     def __init__(
         self,
         problem: Problem,
-        solution: Solution,
         attribute: Optional[str] = None,
-        proportion: float = 0.3,
+        proportion: float = 0.2,
+        **kwargs: Any,
     ):
-        self.problem = problem
-        register = solution.get_attribute_register(problem)
-        if attribute is None:
-            self.attribute = get_attribute_for_type(register, TypeAttribute.PERMUTATION)
-        else:
-            self.attribute = attribute
-        self.range_shuffle = register.dict_attribute_to_type[self.attribute]["range"]
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
         self.n_to_move = int(proportion * len(self.range_shuffle))
         self.range_int = list(range(self.n_to_move))
         self.range_int_total = list(range(len(self.range_shuffle)))
@@ -118,13 +96,6 @@ class PermutationPartialShuffleMutation(Mutation):
         sol = solution.lazy_copy()
         setattr(sol, self.attribute, new)
         return sol, ShuffleMove(self.attribute, new, previous)
-
-    def mutate_and_compute_obj(
-        self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        sol, move = self.mutate(solution)
-        obj = self.problem.evaluate(sol)
-        return sol, move, obj
 
 
 class SwapsLocalMove(LocalMove):
@@ -147,46 +118,25 @@ class SwapsLocalMove(LocalMove):
         return solution
 
 
-class PermutationSwap(Mutation):
-    @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs: Any) -> "PermutationSwap":
-        return PermutationSwap(
-            problem,
-            solution,
-            attribute=kwargs.get("attribute", None),
-            nb_swap=kwargs.get("nb_swap", 1),
-        )
-
+class SwapMutation(_BasePermutationMutation):
     def __init__(
         self,
         problem: Problem,
-        solution: Solution,
         attribute: Optional[str] = None,
         nb_swap: int = 1,
+        **kwargs: Any,
     ):
-        self.problem = problem
+        super().__init__(problem=problem, attribute=attribute, **kwargs)
         self.nb_swap = nb_swap
-        register = solution.get_attribute_register(problem)
-        if attribute is None:
-            self.attribute = get_attribute_for_type(register, TypeAttribute.PERMUTATION)
-        else:
-            self.attribute = attribute
-        self.length = len(register.dict_attribute_to_type[self.attribute]["range"])
 
     def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         swaps = np.random.randint(low=0, high=self.length - 1, size=(self.nb_swap, 2))
         move = SwapsLocalMove(
-            self.attribute, [(swaps[i, 0], swaps[i, 1]) for i in range(self.nb_swap)]
+            self.attribute,
+            [(int(swaps[i, 0]), int(swaps[i, 1])) for i in range(self.nb_swap)],
         )
         next_sol = move.apply_local_move(solution)
         return next_sol, move
-
-    def mutate_and_compute_obj(
-        self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        sol, move = self.mutate(solution)
-        obj = self.problem.evaluate(sol)
-        return sol, move, obj
 
 
 class TwoOptMove(LocalMove):
@@ -209,34 +159,10 @@ class TwoOptMove(LocalMove):
         return solution
 
 
-class TwoOptMutation(Mutation):
-    @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs: Any) -> "TwoOptMutation":
-        return TwoOptMutation(
-            problem, solution, attribute=kwargs.get("attribute", None)
-        )
-
-    def __init__(
-        self, problem: Problem, solution: Solution, attribute: Optional[str] = None
-    ):
-        self.problem = problem
-        register = solution.get_attribute_register(problem)
-        if attribute is None:
-            self.attribute = get_attribute_for_type(register, TypeAttribute.PERMUTATION)
-        else:
-            self.attribute = attribute
-        self.length = len(register.dict_attribute_to_type[self.attribute]["range"])
-
+class TwoOptMutation(_BasePermutationMutation):
     def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         i = random.randint(0, self.length - 2)
         j = random.randint(i + 1, self.length - 1)
         two_opt_move = TwoOptMove(self.attribute, [(i, j)])
         new_sol = two_opt_move.apply_local_move(solution)
         return new_sol, two_opt_move
-
-    def mutate_and_compute_obj(
-        self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        sol, move = self.mutate(solution)
-        obj = self.problem.evaluate(sol)
-        return sol, move, obj

@@ -17,6 +17,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
+    ListBoolean,
     MethodAggregating,
     ModeOptim,
     ObjectiveDoc,
@@ -26,7 +27,6 @@ from discrete_optimization.generic_tools.do_problem import (
     RobustProblem,
     Solution,
     TupleFitness,
-    TypeAttribute,
     TypeObjective,
 )
 
@@ -111,6 +111,16 @@ class KnapsackSolution(AllocationSolution[Item, Knapsack]):
         )
 
 
+class ListBooleanKnapsack(ListBoolean):
+    """Attribute type for boolean list in KnapsackSolution.
+
+    This is used to map solution attribute to knapsack-specific mutations in the mutation catalog
+
+    """
+
+    ...
+
+
 class KnapsackProblem(AllocationProblem[Item, Knapsack]):
     def __init__(
         self,
@@ -139,14 +149,9 @@ class KnapsackProblem(AllocationProblem[Item, Knapsack]):
         return self.list_items
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {
-            "list_taken": {
-                "name": "list_taken",
-                "type": [TypeAttribute.LIST_BOOLEAN, TypeAttribute.LIST_BOOLEAN_KNAP],
-                "n": self.nb_items,
-            }
-        }
-        return EncodingRegister(dict_register)
+        return EncodingRegister(
+            {"list_taken": ListBooleanKnapsack(length=self.nb_items)}
+        )
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
@@ -391,14 +396,7 @@ class MultidimensionalKnapsackProblem(Problem):
         self.force_recompute_values = force_recompute_values
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {
-            "list_taken": {
-                "name": "list_taken",
-                "type": [TypeAttribute.LIST_BOOLEAN],
-                "n": self.nb_items,
-            }
-        }
-        return EncodingRegister(dict_register)
+        return EncodingRegister({"list_taken": ListBoolean(length=self.nb_items)})
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {

@@ -26,9 +26,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
+    Permutation,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 
@@ -137,6 +137,16 @@ class TspSolution(SchedulingSolution[Node]):
 
 
 class Point: ...
+
+
+class PermutationTsp(Permutation):
+    """Attribute type specific to TspSolution.
+
+    Useful to make mutation catalog map TspSolution attribute to specific mutations.
+
+    """
+
+    ...
 
 
 class TspProblem(SchedulingProblem[Node]):
@@ -288,21 +298,14 @@ class TspProblem(SchedulingProblem[Node]):
         return TspSolution
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {
-            "permutation_from0": {
-                "name": "permutation_from0",
-                "type": [TypeAttribute.PERMUTATION],
-                "range": range(len(self.original_indices_to_permutation_indices)),
-                "n": len(self.original_indices_to_permutation_indices),
-            },
-            "permutation": {
-                "name": "permutation",
-                "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_TSP],
-                "range": self.ind_in_permutation,
-                "n": self.length_permutation,
-            },
-        }
-        return EncodingRegister(dict_register)
+        return EncodingRegister(
+            {
+                "permutation_from0": Permutation(
+                    range=range(len(self.original_indices_to_permutation_indices))
+                ),
+                "permutation": PermutationTsp(range=self.ind_in_permutation),
+            }
+        )
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {

@@ -22,11 +22,8 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.generic_tools.sequential_metasolver import (
     SequentialMetasolver,
@@ -61,15 +58,7 @@ def test_sequential_metasolver_rcpsp(random_seed):
     rcpsp_problem = parse_file(file)
 
     # kwargs SA
-    solution = rcpsp_problem.get_dummy_solution()
-    _, list_mutation = get_available_mutations(rcpsp_problem, solution)
-    list_mutation = [
-        mutate[0].build(rcpsp_problem, solution, **mutate[1])
-        for mutate in list_mutation
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
-    )
+    mixed_mutation = create_mutations_portfolio_from_problem(problem=rcpsp_problem)
     restart_handler = RestartHandlerLimit(3000)
     temperature_handler = TemperatureSchedulingFactor(1000, restart_handler, 0.99)
 
@@ -118,15 +107,7 @@ def test_sequential_metasolver_rcpsp_with_dynamic_kwargs(random_seed):
     rcpsp_problem = parse_file(file)
 
     # kwargs SA
-    solution = rcpsp_problem.get_dummy_solution()
-    _, list_mutation = get_available_mutations(rcpsp_problem, solution)
-    list_mutation = [
-        mutate[0].build(rcpsp_problem, solution, **mutate[1])
-        for mutate in list_mutation
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
-    )
+    mixed_mutation = create_mutations_portfolio_from_problem(problem=rcpsp_problem)
     restart_handler = RestartHandlerLimit(3000)
     temperature_handler = TemperatureSchedulingFactor(1000, restart_handler, 0.99)
 

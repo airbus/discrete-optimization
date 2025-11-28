@@ -206,9 +206,6 @@ class AllocSchedulingProblem(
             #                                                                      ac_mode_to_team=self.ac_mode_to_team,
             #                                                                      alloc_scheduling_problem=self))
 
-    def get_attribute_register(self) -> EncodingRegister:
-        pass
-
     def get_solution_type(self) -> type[Solution]:
         return AllocSchedulingSolution
 

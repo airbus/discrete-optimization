@@ -11,7 +11,6 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -124,9 +123,6 @@ class JobShopProblem(SchedulingProblem[Task], PrecedenceProblem[Task]):
                 if variable.schedule[job][s_j][0] < variable.schedule[job][s_j - 1][1]:
                     return False
         return True
-
-    def get_attribute_register(self) -> EncodingRegister:
-        return EncodingRegister(dict_attribute_to_type={})
 
     def get_solution_type(self) -> type[Solution]:
         return JobShopSolution

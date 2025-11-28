@@ -4,10 +4,7 @@
 import logging
 
 import numpy as np
-from didppy import BeamParallelizationMethod
 
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import Ga
 from discrete_optimization.generic_tools.ls.local_search import (
@@ -17,26 +14,16 @@ from discrete_optimization.generic_tools.ls.local_search import (
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
     TemperatureSchedulingFactor,
 )
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
 )
-from discrete_optimization.generic_tools.mutations.permutation_mutations import (
-    PermutationPartialShuffleMutation,
-    PermutationShuffleMutation,
-    ShuffleMove,
-    TwoOptMutation,
+from discrete_optimization.generic_tools.mutations.mutation_permutation import (
+    SwapMutation,
 )
-from discrete_optimization.knapsack.mutation import (
-    KnapsackMutationSingleBitFlip,
-    MutationKnapsack,
+from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
+    create_mutations_portfolio_from_problem,
 )
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file
-from discrete_optimization.singlemachine.problem import WeightedTardinessProblem
-from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver
-from discrete_optimization.singlemachine.solvers.dp import DpWTSolver, dp
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -45,17 +32,8 @@ def run_ga():
     problems = parse_file(get_data_available()[0])
     print(len(problems), " problems in the file")
     problem = problems[3]
-    dummy = problem.get_dummy_solution()
     params = get_default_objective_setup(problem)
-    _, mutations = get_available_mutations(problem)
-    print(mutations)
-    _, mutations = get_available_mutations(problem, dummy)
-    list_mutation = [
-        mutate[0].build(problem, dummy, **mutate[1]) for mutate in mutations
-    ]
-    mixed_mutation = BasicPortfolioMutation(
-        list_mutation, np.ones((len(list_mutation)))
-    )
+    mixed_mutation = create_mutations_portfolio_from_problem(problem=problem)
     ga_solver = Ga(
         problem,
         encoding="permutation",
@@ -83,15 +61,11 @@ def run_ls():
     print(len(problems), " problems in the file")
     problem = problems[2]
     solution = problem.get_dummy_solution()
-    _, list_mutation = get_available_mutations(problem, solution)
     res = RestartHandlerLimit(3000)
-    print(list_mutation)
-    list_mutation = [
-        mutate[0].build(problem, solution, attribute="permutation", **mutate[1])
-        for mutate in [list_mutation[2]]
-    ]
-    weight = np.ones(len(list_mutation))
-    mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
+    mutate_portfolio = create_mutations_portfolio_from_problem(
+        problem=problem, selected_mutations={SwapMutation}
+    )
+
     sa = SimulatedAnnealing(
         problem=problem,
         mutator=mutate_portfolio,
@@ -107,4 +81,4 @@ def run_ls():
 
 
 if __name__ == "__main__":
-    run_ga()
+    run_ls()

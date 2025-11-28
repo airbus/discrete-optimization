@@ -17,7 +17,6 @@ import numpy as np
 import numpy.typing as npt
 
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -353,9 +352,6 @@ class GpdpProblem(Problem):
 
     def get_solution_type(self) -> type[Solution]:
         return GpdpSolution
-
-    def get_attribute_register(self) -> EncodingRegister:
-        return EncodingRegister(dict_attribute_to_type={})
 
     def get_objective_register(self) -> ObjectiveRegister:
         return ObjectiveRegister(
