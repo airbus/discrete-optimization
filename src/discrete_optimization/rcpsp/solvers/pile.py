@@ -528,7 +528,7 @@ class Executor(PileRcpspSolver):
         queue = []
         current_time = 0
         perm = []
-        while len(schedule) < self.n_jobs + 2:
+        while len(schedule) < self.n_jobs:
             possible_activities = [
                 n
                 for n in available_activities
