@@ -37,13 +37,13 @@ this_path = os.path.dirname(os.path.abspath(__file__))
 
 files_mzn = {
     "gpdp": os.path.join(
-        this_path, "../../discrete_optimization/gpdp/minizinc/gpdp.mzn"
+        this_path, "../../src/discrete_optimization/gpdp/minizinc/gpdp.mzn"
     ),
     "gpdp-flow": os.path.join(
-        this_path, "../../discrete_optimization/gpdp/minizinc/gpdp_flow.mzn"
+        this_path, "../../src/discrete_optimization/gpdp/minizinc/gpdp_flow.mzn"
     ),
     "gpdp-resources": os.path.join(
-        this_path, "../../discrete_optimization/gpdp/minizinc/gpdp_resources.mzn"
+        this_path, "../../src/discrete_optimization/gpdp/minizinc/gpdp_resources.mzn"
     ),
 }
 
