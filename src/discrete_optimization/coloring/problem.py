@@ -439,29 +439,6 @@ class ColoringProblem(AllocationProblem[Node, Color]):
             )
         return val
 
-    def evaluate_from_encoding(
-        self, int_vector: list[int], encoding_name: str
-    ) -> dict[str, float]:
-        """Can be used in GA algorithm to build an object solution and evaluate from a int_vector representation.
-
-        Args:
-            int_vector: representing the colors vector of our problem
-            encoding_name: name of the attribute in ColoringSolution corresponding to the int_vector given.
-             In our case, will only work for encoding_name="colors"
-        Returns: the evaluation of the (int_vector, encoding) object on the coloring problem.
-
-        """
-        coloring_sol: ColoringSolution
-        if encoding_name == "colors":
-            coloring_sol = ColoringSolution(problem=self, colors=int_vector)
-        elif encoding_name == "custom":
-            kwargs = {encoding_name: int_vector}
-            coloring_sol = ColoringSolution(problem=self, **kwargs)  # type: ignore
-        else:
-            raise ValueError("encoding_name can only be 'colors' or 'custom'.")
-        objectives = self.evaluate(coloring_sol)
-        return objectives
-
 
 def compute_constraints_penalty(
     coloring_solution: ColoringSolution,

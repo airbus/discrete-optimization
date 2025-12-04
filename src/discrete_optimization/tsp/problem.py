@@ -192,33 +192,6 @@ class TspProblem(SchedulingProblem[Node]):
     @abstractmethod
     def evaluate_function_indexes(self, index_1: int, index_2: int) -> float: ...
 
-    def evaluate_from_encoding(
-        self, int_vector: Iterable[int], encoding_name: str
-    ) -> dict[str, float]:
-        if encoding_name == "permutation_from0":
-            tsp_sol = TspSolution(
-                problem=self,
-                start_index=self.start_index,
-                end_index=self.end_index,
-                permutation=self.convert_perm_from0_to_original_perm(int_vector),
-            )
-        elif encoding_name == "permutation":
-            tsp_sol = TspSolution(
-                problem=self,
-                start_index=self.start_index,
-                end_index=self.end_index,
-                permutation=list(int_vector),
-            )
-        else:
-            kwargs = {
-                encoding_name: int_vector,
-                "start_index": self.start_index,
-                "end_index": self.end_index,
-            }
-            tsp_sol = TspSolution(problem=self, **kwargs)  # type: ignore
-        objectives = self.evaluate(tsp_sol)
-        return objectives
-
     def evaluate(self, variable: TspSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         if None in variable.permutation:
             return {"length": -1}

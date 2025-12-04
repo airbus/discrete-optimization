@@ -133,14 +133,6 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
             ),
         }
 
-    def evaluate_from_encoding(self, permutation: list[int], encoding_name):
-        if encoding_name == "permutation":
-            kp_sol = WTSolution(problem=self, permutation=permutation, schedule=None)
-        else:
-            raise NotImplementedError("encoding_name must be 'permutation'")
-        objectives = self.evaluate(kp_sol)
-        return objectives
-
     def satisfy(self, variable: WTSolution) -> bool:
         max_t = max([x[1] for x in variable.schedule])
         active_machine = np.zeros((max_t + 1))

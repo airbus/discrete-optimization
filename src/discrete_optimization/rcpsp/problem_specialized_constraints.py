@@ -236,16 +236,6 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
             name_task=self.name_task,
         )
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
-        if encoding_name == "rcpsp_permutation":
-            single_mode_list = [1 for i in range(self.n_jobs_non_dummy)]
-            rcpsp_sol = SpecialPreemptiveRcpspSolution(
-                problem=self, rcpsp_permutation=int_vector, rcpsp_modes=single_mode_list
-            )
-            objectives = self.evaluate(rcpsp_sol)
-            return objectives
-        return None
-
     def evaluate_function(self, rcpsp_sol: PreemptiveRcpspSolution):
         if rcpsp_sol._schedule_to_recompute:
             rcpsp_sol.generate_schedule_from_permutation_serial_sgs()

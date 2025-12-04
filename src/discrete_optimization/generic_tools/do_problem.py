@@ -385,10 +385,12 @@ class Problem(ABC):
         keys = self.get_objective_names()
         return TupleFitness(np.array([dict_values[k] for k in keys]), len(keys))
 
-    def evaluate_from_encoding(self, int_vector: list[int], encoding_name: str):
+    def evaluate_from_encoding(
+        self, int_vector: list[int], encoding_name: str
+    ) -> dict[str, float]:
         """Evaluate a solution represented by its encoding.
 
-        Necessary to apply a Ga/Nsga solver.
+        Necessary to apply a genetic algorithm.
 
         Args:
             int_vector: solution attribute seen as a list of integer
@@ -398,7 +400,19 @@ class Problem(ABC):
         Returns:
 
         """
-        raise NotImplementedError()
+        return self.evaluate(
+            self.build_solution_from_encoding(int_vector, encoding_name)
+        )
+
+    def build_solution_from_encoding(
+        self, int_vector: list[int], encoding_name: str
+    ) -> Solution:
+        """Build a solution from its encoding.
+
+        Used by genetic algorithms.
+
+        """
+        return self.get_solution_type()(problem=self, **{encoding_name: int_vector})
 
     @abstractmethod
     def satisfy(self, variable: Solution) -> bool:

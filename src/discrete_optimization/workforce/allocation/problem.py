@@ -689,26 +689,6 @@ class TeamAllocationProblem(AllocationProblem[Task, UnaryResource]):
                         nb_violation += 1
         return nb_violation
 
-    def evaluate_from_encoding(
-        self, int_vector: list[int], encoding_name: str
-    ) -> dict[str, float]:
-        """Can be used in GA algorithm to build an object solution and evaluate from a int_vector representation.
-
-        Args:
-            int_vector: representing the colors vector of our problem
-            encoding_name: name of the attribute in TeamAllocationSolution corresponding to the int_vector given.
-             In our case, will only work for encoding_name="allocation"
-        Returns: the evaluation of the (int_vector, encoding) object on the team allocation problem.
-
-        """
-        coloring_sol: TeamAllocationSolution
-        if encoding_name == "allocation":
-            coloring_sol = TeamAllocationSolution(problem=self, allocation=int_vector)
-        else:
-            raise ValueError("encoding_name can only be 'allocation'")
-        objectives = self.evaluate(coloring_sol)
-        return objectives
-
     def get_natural_explanation_unsat_constraints(
         self, variable: TeamAllocationSolution
     ) -> list[str]:

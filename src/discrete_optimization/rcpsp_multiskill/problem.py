@@ -2918,48 +2918,6 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
             priority_worker_per_task_corrected.append(tmp_corrected)
         return priority_worker_per_task_corrected
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
-        if encoding_name == "priority_list_task":
-            # change the permutation in the solution with int_vector and set the modes with self.fixed_modes
-            rcpsp_sol = VariantMultiskillRcpspSolution(
-                problem=self,
-                priority_list_task=int_vector,
-                modes_vector=self.fixed_modes,
-                priority_worker_per_task=self.fixed_priority_worker_per_task,
-            )
-        elif encoding_name == "modes_vector":
-            # change the modes in the solution with int_vector and set the permutation with self.fixed_permutation
-            modes_corrected = int_vector
-            rcpsp_sol = VariantMultiskillRcpspSolution(
-                problem=self,
-                priority_list_task=self.fixed_permutation,
-                modes_vector=modes_corrected,
-                priority_worker_per_task=self.fixed_priority_worker_per_task,
-            )
-        elif encoding_name == "modes_vector_from0":
-            # change the modes in the solution with int_vector and set the permutation with self.fixed_permutation
-            modes_corrected = [x + 1 for x in int_vector]
-            rcpsp_sol = VariantMultiskillRcpspSolution(
-                problem=self,
-                priority_list_task=self.fixed_permutation,
-                modes_vector=modes_corrected,
-                priority_worker_per_task=self.fixed_priority_worker_per_task,
-            )
-        elif encoding_name == "priority_worker_per_task":
-            # change the resource permutation priority lists in the solution from int_vector and set the permutation
-            # with self.fixed_permutation and the modes with self.fixed_modes
-            priority_worker_per_task_corrected = (
-                self.convert_fixed_priority_worker_per_task_from_permutation(int_vector)
-            )
-            rcpsp_sol = VariantMultiskillRcpspSolution(
-                problem=self,
-                priority_list_task=self.fixed_permutation,
-                modes_vector=self.fixed_modes,
-                priority_worker_per_task=priority_worker_per_task_corrected,
-            )
-        objectives = self.evaluate(rcpsp_sol)
-        return objectives
-
     def get_solution_type(self) -> type[Solution]:
         if not self.preemptive:
             return VariantMultiskillRcpspSolution
