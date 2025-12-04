@@ -2,25 +2,38 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from typing import Any, List
+from typing import Any, List, Optional
 
 import clingo
 
 from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolution
 from discrete_optimization.generic_tools.asp_tools import AspClingoSolver
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
 )
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 
 logger = logging.getLogger(__name__)
 
 
-class AspBinPackingSolver(AspClingoSolver):
+class AspBinPackingSolver(AspClingoSolver, WarmstartMixin):
     """Solver based on Answer Set Programming formulation and clingo solver for Bin Packing."""
 
     problem: BinPackProblem
     upper_bound: int
+
+    def __init__(
+        self,
+        problem: BinPackProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
+    ):
+        super().__init__(problem, params_objective_function, **kwargs)
+        # there to store the program and facts after call to init_model and before warm-start,
+        # which needs a re-instanciation of the clingo control
+        self.basic_model = ""
+        self.string_data_input = ""
 
     def init_model(self, **kwargs: Any) -> None:
         # 1. Define the ASP program
@@ -83,14 +96,35 @@ class AspBinPackingSolver(AspClingoSolver):
         self.ctl.add("base", [], basic_model)
         # Build and add the data facts
         self.ctl.add("base", [], string_data_input)
+        # Store i
+        self.basic_model = basic_model
+        self.string_data_input = string_data_input
+
+    def set_warm_start(self, solution: BinPackSolution) -> None:
+        assert len(self.basic_model) > 0
+        flags_clingo = [
+            "--warn=no-atom-undefined",
+            "--opt-mode=optN",
+            "--parallel-mode=10",
+            "--heuristic=Domain",
+        ]
+        string_data_input = self.string_data_input
+        heuristic_str = self.build_heuristic_input(solution)
+        string_data_input += "\n" + heuristic_str
+        # Re-instanciate with warmstart. TODO : find a better way ?!
+        self.ctl = clingo.Control(flags_clingo)
+        # Add the logic model
+        self.ctl.add("base", [], self.basic_model)
+        # Build and add the data facts
+        self.ctl.add("base", [], string_data_input)
+        # Store i
+        self.string_data_input = string_data_input
 
     def build_heuristic_input(self, solution: BinPackSolution):
         str_ = [
             f"#heuristic put({i}, {solution.allocation[i]}):bin({solution.allocation[i]}). [100000, true]"
             for i in range(self.problem.nb_items)
         ]
-        # str_ = [f"put({i}, {solution.allocation[i]}):bin({solution.allocation[i]})." for i in range(self.problem.nb_items)]
-        # str_ = [f"{{put({i}, {solution.allocation[i]}):bin({solution.allocation[i]})}}." for i in range(self.problem.nb_items)]
         merged_str = "\n".join(str_)
         return merged_str
 
