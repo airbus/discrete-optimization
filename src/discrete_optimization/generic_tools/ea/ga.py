@@ -16,12 +16,8 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 )
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
-    ListBoolean,
-    ListInteger,
     ObjectiveHandling,
     ParamsObjectiveFunction,
-    Permutation,
     Problem,
     Solution,
     lower_bound_vector_encoding_from_dict,
@@ -29,6 +25,12 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
+from discrete_optimization.generic_tools.encoding_register import (
+    EncodingRegister,
+    ListBoolean,
+    ListInteger,
+    Permutation,
+)
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
     FloatHyperparameter,

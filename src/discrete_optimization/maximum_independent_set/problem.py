@@ -7,8 +7,6 @@ import networkx as nx
 import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
-    ListBoolean,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -16,6 +14,10 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
     TypeObjective,
+)
+from discrete_optimization.generic_tools.encoding_register import (
+    EncodingRegister,
+    ListBoolean,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
 

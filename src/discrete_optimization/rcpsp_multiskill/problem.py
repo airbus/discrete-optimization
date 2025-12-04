@@ -33,7 +33,6 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -43,6 +42,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TupleFitness,
     TypeObjective,
 )
+from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.rcpsp.problem import (
     RcpspProblem,

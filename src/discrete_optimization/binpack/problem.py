@@ -17,14 +17,16 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
-    ListInteger,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Solution,
     TypeObjective,
+)
+from discrete_optimization.generic_tools.encoding_register import (
+    EncodingRegister,
+    ListInteger,
 )
 
 logger = logging.getLogger(__name__)

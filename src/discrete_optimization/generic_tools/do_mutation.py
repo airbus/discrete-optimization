@@ -6,10 +6,10 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from discrete_optimization.generic_tools.do_problem import (
-    AttributeType,
     Problem,
     Solution,
 )
+from discrete_optimization.generic_tools.encoding_register import AttributeType
 
 
 class LocalMove:

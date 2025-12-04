@@ -23,8 +23,6 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
-    ListInteger,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -32,6 +30,10 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
     TypeObjective,
+)
+from discrete_optimization.generic_tools.encoding_register import (
+    EncodingRegister,
+    ListInteger,
 )
 
 

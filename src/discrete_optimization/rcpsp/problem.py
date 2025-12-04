@@ -21,7 +21,6 @@ from discrete_optimization.generic_tasks_tools.multimode import MultimodeProblem
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -30,6 +29,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TupleFitness,
     TypeObjective,
 )
+from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.rcpsp.fast_function import (
     compute_mean_ressource,

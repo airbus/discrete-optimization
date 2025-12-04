@@ -11,10 +11,10 @@ from discrete_optimization.generic_tools.do_mutation import (
     SingleAttributeMutation,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ListInteger,
     Problem,
     Solution,
 )
+from discrete_optimization.generic_tools.encoding_register import ListInteger
 
 
 class IntegerMutation(SingleAttributeMutation):

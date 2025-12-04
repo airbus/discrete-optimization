@@ -12,15 +12,17 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
-    Permutation,
     Problem,
     Solution,
     TypeObjective,
+)
+from discrete_optimization.generic_tools.encoding_register import (
+    EncodingRegister,
+    Permutation,
 )
 
 Task = int

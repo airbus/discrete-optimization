@@ -4,7 +4,10 @@
 
 from __future__ import annotations
 
-from discrete_optimization.generic_tools.do_problem import ListInteger, Permutation
+from discrete_optimization.generic_tools.encoding_register import (
+    ListInteger,
+    Permutation,
+)
 
 
 class ListIntegerRcpsp(ListInteger):
