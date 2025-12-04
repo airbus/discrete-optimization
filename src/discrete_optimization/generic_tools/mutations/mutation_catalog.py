@@ -17,11 +17,13 @@ from discrete_optimization.generic_tools.do_mutation import (
     SingleAttributeMutation,
 )
 from discrete_optimization.generic_tools.do_problem import (
+    Problem,
+)
+from discrete_optimization.generic_tools.encoding_register import (
     AttributeType,
     ListBoolean,
     ListInteger,
     Permutation,
-    Problem,
 )
 from discrete_optimization.generic_tools.mutations.mutation_bool import BitFlipMutation
 from discrete_optimization.generic_tools.mutations.mutation_integer import (

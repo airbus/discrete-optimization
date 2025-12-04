@@ -12,7 +12,6 @@ from deap import algorithms, base, creator, tools
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
@@ -28,6 +27,7 @@ from discrete_optimization.generic_tools.ea.ga import (
     default_crossovers,
     default_mutations,
 )
+from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,

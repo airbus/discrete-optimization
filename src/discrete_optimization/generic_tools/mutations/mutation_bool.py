@@ -12,10 +12,10 @@ from discrete_optimization.generic_tools.do_mutation import (
     SingleAttributeMutation,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ListBoolean,
     Problem,
     Solution,
 )
+from discrete_optimization.generic_tools.encoding_register import ListBoolean
 
 
 class BitFlipMove(LocalMove):

@@ -8,15 +8,17 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
-    Permutation,
     Problem,
     Solution,
     TypeObjective,
+)
+from discrete_optimization.generic_tools.encoding_register import (
+    EncodingRegister,
+    Permutation,
 )
 
 

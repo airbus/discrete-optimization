@@ -22,7 +22,6 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     PermutationRcpsp,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -32,6 +31,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TupleFitness,
     TypeObjective,
 )
+from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.rcpsp.fast_function import (
     compute_mean_ressource,

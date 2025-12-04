@@ -15,8 +15,6 @@ import numpy as np
 from numba import njit
 
 from discrete_optimization.generic_tools.do_problem import (
-    AttributeType,
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
@@ -24,6 +22,10 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
     TypeObjective,
+)
+from discrete_optimization.generic_tools.encoding_register import (
+    AttributeType,
+    EncodingRegister,
 )
 
 
