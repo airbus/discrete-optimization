@@ -116,25 +116,18 @@ class ListBoolean(ListInteger):
 class EncodingRegister(Mapping[str, AttributeType]):
     """List the encoding attributes of a solution.
 
+    Only the ones to be used by genetic algorithms and local search have to be specified.
+
     Attributes:
-        dict_attribute_to_type (dict[str, Any]): specifies the encodings of a solution object.
-            Maps an encoding name to an encoding type.
-            NB: several encoding can target the same attribute (depending on how we see it).
-            For instance, in rcpsp problem, the modes can be seen as an integer list (one by task),
-            each one with the same arity or with a different arity for each task.
+        dict_attribute_to_type (dict[str, AttributeType]): specifies the encodings of a solution object.
+            Maps an attribute name to an attribute type.
 
-        User may refer to example in the different implemented problem definition.
+    Each attribute name (key of the mapping) should correspond to
+    - an actual attribute of the solution (solution.<attribute_name> should exist) with the proper type
+    - a licit argument of __init__() method of the solution (at least to be used in genetic algorithms)
 
-    Examples:
-        in ColoringModel, to specify the colors attribute of the Solution, you will do the following.
-        dict_register = {
-            "colors": {
-                "name": "colors",
-                "type": [TypeAttribute.LIST_INTEGER],
-                "n": self.number_of_nodes,
-                "arity": self.number_of_nodes,
-            }
-        }
+    You can bypass the latter hypothesis by overriding `build_solution_from_encoding()`
+
     """
 
     def __init__(self, dict_attribute_to_type: dict[str, AttributeType]):
