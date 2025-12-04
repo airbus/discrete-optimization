@@ -186,19 +186,6 @@ class TSPTWProblem(Problem):
 
         return {"makespan": variable.makespan, "tw_violation": -variable.tw_violation}
 
-    def evaluate_from_encoding(
-        self, int_vector: List[int], encoding_name: str
-    ) -> Dict[str, float]:
-        if encoding_name == "permutation":
-            # The encoding gives a permutation of indices from 0 to N-2
-            # We map these indices back to the actual customer node IDs
-            perm_customers = [self.customers[i] for i in int_vector]
-            sol = TSPTWSolution(problem=self, permutation=perm_customers)
-        else:
-            raise NotImplementedError(f"Encoding '{encoding_name}' is not supported.")
-
-        return self.evaluate(sol)
-
     def satisfy(self, variable: TSPTWSolution) -> bool:
         if variable.tw_violation is None:
             self.evaluate(variable)

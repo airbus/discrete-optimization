@@ -169,31 +169,6 @@ class FacilityProblem(AllocationProblem[Customer, Facility]):
         d["capacity_constraint_violation"] = capacity_constraint_violation
         return d
 
-    def evaluate_from_encoding(
-        self, int_vector: list[int], encoding_name: str
-    ) -> dict[str, float]:
-        """Evaluate function based on direct integer vector (used in GA algorithms only)
-
-        Args:
-            int_vector (list[int]): vector encoding the solution
-            encoding_name (str): name of encoding (see get_attribute_register) for available encoding
-
-        Returns: kpi of the solution
-
-        """
-        kp_sol: FacilitySolution
-        if encoding_name == "facility_for_customers":
-            kp_sol = FacilitySolution(problem=self, facility_for_customers=int_vector)
-        elif encoding_name == "custom":
-            kwargs: dict[str, Any] = {encoding_name: int_vector}
-            kp_sol = FacilitySolution(problem=self, **kwargs)
-        else:
-            raise ValueError(
-                f"encoding_name must be 'facility_for_customers' or 'custom'"
-            )
-        objectives = self.evaluate(kp_sol)
-        return objectives
-
     def evaluate_cost(self, variable: FacilitySolution) -> dict[str, Any]:
         """Compute the allocation cost of the solution along with setup cost too.
 

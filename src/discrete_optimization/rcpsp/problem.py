@@ -311,34 +311,6 @@ class RcpspProblem(
 
         return makespan, obj_mean_resource_reserve, penalty
 
-    def evaluate_from_encoding(
-        self, int_vector: list[int], encoding_name: str
-    ) -> dict[str, float]:
-        if encoding_name == "rcpsp_permutation":
-            if self.fixed_modes is None:
-                rcpsp_modes = [1 for i in range(self.n_jobs_non_dummy)]
-            else:
-                rcpsp_modes = self.fixed_modes
-            rcpsp_sol = RcpspSolution(
-                problem=self, rcpsp_permutation=int_vector, rcpsp_modes=rcpsp_modes
-            )
-        elif encoding_name == "rcpsp_modes":
-            if self.fixed_permutation is not None:
-                rcpsp_sol = RcpspSolution(
-                    problem=self,
-                    rcpsp_permutation=self.fixed_permutation,
-                    rcpsp_modes=int_vector,
-                )
-            else:
-                raise RuntimeError(
-                    "Encoding rcpsp_modes possible "
-                    "only if self.fixed_permutation is not None"
-                )
-        else:
-            raise NotImplementedError(f"Encoding {encoding_name} not implemented")
-        objectives = self.evaluate(rcpsp_sol)
-        return objectives
-
     def evaluate(self, variable: RcpspSolution) -> dict[str, float]:  # type: ignore
         obj_makespan, obj_mean_resource_reserve, penalty = self.evaluate_function(
             variable

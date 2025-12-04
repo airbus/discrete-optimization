@@ -565,16 +565,6 @@ class PreemptiveRcpspProblem(Problem):
         makespan = rcpsp_sol.rcpsp_schedule[self.sink_task]["ends"][-1]
         return makespan, 0.0
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
-        if encoding_name == "rcpsp_permutation":
-            single_mode_list = [1 for i in range(self.n_jobs_non_dummy)]
-            rcpsp_sol = PreemptiveRcpspSolution(
-                problem=self, rcpsp_permutation=int_vector, rcpsp_modes=single_mode_list
-            )
-            objectives = self.evaluate(rcpsp_sol)
-            return objectives
-        return None
-
     def evaluate(self, variable: PreemptiveRcpspSolution) -> dict[str, float]:
         obj_makespan, obj_mean_resource_reserve = self.evaluate_function(variable)
         return {

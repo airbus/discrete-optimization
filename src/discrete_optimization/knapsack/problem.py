@@ -166,16 +166,6 @@ class KnapsackProblem(AllocationProblem[Item, Knapsack]):
             dict_objective_to_doc=dict_objective,
         )
 
-    def evaluate_from_encoding(
-        self, int_vector: list[int], encoding_name: str
-    ) -> dict[str, float]:
-        if encoding_name == "list_taken":
-            kp_sol = KnapsackSolution(problem=self, list_taken=int_vector)
-        else:
-            raise NotImplementedError("encoding_name must be 'list_taken'")
-        objectives = self.evaluate(kp_sol)
-        return objectives
-
     def evaluate(self, variable: KnapsackSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         if variable.value is None or self.force_recompute_values:
             val = self.evaluate_value(variable)
@@ -410,21 +400,6 @@ class MultidimensionalKnapsackProblem(Problem):
             objective_handling=ObjectiveHandling.AGGREGATE,
             dict_objective_to_doc=dict_objective,
         )
-
-    def evaluate_from_encoding(
-        self, int_vector: list[int], encoding_name: str
-    ) -> dict[str, float]:
-        if encoding_name == "list_taken":
-            kp_sol = MultidimensionalKnapsackSolution(
-                problem=self, list_taken=int_vector
-            )
-        elif encoding_name == "custom":
-            kwargs: dict[str, Any] = {encoding_name: int_vector}
-            kp_sol = MultidimensionalKnapsackSolution(problem=self, **kwargs)
-        else:
-            raise NotImplementedError("encoding_name must be 'list_taken' or 'custom'")
-        objectives = self.evaluate(kp_sol)
-        return objectives
 
     def evaluate(self, variable: MultidimensionalKnapsackSolution) -> dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
         if variable.value is None or self.force_recompute_values:
