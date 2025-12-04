@@ -292,7 +292,7 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
         modes_vector: Optional[list[int]] = None,
         modes_vector_from0: Optional[list[int]] = None,
         priority_list_task: Optional[list[int]] = None,
-        priority_worker_per_task: Optional[list[list[Hashable]]] = None,
+        priority_worker_per_task: Optional[list[list[Hashable]] | list[int]] = None,
         modes: dict[int, int] = None,
         schedule: dict[int, dict[str, int]] = None,
         employee_usage: dict[int, dict[int, set[str]]] = None,
