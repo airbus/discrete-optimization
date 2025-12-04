@@ -292,7 +292,8 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
         modes_vector: Optional[list[int]] = None,
         modes_vector_from0: Optional[list[int]] = None,
         priority_list_task: Optional[list[int]] = None,
-        priority_worker_per_task: Optional[list[list[Hashable]] | list[int]] = None,
+        priority_worker_per_task: Optional[list[list[UnaryResource]]] = None,
+        priority_worker_per_task_perm: Optional[list[int]] = None,
         modes: dict[int, int] = None,
         schedule: dict[int, dict[str, int]] = None,
         employee_usage: dict[int, dict[int, set[str]]] = None,
@@ -302,18 +303,11 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
         self.priority_list_task = priority_list_task
         self.modes_vector = modes_vector
         self.modes_vector_from0 = modes_vector_from0
+        self.priority_worker_per_task = priority_worker_per_task
         if priority_worker_per_task is None:
-            self.priority_worker_per_task = None
-        elif any(
-            isinstance(i, list) for i in priority_worker_per_task
-        ):  # if arg is a nested list
-            self.priority_worker_per_task = priority_worker_per_task
-        else:  # if arg is a single list
-            self.priority_worker_per_task = (
-                self.problem.convert_fixed_priority_worker_per_task_from_permutation(
-                    priority_worker_per_task
-                )
-            )
+            # use priority_worker_per_task_perm only if not priority_worker_per_task set
+            # as this is another representation of the same information
+            self.priority_worker_per_task_perm = priority_worker_per_task_perm
 
         if self.modes_vector is None and self.modes_vector_from0 is None:
             if "fixed_modes" in self.problem.__dict__:
@@ -358,6 +352,23 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
         self.fast = fast
         if self._schedule_to_recompute:
             self.do_recompute(self.fast)
+
+    @property
+    def priority_worker_per_task_perm(self) -> list[int]:
+        """Represent `priority_worker_per_task` as a big permutation."""
+        return self.problem.convert_fixed_priority_worker_per_task_to_permutation(
+            self.priority_worker_per_task
+        )
+
+    @priority_worker_per_task_perm.setter
+    def priority_worker_per_task_perm(
+        self, priority_worker_per_task_perm: list[int]
+    ) -> None:
+        self.priority_worker_per_task = (
+            self.problem.convert_fixed_priority_worker_per_task_from_permutation(
+                priority_worker_per_task_perm
+            )
+        )
 
     def do_recompute(self, fast=True):
         if not fast:
@@ -528,6 +539,7 @@ class VariantPreemptiveMultiskillRcpspSolution(PreemptiveMultiskillRcpspSolution
         modes_vector_from0: Optional[list[int]] = None,
         priority_list_task: Optional[list[int]] = None,
         priority_worker_per_task: Optional[list[list[Hashable]]] = None,
+        priority_worker_per_task_perm: Optional[list[int]] = None,
         modes: dict[int, int] = None,
         schedule: dict[Hashable, dict[str, list[int]]] = None,
         employee_usage: dict[Hashable, list[dict[Hashable, set[str]]]] = None,
@@ -537,18 +549,11 @@ class VariantPreemptiveMultiskillRcpspSolution(PreemptiveMultiskillRcpspSolution
         self.priority_list_task = priority_list_task
         self.modes_vector = modes_vector
         self.modes_vector_from0 = modes_vector_from0
+        self.priority_worker_per_task = priority_worker_per_task
         if priority_worker_per_task is None:
-            self.priority_worker_per_task = None
-        elif any(
-            isinstance(i, list) for i in priority_worker_per_task
-        ):  # if arg is a nested list
-            self.priority_worker_per_task = priority_worker_per_task
-        else:  # if arg is a single list
-            self.priority_worker_per_task = (
-                self.problem.convert_fixed_priority_worker_per_task_from_permutation(
-                    priority_worker_per_task
-                )
-            )
+            # use priority_worker_per_task_perm only if not priority_worker_per_task set
+            # as this is another representation of the same information
+            self.priority_worker_per_task_perm = priority_worker_per_task_perm
 
         if self.modes_vector is None and self.modes_vector_from0 is None:
             self.modes_vector = self.problem.fixed_modes
@@ -565,6 +570,23 @@ class VariantPreemptiveMultiskillRcpspSolution(PreemptiveMultiskillRcpspSolution
         self.fast = fast
         if self.schedule is None:
             self.do_recompute(self.fast)
+
+    @property
+    def priority_worker_per_task_perm(self) -> list[int]:
+        """Represent `priority_worker_per_task` as a big permutation."""
+        return self.problem.convert_fixed_priority_worker_per_task_to_permutation(
+            self.priority_worker_per_task
+        )
+
+    @priority_worker_per_task_perm.setter
+    def priority_worker_per_task_perm(
+        self, priority_worker_per_task_perm: list[int]
+    ) -> None:
+        self.priority_worker_per_task = (
+            self.problem.convert_fixed_priority_worker_per_task_from_permutation(
+                priority_worker_per_task_perm
+            )
+        )
 
     def do_recompute(self, fast=True):
         if not fast:
@@ -2832,7 +2854,7 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
                 "priority_list_task": PermutationRcpsp(
                     range=range(self.n_jobs_non_dummy)
                 ),
-                "priority_worker_per_task": PermutationRcpsp(
+                "priority_worker_per_task_perm": PermutationRcpsp(
                     range=range(self.n_jobs_non_dummy * len(self.employees.keys()))
                 ),
                 "modes_vector": ListIntegerRcpsp(
@@ -2900,15 +2922,21 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
     def set_fixed_task_permutation(self, fixed_permutation):
         self.fixed_permutation = fixed_permutation
 
-    def set_fixed_priority_worker_per_task(self, fixed_priority_worker_per_task):
+    def set_fixed_priority_worker_per_task(
+        self, fixed_priority_worker_per_task: list[list[UnaryResource]]
+    ):
         self.fixed_priority_worker_per_task = fixed_priority_worker_per_task
 
-    def set_fixed_priority_worker_per_task_from_permutation(self, permutation):
+    def set_fixed_priority_worker_per_task_from_permutation(
+        self, permutation: list[int]
+    ):
         self.fixed_priority_worker_per_task = (
             self.convert_fixed_priority_worker_per_task_from_permutation(permutation)
         )
 
-    def convert_fixed_priority_worker_per_task_from_permutation(self, permutation):
+    def convert_fixed_priority_worker_per_task_from_permutation(
+        self, permutation: list[int]
+    ) -> list[list[UnaryResource]]:
         priority_worker_per_task_corrected = []
         for i in range(self.n_jobs_non_dummy):
             tmp = []
@@ -2917,6 +2945,15 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
             tmp_corrected = [self.employees_list[int(x) - 1] for x in ss.rankdata(tmp)]
             priority_worker_per_task_corrected.append(tmp_corrected)
         return priority_worker_per_task_corrected
+
+    def convert_fixed_priority_worker_per_task_to_permutation(
+        self, priority_worker_per_task: list[list[UnaryResource]]
+    ) -> list[int]:
+        return [
+            self.employees_list.index(employee) + i_task * self.nb_employees
+            for i_task, priority_task in enumerate(priority_worker_per_task)
+            for employee in priority_task
+        ]
 
     def get_solution_type(self) -> type[Solution]:
         if not self.preemptive:
