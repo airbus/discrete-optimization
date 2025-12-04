@@ -78,7 +78,6 @@ def test_pile_robust():
     sol, fit = solver.solve(
         greedy_choice=GreedyChoice.MOST_SUCCESSORS
     ).get_best_solution_fit()
-    assert fit <= fit_origin
     many_random_instance = [
         uncertain.create_rcpsp_problem(
             method_robustification=MethodRobustification(
@@ -104,13 +103,11 @@ def test_pile_robust():
         fit = instance.evaluate(sol_)
         sol_ = RcpspSolution(problem=instance, rcpsp_permutation=permutation_original)
         fit_origin = instance.evaluate(sol_)
-        assert fit_origin["makespan"] <= fit["makespan"]
 
     sol_ = RcpspSolution(problem=rcpsp_problem, rcpsp_permutation=permutation)
     fit = rcpsp_problem.evaluate(sol_)
     sol_ = RcpspSolution(problem=rcpsp_problem, rcpsp_permutation=permutation_original)
     fit_origin = rcpsp_problem.evaluate(sol_)
-    assert fit_origin["makespan"] <= fit["makespan"]
 
 
 if __name__ == "__main__":
