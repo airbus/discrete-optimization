@@ -177,6 +177,6 @@ class _BaseKnapsackMilpSolver(MilpSolver):
 then inherit it with `OrtoolsMathOptMilpSolver` or `GurobiMilpSolver` to generate a mathopt or gurobi knapsack solver.
 
 This is how it is done in the d-o implementation of knapsack milp solver.
-See [`discrete_optimization.knapsack.solvers.lp`](https://github.com/airbus/discrete-optimization/blob/master/src/discrete_optimization/knapsack/solvers/lp.py) for more details.
+See {py:obj}`discrete_optimization.knapsack.solvers.lp` for more details.
 
 :::

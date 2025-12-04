@@ -25,7 +25,6 @@ You should get something like:
 
 ```python
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ObjectiveRegister,
     Problem,
     Solution,
@@ -38,9 +37,6 @@ class MyKnapsackProblem(Problem):
         pass
 
     def satisfy(self, variable: Solution) -> bool:
-        pass
-
-    def get_attribute_register(self) -> EncodingRegister:
         pass
 
     def get_solution_type(self) -> type[Solution]:
@@ -59,8 +55,54 @@ class MyKnapsackSolution(Solution):
 
 :::{tip}
 - with PyCharm, right-click on the class, and select "Generate..." > "Implement Methods..."
+  (NB: you will also be suggested methods that are not mandatory but raise NotImplementedError,
+  that could be useful for some advanced features, like use of evolutionary algorithms.)
 - with VSCode, click on the class name, then on the lightbulb that comes up above, then "Implement all inherited abstract classes"
 :::
+
+
+As we want also to [apply existing local search algorithms](#apply-a-generic-solver-local-search) from the library to our problem,
+we will also need to implement `get_attribute_register()` which is not mandatory per itself
+but raises `NotImplementedError` by default and will be needed to find automatically the mutations available for our problem.
+
+We will also implement `lazy_copy` to avoid deep copying and potentially improve mutations performance.
+
+So the final skeleton looks like:
+
+```python
+from discrete_optimization.generic_tools.do_problem import (
+    Problem,
+    Solution,
+    ObjectiveRegister,
+)
+from discrete_optimization.generic_tools.encoding_register import EncodingRegister
+
+
+class MyKnapsackProblem(Problem):
+    def evaluate(self, variable: Solution) -> dict[str, float]:
+        pass
+
+    def satisfy(self, variable: Solution) -> bool:
+        pass
+
+    def get_solution_type(self) -> type[Solution]:
+        pass
+
+    def get_objective_register(self) -> ObjectiveRegister:
+        pass
+
+    def get_attribute_register(self) -> EncodingRegister:
+        pass
+
+
+class MyKnapsackSolution(Solution):
+
+    def copy(self) -> Solution:
+        pass
+
+    def lazy_copy(self) -> Solution:
+        return super().lazy_copy()
+```
 
 
 ## Implementation
@@ -153,18 +195,12 @@ class MyKnapsackProblem(Problem):
     def get_attribute_register(self) -> EncodingRegister:
         """Describe attributes of a solution.
 
-        To be used by evolutionary solvers to choose the appropriate mutations
+        To be used by evolutionary solvers and local search to choose the appropriate mutations
         without implementing a dedicated one.
 
         """
         return EncodingRegister(
-            dict_register={
-                "taken": {
-                    "name": "list_taken",
-                    "type": [TypeAttribute.LIST_BOOLEAN],
-                    "n": len(self.items),
-                }
-            }
+            {"list_taken": ListBoolean(length=len(self.items))}
         )
 
     def evaluate(self, variable: Solution) -> dict[str, float]:
@@ -204,13 +240,17 @@ class MyKnapsackProblem(Problem):
         )
 ```
 
+:::{note}
+The available attribute types are to be found in the module {py:obj}`discrete_optimization.generic_tools.encoding_register`.
+:::
+
 The complete resulting python module with creation of problem, solutions and evaluation and satifiyability checks can be found here: <path:tutorial_new_problem.py>.
 
-## Apply a generic solver
+## Apply a generic solver: local search
 
 Now that we have implemented a new problem, we can try to solve it with an existing solver.
 In discrete-optimization, most solvers are specialized to a problem class.
-But evolutionary algorithms (from `discrete_optimization.generic_tools.ea`) or local search (from `discrete_optimization.generic_tools.ls`) can be applied directly.
+But evolutionary algorithms (from {py:obj}`discrete_optimization.generic_tools.ea`) or local search (from {py:obj}`discrete_optimization.generic_tools.ls`) can be applied directly.
 
 In this section we use simulated annealing to solve a knapsack instance.
 
@@ -239,9 +279,8 @@ The simulated annealing will need a mutation to apply at each step.
 We can select all mutations compatible with the declared solution attributes.
 
 ```python
-mixed_mutation = create_mixed_mutation_from_problem_and_solution(
+mixed_mutation = create_mutations_portfolio_from_problem(
     problem=problem,
-    solution=solution,
 )
 ```
 
@@ -288,7 +327,7 @@ and should be run near the previous module <path:tutorial_new_problem.py> so tha
 
 If your problem can be seen as an allocation or a scheduling problem,
 you should consider also implementing the related API
-(i.e. derive from `AllocationProblem` or `SchedulingProblem` from `discrete_optimization.generic_tasks_tools` subpackage).
+(i.e. derive from `AllocationProblem` or `SchedulingProblem` from {py:obj}`discrete_optimization.generic_tasks_tools` subpackage).
 
 If you do so:
 - you will soon have access to an autogenerated cpsat solver (work in progress);

@@ -5,15 +5,17 @@
 from __future__ import annotations
 
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
+)
+from discrete_optimization.generic_tools.encoding_register import (
+    EncodingRegister,
+    ListBoolean,
 )
 
 Item = tuple[int, int]  # value, weight
@@ -46,19 +48,11 @@ class MyKnapsackProblem(Problem):
     def get_attribute_register(self) -> EncodingRegister:
         """Describe attributes of a solution.
 
-        To be used by evolutionary solvers to choose the appropriate mutations
+        To be used by evolutionary solvers and local search to choose the appropriate mutations
         without implementing a dedicated one.
 
         """
-        return EncodingRegister(
-            dict_attribute_to_type={
-                "list_taken": {
-                    "name": "list_taken",
-                    "type": [TypeAttribute.LIST_BOOLEAN],
-                    "n": len(self.items),
-                }
-            }
-        )
+        return EncodingRegister({"list_taken": ListBoolean(length=len(self.items))})
 
     def evaluate(self, variable: Solution) -> dict[str, float]:
         """Evaluate the objectives corresponding to the solution.
