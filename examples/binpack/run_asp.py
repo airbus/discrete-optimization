@@ -15,8 +15,22 @@ from discrete_optimization.binpack.solvers.greedy import (
 logging.basicConfig(level=logging.INFO)
 
 
-def run_asp():
-    f = [ff for ff in get_data_available_bppc() if "BPPC_8_9_10.txt" in ff][0]
+def run_asp_without_ws():
+    f = [ff for ff in get_data_available_bppc() if "BPPC_4_1_1.txt" in ff][0]
+    problem = parse_bin_packing_constraint_file(f)
+    solver = AspBinPackingSolver(problem=problem)
+    solver.init_model()
+    res = solver.solve(
+        time_limit=20,
+    )
+    sol = res[-1][0]
+    print("Status", solver.status_solver)
+    print(problem.evaluate(sol))
+    print(problem.satisfy(sol))
+
+
+def run_asp_with_ws():
+    f = [ff for ff in get_data_available_bppc() if "BPPC_4_1_1.txt" in ff][0]
     problem = parse_bin_packing_constraint_file(f)
 
     solver = GreedyBinPackOpenEvolve(problem)
@@ -24,7 +38,8 @@ def run_asp():
     nb_bins = problem.evaluate(sol)["nb_bins"]
     print("Solution from Greedy", problem.evaluate(sol))
     solver = AspBinPackingSolver(problem=problem)
-    solver.init_model(upper_bound=nb_bins, solution=sol)
+    solver.init_model(upper_bound=nb_bins)
+    solver.set_warm_start(sol)
     res = solver.solve(
         time_limit=20,
     )
@@ -35,4 +50,4 @@ def run_asp():
 
 
 if __name__ == "__main__":
-    run_asp()
+    run_asp_with_ws()

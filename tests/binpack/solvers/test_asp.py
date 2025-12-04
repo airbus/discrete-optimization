@@ -22,7 +22,8 @@ def test_asp(problem):
 
 def test_asp_ws(problem, manual_sol):
     solver = AspBinPackingSolver(problem=problem)
-    solver.init_model(upper_bound=20, solution=manual_sol)
+    solver.init_model(upper_bound=20)
+    solver.set_warm_start(manual_sol)
     solve_kwargs = dict(
         time_limit=3,
     )
