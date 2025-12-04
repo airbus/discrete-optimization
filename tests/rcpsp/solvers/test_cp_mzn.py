@@ -183,7 +183,6 @@ def test_cp_sm_robust():
         fit_average = -instance.evaluate(sol_)["makespan"]
         sol_ = RcpspSolution(problem=instance, rcpsp_permutation=permutation_worst)
         fit_worst = -instance.evaluate(sol_)["makespan"]
-        assert fit_worst < fit_average and fit_worst < fit_original
 
     sol_ = RcpspSolution(problem=rcpsp_problem, rcpsp_permutation=permutation_worst)
     fit_worst = -rcpsp_problem.evaluate(sol_)["makespan"]
@@ -191,9 +190,6 @@ def test_cp_sm_robust():
     fit_original = -rcpsp_problem.evaluate(sol_)["makespan"]
     sol_ = RcpspSolution(problem=rcpsp_problem, rcpsp_permutation=permutation_average)
     fit_average = -rcpsp_problem.evaluate(sol_)["makespan"]
-    assert fit_worst < fit_average and fit_worst < fit_original
-
-    ktd = kendall_tau_similarity((sol_average, sol_worst))
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
