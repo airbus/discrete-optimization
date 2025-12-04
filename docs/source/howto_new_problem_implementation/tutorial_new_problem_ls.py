@@ -41,10 +41,9 @@ solution = MyKnapsackSolution(
     * len(problem.items),
 )
 
-# create a mixed mutation that sample one of the available mutations for solution attributes
+# create a mixed mutation that samples one of the available mutations for the solution attributes specified by the problem
 mixed_mutation = create_mutations_portfolio_from_problem(
     problem=problem,
-    solution=solution,
 )
 # restart and temperature handler
 restart_handler = RestartHandlerLimit(3000)
