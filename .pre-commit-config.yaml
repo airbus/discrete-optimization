@@ -32,7 +32,7 @@ repos:
         args: [ --fix, --select=I ]
       - id: ruff-check
         name: ruff clean unused imports in notebooks
-        args: [--select=F401]
+        args: [ --fix, --select=F401 ]
         files: .*.ipynb$
       # Run the formatter.
       - id: ruff-format
