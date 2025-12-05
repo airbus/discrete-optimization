@@ -1,0 +1,531 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.gpdp package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.gpdp.builders package" href="discrete_optimization.gpdp.builders.html" />
+    <link rel="prev" title="discrete_optimization.generic_tools.study package" href="discrete_optimization.generic_tools.study.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.gpdp package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-gpdp-package">
+<h1>discrete_optimization.gpdp package<a class="headerlink" href="#discrete-optimization-gpdp-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.gpdp.builders.html">discrete_optimization.gpdp.builders package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#module-discrete_optimization.gpdp.builders.instance_builders">discrete_optimization.gpdp.builders.instance_builders module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.create_ortools_example"><code class="docutils literal notranslate"><span class="pre">create_ortools_example()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.create_pickup_and_delivery"><code class="docutils literal notranslate"><span class="pre">create_pickup_and_delivery()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.create_selective_tsp"><code class="docutils literal notranslate"><span class="pre">create_selective_tsp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.load_tsp_and_transform"><code class="docutils literal notranslate"><span class="pre">load_tsp_and_transform()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#discrete_optimization.gpdp.builders.instance_builders.load_vrp_and_transform"><code class="docutils literal notranslate"><span class="pre">load_vrp_and_transform()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.builders.html#module-discrete_optimization.gpdp.builders">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html">discrete_optimization.gpdp.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#module-discrete_optimization.gpdp.solvers.gpdp_solver">discrete_optimization.gpdp.solvers.gpdp_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.gpdp_solver.GpdpSolver"><code class="docutils literal notranslate"><span class="pre">GpdpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.gpdp_solver.GpdpSolver.problem"><code class="docutils literal notranslate"><span class="pre">GpdpSolver.problem</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#module-discrete_optimization.gpdp.solvers.lp_iterative">discrete_optimization.gpdp.solvers.lp_iterative module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.add_order_constraints"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.add_order_constraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.convert_temporaryresults"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.convert_temporaryresults()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.init_model"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.init_order_variables"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.init_order_variables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.lazy"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.lazy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.one_visit_per_clusters"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.one_visit_per_clusters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.one_visit_per_node"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.one_visit_per_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.problem"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.resources_constraint"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.resources_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.retrieve_current_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.retrieve_current_temporaryresult"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.retrieve_current_temporaryresult()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.simple_capacity_constraint"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.simple_capacity_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.solve"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.solve_iterative"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.solve_iterative()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.solve_one_iteration"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.solve_one_iteration()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.time_evolution"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.time_evolution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.BaseLinearFlowGpdpSolver.warm_start"><code class="docutils literal notranslate"><span class="pre">BaseLinearFlowGpdpSolver.warm_start</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.ConstraintHandlerOrWarmStart"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerOrWarmStart</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.ConstraintHandlerOrWarmStart.adding_constraint"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerOrWarmStart.adding_constraint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLazyConstraintLinearFlowGpdpSolver"><code class="docutils literal notranslate"><span class="pre">GurobiLazyConstraintLinearFlowGpdpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLazyConstraintLinearFlowGpdpSolver.lazy"><code class="docutils literal notranslate"><span class="pre">GurobiLazyConstraintLinearFlowGpdpSolver.lazy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLazyConstraintLinearFlowGpdpSolver.retrieve_ith_temporaryresult"><code class="docutils literal notranslate"><span class="pre">GurobiLazyConstraintLinearFlowGpdpSolver.retrieve_ith_temporaryresult()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLazyConstraintLinearFlowGpdpSolver.solve_one_iteration"><code class="docutils literal notranslate"><span class="pre">GurobiLazyConstraintLinearFlowGpdpSolver.solve_one_iteration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLinearFlowGpdpSolver"><code class="docutils literal notranslate"><span class="pre">GurobiLinearFlowGpdpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLinearFlowGpdpSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">GurobiLinearFlowGpdpSolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLinearFlowGpdpSolver.init_model"><code class="docutils literal notranslate"><span class="pre">GurobiLinearFlowGpdpSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLinearFlowGpdpSolver.model"><code class="docutils literal notranslate"><span class="pre">GurobiLinearFlowGpdpSolver.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLinearFlowGpdpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">GurobiLinearFlowGpdpSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLinearFlowGpdpSolver.solve"><code class="docutils literal notranslate"><span class="pre">GurobiLinearFlowGpdpSolver.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.GurobiLinearFlowGpdpSolver.solve_one_iteration"><code class="docutils literal notranslate"><span class="pre">GurobiLinearFlowGpdpSolver.solve_one_iteration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.MathOptLinearFlowGpdpSolver"><code class="docutils literal notranslate"><span class="pre">MathOptLinearFlowGpdpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.MathOptLinearFlowGpdpSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">MathOptLinearFlowGpdpSolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.MathOptLinearFlowGpdpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">MathOptLinearFlowGpdpSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.MathOptLinearFlowGpdpSolver.solve"><code class="docutils literal notranslate"><span class="pre">MathOptLinearFlowGpdpSolver.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.MathOptLinearFlowGpdpSolver.solve_one_iteration"><code class="docutils literal notranslate"><span class="pre">MathOptLinearFlowGpdpSolver.solve_one_iteration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.SubtourAddingConstraint"><code class="docutils literal notranslate"><span class="pre">SubtourAddingConstraint</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.SubtourAddingConstraint.adding_component_constraints"><code class="docutils literal notranslate"><span class="pre">SubtourAddingConstraint.adding_component_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.TemporaryResult"><code class="docutils literal notranslate"><span class="pre">TemporaryResult</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.TemporaryResultGurobiCallback"><code class="docutils literal notranslate"><span class="pre">TemporaryResultGurobiCallback</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.TemporaryResultMathOptCallback"><code class="docutils literal notranslate"><span class="pre">TemporaryResultMathOptCallback</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.build_graph_solution"><code class="docutils literal notranslate"><span class="pre">build_graph_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.build_graph_solutions"><code class="docutils literal notranslate"><span class="pre">build_graph_solutions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.build_path_from_vehicle_type_flow"><code class="docutils literal notranslate"><span class="pre">build_path_from_vehicle_type_flow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.build_the_cycles"><code class="docutils literal notranslate"><span class="pre">build_the_cycles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.construct_edges_in_out_dict"><code class="docutils literal notranslate"><span class="pre">construct_edges_in_out_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.convert_temporaryresult_to_gpdpsolution"><code class="docutils literal notranslate"><span class="pre">convert_temporaryresult_to_gpdpsolution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.rebuild_routine"><code class="docutils literal notranslate"><span class="pre">rebuild_routine()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.rebuild_routine_variant"><code class="docutils literal notranslate"><span class="pre">rebuild_routine_variant()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.reevaluate_result"><code class="docutils literal notranslate"><span class="pre">reevaluate_result()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">retrieve_current_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.lp_iterative.update_model_generic"><code class="docutils literal notranslate"><span class="pre">update_model_generic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#module-discrete_optimization.gpdp.solvers.ortools_routing">discrete_optimization.gpdp.solvers.ortools_routing module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.ALL_UNPERFORMED"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.ALL_UNPERFORMED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.AUTOMATIC"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.AUTOMATIC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.BEST_INSERTION"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.BEST_INSERTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.CHRISTOFIDES"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.CHRISTOFIDES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.EVALUATOR_STRATEGY"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.EVALUATOR_STRATEGY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.FIRST_UNBOUND_MIN_VALUE"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.FIRST_UNBOUND_MIN_VALUE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.GLOBAL_CHEAPEST_ARC"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.GLOBAL_CHEAPEST_ARC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.LOCAL_CHEAPEST_ARC"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.LOCAL_CHEAPEST_ARC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.LOCAL_CHEAPEST_COST_INSERTION"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.LOCAL_CHEAPEST_COST_INSERTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.PARALLEL_SAVINGS"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.PARALLEL_SAVINGS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.PATH_CHEAPEST_ARC"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.PATH_CHEAPEST_ARC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.SAVINGS"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.SAVINGS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.SEQUENTIAL_CHEAPEST_INSERTION"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.SEQUENTIAL_CHEAPEST_INSERTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.SWEEP"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.SWEEP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.FirstSolutionStrategy.UNSET"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.UNSET</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic.AUTOMATIC"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.AUTOMATIC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic.GENERIC_TABU_SEARCH"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.GENERIC_TABU_SEARCH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic.GREEDY_DESCENT"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.GREEDY_DESCENT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic.SIMULATED_ANNEALING"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.SIMULATED_ANNEALING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic.TABU_SEARCH"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.TABU_SEARCH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.LocalSearchMetaheuristic.UNSET"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.UNSET</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.NodePosition"><code class="docutils literal notranslate"><span class="pre">NodePosition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.NodePosition.END"><code class="docutils literal notranslate"><span class="pre">NodePosition.END</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.NodePosition.INTERMEDIATE"><code class="docutils literal notranslate"><span class="pre">NodePosition.INTERMEDIATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.NodePosition.START"><code class="docutils literal notranslate"><span class="pre">NodePosition.START</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.build_search_parameters"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver.build_search_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.init_model"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.initial_solution"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver.initial_solution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.problem"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.OrtoolsGpdpSolver.solve"><code class="docutils literal notranslate"><span class="pre">OrtoolsGpdpSolver.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.ParametersCost"><code class="docutils literal notranslate"><span class="pre">ParametersCost</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.ParametersCost.default"><code class="docutils literal notranslate"><span class="pre">ParametersCost.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor"><code class="docutils literal notranslate"><span class="pre">RoutingMonitor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.AtSolution"><code class="docutils literal notranslate"><span class="pre">RoutingMonitor.AtSolution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.EnterSearch"><code class="docutils literal notranslate"><span class="pre">RoutingMonitor.EnterSearch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.ExitSearch"><code class="docutils literal notranslate"><span class="pre">RoutingMonitor.ExitSearch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingMonitor.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">RoutingMonitor.retrieve_current_solution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_FAIL"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_FAIL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_FAIL_TIMEOUT"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_FAIL_TIMEOUT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_INFEASIBLE"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_INFEASIBLE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_INVALID"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_INVALID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_NOT_SOLVED"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_NOT_SOLVED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_OPTIMAL"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_OPTIMAL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_PARTIAL_SUCCESS_LOCAL_OPTIMUM_NOT_REACHED"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_PARTIAL_SUCCESS_LOCAL_OPTIMUM_NOT_REACHED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.RoutingSearchStatus.ROUTING_SUCCESS"><code class="docutils literal notranslate"><span class="pre">RoutingSearchStatus.ROUTING_SUCCESS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.apply_cost"><code class="docutils literal notranslate"><span class="pre">apply_cost()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.convert_to_gpdpsolution"><code class="docutils literal notranslate"><span class="pre">convert_to_gpdpsolution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#discrete_optimization.gpdp.solvers.ortools_routing.status_description"><code class="docutils literal notranslate"><span class="pre">status_description</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.gpdp.solvers.html#module-discrete_optimization.gpdp.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.gpdp.plot">
+<span id="discrete-optimization-gpdp-plot-module"></span><h2>discrete_optimization.gpdp.plot module<a class="headerlink" href="#module-discrete_optimization.gpdp.plot" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.plot.plot_gpdp_solution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.plot.</span></span><span class="sig-name descname"><span class="pre">plot_gpdp_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Axes</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/plot.html#plot_gpdp_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.plot.plot_gpdp_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.gpdp.problem">
+<span id="discrete-optimization-gpdp-problem-module"></span><h2>discrete_optimization.gpdp.problem module<a class="headerlink" href="#module-discrete_optimization.gpdp.problem" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">GpdpProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number_vehicle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes_transportation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes_origin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_pickup_deliverable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin_vehicle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_vehicle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resources_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resources_flow_node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resources_flow_edges</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_delta_node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates_2d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clusters_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_pickup_deliverable_per_cluster</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mandatory_node_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cumulative_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_windows_nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_windows_cluster</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_identical_vehicles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slack_time_bound_per_node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_vehicle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.MAX_VALUE">
+<span class="sig-name descname"><span class="pre">MAX_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10000000000.0</span></em><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.MAX_VALUE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.compute_distance">
+<span class="sig-name descname"><span class="pre">compute_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.compute_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.compute_distance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.compute_graph">
+<span class="sig-name descname"><span class="pre">compute_graph</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.compute_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.compute_graph" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluate a given solution object for the given problem.</p>
+<p>This method should return a dictionnary of KPI, that can be then used for mono or multiobjective optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><em>Solution</em></a>) – the Solution object to evaluate.</p>
+</dd>
+</dl>
+<p>Returns: dictionnary of float kpi for the solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.evaluate_function_node">
+<span class="sig-name descname"><span class="pre">evaluate_function_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hashable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hashable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.evaluate_function_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.evaluate_function_node" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.EncodingRegister" title="discrete_optimization.generic_tools.do_problem.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.get_attribute_register" title="Link to this definition"></a></dt>
+<dd><p>Returns how the Solution should be encoded.</p>
+<p>Returns (EncodingRegister): content of the encoding of the solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.get_objective_register" title="Link to this definition"></a></dt>
+<dd><p>Returns the objective definition.</p>
+<p>Returns (ObjectiveRegister): object defining the objective criteria.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Returns the class implementation of a Solution.</p>
+<p>Returns (class): class object of the given Problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Computes if a solution satisfies or not the constraints of the problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> – the Solution object to check satisfability</p>
+</dd>
+</dl>
+<p>Returns (bool): boolean true if the constraints are fulfilled, false elsewhere.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.update_edges">
+<span class="sig-name descname"><span class="pre">update_edges</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.update_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.update_edges" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpProblem.update_graph">
+<span class="sig-name descname"><span class="pre">update_graph</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpProblem.update_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpProblem.update_graph" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpSolution">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">GpdpSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">trajectories</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_evolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Solution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpSolution.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpSolution.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpSolution.change_problem" title="Link to this definition"></a></dt>
+<dd><p>If relevant to the optimisation problem, change the underlying problem instance for the solution.</p>
+<p>This method can be used to evaluate a solution for different instance of problems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><em>Problem</em></a>) – another problem instance from which the solution can be evaluated</p>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpSolution.check_pickup_deliverable">
+<span class="sig-name descname"><span class="pre">check_pickup_deliverable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpSolution.check_pickup_deliverable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpSolution.check_pickup_deliverable" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.GpdpSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#GpdpSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.GpdpSolution.copy" title="Link to this definition"></a></dt>
+<dd><p>Deep copy of the solution.</p>
+<p>The copy() function should return a new object containing the same input as the current object,
+that respects the following expected behaviour:
+-y = x.copy()
+-if do some inplace change of y, the changes are not done in x.</p>
+<p>Returns: a new object from which you can manipulate attributes without changing the original object.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.ProxyClass">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">ProxyClass</span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#ProxyClass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.ProxyClass" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.ProxyClass.from_tsp_to_gpdp">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_tsp_to_gpdp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tsp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.Point2DTspProblem" title="discrete_optimization.tsp.problem.Point2DTspProblem"><span class="pre">Point2DTspProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#ProxyClass.from_tsp_to_gpdp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.ProxyClass.from_tsp_to_gpdp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.ProxyClass.from_tsptw_to_gpdp">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_tsptw_to_gpdp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tsptw_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsptw.html#discrete_optimization.tsptw.problem.TSPTWProblem" title="discrete_optimization.tsptw.problem.TSPTWProblem"><span class="pre">TSPTWProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#ProxyClass.from_tsptw_to_gpdp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.ProxyClass.from_tsptw_to_gpdp" title="Link to this definition"></a></dt>
+<dd><p>Converts a TSPTWProblem to a GpdpProblem instance.</p>
+<p>This method maps the single-vehicle TSP-TW to the more general multi-vehicle
+pickup and delivery framework by:
+1. Creating distinct virtual origin and target nodes for the single vehicle,</p>
+<blockquote>
+<div><p>both corresponding to the original depot.</p>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Mapping customers and time windows to the new node structure.</p></li>
+<li><p>Setting up the distance and time matrices based on the original problem.</p></li>
+</ol>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.ProxyClass.from_vrp_to_gpdp">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_vrp_to_gpdp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#ProxyClass.from_vrp_to_gpdp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.ProxyClass.from_vrp_to_gpdp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.ProxyClass.from_vrptw_to_gpdp">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_vrptw_to_gpdp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrptw_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#ProxyClass.from_vrptw_to_gpdp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.ProxyClass.from_vrptw_to_gpdp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.build_matrix_distance">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">build_matrix_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#build_matrix_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.build_matrix_distance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.build_matrix_time">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">build_matrix_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#build_matrix_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.build_matrix_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.build_pruned_problem">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">build_pruned_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">undirected</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#build_pruned_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.build_pruned_problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.max_distance">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">max_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#max_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.max_distance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.problem.max_time">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.problem.</span></span><span class="sig-name descname"><span class="pre">max_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/problem.html#max_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.problem.max_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.gpdp">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.gpdp" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.generic_tools.study.html" class="btn btn-neutral float-left" title="discrete_optimization.generic_tools.study package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.gpdp.builders.html" class="btn btn-neutral float-right" title="discrete_optimization.gpdp.builders package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

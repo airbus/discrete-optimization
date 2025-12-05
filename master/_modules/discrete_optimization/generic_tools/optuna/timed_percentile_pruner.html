@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.optuna.timed_percentile_pruner &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.optuna.timed_percentile_pruner</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.optuna.timed_percentile_pruner</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2024 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="c1">#</span>
+<span class="c1"># This module is adapted from https://github.com/optuna/optuna/blob/master/optuna/pruners/_percentile.py</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">KeysView</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">optuna</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;You should install optuna to use TimedPercentilePruner for optuna.&quot;</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">TimedPercentilePruner</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cannot be instantiated if optuna is not installed.&quot;</span><span class="p">)</span>
+
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">optuna.pruners</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePruner</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">optuna.study._study_direction</span><span class="w"> </span><span class="kn">import</span> <span class="n">StudyDirection</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">optuna.trial._state</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrialState</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_best_intermediate_result_over_steps</span><span class="p">(</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="s2">&quot;optuna.trial.FrozenTrial&quot;</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="n">StudyDirection</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">trial</span><span class="o">.</span><span class="n">intermediate_values</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">StudyDirection</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_interpolated_intermediate_value</span><span class="p">(</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="s2">&quot;optuna.trial.FrozenTrial&quot;</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">xp</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">trial</span><span class="o">.</span><span class="n">intermediate_values</span><span class="p">)</span>
+        <span class="n">yp</span> <span class="o">=</span> <span class="p">[</span><span class="n">trial</span><span class="o">.</span><span class="n">intermediate_values</span><span class="p">[</span><span class="n">xx</span><span class="p">]</span> <span class="k">for</span> <span class="n">xx</span> <span class="ow">in</span> <span class="n">xp</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">xp</span><span class="o">=</span><span class="n">xp</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="n">yp</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_percentile_intermediate_result_over_trials</span><span class="p">(</span>
+        <span class="n">completed_trials</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;optuna.trial.FrozenTrial&quot;</span><span class="p">],</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="n">StudyDirection</span><span class="p">,</span>
+        <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">n_min_trials</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">completed_trials</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No trials have been completed.&quot;</span><span class="p">)</span>
+
+        <span class="n">intermediate_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_get_interpolated_intermediate_value</span><span class="p">(</span><span class="n">trial</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">completed_trials</span>
+        <span class="p">]</span>
+        <span class="n">intermediate_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">intermediate_values</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">intermediate_values</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_min_trials</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">StudyDirection</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">:</span>
+            <span class="n">percentile</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">-</span> <span class="n">percentile</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanpercentile</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">intermediate_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+                <span class="n">percentile</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_first_in_interval_step</span><span class="p">(</span>
+        <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">intermediate_steps</span><span class="p">:</span> <span class="n">KeysView</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">n_warmup_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">interval_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">nearest_lower_pruning_step</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">step</span> <span class="o">-</span> <span class="n">n_warmup_steps</span>
+        <span class="p">)</span> <span class="o">//</span> <span class="n">interval_steps</span> <span class="o">*</span> <span class="n">interval_steps</span> <span class="o">+</span> <span class="n">n_warmup_steps</span>
+        <span class="k">assert</span> <span class="n">nearest_lower_pruning_step</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+        <span class="c1"># `intermediate_steps` may not be sorted so we must go through all elements.</span>
+        <span class="n">second_last_step</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">second_last_step</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="n">second_last_step</span> <span class="ow">and</span> <span class="n">s</span> <span class="o">!=</span> <span class="n">step</span>
+            <span class="k">else</span> <span class="n">second_last_step</span><span class="p">,</span>
+            <span class="n">intermediate_steps</span><span class="p">,</span>
+            <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">second_last_step</span> <span class="o">&lt;</span> <span class="n">nearest_lower_pruning_step</span>
+
+<div class="viewcode-block" id="TimedPercentilePruner">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.optuna.html#discrete_optimization.generic_tools.optuna.timed_percentile_pruner.TimedPercentilePruner">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">TimedPercentilePruner</span><span class="p">(</span><span class="n">BasePruner</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pruner to keep the specified percentile of the trials.</span>
+
+<span class="sd">        Prune if the best intermediate value is in the bottom percentile among trials at the same step.</span>
+<span class="sd">        If no report for the exact step exits in other trials, we use an interpolated value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            percentile:</span>
+<span class="sd">                Percentile which must be between 0 and 100 inclusive</span>
+<span class="sd">                (e.g., When given 25.0, top of 25th percentile trials are kept).</span>
+<span class="sd">            n_startup_trials:</span>
+<span class="sd">                Pruning is disabled until the given number of trials finish in the same study.</span>
+<span class="sd">            n_warmup_steps:</span>
+<span class="sd">                Pruning is disabled until the trial exceeds the given number of step. Note that</span>
+<span class="sd">                this feature assumes that ``step`` starts at zero.</span>
+<span class="sd">            interval_steps:</span>
+<span class="sd">                Interval in number of steps between the pruning checks, offset by the warmup steps.</span>
+<span class="sd">                If no value has been reported at the time of a pruning check, that particular check</span>
+<span class="sd">                will be postponed until a value is reported. Value must be at least 1.</span>
+<span class="sd">            n_min_trials:</span>
+<span class="sd">                Minimum number of reported trial results at a step to judge whether to prune.</span>
+<span class="sd">                If the number of reported intermediate values from all trials at the current step</span>
+<span class="sd">                is less than ``n_min_trials``, the trial will not be pruned. This can be used to ensure</span>
+<span class="sd">                that a minimum number of trials are run to completion without being pruned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">n_startup_trials</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="n">n_warmup_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">interval_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="o">*</span><span class="p">,</span>
+            <span class="n">n_min_trials</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">percentile</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Percentile must be between 0 and 100 inclusive but got </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">percentile</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">n_startup_trials</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Number of startup trials cannot be negative but got </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">n_startup_trials</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">n_warmup_steps</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Number of warmup steps cannot be negative but got </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">n_warmup_steps</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">interval_steps</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Pruning interval steps must be at least 1 but got </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">interval_steps</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">n_min_trials</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Number of trials for pruning must be at least 1 but got </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">n_min_trials</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_percentile</span> <span class="o">=</span> <span class="n">percentile</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_startup_trials</span> <span class="o">=</span> <span class="n">n_startup_trials</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_warmup_steps</span> <span class="o">=</span> <span class="n">n_warmup_steps</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_interval_steps</span> <span class="o">=</span> <span class="n">interval_steps</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_min_trials</span> <span class="o">=</span> <span class="n">n_min_trials</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">prune</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">study</span><span class="p">:</span> <span class="s2">&quot;optuna.study.Study&quot;</span><span class="p">,</span> <span class="n">trial</span><span class="p">:</span> <span class="s2">&quot;optuna.trial.FrozenTrial&quot;</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">completed_trials</span> <span class="o">=</span> <span class="n">study</span><span class="o">.</span><span class="n">get_trials</span><span class="p">(</span>
+                <span class="n">deepcopy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="p">(</span><span class="n">TrialState</span><span class="o">.</span><span class="n">COMPLETE</span><span class="p">,)</span>
+            <span class="p">)</span>
+            <span class="n">n_trials</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">completed_trials</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">n_trials</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">n_trials</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_startup_trials</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="n">step</span> <span class="o">=</span> <span class="n">trial</span><span class="o">.</span><span class="n">last_step</span>
+            <span class="k">if</span> <span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="n">n_warmup_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_warmup_steps</span>
+            <span class="k">if</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="n">n_warmup_steps</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_first_in_interval_step</span><span class="p">(</span>
+                <span class="n">step</span><span class="p">,</span>
+                <span class="n">trial</span><span class="o">.</span><span class="n">intermediate_values</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                <span class="n">n_warmup_steps</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_interval_steps</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="n">direction</span> <span class="o">=</span> <span class="n">study</span><span class="o">.</span><span class="n">direction</span>
+            <span class="n">best_intermediate_result</span> <span class="o">=</span> <span class="n">_get_best_intermediate_result_over_steps</span><span class="p">(</span>
+                <span class="n">trial</span><span class="p">,</span> <span class="n">direction</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">best_intermediate_result</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+            <span class="n">p</span> <span class="o">=</span> <span class="n">_get_percentile_intermediate_result_over_trials</span><span class="p">(</span>
+                <span class="n">completed_trials</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_percentile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_min_trials</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">StudyDirection</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">best_intermediate_result</span> <span class="o">&lt;</span> <span class="n">p</span>
+            <span class="k">return</span> <span class="n">best_intermediate_result</span> <span class="o">&gt;</span> <span class="n">p</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

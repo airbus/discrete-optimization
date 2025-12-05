@@ -1,0 +1,656 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.facility.solvers.lp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.facility.solvers.lp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.facility.solvers.lp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Linear programming models and solve functions for facility location problem.&quot;&quot;&quot;</span>
+
+<span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.linear_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">pywraplp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.math_opt.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">mathopt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.facility.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">FacilityProblem</span><span class="p">,</span> <span class="n">FacilitySolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.facility.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">FacilitySolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+    <span class="n">IntegerHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstraintType</span><span class="p">,</span>
+    <span class="n">GurobiMilpSolver</span><span class="p">,</span>
+    <span class="n">MilpSolver</span><span class="p">,</span>
+    <span class="n">OrtoolsMathOptMilpSolver</span><span class="p">,</span>
+    <span class="n">ParametersMilp</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">gurobipy</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">gurobipy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">GRB</span><span class="p">,</span>
+        <span class="n">Constr</span><span class="p">,</span>
+        <span class="n">GenConstr</span><span class="p">,</span>
+        <span class="n">LinExpr</span><span class="p">,</span>
+        <span class="n">MConstr</span><span class="p">,</span>
+        <span class="n">Model</span><span class="p">,</span>
+        <span class="n">QConstr</span><span class="p">,</span>
+        <span class="n">quicksum</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="compute_length_matrix">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.compute_length_matrix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_length_matrix</span><span class="p">(</span>
+    <span class="n">facility_problem</span><span class="p">:</span> <span class="n">FacilityProblem</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">],</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Precompute all the cost of allocation in a matrix form.</span>
+
+<span class="sd">    A matrix &quot;closest&quot; is also computed, sorting for each customers the facility by distance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        facility_problem (FacilityProblem): facility problem instance to compute cost matrix</span>
+
+<span class="sd">    Returns: setup cost vector, sorted matrix distance, matrix distance</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">facilities</span> <span class="o">=</span> <span class="n">facility_problem</span><span class="o">.</span><span class="n">facilities</span>
+    <span class="n">customers</span> <span class="o">=</span> <span class="n">facility_problem</span><span class="o">.</span><span class="n">customers</span>
+    <span class="n">nb_facilities</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">facilities</span><span class="p">)</span>
+    <span class="n">nb_customers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">customers</span><span class="p">)</span>
+    <span class="n">matrix_distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nb_facilities</span><span class="p">,</span> <span class="n">nb_customers</span><span class="p">))</span>
+    <span class="n">costs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">setup_cost</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">)])</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+            <span class="n">matrix_distance</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">facility_problem</span><span class="o">.</span><span class="n">evaluate_customer_facility</span><span class="p">(</span>
+                <span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">],</span> <span class="n">customers</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
+            <span class="p">)</span>
+    <span class="n">closest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">matrix_distance</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">costs</span><span class="p">,</span> <span class="n">closest</span><span class="p">,</span> <span class="n">matrix_distance</span></div>
+
+
+
+<div class="viewcode-block" id="prune_search_space">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.prune_search_space">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prune_search_space</span><span class="p">(</span>
+    <span class="n">facility_problem</span><span class="p">:</span> <span class="n">FacilityProblem</span><span class="p">,</span> <span class="n">n_cheapest</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">n_shortest</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Utility function that can prune the search space.</span>
+
+<span class="sd">    Output of this function will be used to :</span>
+<span class="sd">    - consider only the n_cheapest facility that has the cheapest setup_cost</span>
+<span class="sd">    - consider only the n_shortest (closest actually) facilities for each customers</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        facility_problem (FacilityProblem): facility problem instance</span>
+<span class="sd">        n_cheapest (int): select the cheapest setup cost facilities</span>
+<span class="sd">        n_shortest (int): for each customer, select the closest facilities</span>
+
+<span class="sd">    Returns: tuple of matrix, first element is a matrix (facility_count, customer_count) with 2 as value</span>
+<span class="sd">    when we should consider the allocation possible. Second element in the (facility,customer) matrix distance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">costs</span><span class="p">,</span> <span class="n">closest</span><span class="p">,</span> <span class="n">matrix_distance</span> <span class="o">=</span> <span class="n">compute_length_matrix</span><span class="p">(</span><span class="n">facility_problem</span><span class="p">)</span>
+    <span class="n">sorted_costs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">costs</span><span class="p">)</span>
+    <span class="n">facilities</span> <span class="o">=</span> <span class="n">facility_problem</span><span class="o">.</span><span class="n">facilities</span>
+    <span class="n">customers</span> <span class="o">=</span> <span class="n">facility_problem</span><span class="o">.</span><span class="n">customers</span>
+    <span class="n">nb_facilities</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">facilities</span><span class="p">)</span>
+    <span class="n">nb_customers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">customers</span><span class="p">)</span>
+    <span class="n">matrix_fc_indicator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nb_facilities</span><span class="p">,</span> <span class="n">nb_customers</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+    <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">sorted_costs</span><span class="p">[:</span><span class="n">n_cheapest</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+        <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">closest</span><span class="p">[:</span><span class="n">n_shortest</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">matrix_fc_indicator</span><span class="p">,</span> <span class="n">matrix_distance</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_BaseLpFacilitySolver</span><span class="p">(</span><span class="n">MilpSolver</span><span class="p">,</span> <span class="n">FacilitySolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Facility LP solvers.&quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_matrix_indicator_heuristic&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;n_shortest&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;use_matrix_indicator_heuristic&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">]),</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;n_cheapest&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;use_matrix_indicator_heuristic&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">]),</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">FacilityProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_variable_description</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+                <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;for each facility/customer indicate&quot;</span>
+                <span class="s2">&quot; if the pair is active, meaning &quot;</span>
+                <span class="s2">&quot;that the customer c is dealt with facility f&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_constraint</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Keyword Args:</span>
+<span class="sd">            use_matrix_indicator_heuristic (bool): use the prune search method to reduce number of variable.</span>
+<span class="sd">            n_shortest (int): parameter for the prune search method</span>
+<span class="sd">            n_cheapest (int): parameter for the prune search method</span>
+
+<span class="sd">        Returns: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nb_facilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">facility_count</span>
+        <span class="n">nb_customers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">use_matrix_indicator_heuristic</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_matrix_indicator_heuristic&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">use_matrix_indicator_heuristic</span><span class="p">:</span>
+            <span class="n">n_shortest</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;n_shortest&quot;</span><span class="p">]</span>
+            <span class="n">n_cheapest</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;n_cheapest&quot;</span><span class="p">]</span>
+            <span class="n">matrix_fc_indicator</span><span class="p">,</span> <span class="n">matrix_length</span> <span class="o">=</span> <span class="n">prune_search_space</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">n_cheapest</span><span class="o">=</span><span class="n">n_cheapest</span><span class="p">,</span> <span class="n">n_shortest</span><span class="o">=</span><span class="n">n_shortest</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">matrix_fc_indicator</span><span class="p">,</span> <span class="n">matrix_length</span> <span class="o">=</span> <span class="n">prune_search_space</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">n_cheapest</span><span class="o">=</span><span class="n">nb_facilities</span><span class="p">,</span>
+                <span class="n">n_shortest</span><span class="o">=</span><span class="n">nb_facilities</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_empty_model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;facilities&quot;</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">elif</span> <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_binary_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;x_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">)))</span>
+        <span class="n">facilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">facilities</span>
+        <span class="n">customers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span>
+        <span class="n">used</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">add_binary_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">)]</span>
+        <span class="n">constraints_customer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ConstraintType</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+            <span class="n">constraints_customer</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="c1"># one facility</span>
+        <span class="n">constraint_capacity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ConstraintType</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">used</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span>
+            <span class="n">constraint_capacity</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">*</span> <span class="n">customers</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">demand</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">&lt;=</span> <span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span>
+            <span class="p">)</span>
+        <span class="n">new_obj_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+            <span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">setup_cost</span> <span class="o">*</span> <span class="n">used</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">new_obj_f</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+            <span class="n">matrix_length</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_model_objective</span><span class="p">(</span><span class="n">new_obj_f</span><span class="p">,</span> <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">used</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;constraint_customer&quot;</span><span class="p">:</span> <span class="n">constraints_customer</span><span class="p">,</span>
+            <span class="s2">&quot;constraint_capacity&quot;</span><span class="p">:</span> <span class="n">constraint_capacity</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_variable_description</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">nb_facilities</span><span class="p">,</span> <span class="n">nb_customers</span><span class="p">),</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+                <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;for each facility/customer indicate&quot;</span>
+                <span class="s2">&quot; if the pair is active, meaning &quot;</span>
+                <span class="s2">&quot;that the customer c is dealt with facility f&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initialized&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">FacilitySolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start().</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Init all variables to 0</span>
+        <span class="n">hinted_variables</span> <span class="o">=</span> <span class="p">{</span><span class="n">var</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
+        <span class="c1"># Set var(facility, customer) to 1 according to the solution</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">facility_for_customers</span><span class="p">):</span>
+            <span class="n">variable_decision_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+            <span class="n">hinted_variables</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">][</span><span class="n">variable_decision_key</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">hinted_variables</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">][</span><span class="n">f</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">hinted_variables</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">get_var_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">get_obj_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FacilitySolution</span><span class="p">:</span>
+        <span class="n">facility_for_customer</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span>
+        <span class="k">for</span> <span class="p">(</span>
+            <span class="n">variable_decision_key</span><span class="p">,</span>
+            <span class="n">variable_decision_value</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable_decision_value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">get_var_value_for_current_solution</span><span class="p">(</span><span class="n">variable_decision_value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">variable_decision_value</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">variable_decision_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">variable_decision_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">facility_for_customer</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="k">return</span> <span class="n">FacilitySolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">facility_for_customer</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GurobiFacilitySolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiFacilitySolver</span><span class="p">(</span><span class="n">GurobiMilpSolver</span><span class="p">,</span> <span class="n">_BaseLpFacilitySolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Milp solver using gurobi library</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coloring_problem (FacilityProblem): facility problem instance to solve</span>
+<span class="sd">        params_objective_function (ParamsObjectiveFunction): objective function parameters</span>
+<span class="sd">                        (however this is just used for the ResultStorage creation, not in the optimisation)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GurobiFacilitySolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Keyword Args:</span>
+<span class="sd">            use_matrix_indicator_heuristic (bool): use the prune search method to reduce number of variable.</span>
+<span class="sd">            n_shortest (int): parameter for the prune search method</span>
+<span class="sd">            n_cheapest (int): parameter for the prune search method</span>
+
+<span class="sd">        Returns: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_BaseLpFacilitySolver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">Threads</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">Method</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GurobiFacilitySolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start().</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_BaseLpFacilitySolver</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MathOptFacilitySolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.MathOptFacilitySolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathOptFacilitySolver</span><span class="p">(</span><span class="n">OrtoolsMathOptMilpSolver</span><span class="p">,</span> <span class="n">_BaseLpFacilitySolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Milp solver using gurobi library</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coloring_problem (FacilityProblem): facility problem instance to solve</span>
+<span class="sd">        params_objective_function (ParamsObjectiveFunction): objective function parameters</span>
+<span class="sd">                        (however this is just used for the ResultStorage creation, not in the optimisation)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="n">_BaseLpFacilitySolver</span><span class="o">.</span><span class="n">hyperparameters</span>
+
+<div class="viewcode-block" id="MathOptFacilitySolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.MathOptFacilitySolver.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">FacilitySolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.</span>
+<span class="sd">        See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</span>
+<span class="sd">        for more information.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_BaseLpFacilitySolver</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CbcFacilitySolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CbcFacilitySolver</span><span class="p">(</span><span class="n">FacilitySolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Milp formulation using cbc solver.&quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_matrix_indicator_heuristic&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;n_shortest&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;n_cheapest&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pywraplp</span><span class="o">.</span><span class="n">Solver</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">FacilityProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_variable_description</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+                <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;for each facility/customer indicate&quot;</span>
+                <span class="s2">&quot; if the pair is active, meaning &quot;</span>
+                <span class="s2">&quot;that the customer c is dealt with facility f&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_constraint</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="CbcFacilitySolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nb_facilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">facility_count</span>
+        <span class="n">nb_customers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">use_matrix_indicator_heuristic</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_matrix_indicator_heuristic&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">use_matrix_indicator_heuristic</span><span class="p">:</span>
+            <span class="n">n_shortest</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;n_shortest&quot;</span><span class="p">]</span>
+            <span class="n">n_cheapest</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;n_cheapest&quot;</span><span class="p">]</span>
+            <span class="n">matrix_fc_indicator</span><span class="p">,</span> <span class="n">matrix_length</span> <span class="o">=</span> <span class="n">prune_search_space</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">n_cheapest</span><span class="o">=</span><span class="n">n_cheapest</span><span class="p">,</span> <span class="n">n_shortest</span><span class="o">=</span><span class="n">n_shortest</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">matrix_fc_indicator</span><span class="p">,</span> <span class="n">matrix_length</span> <span class="o">=</span> <span class="n">prune_search_space</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">n_cheapest</span><span class="o">=</span><span class="n">nb_facilities</span><span class="p">,</span>
+                <span class="n">n_shortest</span><span class="o">=</span><span class="n">nb_facilities</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pywraplp</span><span class="o">.</span><span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;facility&quot;</span><span class="p">,</span> <span class="n">pywraplp</span><span class="o">.</span><span class="n">Solver</span><span class="o">.</span><span class="n">CBC_MIXED_INTEGER_PROGRAMMING</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">elif</span> <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">matrix_fc_indicator</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">BoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;x_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">)))</span>
+        <span class="n">facilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">facilities</span>
+        <span class="n">customers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span>
+        <span class="n">used</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">BoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;y_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">))</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">facility_count</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">constraints_customer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+            <span class="n">constraints_customer</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">Sum</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">)])</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="c1"># one facility</span>
+        <span class="n">constraint_capacity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">):</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">used</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span>
+            <span class="n">constraint_capacity</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">Sum</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">*</span> <span class="n">customers</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">demand</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)])</span>
+                <span class="o">&lt;=</span> <span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span>
+            <span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">setup_cost</span> <span class="o">*</span> <span class="n">used</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">)]</span>
+            <span class="o">+</span> <span class="p">[</span>
+                <span class="n">matrix_length</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_facilities</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;constraint_customer&quot;</span><span class="p">:</span> <span class="n">constraints_customer</span><span class="p">,</span>
+            <span class="s2">&quot;constraint_capacity&quot;</span><span class="p">:</span> <span class="n">constraint_capacity</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_variable_description</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">nb_facilities</span><span class="p">,</span> <span class="n">nb_customers</span><span class="p">),</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+                <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;for each facility/customer indicate&quot;</span>
+                <span class="s2">&quot; if the pair is active, meaning &quot;</span>
+                <span class="s2">&quot;that the customer c is dealt with facility f&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_constraint</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initialized&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CbcFacilitySolver.retrieve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.retrieve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]:</span>
+            <span class="n">variable_decision_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable_decision_key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">variable_decision_key</span><span class="o">.</span><span class="n">solution_value</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">variable_decision_key</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">solution</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">facility_solution</span> <span class="o">=</span> <span class="n">FacilitySolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">facility_solution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span>
+            <span class="p">[(</span><span class="n">facility_solution</span><span class="p">,</span> <span class="n">fit</span><span class="p">)],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CbcFacilitySolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parameters_milp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_milp</span> <span class="o">=</span> <span class="n">ParametersMilp</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.model must be not None after calling self.init_model().&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">time_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">SetTimeLimit</span><span class="p">(</span><span class="n">time_limit</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+        <span class="n">resdict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;OPTIMAL&quot;</span><span class="p">,</span>
+            <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;FEASIBLE&quot;</span><span class="p">,</span>
+            <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;INFEASIBLE&quot;</span><span class="p">,</span>
+            <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;UNBOUNDED&quot;</span><span class="p">,</span>
+            <span class="mi">4</span><span class="p">:</span> <span class="s2">&quot;ABNORMAL&quot;</span><span class="p">,</span>
+            <span class="mi">5</span><span class="p">:</span> <span class="s2">&quot;MODEL_INVALID&quot;</span><span class="p">,</span>
+            <span class="mi">6</span><span class="p">:</span> <span class="s2">&quot;NOT_SOLVED&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Result: </span><span class="si">{</span><span class="n">resdict</span><span class="p">[</span><span class="n">res</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Objective</span><span class="p">()</span><span class="o">.</span><span class="n">Value</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective : </span><span class="si">{</span><span class="n">objective</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

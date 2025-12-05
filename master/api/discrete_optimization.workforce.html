@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.workforce package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.workforce.allocation package" href="discrete_optimization.workforce.allocation.html" />
+    <link rel="prev" title="discrete_optimization.vrptw.solvers package" href="discrete_optimization.vrptw.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.workforce package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-workforce-package">
+<h1>discrete_optimization.workforce package<a class="headerlink" href="#discrete-optimization-workforce-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.workforce.allocation.html">discrete_optimization.workforce.allocation package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.solvers.html">discrete_optimization.workforce.allocation.solvers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.solvers.html#module-discrete_optimization.workforce.allocation.solvers.cpmpy">discrete_optimization.workforce.allocation.solvers.cpmpy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.solvers.html#module-discrete_optimization.workforce.allocation.solvers.cpsat">discrete_optimization.workforce.allocation.solvers.cpsat module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.solvers.html#module-discrete_optimization.workforce.allocation.solvers.dp">discrete_optimization.workforce.allocation.solvers.dp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.solvers.html#module-discrete_optimization.workforce.allocation.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#module-discrete_optimization.workforce.allocation.parser">discrete_optimization.workforce.allocation.parser module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.parser.parse_to_allocation_problem"><code class="docutils literal notranslate"><span class="pre">parse_to_allocation_problem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.parser.parse_to_allocation_problem_additional_constraint"><code class="docutils literal notranslate"><span class="pre">parse_to_allocation_problem_additional_constraint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#module-discrete_optimization.workforce.allocation.problem">discrete_optimization.workforce.allocation.problem module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AggregateOperator"><code class="docutils literal notranslate"><span class="pre">AggregateOperator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AggregateOperator.GINI"><code class="docutils literal notranslate"><span class="pre">AggregateOperator.GINI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AggregateOperator.MAX"><code class="docutils literal notranslate"><span class="pre">AggregateOperator.MAX</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AggregateOperator.MAX_MINUS_MIN"><code class="docutils literal notranslate"><span class="pre">AggregateOperator.MAX_MINUS_MIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AggregateOperator.MEAN"><code class="docutils literal notranslate"><span class="pre">AggregateOperator.MEAN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AggregateOperator.MIN"><code class="docutils literal notranslate"><span class="pre">AggregateOperator.MIN</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.all_diff_allocation"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.all_diff_allocation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.allowed_allocation"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.allowed_allocation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.disjunction"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.disjunction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.forbidden_allocation"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.forbidden_allocation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.forced_allocation"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.forced_allocation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.is_empty"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.is_empty()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.nb_max_teams"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.nb_max_teams</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.precedences"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.precedences</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.AllocationAdditionalConstraint.same_allocation"><code class="docutils literal notranslate"><span class="pre">AllocationAdditionalConstraint.same_allocation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.GraphBipartite"><code class="docutils literal notranslate"><span class="pre">GraphBipartite</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.GraphBipartite.get_nodes_activity"><code class="docutils literal notranslate"><span class="pre">GraphBipartite.get_nodes_activity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.GraphBipartite.get_nodes_team"><code class="docutils literal notranslate"><span class="pre">GraphBipartite.get_nodes_team()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.GraphBipartite.get_nodes_team_list"><code class="docutils literal notranslate"><span class="pre">GraphBipartite.get_nodes_team_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.GraphBipartite.is_bipartite"><code class="docutils literal notranslate"><span class="pre">GraphBipartite.is_bipartite()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.GraphBipartite.to_networkx"><code class="docutils literal notranslate"><span class="pre">GraphBipartite.to_networkx()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.add_additional_constraint"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.add_additional_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.compute_allowed_team_for_task"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.compute_allowed_team_for_task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.compute_allowed_team_index_all_task"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.compute_allowed_team_index_all_task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.compute_allowed_team_index_for_task"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.compute_allowed_team_index_for_task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.compute_compatibility_for_all_tasks"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.compute_compatibility_for_all_tasks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.compute_forbidden_team_index_all_task"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.compute_forbidden_team_index_all_task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.compute_forbidden_team_index_for_task"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.compute_forbidden_team_index_for_task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.compute_pair_overlap_index_task"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.compute_pair_overlap_index_task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.computed_forbidden_team_for_task"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.computed_forbidden_team_for_task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.count_allowed_assignment_violations"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.count_allowed_assignment_violations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.count_color_constraints_violations"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.count_color_constraints_violations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.do_add_cons"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.do_add_cons</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.evaluate"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.evaluate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.evaluate_from_encoding"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.evaluate_from_encoding()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_attribute_register"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_attribute_register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_dummy_solution"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_dummy_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_max_teams"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_max_teams()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_natural_explanation_unsat_allowed_assignment"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_natural_explanation_unsat_allowed_assignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_natural_explanation_unsat_colors"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_natural_explanation_unsat_colors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_natural_explanation_unsat_constraints"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_natural_explanation_unsat_constraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_objective_register"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_objective_register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.get_solution_type"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.get_solution_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.is_compatible_task_unary_resource"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.is_compatible_task_unary_resource()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.remove_additional_constraint"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.remove_additional_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.reorder_teams_name"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.reorder_teams_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.satisfy"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.satisfy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.satisfy_allowed_assignment"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.satisfy_allowed_assignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.satisfy_color_constraints"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.satisfy_color_constraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.tasks_list"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.tasks_list</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblem.unary_resources_list"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblem.unary_resources_list</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblemMultiobj"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblemMultiobj</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblemMultiobj.aggregate_cumuls"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblemMultiobj.aggregate_cumuls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblemMultiobj.evaluate"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblemMultiobj.evaluate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblemMultiobj.evaluate_cumul_nodes"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblemMultiobj.evaluate_cumul_nodes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblemMultiobj.get_objective_register"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblemMultiobj.get_objective_register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationProblemMultiobj.update_attributes_of_activities"><code class="docutils literal notranslate"><span class="pre">TeamAllocationProblemMultiobj.update_attributes_of_activities()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationSolution"><code class="docutils literal notranslate"><span class="pre">TeamAllocationSolution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationSolution.change_problem"><code class="docutils literal notranslate"><span class="pre">TeamAllocationSolution.change_problem()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationSolution.copy"><code class="docutils literal notranslate"><span class="pre">TeamAllocationSolution.copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationSolution.is_allocated"><code class="docutils literal notranslate"><span class="pre">TeamAllocationSolution.is_allocated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationSolution.lazy_copy"><code class="docutils literal notranslate"><span class="pre">TeamAllocationSolution.lazy_copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.TeamAllocationSolution.problem"><code class="docutils literal notranslate"><span class="pre">TeamAllocationSolution.problem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.build_graph_allocation_from_calendar_and_schedule"><code class="docutils literal notranslate"><span class="pre">build_graph_allocation_from_calendar_and_schedule()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.compute_available_teams_per_activities"><code class="docutils literal notranslate"><span class="pre">compute_available_teams_per_activities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.compute_graph_coloring"><code class="docutils literal notranslate"><span class="pre">compute_graph_coloring()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_additional_constraint"><code class="docutils literal notranslate"><span class="pre">satisfy_additional_constraint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_all_diff"><code class="docutils literal notranslate"><span class="pre">satisfy_all_diff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_allowed_allocation"><code class="docutils literal notranslate"><span class="pre">satisfy_allowed_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_disjunction"><code class="docutils literal notranslate"><span class="pre">satisfy_disjunction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_disjunctions"><code class="docutils literal notranslate"><span class="pre">satisfy_disjunctions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_forbidden_allocation"><code class="docutils literal notranslate"><span class="pre">satisfy_forbidden_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_forced_allocation"><code class="docutils literal notranslate"><span class="pre">satisfy_forced_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_nb_teams"><code class="docutils literal notranslate"><span class="pre">satisfy_nb_teams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.satisfy_same_allocation"><code class="docutils literal notranslate"><span class="pre">satisfy_same_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.problem.transform_to_coloring_problem"><code class="docutils literal notranslate"><span class="pre">transform_to_coloring_problem()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#module-discrete_optimization.workforce.allocation.utils">discrete_optimization.workforce.allocation.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.additional_constraint_subset_teams"><code class="docutils literal notranslate"><span class="pre">additional_constraint_subset_teams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.allocation_additional_constraint_subset_tasks"><code class="docutils literal notranslate"><span class="pre">allocation_additional_constraint_subset_tasks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_active_activities_on_time"><code class="docutils literal notranslate"><span class="pre">compute_active_activities_on_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_all_overlapping"><code class="docutils literal notranslate"><span class="pre">compute_all_overlapping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_changes_between_solution_alloc"><code class="docutils literal notranslate"><span class="pre">compute_changes_between_solution_alloc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_equivalent_teams"><code class="docutils literal notranslate"><span class="pre">compute_equivalent_teams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_overlapping_activities_on_end_time"><code class="docutils literal notranslate"><span class="pre">compute_overlapping_activities_on_end_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_overlapping_activities_on_start_time"><code class="docutils literal notranslate"><span class="pre">compute_overlapping_activities_on_start_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.create_subproblem_allocation"><code class="docutils literal notranslate"><span class="pre">create_subproblem_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.cut_number_of_team"><code class="docutils literal notranslate"><span class="pre">cut_number_of_team()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.modify_graph"><code class="docutils literal notranslate"><span class="pre">modify_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.plot_allocation_solution"><code class="docutils literal notranslate"><span class="pre">plot_allocation_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.subgraph_activities"><code class="docutils literal notranslate"><span class="pre">subgraph_activities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.subgraph_bipartite_activities"><code class="docutils literal notranslate"><span class="pre">subgraph_bipartite_activities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.subgraph_teams"><code class="docutils literal notranslate"><span class="pre">subgraph_teams()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.allocation.html#module-discrete_optimization.workforce.allocation">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.workforce.commons.html">discrete_optimization.workforce.commons package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.commons.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.commons.html#module-discrete_optimization.workforce.commons.fairness_modeling">discrete_optimization.workforce.commons.fairness_modeling module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion.EXACT_MODELING_DUPLICATED_VARS"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion.EXACT_MODELING_DUPLICATED_VARS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion.MAX_DIFF"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion.MAX_DIFF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion.PROXY_MAX_MIN"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion.PROXY_MAX_MIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion.PROXY_MIN_MAX"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion.PROXY_MIN_MAX</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion.PROXY_SLACK"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion.PROXY_SLACK</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling.ModelisationDispersion.PROXY_SUM"><code class="docutils literal notranslate"><span class="pre">ModelisationDispersion.PROXY_SUM</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.commons.html#module-discrete_optimization.workforce.commons.fairness_modeling_cpmpy">discrete_optimization.workforce.commons.fairness_modeling_cpmpy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_cpmpy.cumulate_value_per_teams"><code class="docutils literal notranslate"><span class="pre">cumulate_value_per_teams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_cpmpy.cumulate_value_per_teams_version_2"><code class="docutils literal notranslate"><span class="pre">cumulate_value_per_teams_version_2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_cpmpy.define_fairness_criteria_from_cumulated_value"><code class="docutils literal notranslate"><span class="pre">define_fairness_criteria_from_cumulated_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_cpmpy.model_fairness"><code class="docutils literal notranslate"><span class="pre">model_fairness()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.commons.html#module-discrete_optimization.workforce.commons.fairness_modeling_ortools">discrete_optimization.workforce.commons.fairness_modeling_ortools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_ortools.cumulate_value_per_teams"><code class="docutils literal notranslate"><span class="pre">cumulate_value_per_teams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_ortools.cumulate_value_per_teams_version_2"><code class="docutils literal notranslate"><span class="pre">cumulate_value_per_teams_version_2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_ortools.define_fairness_criteria_from_cumulated_value"><code class="docutils literal notranslate"><span class="pre">define_fairness_criteria_from_cumulated_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.commons.html#discrete_optimization.workforce.commons.fairness_modeling_ortools.model_fairness"><code class="docutils literal notranslate"><span class="pre">model_fairness()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.commons.html#module-discrete_optimization.workforce.commons">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.workforce.generators.html">discrete_optimization.workforce.generators package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.generators.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.generators.html#module-discrete_optimization.workforce.generators.random_tools">discrete_optimization.workforce.generators.random_tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.random_tools.RandomState"><code class="docutils literal notranslate"><span class="pre">RandomState</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.random_tools.RandomState.T"><code class="docutils literal notranslate"><span class="pre">RandomState.T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.random_tools.RandomState.get_discrete_truncated_normal_sample"><code class="docutils literal notranslate"><span class="pre">RandomState.get_discrete_truncated_normal_sample()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.random_tools.RandomState.get_discrete_truncated_uniform_sample"><code class="docutils literal notranslate"><span class="pre">RandomState.get_discrete_truncated_uniform_sample()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.random_tools.RandomState.get_random_element_prop"><code class="docutils literal notranslate"><span class="pre">RandomState.get_random_element_prop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.random_tools.RandomState.get_random_element_uniform"><code class="docutils literal notranslate"><span class="pre">RandomState.get_random_element_uniform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.random_tools.RandomState.get_uniform_advantage_sample"><code class="docutils literal notranslate"><span class="pre">RandomState.get_uniform_advantage_sample()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.generators.html#module-discrete_optimization.workforce.generators.resource_scenario">discrete_optimization.workforce.generators.resource_scenario module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.ParamsRandomness"><code class="docutils literal notranslate"><span class="pre">ParamsRandomness</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.ParamsRandomness.generate_list"><code class="docutils literal notranslate"><span class="pre">ParamsRandomness.generate_list()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.compute_available_teams_per_activities_alloc_problem"><code class="docutils literal notranslate"><span class="pre">compute_available_teams_per_activities_alloc_problem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.compute_starts_end_activities"><code class="docutils literal notranslate"><span class="pre">compute_starts_end_activities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.create_scheduling_problem_several_resource_dropping"><code class="docutils literal notranslate"><span class="pre">create_scheduling_problem_several_resource_dropping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.generate_allocation_disruption"><code class="docutils literal notranslate"><span class="pre">generate_allocation_disruption()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.generate_resource_disruption_scenario_from"><code class="docutils literal notranslate"><span class="pre">generate_resource_disruption_scenario_from()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.generate_scheduling_disruption"><code class="docutils literal notranslate"><span class="pre">generate_scheduling_disruption()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.generators.html#discrete_optimization.workforce.generators.resource_scenario.update_allocation_constraint"><code class="docutils literal notranslate"><span class="pre">update_allocation_constraint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.generators.html#module-discrete_optimization.workforce.generators">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html">discrete_optimization.workforce.scheduling package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html">discrete_optimization.workforce.scheduling.solvers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html#module-discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb">discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html#module-discrete_optimization.workforce.scheduling.solvers.cpsat">discrete_optimization.workforce.scheduling.solvers.cpsat module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html#module-discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed">discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html#module-discrete_optimization.workforce.scheduling.solvers.optal">discrete_optimization.workforce.scheduling.solvers.optal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html#module-discrete_optimization.workforce.scheduling.solvers.tempo">discrete_optimization.workforce.scheduling.solvers.tempo module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.solvers.html#module-discrete_optimization.workforce.scheduling.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#module-discrete_optimization.workforce.scheduling.parser">discrete_optimization.workforce.scheduling.parser module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.parser.get_data_available"><code class="docutils literal notranslate"><span class="pre">get_data_available()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.parser.parse_json_to_problem"><code class="docutils literal notranslate"><span class="pre">parse_json_to_problem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.parser.update_calendars_with_disruptions"><code class="docutils literal notranslate"><span class="pre">update_calendars_with_disruptions()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#module-discrete_optimization.workforce.scheduling.problem">discrete_optimization.workforce.scheduling.problem module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.compatible_teams_all_activity"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.compatible_teams_all_activity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.compatible_teams_index_all_activity"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.compatible_teams_index_all_activity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.compute_predecessors"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.compute_predecessors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.compute_unavailability_calendar"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.compute_unavailability_calendar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.evaluate"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.evaluate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_all_lb_ub"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_all_lb_ub()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_attribute_register"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_attribute_register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_lb_end_window"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_lb_end_window()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_lb_start_window"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_lb_start_window()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_makespan_lower_bound"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_makespan_lower_bound()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_makespan_upper_bound"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_makespan_upper_bound()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_objective_register"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_objective_register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_precedence_constraints"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_precedence_constraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_solution_type"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_solution_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_ub_end_window"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_ub_end_window()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_ub_start_window"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_ub_start_window()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.get_unavailable_teams_per_activity"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.get_unavailable_teams_per_activity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.is_compatible_task_unary_resource"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.is_compatible_task_unary_resource()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.satisfy"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.satisfy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.set_objective_handling"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.set_objective_handling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.tasks_list"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.tasks_list</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.unary_resources_list"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.unary_resources_list</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem.update_available_team_for_activity"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingProblem.update_available_team_for_activity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingSolution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution.change_problem"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingSolution.change_problem()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution.copy"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingSolution.copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution.get_end_time"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingSolution.get_end_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution.get_start_time"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingSolution.get_start_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution.is_allocated"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingSolution.is_allocated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution.problem"><code class="docutils literal notranslate"><span class="pre">AllocSchedulingSolution.problem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.TasksDescription"><code class="docutils literal notranslate"><span class="pre">TasksDescription</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.build_calendar_array_from_availability_slot"><code class="docutils literal notranslate"><span class="pre">build_calendar_array_from_availability_slot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.build_pair_mode_constraint"><code class="docutils literal notranslate"><span class="pre">build_pair_mode_constraint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.compute_stats_per_team"><code class="docutils literal notranslate"><span class="pre">compute_stats_per_team()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.correct_schedule_avoid_overlap"><code class="docutils literal notranslate"><span class="pre">correct_schedule_avoid_overlap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.evaluate_solution"><code class="docutils literal notranslate"><span class="pre">evaluate_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.export_scheduling_problem_json"><code class="docutils literal notranslate"><span class="pre">export_scheduling_problem_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.full_satisfy"><code class="docutils literal notranslate"><span class="pre">full_satisfy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.interval_inside"><code class="docutils literal notranslate"><span class="pre">interval_inside()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.intervals_do_not_overlap"><code class="docutils literal notranslate"><span class="pre">intervals_do_not_overlap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.realign_calendars"><code class="docutils literal notranslate"><span class="pre">realign_calendars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_all_done"><code class="docutils literal notranslate"><span class="pre">satisfy_all_done()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_available_team"><code class="docutils literal notranslate"><span class="pre">satisfy_available_team()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_calendars"><code class="docutils literal notranslate"><span class="pre">satisfy_calendars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_detailed"><code class="docutils literal notranslate"><span class="pre">satisfy_detailed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_detailed_all_done"><code class="docutils literal notranslate"><span class="pre">satisfy_detailed_all_done()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_detailed_available_team"><code class="docutils literal notranslate"><span class="pre">satisfy_detailed_available_team()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_detailed_precedence"><code class="docutils literal notranslate"><span class="pre">satisfy_detailed_precedence()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_detailed_same_allocation"><code class="docutils literal notranslate"><span class="pre">satisfy_detailed_same_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_overlap_teams"><code class="docutils literal notranslate"><span class="pre">satisfy_overlap_teams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_overlap_teams_detailed"><code class="docutils literal notranslate"><span class="pre">satisfy_overlap_teams_detailed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_precedence"><code class="docutils literal notranslate"><span class="pre">satisfy_precedence()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_same_allocation"><code class="docutils literal notranslate"><span class="pre">satisfy_same_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_time_window"><code class="docutils literal notranslate"><span class="pre">satisfy_time_window()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.satisfy_time_window_detailed"><code class="docutils literal notranslate"><span class="pre">satisfy_time_window_detailed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.transform_alloc_solution_to_rcpsp_solution"><code class="docutils literal notranslate"><span class="pre">transform_alloc_solution_to_rcpsp_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.transform_rcpsp_solution_to_alloc_solution"><code class="docutils literal notranslate"><span class="pre">transform_rcpsp_solution_to_alloc_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.transform_to_monomode_rcpsp"><code class="docutils literal notranslate"><span class="pre">transform_to_monomode_rcpsp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.transform_to_multimode_rcpsp"><code class="docutils literal notranslate"><span class="pre">transform_to_multimode_rcpsp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#module-discrete_optimization.workforce.scheduling.utils">discrete_optimization.workforce.scheduling.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.alloc_solution_to_alloc_sched_solution"><code class="docutils literal notranslate"><span class="pre">alloc_solution_to_alloc_sched_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.binary_calendar"><code class="docutils literal notranslate"><span class="pre">binary_calendar()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.build_allocation_problem_from_scheduling"><code class="docutils literal notranslate"><span class="pre">build_allocation_problem_from_scheduling()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.build_scheduling_problem_from_allocation"><code class="docutils literal notranslate"><span class="pre">build_scheduling_problem_from_allocation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_available_teams_per_activities_alloc_problem"><code class="docutils literal notranslate"><span class="pre">compute_available_teams_per_activities_alloc_problem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_changes_between_solution"><code class="docutils literal notranslate"><span class="pre">compute_changes_between_solution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_changes_between_solution_same_pb"><code class="docutils literal notranslate"><span class="pre">compute_changes_between_solution_same_pb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_equivalent_teams_scheduling_problem"><code class="docutils literal notranslate"><span class="pre">compute_equivalent_teams_scheduling_problem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.compute_precedence_graph"><code class="docutils literal notranslate"><span class="pre">compute_precedence_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.estimate_nb_resource_needed"><code class="docutils literal notranslate"><span class="pre">estimate_nb_resource_needed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.export_scheduling_problem_json"><code class="docutils literal notranslate"><span class="pre">export_scheduling_problem_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.get_availability_slots"><code class="docutils literal notranslate"><span class="pre">get_availability_slots()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.get_working_time_teams"><code class="docutils literal notranslate"><span class="pre">get_working_time_teams()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.natural_explanation_unsat"><code class="docutils literal notranslate"><span class="pre">natural_explanation_unsat()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.natural_explanation_unsat_from_sol"><code class="docutils literal notranslate"><span class="pre">natural_explanation_unsat_from_sol()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.overlap_interval"><code class="docutils literal notranslate"><span class="pre">overlap_interval()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.plot_schedule_comparison"><code class="docutils literal notranslate"><span class="pre">plot_schedule_comparison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.plotly_schedule_comparison"><code class="docutils literal notranslate"><span class="pre">plotly_schedule_comparison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.utils.template_violated_constraint"><code class="docutils literal notranslate"><span class="pre">template_violated_constraint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#module-discrete_optimization.workforce.scheduling">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-discrete_optimization.workforce">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.workforce" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.vrptw.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.vrptw.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.workforce.allocation.html" class="btn btn-neutral float-right" title="discrete_optimization.workforce.allocation package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

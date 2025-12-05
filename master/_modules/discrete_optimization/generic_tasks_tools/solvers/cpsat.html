@@ -1,0 +1,885 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers.cpsat &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers.cpsat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.solvers.cpsat</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntVar</span><span class="p">,</span> <span class="n">LinearExprT</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationCpSolver</span><span class="p">,</span>
+    <span class="n">AllocationSolution</span><span class="p">,</span>
+    <span class="n">UnaryResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.multimode</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultimodeCpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchedulingCpSolver</span><span class="p">,</span>
+    <span class="n">Task</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ortools_cpsat_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrtoolsCpSatSolver</span>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SchedulingCpSatSolver</span><span class="p">(</span><span class="n">OrtoolsCpSatSolver</span><span class="p">,</span> <span class="n">SchedulingCpSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for most ortools/cpsat solvers handling scheduling problems.</span>
+
+<span class="sd">    Allows to have common code.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_makespan</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IntVar</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Internal variable use to define the global makespan.&quot;&quot;&quot;</span>
+
+    <span class="n">_subtasks_makespan</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IntVar</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Internal variable use to define the partial makespan.&quot;&quot;&quot;</span>
+
+    <span class="n">constraints_on_makespan</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraints on partial makespan so that it can be considered as the objective.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Init cp model and reset stored variables if any.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_task_start_or_end_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_task_start_or_end_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve the variable storing the start or end time of given task.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task:</span>
+<span class="sd">            start_or_end:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.add_constraint_on_task">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.add_constraint_on_task">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">start_or_end</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_bound_constraint</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">sign</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">time</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.add_constraint_chaining_tasks">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.add_constraint_chaining_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_chaining_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task1</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">task2</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">var1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">task1</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+        <span class="p">)</span>
+        <span class="n">var2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">task2</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var1</span> <span class="o">==</span> <span class="n">var2</span><span class="p">)]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_makespan_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntVar</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the makespan variable used to track global makespan.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_lower_bound</span><span class="p">(),</span>
+                <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">(),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;makespan&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_subtasks_makespan_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntVar</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the makespan variable used to track subtasks makespan.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># lower bound for any tasks subset</span>
+                <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">(),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;subtasks_makespan&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span>
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.remove_constraints_on_objective">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.remove_constraints_on_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_constraints_on_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_global_makespan_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_global_makespan_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_global_makespan_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="c1"># remove previous constraints on makespan variable from cp model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="c1"># get makespan variable</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_makespan_var</span><span class="p">()</span>
+        <span class="c1"># update those constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                <span class="n">makespan</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_last_tasks</span><span class="p">()</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">makespan</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_subtasks_makespan_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_makespan_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_subtasks_makespan_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subtasks</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="c1"># remove previous constraints on makespan variable from cp model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="c1"># get makespan variable</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_subtasks_makespan_var</span><span class="p">()</span>
+        <span class="c1"># update those constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                <span class="n">makespan</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">subtasks</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">makespan</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_subtasks_sum_end_time_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_sum_end_time_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_subtasks_sum_end_time_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subtasks</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">subtasks</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_subtasks_sum_start_time_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_sum_start_time_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_subtasks_sum_start_time_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subtasks</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">subtasks</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MultimodeCpSatSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultimodeCpSatSolver</span><span class="p">(</span><span class="n">OrtoolsCpSatSolver</span><span class="p">,</span> <span class="n">MultimodeCpSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<div class="viewcode-block" id="MultimodeCpSatSolver.get_task_mode_is_present_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver.get_task_mode_is_present_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_mode_is_present_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve the 0-1 variable/expression telling if the mode is used for the task.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task:</span>
+<span class="sd">            mode:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MultimodeCpSatSolver.add_constraint_on_task_mode">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver.add_constraint_on_task_mode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_task_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">possible_modes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">possible_modes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> cannot be done with mode </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">possible_modes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">other_mode</span> <span class="ow">in</span> <span class="n">possible_modes</span><span class="p">:</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_is_present_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">other_mode</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">other_mode</span> <span class="o">==</span> <span class="n">mode</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span> <span class="o">==</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span> <span class="o">==</span> <span class="kc">False</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">constraints</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AllocationCpSatSolver</span><span class="p">(</span>
+    <span class="n">OrtoolsCpSatSolver</span><span class="p">,</span>
+    <span class="n">AllocationCpSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for allocation cp-sat solvers using a binary modelling.</span>
+
+<span class="sd">    I.e. using 0-1 variables to model allocation status of each couple (task, unary_resource)</span>
+<span class="sd">    This is a more general modelisation thant the integer one as it allows allocation of multiple resources.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">allocation_changes_variables_created</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag telling whether &#39;allocation changes variables&#39; have been created&quot;&quot;&quot;</span>
+    <span class="n">allocation_changes_variables</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Variables tracking allocation changes from a given reference.&quot;&quot;&quot;</span>
+    <span class="n">used_variables_created</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag telling whether &#39;used variables&#39; have been created&quot;&quot;&quot;</span>
+    <span class="n">used_variables</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Variables tracking whether a unary resource has been used at least once.&quot;&quot;&quot;</span>
+    <span class="n">done_variables_created</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag telling whether &#39;done variables&#39; have been created&quot;&quot;&quot;</span>
+    <span class="n">done_variables</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Variables tracking whether a task has at least one unary resource allocated.&quot;&quot;&quot;</span>
+
+    <span class="n">at_most_one_unary_resource_per_task</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag telling if the problem accept at most one unary_resource per task.</span>
+
+<span class="sd">    Default to False, ie several resources allowed per task.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_tasks_of_interest</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Subset of tasks of interest used for the objective.</span>
+
+<span class="sd">        By default, all tasks.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_unaryresources_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unary resources allowed to solve the problem.</span>
+
+<span class="sd">        By default, all unary resources.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">unary_resources_list</span>
+
+<div class="viewcode-block" id="AllocationCpSatSolver.get_default_tasks_n_unary_resources">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_default_tasks_n_unary_resources">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_default_tasks_n_unary_resources</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">unary_resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="n">tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_tasks_of_interest</span>
+        <span class="k">if</span> <span class="n">unary_resources</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">unary_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_unaryresources_allowed</span>
+        <span class="k">return</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Init cp model and reset stored variables if any.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables_created</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_variables_created</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_variables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done_variables_created</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done_variables_created</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.get_task_unary_resource_is_present_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_task_unary_resource_is_present_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a 0-1 variable/expression telling if the unary_resource is used for the task.</span>
+
+<span class="sd">        NB: sometimes the given resource is never to be used by a task and the variable has not been created.</span>
+<span class="sd">        The convention is to return 0 in that case.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.add_constraint_on_task_unary_resource_allocation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_task_unary_resource_allocation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_task_unary_resource_allocation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">used</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span> <span class="o">==</span> <span class="n">used</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.add_constraint_on_nb_allocation_changes">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_nb_allocation_changes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_nb_allocation_changes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ref</span><span class="p">:</span> <span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+        <span class="n">nb_changes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span> <span class="o">=</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_allocation_changes_variables</span><span class="p">()</span>
+        <span class="c1"># constraints so that change variables reflect diff to ref</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_allocation_changes_constraints</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">)</span>
+        <span class="c1"># nb of changes variable</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">constraints</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_bound_constraint</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">sign</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">nb_changes</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">constraints</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.add_allocation_changes_constraints">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_allocation_changes_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_allocation_changes_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add and return constraints so that change variables reflect diff to ref.&quot;&quot;&quot;</span>
+        <span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_tasks_n_unary_resources</span><span class="p">()</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="n">unary_resources</span><span class="p">:</span>
+                <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                <span class="p">)</span>
+                <span class="n">allocation_change</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="n">is_allocated_ref</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">is_allocated</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_a_trivial_zero</span><span class="p">(</span><span class="n">is_present</span><span class="p">):</span>
+                    <span class="c1"># can never be allocated: change &lt;=&gt; ref has allocated</span>
+                    <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">allocation_change</span> <span class="o">==</span> <span class="n">is_allocated_ref</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">constraints</span> <span class="o">+=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">is_present</span> <span class="o">!=</span> <span class="n">is_allocated_ref</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="n">allocation_change</span><span class="p">),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">is_present</span> <span class="o">==</span> <span class="n">is_allocated_ref</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="o">~</span><span class="n">allocation_change</span><span class="p">),</span>
+                    <span class="p">]</span>
+        <span class="k">return</span> <span class="n">constraints</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.create_allocation_changes_variables">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_allocation_changes_variables">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_allocation_changes_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create variables necessary for constraint on nb of changes.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables_created</span><span class="p">:</span>
+            <span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_tasks_n_unary_resources</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">new_bool_var</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">unary_resource</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+                <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="n">unary_resources</span>
+            <span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables_created</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.add_constraint_nb_unary_resource_usages">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_nb_unary_resource_usages">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_nb_unary_resource_usages</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">unary_resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_tasks_n_unary_resources</span><span class="p">(</span>
+            <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span><span class="o">=</span><span class="n">unary_resources</span>
+        <span class="p">)</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">is_present</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+            <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="n">unary_resources</span>
+            <span class="c1"># filter out trivial 0&#39;s corresponding to incompatible (task, resource)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                <span class="n">is_a_trivial_zero</span><span class="p">(</span>
+                    <span class="n">is_present</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+                        <span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_bound_constraint</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">sign</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">target</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.add_constraint_on_total_nb_usages">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_total_nb_usages">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_total_nb_usages</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_constraint_nb_unary_resource_usages</span><span class="p">(</span><span class="n">sign</span><span class="o">=</span><span class="n">sign</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.add_constraint_on_unary_resource_nb_usages">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_unary_resource_nb_usages">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_unary_resource_nb_usages</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_constraint_nb_unary_resource_usages</span><span class="p">(</span>
+            <span class="n">sign</span><span class="o">=</span><span class="n">sign</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="n">unary_resources</span><span class="o">=</span><span class="p">(</span><span class="n">unary_resource</span><span class="p">,)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.create_used_variables">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_used_variables">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_used_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_variables_created</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">used_variables</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_unaryresources_allowed</span><span class="p">:</span>
+                <span class="n">used</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">new_bool_var</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;used_</span><span class="si">{</span><span class="n">unary_resource</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">used_variables</span><span class="p">[</span><span class="n">unary_resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">used</span>
+                <span class="n">list_is_present_variables</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">is_present</span>
+                    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_tasks_of_interest</span>
+                    <span class="c1"># filter out trivial 0&#39;s corresponding to incompatible (task, resource)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                        <span class="n">is_a_trivial_zero</span><span class="p">(</span>
+                            <span class="n">is_present</span>
+                            <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+                                <span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_is_present_variables</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_max_equality</span><span class="p">(</span><span class="n">used</span><span class="p">,</span> <span class="n">list_is_present_variables</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">used</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">used_variables_created</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.create_done_variables">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_done_variables">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_done_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">done_variables_created</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done_variables</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_tasks_of_interest</span><span class="p">:</span>
+                <span class="n">done</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">new_bool_var</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_done&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">done_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">done</span>
+                <span class="n">list_is_present_variables</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">is_present</span>
+                    <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_unaryresources_allowed</span>
+                    <span class="c1"># filter out trivial 0&#39;s corresponding to incompatible (task, resource)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                        <span class="n">is_a_trivial_zero</span><span class="p">(</span>
+                            <span class="n">is_present</span>
+                            <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+                                <span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_is_present_variables</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">at_most_one_unary_resource_per_task</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_at_most_one</span><span class="p">(</span><span class="n">list_is_present_variables</span><span class="p">)</span>
+                        <span class="n">nb_teams_allocated_to_task</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">list_is_present_variables</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">nb_teams_allocated_to_task</span> <span class="o">==</span> <span class="mi">1</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="n">done</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">nb_teams_allocated_to_task</span> <span class="o">==</span> <span class="mi">0</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="o">~</span><span class="n">done</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_max_equality</span><span class="p">(</span><span class="n">done</span><span class="p">,</span> <span class="n">list_is_present_variables</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">done</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done_variables_created</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.get_nb_tasks_done_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_nb_tasks_done_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_nb_tasks_done_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_done_variables</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">done_variables</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="AllocationCpSatSolver.get_nb_unary_resources_used_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_nb_unary_resources_used_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_nb_unary_resources_used_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_used_variables</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">used_variables</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AllocationIntegerModellingCpSatSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AllocationIntegerModellingCpSatSolver</span><span class="p">(</span>
+    <span class="n">AllocationCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for allocation cp-sat solvers using an integer modelling.</span>
+
+<span class="sd">    I.e. using integer variables to model allocation of a task.</span>
+<span class="sd">    This assumes that at most one unary_resource can be allocated to a task.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_present_variables_created</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_present_variables</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">]</span>
+
+<div class="viewcode-block" id="AllocationIntegerModellingCpSatSolver.get_task_allocation_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.get_task_allocation_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_allocation_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an integer variable/expression storing the index of the allocated unary_resource.</span>
+
+<span class="sd">        Assumes that exactly one unary resource is allocated to a task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="AllocationIntegerModellingCpSatSolver.create_is_present_variables">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.create_is_present_variables">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_is_present_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_present_variables_created</span><span class="p">:</span>
+            <span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_tasks_n_unary_resources</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_present_variables</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="n">unary_resources</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_compatible_task_unary_resource</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                    <span class="p">):</span>
+                        <span class="n">boolvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">new_bool_var</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;is_present_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">unary_resource</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">is_present_variables</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">)]</span> <span class="o">=</span> <span class="n">boolvar</span>
+                        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_allocation_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_index_from_unary_resource</span><span class="p">(</span>
+                            <span class="n">unary_resource</span>
+                        <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="n">boolvar</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span> <span class="o">!=</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="o">~</span><span class="n">boolvar</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_present_variables_created</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="AllocationIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a 0-1 variable/expression telling if the unary_resource is used for the task.</span>
+
+<span class="sd">        NB: sometimes the given resource is never to be used by a task and the variable has not been created.</span>
+<span class="sd">        The convention is to return 0 in that case.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_is_present_variables</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_present_variables</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="AllocationIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_task_unary_resource_allocation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">used</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_allocation_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">used</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span> <span class="o">==</span> <span class="n">unary_resource</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span> <span class="o">!=</span> <span class="n">unary_resource</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="AllocationIntegerModellingCpSatSolver.add_allocation_changes_constraints">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.add_allocation_changes_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_allocation_changes_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add and return constraints so that change variables reflect diff to ref.&quot;&quot;&quot;</span>
+        <span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_tasks_n_unary_resources</span><span class="p">()</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="n">unary_resources</span><span class="p">:</span>
+                <span class="n">task_allocation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_allocation_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+                <span class="n">i_unary_resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_index_from_unary_resource</span><span class="p">(</span>
+                    <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                <span class="p">)</span>
+                <span class="n">allocation_change</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_changes_variables</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="n">ref</span><span class="o">.</span><span class="n">is_allocated</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span><span class="p">):</span>
+                    <span class="n">subconstraints</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">task_allocation</span> <span class="o">!=</span> <span class="n">i_unary_resource</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="n">allocation_change</span><span class="p">),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">task_allocation</span> <span class="o">==</span> <span class="n">i_unary_resource</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="o">~</span><span class="n">allocation_change</span><span class="p">),</span>
+                    <span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">subconstraints</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">task_allocation</span> <span class="o">==</span> <span class="n">i_unary_resource</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="n">allocation_change</span><span class="p">),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                            <span class="n">task_allocation</span> <span class="o">!=</span> <span class="n">i_unary_resource</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">only_enforce_if</span><span class="p">(</span><span class="o">~</span><span class="n">allocation_change</span><span class="p">),</span>
+                    <span class="p">]</span>
+                <span class="n">constraints</span> <span class="o">+=</span> <span class="n">subconstraints</span>
+        <span class="k">return</span> <span class="n">constraints</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AllocationModelling">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AllocationModelling</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">BINARY</span> <span class="o">=</span> <span class="s2">&quot;binary&quot;</span>
+    <span class="n">INTEGER</span> <span class="o">=</span> <span class="s2">&quot;integer&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AllocationBinaryOrIntegerModellingCpSatSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AllocationBinaryOrIntegerModellingCpSatSolver</span><span class="p">(</span>
+    <span class="n">AllocationIntegerModellingCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for allocation cp-sat solvers using a binary or integer modelling.&quot;&quot;&quot;</span>
+
+    <span class="n">allocation_modelling</span><span class="p">:</span> <span class="n">AllocationModelling</span>
+
+<div class="viewcode-block" id="AllocationBinaryOrIntegerModellingCpSatSolver.get_binary_allocation_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_binary_allocation_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_binary_allocation_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;Return a 0-1 variable/expression telling if the unary_resource is used for the task.</span>
+
+<span class="sd">        Only to be called when allocation_modelling == AllocationModelling.BINARY.</span>
+
+<span class="sd">        NB: sometimes the given resource is never to be used by a task and the variable has not been created.</span>
+<span class="sd">        The convention is to return 0 in that case.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="AllocationBinaryOrIntegerModellingCpSatSolver.get_integer_allocation_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_integer_allocation_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_integer_allocation_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an integer variable/expression storing the index of the allocated unary_resource.</span>
+
+<span class="sd">        Assumes that exactly one unary resource is allocated to a task.</span>
+<span class="sd">        Only to be called when allocation_modelling == AllocationModelling.INTEGER.</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            task:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="AllocationBinaryOrIntegerModellingCpSatSolver.get_task_allocation_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_task_allocation_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_allocation_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_modelling</span> <span class="o">==</span> <span class="n">AllocationModelling</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_integer_allocation_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;get_task_allocation_variable() cannot be called with binary allocation modelling.&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AllocationBinaryOrIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_modelling</span> <span class="o">==</span> <span class="n">AllocationModelling</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_binary_allocation_variable</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AllocationBinaryOrIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_task_unary_resource_allocation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">used</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_modelling</span> <span class="o">==</span> <span class="n">AllocationModelling</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_constraint_on_task_unary_resource_allocation</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span><span class="p">,</span> <span class="n">used</span><span class="o">=</span><span class="n">used</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">AllocationCpSatSolver</span><span class="o">.</span><span class="n">add_constraint_on_task_unary_resource_allocation</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span><span class="p">,</span> <span class="n">used</span><span class="o">=</span><span class="n">used</span>
+                <span class="p">)</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AllocationBinaryOrIntegerModellingCpSatSolver.add_allocation_changes_constraints">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.add_allocation_changes_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_allocation_changes_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_modelling</span> <span class="o">==</span> <span class="n">AllocationModelling</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_allocation_changes_constraints</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">AllocationCpSatSolver</span><span class="o">.</span><span class="n">add_allocation_changes_constraints</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="is_a_trivial_zero">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.is_a_trivial_zero">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_a_trivial_zero</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="n">LinearExprT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether the variable is actually a plain 0 integer.</span>
+
+<span class="sd">    For instance, tells if is_present variables are real variables or not to avoid</span>
+<span class="sd">    including them in sum, max, ...</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">var</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

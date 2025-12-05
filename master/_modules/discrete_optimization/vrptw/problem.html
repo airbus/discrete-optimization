@@ -1,0 +1,504 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.vrptw.problem &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.vrptw.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.vrptw.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationProblem</span><span class="p">,</span>
+    <span class="n">AllocationSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchedulingProblem</span><span class="p">,</span>
+    <span class="n">SchedulingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">Task</span> <span class="o">=</span> <span class="nb">int</span>
+<span class="n">UnaryResource</span> <span class="o">=</span> <span class="nb">int</span>
+
+
+<div class="viewcode-block" id="VRPTWSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VRPTWSolution</span><span class="p">(</span><span class="n">SchedulingSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solution class for the VRPTW problem.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        problem (VRPTWProblem): The problem instance.</span>
+<span class="sd">        routes (List[List[int]]):</span>
+<span class="sd">            List of routes. Each route is a list of customer node indices.</span>
+<span class="sd">            The depot (start/end) is implicit and not included in these lists.</span>
+<span class="sd">        arrival_times (Dict[int, List[float]]):</span>
+<span class="sd">            Maps vehicle index to a list of arrival times at customer nodes in its route.</span>
+<span class="sd">        start_service_times (Dict[int, List[float]]):</span>
+<span class="sd">            Maps vehicle index to a list of service start times at customer nodes.</span>
+<span class="sd">        route_loads (List[float]): Total demand for each route.</span>
+<span class="sd">        route_distances (List[float]): Total distance for each route.</span>
+
+<span class="sd">        # Evaluated metrics</span>
+<span class="sd">        total_distance (float): Sum of distances of all routes.</span>
+<span class="sd">        nb_vehicles_used (int): Number of routes used.</span>
+<span class="sd">        tw_violation (float): Total violation of time windows (sum of lateness).</span>
+<span class="sd">        capacity_violation (float): Total violation of vehicle capacities.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="VRPTWSolution.is_allocated">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution.is_allocated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">[</span><span class="n">unary_resource</span><span class="p">]</span></div>
+
+
+    <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;VRPTWProblem&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;VRPTWProblem&quot;</span><span class="p">,</span>
+        <span class="n">routes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">scaling</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="n">routes</span> <span class="k">if</span> <span class="n">routes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span> <span class="o">=</span> <span class="n">scaling</span>
+        <span class="c1"># Detailed schedule (filled by evaluation)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arrival_times</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_service_times</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">route_loads</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">route_distances</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Main objective and penalty values (filled by evaluation)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_vehicles_used</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tw_violation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">capacity_violation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+<div class="viewcode-block" id="VRPTWSolution.copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;VRPTWSolution&quot;</span><span class="p">:</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">VRPTWSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">routes</span><span class="o">=</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="c1"># Copy evaluated data</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">arrival_times</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrival_times</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">start_service_times</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_service_times</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">route_loads</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_loads</span><span class="p">)</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">route_distances</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_distances</span><span class="p">)</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">total_distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_distance</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">nb_vehicles_used</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_vehicles_used</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">tw_violation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tw_violation</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">capacity_violation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity_violation</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+<div class="viewcode-block" id="VRPTWSolution.lazy_copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution.lazy_copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lazy_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;VRPTWSolution&quot;</span><span class="p">:</span>
+        <span class="c1"># Routes are mutable, so we must copy them.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="VRPTWSolution.change_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution.change_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_problem</span><span class="p">,</span> <span class="n">VRPTWProblem</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;new_problem must be a VRPTWProblem instance.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">new_problem</span>
+        <span class="c1"># Invalidate evaluated metrics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arrival_times</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_service_times</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">route_loads</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">route_distances</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_distance</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_vehicles_used</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tw_violation</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">capacity_violation</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">route_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;  Vehicle </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: Depot -&gt; </span><span class="si">{</span><span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">route</span><span class="p">))</span><span class="si">}</span><span class="s2"> -&gt; Depot&quot;</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">route</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;VRPTW Solution:</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Total Distance: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_distance</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Vehicles Used: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_vehicles_used</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;TW Violation: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tw_violation</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Capacity Violation: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity_violation</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Routes:</span><span class="se">\n</span><span class="si">{</span><span class="n">route_str</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="VRPTWSolution.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_times&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_times&quot;</span><span class="p">)[</span><span class="n">task</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">t</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrival_times</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">[</span><span class="n">v</span><span class="p">])):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">task</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scaling</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_service_times</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="n">j</span><span class="p">]))</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">service_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                    <span class="p">)</span>
+        <span class="k">if</span> <span class="n">task</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="VRPTWSolution.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="VRPTWProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VRPTWProblem</span><span class="p">(</span><span class="n">SchedulingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">AllocationProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vehicle Routing Problem with Time Windows (VRPTW) Problem class.</span>
+
+<span class="sd">    This model includes:</span>
+<span class="sd">    - Multiple vehicles with a shared capacity.</span>
+<span class="sd">    - A single depot.</span>
+<span class="sd">    - Customers with demand.</span>
+<span class="sd">    - Customers with time windows (ready time, due date).</span>
+<span class="sd">    - Customers with service times.</span>
+<span class="sd">    - Objectives: 1) Minimize number of vehicles, 2) Minimize total distance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="VRPTWProblem.get_makespan_upper_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem.get_makespan_upper_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="mi">1000</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">depot_node</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">nb_vehicles</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">vehicle_capacity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">nb_nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">distance_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">time_windows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+        <span class="n">service_times</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">demands</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">depot_node</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_vehicles</span> <span class="o">=</span> <span class="n">nb_vehicles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vehicle_capacity</span> <span class="o">=</span> <span class="n">vehicle_capacity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_nodes</span> <span class="o">=</span> <span class="n">nb_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span> <span class="o">=</span> <span class="n">distance_matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span> <span class="o">=</span> <span class="n">time_windows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">service_times</span> <span class="o">=</span> <span class="n">service_times</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demands</span> <span class="o">=</span> <span class="n">demands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depot_node</span> <span class="o">=</span> <span class="n">depot_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">customers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depot_node</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_customers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">customers</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unary_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_vehicles</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasks_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">customers</span>
+
+<div class="viewcode-block" id="VRPTWProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+        <span class="c1"># VRPTW is complex to encode with simple registers.</span>
+        <span class="c1"># We&#39;ll rely on the Solution object itself for evaluation.</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;routes&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;routes&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VRPTWProblem.get_objective_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                <span class="c1"># Primary objective</span>
+                <span class="s2">&quot;nb_vehicles_used&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">100000.0</span>
+                <span class="p">),</span>
+                <span class="c1"># Secondary objective</span>
+                <span class="s2">&quot;total_distance&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="c1"># Penalties</span>
+                <span class="s2">&quot;tw_violation&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">1000.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;capacity_violation&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">1000.0</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VRPTWProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">VRPTWSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluates a VRPTWSolution.</span>
+<span class="sd">        Calculates distances, time window violations, and capacity violations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">total_distance</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">nb_vehicles_used</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">routes</span><span class="p">)</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">tw_violation</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">capacity_violation</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">solution</span><span class="o">.</span><span class="n">arrival_times</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">start_service_times</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">route_loads</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">route_distances</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">depot_ready</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">depot_node</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">depot_due</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">depot_node</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">v_idx</span><span class="p">,</span> <span class="n">route</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">routes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">route</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">current_time</span> <span class="o">=</span> <span class="n">depot_ready</span>
+            <span class="n">current_load</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">current_dist</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">last_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depot_node</span>
+
+            <span class="n">route_arrivals</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">route_starts</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># Travel to first customer</span>
+            <span class="n">first_customer</span> <span class="o">=</span> <span class="n">route</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">last_node</span><span class="p">,</span> <span class="n">first_customer</span><span class="p">]</span>
+            <span class="n">current_dist</span> <span class="o">+=</span> <span class="n">dist</span>
+            <span class="n">arrival_time</span> <span class="o">=</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">dist</span>
+
+            <span class="c1"># Service at first customer</span>
+            <span class="n">ready</span><span class="p">,</span> <span class="n">due</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="n">first_customer</span><span class="p">]</span>
+            <span class="n">service</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service_times</span><span class="p">[</span><span class="n">first_customer</span><span class="p">]</span>
+
+            <span class="n">start_service_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">arrival_time</span><span class="p">,</span> <span class="n">ready</span><span class="p">)</span>
+            <span class="n">current_time</span> <span class="o">=</span> <span class="n">start_service_time</span> <span class="o">+</span> <span class="n">service</span>
+            <span class="n">current_load</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="n">first_customer</span><span class="p">]</span>
+
+            <span class="n">solution</span><span class="o">.</span><span class="n">tw_violation</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_service_time</span> <span class="o">-</span> <span class="n">due</span><span class="p">)</span>
+            <span class="n">route_arrivals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arrival_time</span><span class="p">)</span>
+            <span class="n">route_starts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start_service_time</span><span class="p">)</span>
+            <span class="n">last_node</span> <span class="o">=</span> <span class="n">first_customer</span>
+
+            <span class="c1"># Travel to subsequent customers</span>
+            <span class="k">for</span> <span class="n">customer</span> <span class="ow">in</span> <span class="n">route</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">last_node</span><span class="p">,</span> <span class="n">customer</span><span class="p">]</span>
+                <span class="n">current_dist</span> <span class="o">+=</span> <span class="n">dist</span>
+                <span class="n">arrival_time</span> <span class="o">=</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">dist</span>
+
+                <span class="n">ready</span><span class="p">,</span> <span class="n">due</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="n">customer</span><span class="p">]</span>
+                <span class="n">service</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service_times</span><span class="p">[</span><span class="n">customer</span><span class="p">]</span>
+
+                <span class="n">start_service_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">arrival_time</span><span class="p">,</span> <span class="n">ready</span><span class="p">)</span>
+                <span class="n">current_time</span> <span class="o">=</span> <span class="n">start_service_time</span> <span class="o">+</span> <span class="n">service</span>
+                <span class="n">current_load</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="n">customer</span><span class="p">]</span>
+
+                <span class="n">solution</span><span class="o">.</span><span class="n">tw_violation</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_service_time</span> <span class="o">-</span> <span class="n">due</span><span class="p">)</span>
+                <span class="n">route_arrivals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arrival_time</span><span class="p">)</span>
+                <span class="n">route_starts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start_service_time</span><span class="p">)</span>
+                <span class="n">last_node</span> <span class="o">=</span> <span class="n">customer</span>
+
+            <span class="c1"># Travel back to depot</span>
+            <span class="n">dist_to_depot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">last_node</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">depot_node</span><span class="p">]</span>
+            <span class="n">current_dist</span> <span class="o">+=</span> <span class="n">dist_to_depot</span>
+            <span class="n">arrival_back_at_depot</span> <span class="o">=</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">dist_to_depot</span>
+
+            <span class="n">solution</span><span class="o">.</span><span class="n">tw_violation</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">arrival_back_at_depot</span> <span class="o">-</span> <span class="n">depot_due</span><span class="p">)</span>
+
+            <span class="c1"># Store route-level stats</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">capacity_violation</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">current_load</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">vehicle_capacity</span><span class="p">)</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">total_distance</span> <span class="o">+=</span> <span class="n">current_dist</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">arrival_times</span><span class="p">[</span><span class="n">v_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">route_arrivals</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">start_service_times</span><span class="p">[</span><span class="n">v_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">route_starts</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">route_loads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_load</span><span class="p">)</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">route_distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_dist</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;nb_vehicles_used&quot;</span><span class="p">:</span> <span class="n">solution</span><span class="o">.</span><span class="n">nb_vehicles_used</span><span class="p">,</span>
+            <span class="s2">&quot;total_distance&quot;</span><span class="p">:</span> <span class="n">solution</span><span class="o">.</span><span class="n">total_distance</span><span class="p">,</span>
+            <span class="s2">&quot;tw_violation&quot;</span><span class="p">:</span> <span class="o">-</span><span class="n">solution</span><span class="o">.</span><span class="n">tw_violation</span><span class="p">,</span>
+            <span class="s2">&quot;capacity_violation&quot;</span><span class="p">:</span> <span class="o">-</span><span class="n">solution</span><span class="o">.</span><span class="n">capacity_violation</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="VRPTWProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">VRPTWSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># Evaluate if not already done</span>
+        <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">total_distance</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">solution</span><span class="o">.</span><span class="n">nb_vehicles_used</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">tw_violation</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="n">solution</span><span class="o">.</span><span class="n">capacity_violation</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="n">solution</span><span class="o">.</span><span class="n">nb_vehicles_used</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_vehicles</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VRPTWProblem.get_dummy_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem.get_dummy_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VRPTWSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a dummy solution (one vehicle per customer).&quot;&quot;&quot;</span>
+        <span class="n">routes</span> <span class="o">=</span> <span class="p">[[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">customers</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">VRPTWSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">routes</span><span class="o">=</span><span class="n">routes</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VRPTWProblem.get_solution_type">
+<a class="viewcode-back" href="../../../api/discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">VRPTWSolution</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

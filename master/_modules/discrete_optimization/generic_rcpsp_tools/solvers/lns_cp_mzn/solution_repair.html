@@ -1,0 +1,686 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">minizinc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.graph_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GraphRcpsp</span><span class="p">,</span>
+    <span class="n">GraphSpecialConstraintsRcpsp</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseSchedulingMznConstraintHandler</span><span class="p">,</span>
+    <span class="n">ParamsConstraintBuilder</span><span class="p">,</span>
+    <span class="n">constraint_unit_used_subset_employees_preemptive</span><span class="p">,</span>
+    <span class="n">constraint_unit_used_to_tasks_preemptive</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem_preemptive</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PreemptiveRcpspProblem</span><span class="p">,</span>
+    <span class="n">PreemptiveRcpspSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem_specialized_constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SpecialConstraintsPreemptiveRcpspProblem</span><span class="p">,</span>
+    <span class="n">SpecialPreemptiveRcpspSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.cp_mzn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpMultimodePreemptiveRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpPreemptiveRcpspSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_fake_tasks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">PreemptiveMultiskillRcpspSolution</span><span class="p">,</span>
+    <span class="n">VariantMultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">create_fake_tasks_multiskills</span><span class="p">,</span>
+    <span class="n">employee_usage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.solvers.cp_mzn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpMultiskillRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">ANY_RCPSP</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span>
+    <span class="n">RcpspProblem</span><span class="p">,</span>
+    <span class="n">PreemptiveRcpspProblem</span><span class="p">,</span>
+    <span class="n">SpecialConstraintsPreemptiveRcpspProblem</span><span class="p">,</span>
+    <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">VariantMultiskillRcpspProblem</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="compute_shift_extremities">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair.compute_shift_extremities">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_shift_extremities</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">):</span>
+    <span class="n">ressource_names</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_resource_names</span><span class="p">()</span>
+    <span class="n">ressource_arrays</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">r</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">get_resource_availability_array</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ressource_names</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">MultiskillRcpspProblem</span><span class="p">):</span>
+        <span class="n">fake_tasks</span><span class="p">,</span> <span class="n">fake_tasks_unit</span> <span class="o">=</span> <span class="n">create_fake_tasks_multiskills</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">fake_tasks</span> <span class="o">+</span> <span class="n">fake_tasks_unit</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fake_tasks</span> <span class="o">=</span> <span class="n">create_fake_tasks</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">fake_tasks</span>
+    <span class="k">return</span> <span class="n">f</span></div>
+
+
+
+<div class="viewcode-block" id="return_pauses_and_active_times">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair.return_pauses_and_active_times">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">return_pauses_and_active_times</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">PreemptiveMultiskillRcpspSolution</span><span class="p">,</span>
+        <span class="n">PreemptiveRcpspSolution</span><span class="p">,</span>
+        <span class="n">SpecialPreemptiveRcpspSolution</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">):</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">tasks_list</span>
+    <span class="n">dictionnary</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_times_list</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_times_list</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">durations</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">starts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">ends</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">starts</span><span class="p">))]</span>
+        <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;starts&quot;</span><span class="p">:</span> <span class="n">starts</span><span class="p">,</span> <span class="s2">&quot;ends&quot;</span><span class="p">:</span> <span class="n">ends</span><span class="p">,</span> <span class="s2">&quot;durations&quot;</span><span class="p">:</span> <span class="n">durations</span><span class="p">}</span>
+        <span class="n">total_duration</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
+        <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;total_duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_duration</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">starts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span><span class="n">starts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ends</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">starts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;diff_start_end&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff</span>
+    <span class="k">return</span> <span class="n">dictionnary</span></div>
+
+
+
+<div class="viewcode-block" id="find_possible_problems_preemptive">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair.find_possible_problems_preemptive">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_possible_problems_preemptive</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">PreemptiveMultiskillRcpspSolution</span><span class="p">,</span>
+        <span class="n">PreemptiveRcpspSolution</span><span class="p">,</span>
+        <span class="n">SpecialPreemptiveRcpspSolution</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">):</span>
+    <span class="n">dictionnary</span> <span class="o">=</span> <span class="n">return_pauses_and_active_times</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+    <span class="n">problems</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">dictionnary</span><span class="p">:</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;diff_start_end&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">durations</span> <span class="o">=</span> <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;durations&quot;</span><span class="p">]</span>
+        <span class="n">total_duration</span> <span class="o">=</span> <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;total_duration&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">diff</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">diff</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">durations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="ow">or</span> <span class="n">diff</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">problems</span><span class="p">:</span>
+                    <span class="n">problems</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">problems</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;end_start_problem&quot;</span><span class="p">,</span>
+                        <span class="n">j</span><span class="p">,</span>
+                        <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="p">{</span>
+                            <span class="s2">&quot;prev_end&quot;</span><span class="p">:</span> <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;ends&quot;</span><span class="p">][</span><span class="n">j</span><span class="p">],</span>
+                            <span class="s2">&quot;next_start&quot;</span><span class="p">:</span> <span class="n">dictionnary</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">},</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">durations</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">total_duration</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">total_duration</span> <span class="o">&gt;</span> <span class="mi">10</span> <span class="ow">and</span> <span class="n">durations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">durations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">total_duration</span>
+            <span class="p">):</span>
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">problems</span><span class="p">:</span>
+                    <span class="n">problems</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">problems</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;duration_problem&quot;</span><span class="p">,</span>
+                        <span class="n">j</span><span class="p">,</span>
+                        <span class="p">{</span><span class="s2">&quot;dur&quot;</span><span class="p">:</span> <span class="n">durations</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="s2">&quot;tot&quot;</span><span class="p">:</span> <span class="n">total_duration</span><span class="p">},</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+                <span class="c1"># starts[j+1] should be higher than end[j]+delta...</span>
+                <span class="c1"># typical case : starts = [0, 50], [49, 53]</span>
+    <span class="k">return</span> <span class="n">problems</span></div>
+
+
+
+<div class="viewcode-block" id="problem_constraints">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair.problem_constraints">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">problem_constraints</span><span class="p">(</span>
+    <span class="n">current_solution</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PreemptiveRcpspSolution</span><span class="p">,</span> <span class="n">PreemptiveMultiskillRcpspSolution</span><span class="p">],</span>
+    <span class="n">problems_output</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
+    <span class="n">minus_delta</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">plus_delta</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">cp_solver</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">CpPreemptiveRcpspSolver</span><span class="p">,</span>
+        <span class="n">CpMultimodePreemptiveRcpspSolver</span><span class="p">,</span>
+        <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">constraint_max_time</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">minus_delta_2</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">plus_delta_2</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">max_time</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">)</span>
+    <span class="n">multimode</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">cp_solver</span><span class="p">,</span> <span class="p">(</span><span class="n">CpMultimodePreemptiveRcpspSolver</span><span class="p">,</span> <span class="n">CpMultiskillRcpspSolver</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">multimode</span><span class="p">:</span>
+        <span class="n">modes_dict</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">build_mode_dict</span><span class="p">(</span>
+            <span class="n">current_solution</span><span class="o">.</span><span class="n">rcpsp_modes</span>
+        <span class="p">)</span>
+    <span class="n">subtasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">problems_output</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subtasks</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">:</span>
+        <span class="n">subtasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">subtasks</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">subtasks</span> <span class="o">=</span> <span class="n">subtasks</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span>
+                <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                    <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">subtasks</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">jobs_to_fix</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span> <span class="k">if</span> <span class="n">j</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subtasks</span><span class="p">]</span>
+    <span class="n">list_strings</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">subtasks_2</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+    <span class="n">string</span> <span class="o">=</span> <span class="p">(</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">             int: nb_task_problems=&quot;&quot;&quot;</span>
+        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">subtasks_2</span><span class="p">))</span>
+        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">             array[1..nb_task_problems] of Tasks: task_list_problems=&quot;&quot;&quot;</span>
+        <span class="o">+</span> <span class="nb">str</span><span class="p">([</span><span class="n">cp_solver</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">subtasks_2</span><span class="p">])</span>
+        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">             var int: nb_preemption_subtasks;</span><span class="se">\n</span>
+<span class="s2">             var int: nb_small_tasks;</span><span class="se">\n</span>
+<span class="s2">             constraint nb_preemption_subtasks=sum(i in 1..nb_task_problems)(sum(j in 2..nb_preemptive)(bool2int(d_preemptive[task_list_problems[i], j]&gt;0)));</span><span class="se">\n</span>
+<span class="s2">             constraint nb_small_tasks=sum(i in 1..nb_task_problems)(sum(j in 1..nb_preemptive)(bool2int(d_preemptive[task_list_problems[i], j]&gt;0 /</span><span class="se">\</span>
+<span class="s2">             ((d_preemptive[task_list_problems[i], j]&lt;=adur[task_list_problems[i]] div 20) \/ (d_preemptive[task_list_problems[i], j]==1 /\ adur[task_list_problems[i]]&gt;10)))));</span><span class="se">\n</span>
+<span class="s2">             &quot;&quot;&quot;</span>
+    <span class="p">)</span>
+    <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string</span><span class="p">]</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">second_objectives</span><span class="p">[</span><span class="s2">&quot;weights&quot;</span><span class="p">]</span>
+    <span class="n">name_penalty</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">second_objectives</span><span class="p">[</span><span class="s2">&quot;name_penalty&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">define_second_part_objective</span><span class="p">(</span><span class="n">weights_</span><span class="p">,</span> <span class="n">name_penalty_</span><span class="p">):</span>
+        <span class="n">sum_string</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">weights_</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;*&quot;</span> <span class="o">+</span> <span class="n">name_penalty_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights_</span><span class="p">))]</span>
+        <span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;constraint sec_objective==&quot;</span> <span class="o">+</span> <span class="n">sum_string</span> <span class="o">+</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">define_second_part_objective</span><span class="p">(</span>
+        <span class="n">weights_</span><span class="o">=</span><span class="n">weights</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span>
+        <span class="n">name_penalty_</span><span class="o">=</span><span class="n">name_penalty</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;nb_preemption_subtasks&quot;</span><span class="p">,</span> <span class="s2">&quot;nb_small_tasks&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">list_strings</span> <span class="o">+=</span> <span class="n">s</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">subtasks</span><span class="p">:</span>
+        <span class="n">list_starts</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">get_start_times_list</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="n">list_ends</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_times_list</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_starts</span><span class="p">)):</span>
+            <span class="n">start_time_j</span> <span class="o">=</span> <span class="n">list_starts</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">end_time_j</span> <span class="o">=</span> <span class="n">list_ends</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">duration_j</span> <span class="o">=</span> <span class="n">end_time_j</span> <span class="o">-</span> <span class="n">start_time_j</span>
+            <span class="n">string1_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                <span class="n">start_time</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_time_j</span> <span class="o">-</span> <span class="n">minus_delta</span><span class="p">),</span>
+                <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">,</span>
+                <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">string2_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                <span class="n">start_time</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">max_time</span><span class="p">,</span> <span class="n">start_time_j</span> <span class="o">+</span> <span class="n">plus_delta</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">constraint_max_time</span>
+                <span class="k">else</span> <span class="n">start_time_j</span> <span class="o">+</span> <span class="n">plus_delta</span><span class="p">,</span>
+                <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span>
+                <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">string1_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                <span class="n">duration</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">duration_j</span> <span class="o">-</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># 0 for index 1</span>
+                <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">,</span>
+                <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">string2_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                <span class="n">duration</span><span class="o">=</span><span class="n">duration_j</span> <span class="o">+</span> <span class="mi">20</span><span class="p">,</span>  <span class="c1"># +50 for index 1</span>
+                <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span>
+                <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string1_dur</span><span class="p">,</span> <span class="n">string1_start</span><span class="p">,</span> <span class="n">string2_dur</span><span class="p">,</span> <span class="n">string2_start</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_starts</span><span class="p">),</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">nb_preemptive</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">cp_solver</span><span class="p">,</span> <span class="p">(</span><span class="n">CpMultiskillRcpspSolver</span><span class="p">,</span> <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">string1_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span> <span class="n">part_id</span><span class="o">=</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">string1_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span> <span class="n">part_id</span><span class="o">=</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">)</span>
+            <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string1_dur</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_to_fix</span><span class="p">:</span>
+        <span class="n">is_paused</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_solution</span><span class="o">.</span><span class="n">get_start_times_list</span><span class="p">(</span><span class="n">job</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="n">is_paused_str</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span> <span class="k">if</span> <span class="n">is_paused</span> <span class="k">else</span> <span class="s2">&quot;false&quot;</span>
+        <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="s2">&quot;constraint is_paused[&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cp_solver</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">job</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s2">&quot;]==&quot;</span>
+            <span class="o">+</span> <span class="n">is_paused_str</span>
+            <span class="o">+</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">]</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_to_fix</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">multimode</span><span class="p">:</span>
+            <span class="n">list_strings</span> <span class="o">+=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_task_to_mode</span><span class="p">(</span>
+                <span class="n">task_id</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">modes_dict</span><span class="p">[</span><span class="n">job</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">subtasks</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">list_starts</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">get_start_times_list</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="n">list_ends</span> <span class="o">=</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_times_list</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_starts</span><span class="p">)):</span>
+            <span class="n">start_time_j</span> <span class="o">=</span> <span class="n">list_starts</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">end_time_j</span> <span class="o">=</span> <span class="n">list_ends</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">duration_j</span> <span class="o">=</span> <span class="n">end_time_j</span> <span class="o">-</span> <span class="n">start_time_j</span>
+            <span class="k">if</span> <span class="n">minus_delta_2</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">plus_delta_2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">string1_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="n">start_time_j</span><span class="p">,</span>
+                    <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">,</span>
+                    <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">string1_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration_j</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">,</span> <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">)</span>
+                <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string1_dur</span><span class="p">,</span> <span class="n">string1_start</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">string1_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_time_j</span> <span class="o">-</span> <span class="n">minus_delta_2</span><span class="p">),</span>
+                    <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">,</span>
+                    <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">string2_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">max_time</span><span class="p">,</span> <span class="n">start_time_j</span> <span class="o">+</span> <span class="n">plus_delta_2</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">constraint_max_time</span>
+                    <span class="k">else</span> <span class="n">start_time_j</span> <span class="o">+</span> <span class="n">plus_delta_2</span><span class="p">,</span>
+                    <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span>
+                    <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">string1_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                    <span class="n">duration</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">duration_j</span> <span class="o">-</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">,</span>
+                    <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">string2_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration_j</span> <span class="o">+</span> <span class="mi">5</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span> <span class="n">part_id</span><span class="o">=</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">)</span>
+                <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string1_dur</span><span class="p">,</span> <span class="n">string1_start</span><span class="p">,</span> <span class="n">string2_dur</span><span class="p">,</span> <span class="n">string2_start</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_starts</span><span class="p">),</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">nb_preemptive</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">minus_delta_2</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">plus_delta_2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">string1_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">job</span><span class="p">),</span>
+                    <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">,</span>
+                    <span class="n">part_id</span><span class="o">=</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string1_start</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">string1_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">job</span><span class="p">)</span> <span class="o">-</span> <span class="n">minus_delta_2</span><span class="p">,</span>
+                    <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">,</span>
+                    <span class="n">part_id</span><span class="o">=</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">string2_start</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span>
+                        <span class="n">max_time</span><span class="p">,</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">job</span><span class="p">)</span> <span class="o">+</span> <span class="n">plus_delta_2</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">constraint_max_time</span>
+                    <span class="k">else</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">job</span><span class="p">)</span> <span class="o">+</span> <span class="n">plus_delta_2</span><span class="p">,</span>
+                    <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span>
+                    <span class="n">part_id</span><span class="o">=</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string2_start</span><span class="p">,</span> <span class="n">string1_start</span><span class="p">]</span>
+            <span class="n">string1_dur</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">constraint_duration_string_preemptive_i</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">,</span> <span class="n">part_id</span><span class="o">=</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string1_dur</span><span class="p">]</span>
+
+    <span class="n">exceptions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">problems_output</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">problems_output</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;end_start_problem&quot;</span><span class="p">:</span>
+                <span class="n">exceptions</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">l</span><span class="p">[</span><span class="mi">2</span><span class="p">])]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">exceptions</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.99</span><span class="p">:</span>
+        <span class="n">exceptions</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">exceptions</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">exceptions</span><span class="p">),</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">list_strings</span> <span class="o">+=</span> <span class="n">constraint_unit_used_to_tasks_preemptive</span><span class="p">(</span>
+            <span class="n">tasks_set</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span>
+                <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                    <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+                    <span class="nb">min</span><span class="p">(</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="mf">0.99</span> <span class="o">*</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">),</span>
+                        <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">current_solution</span><span class="o">=</span><span class="n">current_solution</span><span class="p">,</span>
+            <span class="n">cp_solver</span><span class="o">=</span><span class="n">cp_solver</span><span class="p">,</span>
+            <span class="n">exceptions</span><span class="o">=</span><span class="n">exceptions</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">employee_usage_matrix</span><span class="p">,</span> <span class="n">sum_usage</span><span class="p">,</span> <span class="n">employees_usage_dict</span> <span class="o">=</span> <span class="n">employee_usage</span><span class="p">(</span>
+            <span class="n">solution</span><span class="o">=</span><span class="n">current_solution</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span>
+        <span class="p">)</span>
+        <span class="n">sorted_employee</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">sum_usage</span><span class="p">)</span>
+        <span class="n">set_employees_to_fix</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                <span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">,</span>
+                <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">current_solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">list_strings</span> <span class="o">+=</span> <span class="n">constraint_unit_used_subset_employees_preemptive</span><span class="p">(</span>
+            <span class="n">employees_set</span><span class="o">=</span><span class="n">set_employees_to_fix</span><span class="p">,</span>
+            <span class="n">current_solution</span><span class="o">=</span><span class="n">current_solution</span><span class="p">,</span>
+            <span class="n">cp_solver</span><span class="o">=</span><span class="n">cp_solver</span><span class="p">,</span>
+            <span class="n">employees_usage_dict</span><span class="o">=</span><span class="n">employees_usage_dict</span><span class="p">,</span>
+            <span class="n">exceptions</span><span class="o">=</span><span class="n">exceptions</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">list_strings</span></div>
+
+
+
+<div class="viewcode-block" id="post_process_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair.post_process_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">post_process_solution</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">solution</span><span class="p">):</span>
+    <span class="n">problem</span> <span class="o">=</span> <span class="n">find_possible_problems_preemptive</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="NeighborRepairProblems">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair.NeighborRepairProblems">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeighborRepairProblems</span><span class="p">(</span><span class="n">BaseSchedulingMznConstraintHandler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">RcpspProblem</span><span class="p">,</span>
+            <span class="n">PreemptiveRcpspProblem</span><span class="p">,</span>
+            <span class="n">PreemptiveRcpspSolution</span><span class="p">,</span>
+            <span class="n">SpecialConstraintsPreemptiveRcpspProblem</span><span class="p">,</span>
+            <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">params_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParamsConstraintBuilder</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">SpecialConstraintsPreemptiveRcpspProblem</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">RcpspProblem</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">do_special_constraints</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph_rcpsp</span> <span class="o">=</span> <span class="n">GraphSpecialConstraintsRcpsp</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph_rcpsp</span> <span class="o">=</span> <span class="n">GraphRcpsp</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+            <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+            <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+            <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">params_2</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+            <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+            <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+            <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+            <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">params_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">params</span><span class="p">,</span> <span class="n">params_2</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_list</span> <span class="o">=</span> <span class="n">params_list</span>
+
+<div class="viewcode-block" id="NeighborRepairProblems.adding_constraint_from_results_store">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair.NeighborRepairProblems.adding_constraint_from_results_store">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">CpPreemptiveRcpspSolver</span><span class="p">,</span>
+            <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">,</span>
+            <span class="n">CpMultimodePreemptiveRcpspSolver</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">result_storage_last_iteration</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">child_instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints to the internal model of a solver based on previous solutions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solver: solver whose internal model is updated</span>
+<span class="sd">            result_storage: all results so far</span>
+<span class="sd">            result_storage_last_iteration: results from last LNS iteration only</span>
+<span class="sd">            child_instance: minizinc instance where to include the constraints</span>
+<span class="sd">            **kwargs:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            empty list, not used</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">current_solution</span><span class="p">:</span> <span class="n">PreemptiveRcpspSolution</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extract_best_solution_from_last_iteration</span><span class="p">(</span>
+                <span class="n">result_storage</span><span class="o">=</span><span class="n">result_storage</span><span class="p">,</span>
+                <span class="n">result_storage_last_iteration</span><span class="o">=</span><span class="n">result_storage_last_iteration</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">current_solution</span><span class="o">.</span><span class="n">get_nb_task_preemption</span><span class="p">()</span><span class="si">}</span><span class="s2"> task preempted&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">current_solution</span><span class="o">.</span><span class="n">get_max_preempted</span><span class="p">()</span><span class="si">}</span><span class="s2"> most preempted task&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">current_solution</span><span class="o">.</span><span class="n">total_number_of_cut</span><span class="p">()</span><span class="si">}</span><span class="s2"> total number of cut&quot;</span><span class="p">)</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">current_solution</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current Eval : </span><span class="si">{</span><span class="n">evaluation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraint_penalty&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">problems</span> <span class="o">=</span> <span class="n">find_possible_problems_preemptive</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">solution</span><span class="o">=</span><span class="n">current_solution</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">problems</span><span class="p">[</span><span class="n">t</span><span class="p">])</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">problems</span><span class="p">])</span><span class="si">}</span><span class="s2"> problems ?&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Problems : </span><span class="si">{</span><span class="n">problems</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">list_strings</span> <span class="o">=</span> <span class="n">problem_constraints</span><span class="p">(</span>
+            <span class="n">current_solution</span><span class="o">=</span><span class="n">current_solution</span><span class="p">,</span>
+            <span class="n">problems_output</span><span class="o">=</span><span class="n">problems</span><span class="p">,</span>
+            <span class="n">minus_delta</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">minus_delta_primary</span><span class="p">,</span>
+            <span class="n">plus_delta</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">plus_delta_primary</span><span class="p">,</span>
+            <span class="n">cp_solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
+            <span class="n">constraint_max_time</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">constraint_max_time_to_current_solution</span><span class="p">,</span>
+            <span class="n">minus_delta_2</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">minus_delta_secondary</span><span class="p">,</span>
+            <span class="n">plus_delta_2</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">plus_delta_secondary</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">list_strings</span><span class="p">:</span>
+            <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraint_penalty&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span>
+                <span class="s2">&quot;constraint objective=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">constraint_start_time_string</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+                <span class="n">start_time</span><span class="o">=</span><span class="n">current_solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">)</span>
+                <span class="o">+</span> <span class="mi">200</span><span class="p">,</span>
+                <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">constraint_start_time_string_preemptive_i</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+                <span class="n">start_time</span><span class="o">=</span><span class="n">current_solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">)</span> <span class="o">+</span> <span class="mi">200</span><span class="p">,</span>
+                <span class="n">part_id</span><span class="o">=</span><span class="n">solver</span><span class="o">.</span><span class="n">nb_preemptive</span><span class="p">,</span>
+                <span class="n">sign</span><span class="o">=</span><span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">second_objectives</span><span class="p">[</span><span class="s2">&quot;weights&quot;</span><span class="p">]</span>
+        <span class="n">name_penalty</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">second_objectives</span><span class="p">[</span><span class="s2">&quot;name_penalty&quot;</span><span class="p">]</span>
+        <span class="n">sum_string</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;*&quot;</span> <span class="o">+</span> <span class="n">name_penalty</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">))]</span>
+        <span class="p">)</span>
+        <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span>
+            <span class="s2">&quot;constraint &quot;</span>
+            <span class="o">+</span> <span class="n">sum_string</span>
+            <span class="o">+</span> <span class="s2">&quot;&lt;=&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mf">1.01</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraint_penalty&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+            <span class="o">+</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraint_penalty&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">strings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">strings</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">constraint_objective_equal_makespan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">:</span>
+            <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">list_strings</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

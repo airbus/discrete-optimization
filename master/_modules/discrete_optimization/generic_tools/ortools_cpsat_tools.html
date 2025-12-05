@@ -1,0 +1,429 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.ortools_cpsat_tools &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.ortools_cpsat_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.ortools_cpsat_tools</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2024 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FEASIBLE</span><span class="p">,</span>
+    <span class="n">INFEASIBLE</span><span class="p">,</span>
+    <span class="n">OPTIMAL</span><span class="p">,</span>
+    <span class="n">UNKNOWN</span><span class="p">,</span>
+    <span class="n">Constraint</span><span class="p">,</span>
+    <span class="n">CpModel</span><span class="p">,</span>
+    <span class="n">CpSolverSolutionCallback</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSolver</span> <span class="k">as</span> <span class="n">OrtoolsInternalCpSolver</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSolver</span><span class="p">,</span>
+    <span class="n">ParametersCp</span><span class="p">,</span>
+    <span class="n">SignEnum</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BoundsProviderMixin</span><span class="p">,</span>
+    <span class="n">StatusSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolveEarlyStop</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrtoolsCpSatSolver</span><span class="p">(</span><span class="n">CpSolver</span><span class="p">,</span> <span class="n">BoundsProviderMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic ortools cp-sat solver.&quot;&quot;&quot;</span>
+
+    <span class="n">cp_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CpModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OrtoolsInternalCpSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">clb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CpSolverSolutionCallback</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">early_stopping_exception</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">Exception</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_current_internal_objective_best_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_current_internal_objective_best_bound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.retrieve_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a do solution from the cpsat solver internal solution.</span>
+
+<span class="sd">        It will be called each time the cpsat solver find a new solution.</span>
+<span class="sd">        At that point, value of internal variables are accessible via `cpsolvercb.Value(VARIABLE_NAME)`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cpsolvercb: the ortools callback called when the cpsat solver finds a new solution.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the intermediate solution, at do format.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+        <span class="n">ortools_cpsat_solver_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">retrieve_stats</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve the problem with a CpSat solver drom ortools library.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callbacks: list of callbacks used to hook into the various stage of the solve</span>
+<span class="sd">            time_limit: the solve process stops after this time limit (in seconds).</span>
+<span class="sd">                If None, no time limit is applied.</span>
+<span class="sd">            parameters_cp: parameters specific to cp solvers.</span>
+<span class="sd">                We use here only `parameters_cp.nb_process`.</span>
+<span class="sd">            ortools_cpsat_solver_kwargs: used to customize the underlying ortools solver.</span>
+<span class="sd">                Each key/value will update the corresponding attribute from the ortools.sat.python.cp_model.CpSolver</span>
+<span class="sd">            retrieve_stats: retrieve detailed stats of cpsat solving in the cpsat callback</span>
+<span class="sd">            and store it in the res object.</span>
+<span class="sd">            **kwargs: keyword arguments passed to `self.init_model()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        A dedicated ortools callback is used to:</span>
+<span class="sd">        - update a resultstorage each time a new solution is found by the cpsat solver.</span>
+<span class="sd">        - call the user (do) callbacks at each new solution, with the possibility of early stopping if the callback return True.</span>
+
+<span class="sd">        This ortools callback use the method `self.retrieve_solution()` to reconstruct a do Solution from the cpsat solve internal state.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">callbacks_list</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parameters_cp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_cp</span> <span class="o">=</span> <span class="n">ParametersCp</span><span class="o">.</span><span class="n">default_cpsat</span><span class="p">()</span>
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">OrtoolsInternalCpSolver</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span>
+        <span class="k">if</span> <span class="n">time_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">solver</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">max_time_in_seconds</span> <span class="o">=</span> <span class="n">time_limit</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">=</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">nb_process</span>
+        <span class="k">if</span> <span class="n">ortools_cpsat_solver_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># customize solver</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ortools_cpsat_solver_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">ortools_callback</span> <span class="o">=</span> <span class="n">OrtoolsCpSatCallback</span><span class="p">(</span>
+            <span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callbacks_list</span><span class="p">,</span> <span class="n">retrieve_stats</span><span class="o">=</span><span class="n">retrieve_stats</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clb</span> <span class="o">=</span> <span class="n">ortools_callback</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">Solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="p">,</span> <span class="n">ortools_callback</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">cpstatus_to_dostatus</span><span class="p">(</span><span class="n">status_from_cpsat</span><span class="o">=</span><span class="n">status</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">ortools_callback</span><span class="o">.</span><span class="n">res</span>
+
+        <span class="c1"># update current obj and bound</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">):</span>  <span class="c1"># do not update when no solution (obj and bound set to 0. by cpsat which seems wrong)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">BestObjectiveBound</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">,</span> <span class="n">SolveEarlyStop</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.remove_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.remove_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove the internal model constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            constraints: constraints created for instance with `add_lexico_constraint()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cstr</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span>
+            <span class="n">cstr</span><span class="o">.</span><span class="n">proto</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.get_current_best_internal_objective_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.get_current_best_internal_objective_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.get_current_best_internal_objective_value">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.get_current_best_internal_objective_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.set_warm_start_from_previous_run">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.set_warm_start_from_previous_run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start_from_previous_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set warm start from previous run of the solver.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;You cannot call `set_warm_start_from_previous_run()` before a first call to `solve()`&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">ClearHints</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">ResponseProto</span><span class="p">()</span>  <span class="c1"># Get the raw response</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">solution</span><span class="p">)):</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">GetIntVarFromProtoIndex</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">solution</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.init_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Init cp model and reset stored variables if any.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span> <span class="o">=</span> <span class="n">CpModel</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.add_bound_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.add_bound_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_bound_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">:</span>
+            <span class="n">cstr_tmp</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&lt;=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">:</span>
+            <span class="n">cstr_tmp</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&gt;=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">:</span>
+            <span class="n">cstr_tmp</span> <span class="o">=</span> <span class="n">var</span> <span class="o">==</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LESS</span><span class="p">:</span>
+            <span class="n">cstr_tmp</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&lt;</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span>
+            <span class="n">cstr_tmp</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&gt;</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span>
+        <span class="n">cstr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cstr_tmp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">cstr</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatSolver.minimize_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver.minimize_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">minimize_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">var</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OrtoolsCpSatCallback">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatCallback">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrtoolsCpSatCallback</span><span class="p">(</span><span class="n">CpSolverSolutionCallback</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">do_solver</span><span class="p">:</span> <span class="n">OrtoolsCpSatSolver</span><span class="p">,</span>
+        <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">,</span>
+        <span class="n">retrieve_stats</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_stats</span> <span class="o">=</span> <span class="n">retrieve_stats</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">retrieve_stats</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="OrtoolsCpSatCallback.on_solution_callback">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatCallback.on_solution_callback">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_solution_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_current_solution</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># end of step callback: stopping?</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+                <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">SolveEarlyStop</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.solve() stopped by user callback.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">StopSearch</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsCpSatCallback.store_current_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatCallback.store_current_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">store_current_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">retrieve_solution</span><span class="p">(</span><span class="n">cpsolvercb</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_stats</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;bound&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">BestObjectiveBound</span><span class="p">(),</span>
+                    <span class="s2">&quot;obj&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">(),</span>
+                    <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserTime</span><span class="p">(),</span>
+                    <span class="s2">&quot;num_conflicts&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">NumConflicts</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="c1"># update current bound and value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">BestObjectiveBound</span><span class="p">()</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="cpstatus_to_dostatus">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.cpstatus_to_dostatus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cpstatus_to_dostatus</span><span class="p">(</span><span class="n">status_from_cpsat</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StatusSolver</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param status_from_cpsat: either [UNKNOWN,INFEASIBLE,OPTIMAL,FEASIBLE] from ortools.cp api.</span>
+<span class="sd">    :return: Status</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">status_from_cpsat</span> <span class="o">==</span> <span class="n">UNKNOWN</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span>
+    <span class="k">if</span> <span class="n">status_from_cpsat</span> <span class="o">==</span> <span class="n">INFEASIBLE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span>
+    <span class="k">if</span> <span class="n">status_from_cpsat</span> <span class="o">==</span> <span class="n">OPTIMAL</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span>
+    <span class="k">if</span> <span class="n">status_from_cpsat</span> <span class="o">==</span> <span class="n">FEASIBLE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

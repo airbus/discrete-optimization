@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=30d551ce"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/versions.js?v=dd1a30db"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api/modules.html" />
+    <link rel="prev" title="Notebooks" href="notebooks.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Dashboard</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#launching-a-d-o-study">Launching a d-o study</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#experiment">Experiment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stats-retriever-callbacks">Stats retriever callbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#database">Database</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#full-example">Full example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#launching-the-d-o-dashboard">Launching the d-o dashboard</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Dashboard</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="dashboard">
+<h1>Dashboard<a class="headerlink" href="#dashboard" title="Link to this heading"></a></h1>
+<p>If you want to compare several solvers on a bunch of problem instances, we have you cover with the discrete-optimization dashboard!</p>
+<p>This tool is used to summarize in a few graphs your experiments.
+The following steps are necessary:</p>
+<ul class="simple">
+<li><p>Create a study by running different solver <em>configs</em> on several problem <em>instances</em>.</p></li>
+<li><p>Store time-indexed metrics for each experiment like d-o fitness, internal model objective, bound, gap, …,
+with the necessary metadata (solver config, problem instance, solver final status).</p></li>
+<li><p>Retrieve this data as a list of pandas dataframes.</p></li>
+<li><p>Launch the dashboard to visualize</p></li>
+</ul>
+<p>We enter into details in the next sections.</p>
+<p><img alt="dashboard in action" src="_images/dashboard.gif" /></p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<p>For the dashboard to run you need to install “dash”, “plotly”, and “dash_bootstrap_components” libraries.
+If you want to make use of the hdf5 database presented below to store the data, you will also need “pytables”.
+All these libraries can be installed by choosing the extra “dashboard” when installing discrete-optimization:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>discrete-optimization<span class="o">[</span>dashboard<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="launching-a-d-o-study">
+<h2>Launching a d-o study<a class="headerlink" href="#launching-a-d-o-study" title="Link to this heading"></a></h2>
+<p>We call here a study a set of experiments, where each experiment is the choice of</p>
+<ul class="simple">
+<li><p>a solver config (class and hyperparameters)</p></li>
+<li><p>a problem instance to solve</p></li>
+</ul>
+<section id="experiment">
+<h3>Experiment<a class="headerlink" href="#experiment" title="Link to this heading"></a></h3>
+<p>Each experiment will stores some metadata plus some timeseries.</p>
+<p>The d-o libary introduces in that purpose several classes:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="api/discrete_optimization.generic_tools.study.html#discrete_optimization.generic_tools.study.experiment.SolverConfig"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">SolverConfig</span></code></span></a>:
+storing the solver class and the keyword arguments used by its constructor, <code class="docutils literal notranslate"><span class="pre">init_model()</span></code>, and <code class="docutils literal notranslate"><span class="pre">solve()</span></code>.</p></li>
+<li><p><a class="reference internal" href="api/discrete_optimization.generic_tools.study.html#discrete_optimization.generic_tools.study.experiment.Experiment"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></span></a>:
+stores the solver config, the instance id, the solver status and the metrics dataframe. You can (and you should) associate a name to
+each solver config (for an easier understanding of the dashboard). The easiest way to generate the experiment is by using its alternate constructor
+<code class="docutils literal notranslate"><span class="pre">Experiment.from_solver_config()</span></code>.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers.ls</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LsGenericRcpspSolver</span><span class="p">,</span>
+    <span class="n">LsSolverType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.study</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">SolverConfig</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">xp_id</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># should be unique across a given study</span>
+<span class="n">instance</span> <span class="o">=</span> <span class="s2">&quot;j1201_10.sm&quot;</span>  <span class="c1"># identifier for the problem instance</span>
+<span class="n">config_name</span> <span class="o">=</span> <span class="s2">&quot;hc&quot;</span>
+<span class="n">solver_config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span>
+    <span class="bp">cls</span><span class="o">=</span><span class="n">LsGenericRcpspSolver</span><span class="p">,</span>
+    <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">ls_solver</span><span class="o">=</span><span class="n">LsSolverType</span><span class="o">.</span><span class="n">HC</span><span class="p">,</span> <span class="n">nb_iteration_max</span><span class="o">=</span><span class="mi">10000</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># solve + metrics retrieval as pandas.DataFrame</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># e.g. using a filepath based on instance identifier</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">solver_config</span><span class="o">.</span><span class="n">cls</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">solver_config</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">solver_config</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="o">**</span><span class="n">solver_config</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">status_solver</span>
+<span class="n">reason</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># string used to store the reason of an error during solve</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># see next section how to retrieve metrics</span>
+
+<span class="n">xp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="o">.</span><span class="n">from_solver_config</span><span class="p">(</span>
+    <span class="n">xp_id</span><span class="o">=</span><span class="n">xp_id</span><span class="p">,</span>
+    <span class="n">instance</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+    <span class="n">config_name</span><span class="o">=</span><span class="n">config_name</span><span class="p">,</span>
+    <span class="n">solver_config</span><span class="o">=</span><span class="n">solver_config</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+    <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="stats-retriever-callbacks">
+<h3>Stats retriever callbacks<a class="headerlink" href="#stats-retriever-callbacks" title="Link to this heading"></a></h3>
+<p>You can make use of the stats retrievers callbacks to store the metrics timeseries, i.e. <code class="docutils literal notranslate"><span class="pre">BasicStatsCallback</span></code> or
+<code class="docutils literal notranslate"><span class="pre">StatsWithBoundsCallback</span></code> (if you are using a solver implementing the mixin <code class="docutils literal notranslate"><span class="pre">BoundsProviderMixin</span></code> like cpsat solvers).
+They both have the method <code class="docutils literal notranslate"><span class="pre">get_df_metrics()</span></code> to retrieve the stored metrics (fitness, best objective bound, …) as a pandas
+DataFrame.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.stats_retrievers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BasicStatsCallback</span><span class="p">,</span>
+    <span class="n">StatsWithBoundsCallback</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">stats_cb</span> <span class="o">=</span> <span class="n">BasicStatsCallback</span><span class="p">()</span>  <span class="c1"># or StatsWithBoundsCallback() if solver provides internal objective value and bound?</span>
+<span class="n">result_store</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+    <span class="n">callbacks</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">stats_cb</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="o">**</span><span class="n">solver_config</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">stats_cb</span><span class="o">.</span><span class="n">get_df_metrics</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="database">
+<h3>Database<a class="headerlink" href="#database" title="Link to this heading"></a></h3>
+<p>In order to store each experiment, a dedicated database <a class="reference internal" href="api/discrete_optimization.generic_tools.study.html#discrete_optimization.generic_tools.study.database.Hdf5Database"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">Hdf5Database</span></code></span></a>
+has been implemented making use of hdf5 format.</p>
+<p>It exposes several methods, in particular:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_new_experiment_id()</span></code>: which allows to get a unique id for each experiment to be stored</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">store(xp)</span></code>: which stores a given experiment</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">load_results()</span></code>: which returns the list of experiments stored so far as a list of pandas dataframes whith their metadata stored
+in their <code class="docutils literal notranslate"><span class="pre">attrs</span></code> dictionary attribute. This is the format which will be needed later by the dashboard.</p></li>
+</ul>
+<p>To avoid locking the database, it is best practice to</p>
+<ul class="simple">
+<li><p>use it inside a <code class="docutils literal notranslate"><span class="pre">with</span></code> statement (to be sure to close it even in case of errors)</p></li>
+<li><p>to open it just when needed (at the end of the experiment to store it)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Hdf5Database</span><span class="p">(</span><span class="n">database_filepath</span><span class="p">)</span> <span class="k">as</span> <span class="n">database</span><span class="p">:</span>
+    <span class="n">xp_id</span> <span class="o">=</span> <span class="n">database</span><span class="o">.</span><span class="n">get_new_experiment_id</span><span class="p">()</span>
+    <span class="n">xp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="o">.</span><span class="n">from_solver_config</span><span class="p">(</span>
+        <span class="n">xp_id</span><span class="o">=</span><span class="n">xp_id</span><span class="p">,</span>
+        <span class="n">instance</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+        <span class="n">config_name</span><span class="o">=</span><span class="n">config_name</span><span class="p">,</span>
+        <span class="n">solver_config</span><span class="o">=</span><span class="n">solver_config</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+        <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">database</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">xp</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Hdf5Database</span><span class="p">(</span><span class="n">database_filepath</span><span class="p">)</span> <span class="k">as</span> <span class="n">database</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">database</span><span class="o">.</span><span class="n">load_results</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="full-example">
+<h3>Full example<a class="headerlink" href="#full-example" title="Link to this heading"></a></h3>
+<p>Putting all that together, we got an example of such a study on rcpsp problems
+which makes use of the database, the stats callbacks and the experiments related classes:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text"><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/master/examples/dashboard/run_rcpsp_study.py">examples/dashboard/run_rcpsp_study.py</a></span><a class="headerlink" href="#id1" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers.ls</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LsGenericRcpspSolver</span><span class="p">,</span>
+    <span class="n">LsSolverType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.loggers</span><span class="w"> </span><span class="kn">import</span> <span class="n">NbIterationTracker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.stats_retrievers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BasicStatsCallback</span><span class="p">,</span>
+    <span class="n">StatsWithBoundsCallback</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParametersCp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">StatusSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.study</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Experiment</span><span class="p">,</span>
+    <span class="n">Hdf5Database</span><span class="p">,</span>
+    <span class="n">SolverConfig</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_data_available</span><span class="p">,</span> <span class="n">parse_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.cpsat</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSatRcpspSolver</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+    <span class="n">study_name</span> <span class="o">=</span> <span class="s2">&quot;rcpsp-study-0&quot;</span>
+    <span class="n">overwrite</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># do we overwrite previous study with same name or not? if False, we possibly add duplicates</span>
+    <span class="n">instances</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">get_data_available</span><span class="p">()</span> <span class="k">if</span> <span class="s2">&quot;sm&quot;</span> <span class="ow">in</span> <span class="n">p</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">ParametersCp</span><span class="o">.</span><span class="n">default_cpsat</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">nb_process</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">solver_configs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;cpsat-1proc&quot;</span><span class="p">:</span> <span class="n">SolverConfig</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">=</span><span class="n">CpSatRcpspSolver</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                <span class="n">parameters_cp</span><span class="o">=</span><span class="n">ParametersCp</span><span class="o">.</span><span class="n">default</span><span class="p">(),</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;cpsat-multiproc&quot;</span><span class="p">:</span> <span class="n">SolverConfig</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">=</span><span class="n">CpSatRcpspSolver</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                <span class="n">parameters_cp</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;sa&quot;</span><span class="p">:</span> <span class="n">SolverConfig</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">=</span><span class="n">LsGenericRcpspSolver</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">ls_solver</span><span class="o">=</span><span class="n">LsSolverType</span><span class="o">.</span><span class="n">SA</span><span class="p">,</span> <span class="n">nb_iteration_max</span><span class="o">=</span><span class="mi">10000</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;hc&quot;</span><span class="p">:</span> <span class="n">SolverConfig</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">=</span><span class="n">LsGenericRcpspSolver</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">ls_solver</span><span class="o">=</span><span class="n">LsSolverType</span><span class="o">.</span><span class="n">HC</span><span class="p">,</span> <span class="n">nb_iteration_max</span><span class="o">=</span><span class="mi">10000</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="n">database_filepath</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">study_name</span><span class="si">}</span><span class="s2">.h5&quot;</span>
+    <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">database_filepath</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="c1"># loop over instances x configs</span>
+    <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">instances</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">config_name</span><span class="p">,</span> <span class="n">solver_config</span> <span class="ow">in</span> <span class="n">solver_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;###### Instance </span><span class="si">{</span><span class="n">instance</span><span class="si">}</span><span class="s2">, config </span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2"> ######</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># init problem</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">get_data_available</span><span class="p">()</span> <span class="k">if</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">f</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">problem</span> <span class="o">=</span> <span class="n">parse_file</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="c1"># init solver</span>
+                <span class="n">stats_cb</span> <span class="o">=</span> <span class="n">StatsWithBoundsCallback</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">config_name</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;sa&quot;</span><span class="p">,</span> <span class="s2">&quot;hc&quot;</span><span class="p">}:</span>
+                    <span class="n">stats_cb</span> <span class="o">=</span> <span class="n">BasicStatsCallback</span><span class="p">()</span>
+                <span class="n">solver</span> <span class="o">=</span> <span class="n">solver_config</span><span class="o">.</span><span class="n">cls</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">solver_config</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">solver_config</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="c1"># solve</span>
+                <span class="n">result_store</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                    <span class="n">callbacks</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">stats_cb</span><span class="p">,</span>
+                        <span class="n">NbIterationTracker</span><span class="p">(</span><span class="n">step_verbosity_level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="o">**</span><span class="n">solver_config</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># failed experiment</span>
+                <span class="n">metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([])</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">ERROR</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># get metrics and solver status</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">status_solver</span>
+                <span class="n">metrics</span> <span class="o">=</span> <span class="n">stats_cb</span><span class="o">.</span><span class="n">get_df_metrics</span><span class="p">()</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="c1"># store corresponding experiment</span>
+            <span class="k">with</span> <span class="p">(</span>
+                <span class="n">Hdf5Database</span><span class="p">(</span><span class="n">database_filepath</span><span class="p">)</span> <span class="k">as</span> <span class="n">database</span>
+            <span class="p">):</span>  <span class="c1"># ensure closing the database at the end of computation (even if error)</span>
+                <span class="n">xp_id</span> <span class="o">=</span> <span class="n">database</span><span class="o">.</span><span class="n">get_new_experiment_id</span><span class="p">()</span>
+                <span class="n">xp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="o">.</span><span class="n">from_solver_config</span><span class="p">(</span>
+                    <span class="n">xp_id</span><span class="o">=</span><span class="n">xp_id</span><span class="p">,</span>
+                    <span class="n">instance</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+                    <span class="n">config_name</span><span class="o">=</span><span class="n">config_name</span><span class="p">,</span>
+                    <span class="n">solver_config</span><span class="o">=</span><span class="n">solver_config</span><span class="p">,</span>
+                    <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">database</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">xp</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="launching-the-d-o-dashboard">
+<h2>Launching the d-o dashboard<a class="headerlink" href="#launching-the-d-o-dashboard" title="Link to this heading"></a></h2>
+<p>Once your study is done (or at least some results have been stored), you just have to</p>
+<ul class="simple">
+<li><p>retrieve your results</p></li>
+<li><p>initialize a <code class="docutils literal notranslate"><span class="pre">Dashboard</span></code> object with it</p></li>
+<li><p>run the dashboard</p></li>
+</ul>
+<p>It gives:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text"><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/master/examples/dashboard/run_dashboard_rcpsp_study.py">examples/dashboard/run_dashboard_rcpsp_study.py</a></span><a class="headerlink" href="#id2" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dashboard</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dashboard</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.study</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hdf5Database</span>
+
+<span class="n">study_name</span> <span class="o">=</span> <span class="s2">&quot;rcpsp-study-0&quot;</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># retrieve data</span>
+    <span class="k">with</span> <span class="n">Hdf5Database</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">study_name</span><span class="si">}</span><span class="s2">.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">database</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">database</span><span class="o">.</span><span class="n">load_results</span><span class="p">()</span>
+
+    <span class="c1"># launch dashboard with this data</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">Dashboard</span><span class="p">(</span><span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>By default, the dashboard will then be available at http://127.0.0.1:8050/.</p>
+<p>You will find on a left panel the different filters:</p>
+<ul class="simple">
+<li><p>solver configs</p></li>
+<li><p>instances, with some aliases:</p>
+<ul>
+<li><p>&#64;all: select all the instances</p></li>
+<li><p>&#64;withsol: select all instances for which each selected config has found at least one solution</p></li>
+</ul>
+</li>
+<li><p>metric to show</p></li>
+<li><p>clip at: to avoid outliers, the data whose absolute value is above it are removed</p></li>
+<li><p>on-off buttons for</p>
+<ul>
+<li><p>time in log-scale</p></li>
+<li><p>transposing the graph (solved instances graph only)</p></li>
+<li><p>spectifying if the metric is supposed to be minimized or maximized the metric (aggregated ranks table only)</p></li>
+</ul>
+</li>
+</ul>
+<p>On the main panel, you have several tabs corresponding to graph type, or tables:</p>
+<ul class="simple">
+<li><p>“Metric evolution”: the curve for each experiment of the chosen metric</p></li>
+<li><p>“Metric aggregation along instances”: the metric is aggregated on selected instances.
+A point is drawn for a given time on the curve of a given config,
+only if at least a point occurred before for each filtered instances.
+The table below gives the last point of each curve (so the aggregated metric at solve end of each experiment)</p>
+<ul>
+<li><p>number of experiments by config + number of experiments without solution (usually because of timeout)</p></li>
+</ul>
+</li>
+<li><p>“Nb of solved instances”: the graph shows the time evolution of the number of solved instances (i.e. whose solver status is “optimal”)
+On the graph the % is relative to the total number of experiments done for the solver config. On the table below, you get
+this total number of experiments versus the number of experiments finishing with solver status “optimal”.
+A switch “w/o proof” allows to consider an experiment solved as soon as the fitness found is the same as another experiment
+with the same instance and for which the solver has a status “optimal”.</p></li>
+<li><p>“Solvers competition”: aggregated config rank along instances, aggregated distance to best metric, aggregated convergence time.</p></li>
+<li><p>“Config explorer”: displays the solver class and hyperparameters corresponding to each solver config name.</p></li>
+<li><p>“Experiment data”: displays the raw timeseries for each experiment</p></li>
+<li><p>“Empty experiments”: list the experiments with no data and the potential reason (timeout or raised error)</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="notebooks.html" class="btn btn-neutral float-left" title="Notebooks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/modules.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

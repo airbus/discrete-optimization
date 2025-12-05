@@ -1,0 +1,781 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.workforce.scheduling.solvers package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing" href="../contribute.html" />
+    <link rel="prev" title="discrete_optimization.workforce.scheduling package" href="discrete_optimization.workforce.scheduling.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.workforce.scheduling.html">discrete_optimization.workforce.scheduling package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.workforce.scheduling.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-workforce-scheduling-solvers-package">
+<h1>discrete_optimization.workforce.scheduling.solvers package<a class="headerlink" href="#discrete-optimization-workforce-scheduling-solvers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb">
+<span id="discrete-optimization-workforce-scheduling-solvers-alloc-scheduling-lb-module"></span><h2>discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb module<a class="headerlink" href="#module-discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.ApproximateBoundAllocScheduling">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.</span></span><span class="sig-name descname"><span class="pre">ApproximateBoundAllocScheduling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#ApproximateBoundAllocScheduling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.ApproximateBoundAllocScheduling" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider" title="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAllocSchedulingLowerBoundProvider</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.ApproximateBoundAllocScheduling.get_lb_nb_teams">
+<span class="sig-name descname"><span class="pre">get_lb_nb_teams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#ApproximateBoundAllocScheduling.get_lb_nb_teams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.ApproximateBoundAllocScheduling.get_lb_nb_teams" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.</span></span><span class="sig-name descname"><span class="pre">BaseAllocSchedulingLowerBoundProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#BaseAllocSchedulingLowerBoundProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable" title="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hyperparametrizable</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider.get_lb_nb_teams">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_lb_nb_teams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#BaseAllocSchedulingLowerBoundProvider.get_lb_nb_teams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider.get_lb_nb_teams" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider.status">
+<span class="sig-name descname"><span class="pre">status</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider.status" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.</span></span><span class="sig-name descname"><span class="pre">BoundResourceViaRelaxedProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#BoundResourceViaRelaxedProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider" title="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAllocSchedulingLowerBoundProvider</span></code></a></p>
+<p>See add_lower_bound_nb_teams function in cpmpy_alloc_scheduling_solver</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem.get_lb_nb_teams">
+<span class="sig-name descname"><span class="pre">get_lb_nb_teams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#BoundResourceViaRelaxedProblem.get_lb_nb_teams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem.get_lb_nb_teams" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='adding_precedence_constraint',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='adding_precedence_constraint')]</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.LBoundAllocScheduling">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.</span></span><span class="sig-name descname"><span class="pre">LBoundAllocScheduling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#LBoundAllocScheduling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.LBoundAllocScheduling" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider" title="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BaseAllocSchedulingLowerBoundProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAllocSchedulingLowerBoundProvider</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.LBoundAllocScheduling.get_lb_nb_teams">
+<span class="sig-name descname"><span class="pre">get_lb_nb_teams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/alloc_scheduling_lb.html#LBoundAllocScheduling.get_lb_nb_teams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.LBoundAllocScheduling.get_lb_nb_teams" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.workforce.scheduling.solvers.cpsat">
+<span id="discrete-optimization-workforce-scheduling-solvers-cpsat-module"></span><h2>discrete_optimization.workforce.scheduling.solvers.cpsat module<a class="headerlink" href="#module-discrete_optimization.workforce.scheduling.solvers.cpsat" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">AdditionalCPConstraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nb_teams_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">team_used_constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_tasks_ignore_reallocation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forced_allocation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adding_margin_on_sequence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(False,</span> <span class="pre">0)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#AdditionalCPConstraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">CPSatAllocSchedulingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Hashable</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Hashable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Hashable</span></code>], <a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling" title="discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverAllocScheduling</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.add_lexico_constraint">
+<span class="sig-name descname"><span class="pre">add_lexico_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.add_lexico_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.add_lexico_constraint" title="Link to this definition"></a></dt>
+<dd><p>Add a constraint on a computed sub-objective</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>value</strong> – the limiting value.
+If the optimization direction is maximizing, this is a lower bound,
+else this is an upper bound.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the created constraints.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.add_objective_functions_on_cumul">
+<span class="sig-name descname"><span class="pre">add_objective_functions_on_cumul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.add_objective_functions_on_cumul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.add_objective_functions_on_cumul" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.at_most_one_unary_resource_per_task">
+<span class="sig-name descname"><span class="pre">at_most_one_unary_resource_per_task</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.at_most_one_unary_resource_per_task" title="Link to this definition"></a></dt>
+<dd><p>Flag telling if the problem accept at most one unary_resource per task.</p>
+<p>Default to False, ie several resources allowed per task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_actually_done_variables">
+<span class="sig-name descname"><span class="pre">create_actually_done_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.create_actually_done_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_actually_done_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_delta_objectives">
+<span class="sig-name descname"><span class="pre">create_delta_objectives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution"><span class="pre">AllocSchedulingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints" title="discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints"><span class="pre">AdditionalCPConstraints</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.create_delta_objectives"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_delta_objectives" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_used_variables_dict">
+<span class="sig-name descname"><span class="pre">create_used_variables_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.create_used_variables_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.create_used_variables_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_lexico_objective_value">
+<span class="sig-name descname"><span class="pre">get_lexico_objective_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.get_lexico_objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_lexico_objective_value" title="Link to this definition"></a></dt>
+<dd><p>Get best internal model objective value found by last call to <cite>solve()</cite>.</p>
+<p>The default implementation consists in using the fit of the last solution in result_storage.
+This assumes:
+- that the last solution is the best one for the objective considered
+- that no aggregation was performed but rather that the fitness is a TupleFitness</p>
+<blockquote>
+<div><p>with values in the same order as <cite>self.problem.get_objective_names()</cite>.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>res</strong> – result storage returned by last call to solve().</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_lexico_objectives_available">
+<span class="sig-name descname"><span class="pre">get_lexico_objectives_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.get_lexico_objectives_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_lexico_objectives_available" title="Link to this definition"></a></dt>
+<dd><p>List objectives available for lexico optimization</p>
+<p>It corresponds to the labels accepted for obj argument for
+- <cite>set_lexico_objective()</cite>
+- <cite>add_lexico_constraint()</cite>
+- <cite>get_lexico_objective_value()</cite></p>
+<p>Default to <cite>self.problem.get_objective_names()</cite>.</p>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_task_start_or_end_variable">
+<span class="sig-name descname"><span class="pre">get_task_start_or_end_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hashable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.get_task_start_or_end_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_task_start_or_end_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the variable storing the start or end time of given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hashable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hashable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='symmbreak_on_used',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='symmbreak_on_used'),</span> <span class="pre">CategoricalHyperparameter(name='optional_activities',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='optional_activities'),</span> <span class="pre">EnumHyperparameter(name='modelisation_dispersion',</span> <span class="pre">default=&lt;ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION:</span> <span class="pre">0&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='modelisation_dispersion'),</span> <span class="pre">CategoricalHyperparameter(name='adding_redundant_cumulative',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='adding_redundant_cumulative'),</span> <span class="pre">CategoricalHyperparameter(name='add_lower_bound',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='add_lower_bound'),</span> <span class="pre">SubBrickHyperparameter(name='lower_bound_method',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem'&gt;,</span> <span class="pre">kwargs={'adding_precedence_constraint':</span> <span class="pre">False},</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=('add_lower_bound',</span> <span class="pre">[True]),</span> <span class="pre">name_in_kwargs='lower_bound_method')]</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.implements_lexico_api">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">implements_lexico_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.implements_lexico_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.implements_lexico_api" title="Link to this definition"></a></dt>
+<dd><p>Tell whether this solver is implementing the api for lexicographic optimization.</p>
+<p>Should return True only if</p>
+<ul class="simple">
+<li><p><cite>set_lexico_objective()</cite></p></li>
+<li><p><cite>add_lexico_constraint()</cite></p></li>
+<li><p><cite>get_lexico_objective_value()</cite></p></li>
+</ul>
+<p>have been really implemented, i.e.
+- calling <cite>set_lexico_objective()</cite> and <cite>add_lexico_constraint()</cite></p>
+<blockquote>
+<div><p>should actually change the next call to <cite>solve()</cite>,</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><cite>get_lexico_objective_value()</cite> should correspond to the internal model objective</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_additional_constraints">
+<span class="sig-name descname"><span class="pre">set_additional_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints" title="discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints"><span class="pre">AdditionalCPConstraints</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.set_additional_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_additional_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_lexico_objective">
+<span class="sig-name descname"><span class="pre">set_lexico_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.set_lexico_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_lexico_objective" title="Link to this definition"></a></dt>
+<dd><p>Update internal model objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_model_obj_aggregated">
+<span class="sig-name descname"><span class="pre">set_model_obj_aggregated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objs_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.set_model_obj_aggregated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_model_obj_aggregated" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_nb_teams_constraints">
+<span class="sig-name descname"><span class="pre">set_nb_teams_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints" title="discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints"><span class="pre">AdditionalCPConstraints</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.set_nb_teams_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_nb_teams_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_team_used_constraint">
+<span class="sig-name descname"><span class="pre">set_team_used_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints" title="discrete_optimization.workforce.scheduling.solvers.cpsat.AdditionalCPConstraints"><span class="pre">AdditionalCPConstraints</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.set_team_used_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_team_used_constraint" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution"><span class="pre">AllocSchedulingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat.html#CPSatAllocSchedulingSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat.CPSatAllocSchedulingSolver.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed">
+<span id="discrete-optimization-workforce-scheduling-solvers-cpsat-relaxed-module"></span><h2>discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed module<a class="headerlink" href="#module-discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.</span></span><span class="sig-name descname"><span class="pre">CPSatAllocSchedulingSolverCumulative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling" title="discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverAllocScheduling</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.add_lexico_constraint">
+<span class="sig-name descname"><span class="pre">add_lexico_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.add_lexico_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.add_lexico_constraint" title="Link to this definition"></a></dt>
+<dd><p>Add a constraint on a computed sub-objective</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>value</strong> – the limiting value.
+If the optimization direction is maximizing, this is a lower bound,
+else this is an upper bound.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the created constraints.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.create_makespan_obj">
+<span class="sig-name descname"><span class="pre">create_makespan_obj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ends_var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_lb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.create_makespan_obj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.create_makespan_obj" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.define_objectives">
+<span class="sig-name descname"><span class="pre">define_objectives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.define_objectives"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.define_objectives" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.get_lexico_objective_value">
+<span class="sig-name descname"><span class="pre">get_lexico_objective_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.get_lexico_objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.get_lexico_objective_value" title="Link to this definition"></a></dt>
+<dd><p>Get best internal model objective value found by last call to <cite>solve()</cite>.</p>
+<p>The default implementation consists in using the fit of the last solution in result_storage.
+This assumes:
+- that the last solution is the best one for the objective considered
+- that no aggregation was performed but rather that the fitness is a TupleFitness</p>
+<blockquote>
+<div><p>with values in the same order as <cite>self.problem.get_objective_names()</cite>.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>res</strong> – result storage returned by last call to solve().</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.get_lexico_objectives_available">
+<span class="sig-name descname"><span class="pre">get_lexico_objectives_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.get_lexico_objectives_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.get_lexico_objectives_available" title="Link to this definition"></a></dt>
+<dd><p>List objectives available for lexico optimization</p>
+<p>It corresponds to the labels accepted for obj argument for
+- <cite>set_lexico_objective()</cite>
+- <cite>add_lexico_constraint()</cite>
+- <cite>get_lexico_objective_value()</cite></p>
+<p>Default to <cite>self.problem.get_objective_names()</cite>.</p>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='optional_activities',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='optional_activities'),</span> <span class="pre">CategoricalHyperparameter(name='adding_redundant_cumulative',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='adding_redundant_cumulative'),</span> <span class="pre">CategoricalHyperparameter(name='add_lower_bound',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='add_lower_bound'),</span> <span class="pre">SubBrickHyperparameter(name='lower_bound_method',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb.BoundResourceViaRelaxedProblem'&gt;,</span> <span class="pre">kwargs={'adding_precedence_constraint':</span> <span class="pre">False},</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=('add_lower_bound',</span> <span class="pre">[True]),</span> <span class="pre">name_in_kwargs='lower_bound_method')]</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.implements_lexico_api">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">implements_lexico_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.implements_lexico_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.implements_lexico_api" title="Link to this definition"></a></dt>
+<dd><p>Tell whether this solver is implementing the api for lexicographic optimization.</p>
+<p>Should return True only if</p>
+<ul class="simple">
+<li><p><cite>set_lexico_objective()</cite></p></li>
+<li><p><cite>add_lexico_constraint()</cite></p></li>
+<li><p><cite>get_lexico_objective_value()</cite></p></li>
+</ul>
+<p>have been really implemented, i.e.
+- calling <cite>set_lexico_objective()</cite> and <cite>add_lexico_constraint()</cite></p>
+<blockquote>
+<div><p>should actually change the next call to <cite>solve()</cite>,</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><cite>get_lexico_objective_value()</cite> should correspond to the internal model objective</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.init_main_vars">
+<span class="sig-name descname"><span class="pre">init_main_vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.init_main_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.init_main_vars" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.init_multimode_data">
+<span class="sig-name descname"><span class="pre">init_multimode_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.init_multimode_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.init_multimode_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.not_implemented_objectives">
+<span class="sig-name descname"><span class="pre">not_implemented_objectives</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION,</span> <span class="pre">ObjectivesEnum.DISPERSION,</span> <span class="pre">ObjectivesEnum.MIN_WORKLOAD]</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.not_implemented_objectives" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_lexico_objective">
+<span class="sig-name descname"><span class="pre">set_lexico_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.set_lexico_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_lexico_objective" title="Link to this definition"></a></dt>
+<dd><p>Update internal model objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_model_obj_aggregated">
+<span class="sig-name descname"><span class="pre">set_model_obj_aggregated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objs_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum"><span class="pre">ObjectivesEnum</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.set_model_obj_aggregated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_model_obj_aggregated" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_precedence_constraints">
+<span class="sig-name descname"><span class="pre">set_precedence_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.set_precedence_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_precedence_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_resource_pool_constraints">
+<span class="sig-name descname"><span class="pre">set_resource_pool_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.set_resource_pool_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_resource_pool_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_same_allocation_constraints">
+<span class="sig-name descname"><span class="pre">set_same_allocation_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.set_same_allocation_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_same_allocation_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution"><span class="pre">AllocSchedulingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters_cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCp" title="discrete_optimization.generic_tools.cp_tools.ParametersCp"><span class="pre">ParametersCp</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ortools_cpsat_solver_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retrieve_stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs_scheduling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs_allocation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/cpsat_relaxed.html#CPSatAllocSchedulingSolverCumulative.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.solve" title="Link to this definition"></a></dt>
+<dd><p>Solve the problem with a CpSat scheduling solver chained to a cpsat allocation solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>parameters_cp</strong> – used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation</p></li>
+<li><p><strong>time_limit</strong> – used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation</p></li>
+<li><p><strong>ortools_cpsat_solver_kwargs</strong> – used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation</p></li>
+<li><p><strong>retrieve_stats</strong> – used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation</p></li>
+<li><p><strong>kwargs_scheduling</strong> – kwargs passed to scheduling solver’s <cite>solve()</cite> (including parameters_cp, callbacks, …)</p></li>
+<li><p><strong>kwargs_allocation</strong> – kwargs passed to allocation solver’s <cite>solve()</cite> (including parameters_cp, callbacks, …)</p></li>
+<li><p><strong>**kwargs</strong> – passed to both subsolvers but params are overriden by the one in kwargs_scheduling or kwargs_allocation</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed.CPSatAllocSchedulingSolverCumulative.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.workforce.scheduling.solvers.optal">
+<span id="discrete-optimization-workforce-scheduling-solvers-optal-module"></span><h2>discrete_optimization.workforce.scheduling.solvers.optal module<a class="headerlink" href="#module-discrete_optimization.workforce.scheduling.solvers.optal" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.optal.</span></span><span class="sig-name descname"><span class="pre">OptalAllocSchedulingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/optal.html#OptalAllocSchedulingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver" title="discrete_optimization.generic_tools.hub_solver.optal.generic_optal.OptalSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptalSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.build_command">
+<span class="sig-name descname"><span class="pre">build_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCp" title="discrete_optimization.generic_tools.cp_tools.ParametersCp"><span class="pre">ParametersCp</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/optal.html#OptalAllocSchedulingSolver.build_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.build_command" title="Link to this definition"></a></dt>
+<dd><p>Build the command line call for optal cp. You can pass parameters from the Parameters class of optal cp
+for example : searchType=fds, worker0-1.noOverlapPropagationLevel=4 if you want worker 0 and 1 to use this
+parameters etc. TODO : list such parameters in hyperparameter of this wrapped solver.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_dispersion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_lexico</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/optal.html#OptalAllocSchedulingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a CP model instance</p>
+<p>Afterwards, self.instance should not be None anymore.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.retrieve_current_solution">
+<span class="sig-name descname"><span class="pre">retrieve_current_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dict_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingSolution"><span class="pre">AllocSchedulingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/optal.html#OptalAllocSchedulingSolver.retrieve_current_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.optal.OptalAllocSchedulingSolver.retrieve_current_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.optal.alloc_scheduling_to_dict">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.optal.</span></span><span class="sig-name descname"><span class="pre">alloc_scheduling_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/optal.html#alloc_scheduling_to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.optal.alloc_scheduling_to_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.workforce.scheduling.solvers.tempo">
+<span id="discrete-optimization-workforce-scheduling-solvers-tempo-module"></span><h2>discrete_optimization.workforce.scheduling.solvers.tempo module<a class="headerlink" href="#module-discrete_optimization.workforce.scheduling.solvers.tempo" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.tempo.TempoScheduler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.tempo.</span></span><span class="sig-name descname"><span class="pre">TempoScheduler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum" title="discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.FormatEnum"><span class="pre">FormatEnum</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_to_tempo_executable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/tempo.html#TempoScheduler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.tempo.TempoScheduler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.tempo.html#discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver" title="discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools.TempoSchedulingSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">TempoSchedulingSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling" title="discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverAllocScheduling</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.tempo.TempoScheduler.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/tempo.html#TempoScheduler.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.tempo.TempoScheduler.init_model" title="Link to this definition"></a></dt>
+<dd><p>For tempo solver, this should transform the python object into some format that tempo can understand.
+For now it’s via the creation of a temporary _file_input.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.tempo.TempoScheduler.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_stdout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers/tempo.html#TempoScheduler.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.tempo.TempoScheduler.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.workforce.scheduling.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.workforce.scheduling.solvers" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.</span></span><span class="sig-name descname"><span class="pre">ObjectivesEnum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers.html#ObjectivesEnum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION">
+<span class="sig-name descname"><span class="pre">DELTA_TO_EXISTING_SOLUTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.DISPERSION">
+<span class="sig-name descname"><span class="pre">DISPERSION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.DISPERSION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.MAKESPAN">
+<span class="sig-name descname"><span class="pre">MAKESPAN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.MAKESPAN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.MIN_WORKLOAD">
+<span class="sig-name descname"><span class="pre">MIN_WORKLOAD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.MIN_WORKLOAD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.NB_DONE_AC">
+<span class="sig-name descname"><span class="pre">NB_DONE_AC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.NB_DONE_AC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.NB_TEAMS">
+<span class="sig-name descname"><span class="pre">NB_TEAMS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.ObjectivesEnum.NB_TEAMS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.workforce.scheduling.solvers.</span></span><span class="sig-name descname"><span class="pre">SolverAllocScheduling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/workforce/scheduling/solvers.html#SolverAllocScheduling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.workforce.scheduling.html#discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem" title="discrete_optimization.workforce.scheduling.problem.AllocSchedulingProblem"><span class="pre">AllocSchedulingProblem</span></a></em><a class="headerlink" href="#discrete_optimization.workforce.scheduling.solvers.SolverAllocScheduling.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.workforce.scheduling.html" class="btn btn-neutral float-left" title="discrete_optimization.workforce.scheduling package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../contribute.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+discrete\_optimization.binpack.solvers package
+==============================================
+
+Submodules
+----------
+
+discrete\_optimization.binpack.solvers.cpsat module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.binpack.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.binpack.solvers.dp module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.binpack.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.binpack.solvers.greedy module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.binpack.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.binpack.solvers.lp module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.binpack.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.binpack.solvers.toulbar module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.binpack.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.binpack.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

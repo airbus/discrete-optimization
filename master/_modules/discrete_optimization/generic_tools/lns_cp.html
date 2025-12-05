@@ -1,0 +1,392 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.lns_cp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.lns_cp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.lns_cp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">minizinc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraint</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSolver</span><span class="p">,</span>
+    <span class="n">MinizincCpSolver</span><span class="p">,</span>
+    <span class="n">ParametersCp</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lns_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseLns</span><span class="p">,</span>
+    <span class="n">ConstraintHandler</span><span class="p">,</span>
+    <span class="n">InitialSolution</span><span class="p">,</span>
+    <span class="n">PostProcessSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ortools_cpsat_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrtoolsCpSatSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+    <span class="n">fitness_class</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BaseLnsCp">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.BaseLnsCp">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseLnsCp</span><span class="p">(</span><span class="n">BaseLns</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Large Neighborhood Search solver using a cp solver at each iteration.&quot;&quot;&quot;</span>
+
+    <span class="n">subsolver</span><span class="p">:</span> <span class="n">CpSolver</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sub-solver used by this lns solver at each iteration.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">subsolver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CpSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">initial_solution_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InitialSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConstraintHandler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">post_process_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PostProcessSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">subsolver</span><span class="o">=</span><span class="n">subsolver</span><span class="p">,</span>
+            <span class="n">initial_solution_provider</span><span class="o">=</span><span class="n">initial_solution_provider</span><span class="p">,</span>
+            <span class="n">constraint_handler</span><span class="o">=</span><span class="n">constraint_handler</span><span class="p">,</span>
+            <span class="n">post_process_solution</span><span class="o">=</span><span class="n">post_process_solution</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="BaseLnsCp.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.BaseLnsCp.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">nb_iteration_lns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit_subsolver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+        <span class="n">time_limit_subsolver_iter0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">nb_iteration_no_improvement</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">skip_initial_solution_provider</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">stop_first_iteration_if_optimal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve the problem with an LNS loop</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nb_iteration_lns: number of lns iteration</span>
+<span class="sd">            parameters_cp: parameters needed by the cp solver</span>
+<span class="sd">            time_limit_subsolver: time limit (in seconds) for a subsolver `solve()` call</span>
+<span class="sd">                If None, no time limit is applied.</span>
+<span class="sd">            time_limit_subsolver_iter0: time limit (in seconds) for the first subsolver `solve()` call,</span>
+<span class="sd">                in the case we are skipping the initial solution provider (`skip_initial_solution_provider is True`)</span>
+<span class="sd">                If None, we use the regular `time_limit` parameter even for this first solve.</span>
+<span class="sd">            nb_iteration_no_improvement: maximal number of consecutive iteration without improvement allowed</span>
+<span class="sd">                before stopping the solve process.</span>
+<span class="sd">            skip_initial_solution_provider: if True, we do not use `self.initial_solution_provider`</span>
+<span class="sd">                but instead launch a first `self.subsolver.solve()`</span>
+<span class="sd">            stop_first_iteration_if_optimal: if True, if `skip_initial_solution_provider, and if subsolver tells</span>
+<span class="sd">                its result is optimal after the first `self.subsolver.solve()` (so before any constraint tempering),</span>
+<span class="sd">                we stop the solve process.</span>
+<span class="sd">            callbacks: list of callbacks used to hook into the various stage of the solve</span>
+<span class="sd">            **kwargs: passed to the subsolver</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parameters_cp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_cp</span> <span class="o">=</span> <span class="n">ParametersCp</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="n">parameters_cp</span><span class="o">=</span><span class="n">parameters_cp</span><span class="p">,</span>
+            <span class="n">time_limit_subsolver</span><span class="o">=</span><span class="n">time_limit_subsolver</span><span class="p">,</span>
+            <span class="n">time_limit_subsolver_iter0</span><span class="o">=</span><span class="n">time_limit_subsolver_iter0</span><span class="p">,</span>
+            <span class="n">nb_iteration_lns</span><span class="o">=</span><span class="n">nb_iteration_lns</span><span class="p">,</span>
+            <span class="n">nb_iteration_no_improvement</span><span class="o">=</span><span class="n">nb_iteration_no_improvement</span><span class="p">,</span>
+            <span class="n">skip_initial_solution_provider</span><span class="o">=</span><span class="n">skip_initial_solution_provider</span><span class="p">,</span>
+            <span class="n">stop_first_iteration_if_optimal</span><span class="o">=</span><span class="n">stop_first_iteration_if_optimal</span><span class="p">,</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LnsOrtoolsCpSat">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.LnsOrtoolsCpSat">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LnsOrtoolsCpSat</span><span class="p">(</span><span class="n">BaseLnsCp</span><span class="p">):</span>
+    <span class="n">subsolver</span><span class="p">:</span> <span class="n">OrtoolsCpSatSolver</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sub-solver used by this lns solver at each iteration.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">subsolver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OrtoolsCpSatSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">initial_solution_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InitialSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConstraintHandler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">post_process_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PostProcessSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">subsolver</span><span class="o">=</span><span class="n">subsolver</span><span class="p">,</span>
+            <span class="n">initial_solution_provider</span><span class="o">=</span><span class="n">initial_solution_provider</span><span class="p">,</span>
+            <span class="n">constraint_handler</span><span class="o">=</span><span class="n">constraint_handler</span><span class="p">,</span>
+            <span class="n">post_process_solution</span><span class="o">=</span><span class="n">post_process_solution</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="LnsOrtoolsCpSat.init_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.LnsOrtoolsCpSat.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span><span class="o">.</span><span class="n">cp_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span><span class="o">.</span><span class="n">cp_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;subsolver cp_model must not be None after calling init_model()!&quot;</span>
+                <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OrtoolsCpSatConstraintHandler">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrtoolsCpSatConstraintHandler</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for constraint handler for solvers based on ortools&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OrtoolsCpSatConstraintHandler.adding_constraint_from_results_store">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler.adding_constraint_from_results_store">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">OrtoolsCpSatSolver</span><span class="p">,</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">result_storage_last_iteration</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints to the internal model of a solver based on previous solutions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solver: solver whose internal model is updated</span>
+<span class="sd">            result_storage: all results so far</span>
+<span class="sd">            result_storage_last_iteration: results from last LNS iteration only</span>
+<span class="sd">            **kwargs:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of added constraints</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MznConstraintHandler">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.MznConstraintHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MznConstraintHandler</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
+<div class="viewcode-block" id="MznConstraintHandler.adding_constraint_from_results_store">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.MznConstraintHandler.adding_constraint_from_results_store">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">MinizincCpSolver</span><span class="p">,</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">result_storage_last_iteration</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">child_instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints to the internal model of a solver based on previous solutions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solver: solver whose internal model is updated</span>
+<span class="sd">            result_storage: all results so far</span>
+<span class="sd">            result_storage_last_iteration: results from last LNS iteration only</span>
+<span class="sd">            child_instance: minizinc instance where to include the constraints</span>
+<span class="sd">            **kwargs:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            empty list, not used</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LnsCpMzn">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.LnsCpMzn">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LnsCpMzn</span><span class="p">(</span><span class="n">BaseLnsCp</span><span class="p">):</span>
+    <span class="n">subsolver</span><span class="p">:</span> <span class="n">MinizincCpSolver</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sub-solver used by this lns solver at each iteration.&quot;&quot;&quot;</span>
+
+    <span class="n">constraint_handler</span><span class="p">:</span> <span class="n">MznConstraintHandler</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">subsolver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MinizincCpSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">initial_solution_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InitialSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MznConstraintHandler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">post_process_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PostProcessSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">subsolver</span><span class="o">=</span><span class="n">subsolver</span><span class="p">,</span>
+            <span class="n">initial_solution_provider</span><span class="o">=</span><span class="n">initial_solution_provider</span><span class="p">,</span>
+            <span class="n">constraint_handler</span><span class="o">=</span><span class="n">constraint_handler</span><span class="p">,</span>
+            <span class="n">post_process_solution</span><span class="o">=</span><span class="n">post_process_solution</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="LnsCpMzn.init_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.LnsCpMzn.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span><span class="o">.</span><span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span><span class="o">.</span><span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;CP model instance must not be None after calling init_model()!&quot;</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LnsCpMzn.create_submodel">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.LnsCpMzn.create_submodel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_submodel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">AbstractContextManager</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a branch of the current instance, wrapped in a context manager.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">branch</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

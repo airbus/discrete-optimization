@@ -1,0 +1,805 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.facility package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.facility.solvers package" href="discrete_optimization.facility.solvers.html" />
+    <link rel="prev" title="discrete_optimization.coloring.solvers package" href="discrete_optimization.coloring.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.facility package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-facility-package">
+<h1>discrete_optimization.facility package<a class="headerlink" href="#discrete-optimization-facility-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.facility.solvers.html">discrete_optimization.facility.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.cp_mzn">discrete_optimization.facility.solvers.cp_mzn module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilityModel"><code class="docutils literal notranslate"><span class="pre">CpFacilityModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilityModel.DEFAULT_INT"><code class="docutils literal notranslate"><span class="pre">CpFacilityModel.DEFAULT_INT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilityModel.DEFAULT_INT_LNS"><code class="docutils literal notranslate"><span class="pre">CpFacilityModel.DEFAULT_INT_LNS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver.problem"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver.params_objective_function"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver.params_objective_function</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver.cp_solver_name"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver.cp_solver_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver.silent_solve_error"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver.silent_solve_error</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cp_mzn.CpFacilitySolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">CpFacilitySolver.retrieve_solution()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.cpsat">discrete_optimization.facility.solvers.cpsat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cpsat.CpSatFacilitySolver"><code class="docutils literal notranslate"><span class="pre">CpSatFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cpsat.CpSatFacilitySolver.get_task_unary_resource_is_present_variable"><code class="docutils literal notranslate"><span class="pre">CpSatFacilitySolver.get_task_unary_resource_is_present_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cpsat.CpSatFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">CpSatFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cpsat.CpSatFacilitySolver.problem"><code class="docutils literal notranslate"><span class="pre">CpSatFacilitySolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cpsat.CpSatFacilitySolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">CpSatFacilitySolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cpsat.CpSatFacilitySolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">CpSatFacilitySolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.cpsat.CpSatFacilitySolver.variables"><code class="docutils literal notranslate"><span class="pre">CpSatFacilitySolver.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.dp">discrete_optimization.facility.solvers.dp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilityModeling"><code class="docutils literal notranslate"><span class="pre">DpFacilityModeling</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilityModeling.CUSTOMER"><code class="docutils literal notranslate"><span class="pre">DpFacilityModeling.CUSTOMER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilityModeling.FACILITY"><code class="docutils literal notranslate"><span class="pre">DpFacilityModeling.FACILITY</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.init_model_customer_view"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.init_model_customer_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.init_model_factory_view"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.init_model_factory_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.retrieve_solution_customer_view"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.retrieve_solution_customer_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.retrieve_solution_factory_view"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.retrieve_solution_factory_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.dp.DpFacilitySolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">DpFacilitySolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.facility_solver">discrete_optimization.facility.solvers.facility_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_solver.FacilitySolver"><code class="docutils literal notranslate"><span class="pre">FacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_solver.FacilitySolver.problem"><code class="docutils literal notranslate"><span class="pre">FacilitySolver.problem</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.gphh">discrete_optimization.facility.solvers.gphh module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.FeatureEnum"><code class="docutils literal notranslate"><span class="pre">FeatureEnum</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.FeatureEnum.CAPACITIES"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.CAPACITIES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.FeatureEnum.DEMAND_MINUS_CAPACITY"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.DEMAND_MINUS_CAPACITY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.FeatureEnum.DISTANCE"><code class="docutils literal notranslate"><span class="pre">FeatureEnum.DISTANCE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver.build_solution"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver.build_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver.evaluate_complexity"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver.evaluate_complexity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver.evaluate_heuristic"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver.evaluate_heuristic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver.init_primitives"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver.init_primitives()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver.plot_solution"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver.plot_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.GphhFacilitySolver.solve"><code class="docutils literal notranslate"><span class="pre">GphhFacilitySolver.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.ParametersGphh"><code class="docutils literal notranslate"><span class="pre">ParametersGphh</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.ParametersGphh.set_feature"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.set_feature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.ParametersGphh.set_primitives"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.set_primitives</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.ParametersGphh.default"><code class="docutils literal notranslate"><span class="pre">ParametersGphh.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.capacity"><code class="docutils literal notranslate"><span class="pre">capacity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.closest_facility"><code class="docutils literal notranslate"><span class="pre">closest_facility()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.demand_minus_capacity"><code class="docutils literal notranslate"><span class="pre">demand_minus_capacity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.gphh.distance"><code class="docutils literal notranslate"><span class="pre">distance()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.greedy">discrete_optimization.facility.solvers.greedy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.greedy.DistanceBasedGreedyFacilitySolver"><code class="docutils literal notranslate"><span class="pre">DistanceBasedGreedyFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.greedy.DistanceBasedGreedyFacilitySolver.solve"><code class="docutils literal notranslate"><span class="pre">DistanceBasedGreedyFacilitySolver.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.greedy.GreedyFacilitySolver"><code class="docutils literal notranslate"><span class="pre">GreedyFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.greedy.GreedyFacilitySolver.solve"><code class="docutils literal notranslate"><span class="pre">GreedyFacilitySolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.lns_lp">discrete_optimization.facility.solvers.lns_lp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.GurobiFacilityConstraintHandler"><code class="docutils literal notranslate"><span class="pre">GurobiFacilityConstraintHandler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.GurobiFacilityConstraintHandler.problem"><code class="docutils literal notranslate"><span class="pre">GurobiFacilityConstraintHandler.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.GurobiFacilityConstraintHandler.fraction_to_fix"><code class="docutils literal notranslate"><span class="pre">GurobiFacilityConstraintHandler.fraction_to_fix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.GurobiFacilityConstraintHandler.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">GurobiFacilityConstraintHandler.adding_constraint_from_results_store()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilityMethod"><code class="docutils literal notranslate"><span class="pre">InitialFacilityMethod</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilityMethod.DUMMY"><code class="docutils literal notranslate"><span class="pre">InitialFacilityMethod.DUMMY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilityMethod.GREEDY"><code class="docutils literal notranslate"><span class="pre">InitialFacilityMethod.GREEDY</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilitySolution"><code class="docutils literal notranslate"><span class="pre">InitialFacilitySolution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilitySolution.problem"><code class="docutils literal notranslate"><span class="pre">InitialFacilitySolution.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilitySolution.initial_method"><code class="docutils literal notranslate"><span class="pre">InitialFacilitySolution.initial_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilitySolution.get_starting_solution"><code class="docutils literal notranslate"><span class="pre">InitialFacilitySolution.get_starting_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.InitialFacilitySolution.hyperparameters"><code class="docutils literal notranslate"><span class="pre">InitialFacilitySolution.hyperparameters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.MathOptConstraintHandlerFacility"><code class="docutils literal notranslate"><span class="pre">MathOptConstraintHandlerFacility</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.MathOptConstraintHandlerFacility.problem"><code class="docutils literal notranslate"><span class="pre">MathOptConstraintHandlerFacility.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lns_lp.MathOptConstraintHandlerFacility.fraction_to_fix"><code class="docutils literal notranslate"><span class="pre">MathOptConstraintHandlerFacility.fraction_to_fix</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.lp">discrete_optimization.facility.solvers.lp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver"><code class="docutils literal notranslate"><span class="pre">CbcFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">CbcFacilitySolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">CbcFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.model"><code class="docutils literal notranslate"><span class="pre">CbcFacilitySolver.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.retrieve"><code class="docutils literal notranslate"><span class="pre">CbcFacilitySolver.retrieve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.CbcFacilitySolver.solve"><code class="docutils literal notranslate"><span class="pre">CbcFacilitySolver.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver"><code class="docutils literal notranslate"><span class="pre">GurobiFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver.coloring_problem"><code class="docutils literal notranslate"><span class="pre">GurobiFacilitySolver.coloring_problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver.params_objective_function"><code class="docutils literal notranslate"><span class="pre">GurobiFacilitySolver.params_objective_function</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">GurobiFacilitySolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.GurobiFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">GurobiFacilitySolver.init_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.MathOptFacilitySolver"><code class="docutils literal notranslate"><span class="pre">MathOptFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.MathOptFacilitySolver.coloring_problem"><code class="docutils literal notranslate"><span class="pre">MathOptFacilitySolver.coloring_problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.MathOptFacilitySolver.params_objective_function"><code class="docutils literal notranslate"><span class="pre">MathOptFacilitySolver.params_objective_function</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.MathOptFacilitySolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">MathOptFacilitySolver.convert_to_variable_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.MathOptFacilitySolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">MathOptFacilitySolver.hyperparameters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.compute_length_matrix"><code class="docutils literal notranslate"><span class="pre">compute_length_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.lp.prune_search_space"><code class="docutils literal notranslate"><span class="pre">prune_search_space()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.quantum">discrete_optimization.facility.solvers.quantum module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.FacilityQiskit"><code class="docutils literal notranslate"><span class="pre">FacilityQiskit</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.FacilityQiskit.interpret"><code class="docutils literal notranslate"><span class="pre">FacilityQiskit.interpret()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.FacilityQiskit.to_quadratic_program"><code class="docutils literal notranslate"><span class="pre">FacilityQiskit.to_quadratic_program()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.QaoaFacilitySolver"><code class="docutils literal notranslate"><span class="pre">QaoaFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.QaoaFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">QaoaFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.QaoaFacilitySolver.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">QaoaFacilitySolver.retrieve_current_solution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.VqeFacilitySolver"><code class="docutils literal notranslate"><span class="pre">VqeFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.VqeFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">VqeFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.quantum.VqeFacilitySolver.retrieve_current_solution"><code class="docutils literal notranslate"><span class="pre">VqeFacilitySolver.retrieve_current_solution()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers.toulbar">discrete_optimization.facility.solvers.toulbar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.FacilityConstraintHandlerDestroyFacilityToulbar"><code class="docutils literal notranslate"><span class="pre">FacilityConstraintHandlerDestroyFacilityToulbar</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.FacilityConstraintHandlerDestroyFacilityToulbar.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">FacilityConstraintHandlerDestroyFacilityToulbar.adding_constraint_from_results_store()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.FacilityConstraintHandlerToulbar"><code class="docutils literal notranslate"><span class="pre">FacilityConstraintHandlerToulbar</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.FacilityConstraintHandlerToulbar.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">FacilityConstraintHandlerToulbar.adding_constraint_from_results_store()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ModelingToulbarFacility"><code class="docutils literal notranslate"><span class="pre">ModelingToulbarFacility</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ModelingToulbarFacility.BINARY"><code class="docutils literal notranslate"><span class="pre">ModelingToulbarFacility.BINARY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ModelingToulbarFacility.INTEGER"><code class="docutils literal notranslate"><span class="pre">ModelingToulbarFacility.INTEGER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.client_var_to_index"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.client_var_to_index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.init_model"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.init_model_boolean_variable"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.init_model_boolean_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.init_model_integer_variable"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.init_model_integer_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.key_to_index"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.key_to_index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.modeling"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.modeling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.retrieve_solution_binary"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.retrieve_solution_binary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.retrieve_solution_integer"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.retrieve_solution_integer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.set_warm_start_binary"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.set_warm_start_binary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.set_warm_start_integer"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.set_warm_start_integer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.toulbar.ToulbarFacilitySolver.used_var_to_index"><code class="docutils literal notranslate"><span class="pre">ToulbarFacilitySolver.used_var_to_index</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.facility.solvers.html#module-discrete_optimization.facility.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.facility.parser">
+<span id="discrete-optimization-facility-parser-module"></span><h2>discrete_optimization.facility.parser module<a class="headerlink" href="#module-discrete_optimization.facility.parser" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.parser.get_data_available">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.parser.</span></span><span class="sig-name descname"><span class="pre">get_data_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_home</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/parser.html#get_data_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.parser.get_data_available" title="Link to this definition"></a></dt>
+<dd><p>Get datasets available for facility.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><dl class="simple">
+<dt>data_folder: folder where datasets for facility whould be find.</dt><dd><p>If None, we look in “facility” subdirectory of <cite>data_home</cite>.</p>
+</dd>
+<dt>data_home: root directory for all datasets. Is None, set by</dt><dd><p>default to “~/discrete_optimization_data “</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.parser.parse">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.parser.</span></span><span class="sig-name descname"><span class="pre">parse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.facility.problem.Facility2DProblem" title="discrete_optimization.facility.problem.Facility2DProblem"><span class="pre">Facility2DProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/parser.html#parse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.parser.parse" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.parser.parse_file">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.parser.</span></span><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.facility.problem.Facility2DProblem" title="discrete_optimization.facility.problem.Facility2DProblem"><span class="pre">Facility2DProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/parser.html#parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.parser.parse_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.facility.problem">
+<span id="discrete-optimization-facility-problem-module"></span><h2>discrete_optimization.facility.problem module<a class="headerlink" href="#module-discrete_optimization.facility.problem" title="Link to this heading"></a></h2>
+<p>Implementation of the facility location problem with capacity constraint
+(<a class="reference external" href="https://en.wikipedia.org/wiki/Facility_location_problem#Capacitated_facility_location">https://en.wikipedia.org/wiki/Facility_location_problem#Capacitated_facility_location</a>)</p>
+<p>Facility location problem consist in choosing where to locate facilities and allocate customers to those. Each customers
+have a demand and facility have a capacity. The sum of demand of customers allocated to a given location can’t exceed the
+capacity of the facility.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Customer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.problem.</span></span><span class="sig-name descname"><span class="pre">Customer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><span class="pre">discrete_optimization.facility.problem.Point</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#Customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.Customer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Customer.demand">
+<span class="sig-name descname"><span class="pre">demand</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#discrete_optimization.facility.problem.Customer.demand" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Customer.index">
+<span class="sig-name descname"><span class="pre">index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#discrete_optimization.facility.problem.Customer.index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Customer.location">
+<span class="sig-name descname"><span class="pre">location</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><span class="pre">Point</span></a></em><a class="headerlink" href="#discrete_optimization.facility.problem.Customer.location" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Facility">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.problem.</span></span><span class="sig-name descname"><span class="pre">Facility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_cost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><span class="pre">discrete_optimization.facility.problem.Point</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#Facility"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.Facility" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Facility.capacity">
+<span class="sig-name descname"><span class="pre">capacity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#discrete_optimization.facility.problem.Facility.capacity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Facility.index">
+<span class="sig-name descname"><span class="pre">index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#discrete_optimization.facility.problem.Facility.index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Facility.location">
+<span class="sig-name descname"><span class="pre">location</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><span class="pre">Point</span></a></em><a class="headerlink" href="#discrete_optimization.facility.problem.Facility.location" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Facility.setup_cost">
+<span class="sig-name descname"><span class="pre">setup_cost</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#discrete_optimization.facility.problem.Facility.setup_cost" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Facility2DProblem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.problem.</span></span><span class="sig-name descname"><span class="pre">Facility2DProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">facility_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customer_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facilities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><span class="pre">Facility</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><span class="pre">Customer</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#Facility2DProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.Facility2DProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FacilityProblem</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Facility2DProblem.evaluate_customer_facility">
+<span class="sig-name descname"><span class="pre">evaluate_customer_facility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">facility</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><span class="pre">Facility</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">customer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><span class="pre">Customer</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#Facility2DProblem.evaluate_customer_facility"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.Facility2DProblem.evaluate_customer_facility" title="Link to this definition"></a></dt>
+<dd><p>Implementation of a distance based cost for allocation of facility to customers.</p>
+<p>It uses the euclidian distance as cost.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>facility</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><em>Facility</em></a>) – facility</p></li>
+<li><p><strong>customer</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><em>Customer</em></a>) – customer</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: a float cost</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.problem.</span></span><span class="sig-name descname"><span class="pre">FacilityProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">facility_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customer_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facilities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><span class="pre">Facility</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><span class="pre">Customer</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationProblem" title="discrete_optimization.generic_tasks_tools.allocation.AllocationProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationProblem</span></code></a>[<a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Customer</span></code></a>, <a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><code class="xref py py-class docutils literal notranslate"><span class="pre">Facility</span></code></a>]</p>
+<p>Base class for the facility problem.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.facility_count">
+<span class="sig-name descname"><span class="pre">facility_count</span></span><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.facility_count" title="Link to this definition"></a></dt>
+<dd><p>number of facilities</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.customer_count">
+<span class="sig-name descname"><span class="pre">customer_count</span></span><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.customer_count" title="Link to this definition"></a></dt>
+<dd><p>number of customers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.facilities">
+<span class="sig-name descname"><span class="pre">facilities</span></span><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.facilities" title="Link to this definition"></a></dt>
+<dd><p>list of facilities object, facility has a setup cost, capacity and location</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility">Facility</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.customers">
+<span class="sig-name descname"><span class="pre">customers</span></span><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.customers" title="Link to this definition"></a></dt>
+<dd><p>list of customers object, which has demand and location.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer">Customer</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Computes the KPI of a FacilitySolution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><em>FacilitySolution</em></a>) – solution to evaluate</p>
+</dd>
+</dl>
+<p>Returns: dictionnary of kpi, see get_objective_register() for details of kpi.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.evaluate_cost">
+<span class="sig-name descname"><span class="pre">evaluate_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.evaluate_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.evaluate_cost" title="Link to this definition"></a></dt>
+<dd><p>Compute the allocation cost of the solution along with setup cost too.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><em>FacilitySolution</em></a>) – facility solution to evaluate.</p>
+</dd>
+</dl>
+<p>Returns: a dictionnary containing the cost of allocation (“cost”), setup cost (“setup_cost”),
+and details by facilities (“details”)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.evaluate_customer_facility">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate_customer_facility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">facility</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><span class="pre">Facility</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">customer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><span class="pre">Customer</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.evaluate_customer_facility"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.evaluate_customer_facility" title="Link to this definition"></a></dt>
+<dd><p>Compute the cost of allocating a customer to a facility. This function is not implemented by default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>facility</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><em>Facility</em></a>) – facility</p></li>
+<li><p><strong>customer</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><em>Customer</em></a>) – customer</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns (float): a cost as a float</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.evaluate_from_encoding">
+<span class="sig-name descname"><span class="pre">evaluate_from_encoding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int_vector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.evaluate_from_encoding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.evaluate_from_encoding" title="Link to this definition"></a></dt>
+<dd><p>Evaluate function based on direct integer vector (used in GA algorithms only)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int_vector</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – vector encoding the solution</p></li>
+<li><p><strong>encoding_name</strong> (<em>str</em>) – name of encoding (see get_attribute_register) for available encoding</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: kpi of the solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.EncodingRegister" title="discrete_optimization.generic_tools.do_problem.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.get_attribute_register" title="Link to this definition"></a></dt>
+<dd><p>Returns how the Solution should be encoded.</p>
+<p>Returns (EncodingRegister): content of the encoding of the solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.get_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_dummy_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.get_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.get_dummy_solution" title="Link to this definition"></a></dt>
+<dd><p>Returns Dummy solution (that is not necessary fulfilling the constraints)</p>
+<p>All customers are allocated to the first facility (which usually will break the capacity constraint)
+Returns (FacilitySolution): a dummy solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.get_objective_register" title="Link to this definition"></a></dt>
+<dd><p>Returns the objective definition.</p>
+<p>Returns (ObjectiveRegister): object defining the objective criteria.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Returns the class implementation of a Solution.</p>
+<p>Returns (class): class object of the given Problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilityProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Satisfaction function of a facility solution.</p>
+<p>We only check that the capacity constraint is fulfilled. We admit that the values of the vector are in the
+allowed range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><em>FacilitySolution</em></a>) – facility solution to check satisfaction</p>
+</dd>
+</dl>
+<p>Returns (bool): true if solution satisfies constraint.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.tasks_list">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tasks_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><span class="pre">Customer</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.tasks_list" title="Link to this definition"></a></dt>
+<dd><p>List of all tasks to schedule or allocate to.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilityProblem.unary_resources_list">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unary_resources_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><span class="pre">Facility</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.facility.problem.FacilityProblem.unary_resources_list" title="Link to this definition"></a></dt>
+<dd><p>Available unary resources.</p>
+<p>It can correspond to employees (rcpsp-multiskill), teams (workforce-scheduling), or
+a mix of several types.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.problem.</span></span><span class="sig-name descname"><span class="pre">FacilitySolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">facility_for_customers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilitySolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationSolution</span></code></a>[<a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Customer</span></code></a>, <a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><code class="xref py py-class docutils literal notranslate"><span class="pre">Facility</span></code></a>]</p>
+<p>Solution object for facility location</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution.problem" title="Link to this definition"></a></dt>
+<dd><p>facility problem instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem">FacilityProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution.facility_for_customers">
+<span class="sig-name descname"><span class="pre">facility_for_customers</span></span><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution.facility_for_customers" title="Link to this definition"></a></dt>
+<dd><p>for each customers, specify the index of the facility</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution.dict_details">
+<span class="sig-name descname"><span class="pre">dict_details</span></span><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution.dict_details" title="Link to this definition"></a></dt>
+<dd><p>giving more metrics of the solution such as the capacities used, the setup cost etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">See</span> <span class="pre">problem.evaluate</span></span></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sol</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilitySolution.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution.change_problem" title="Link to this definition"></a></dt>
+<dd><p>If relevant to the optimisation problem, change the underlying problem instance for the solution.</p>
+<p>This method can be used to evaluate a solution for different instance of problems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><em>Problem</em></a>) – another problem instance from which the solution can be evaluated</p>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilitySolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution.copy" title="Link to this definition"></a></dt>
+<dd><p>Deep copy of the solution.</p>
+<p>The copy() function should return a new object containing the same input as the current object,
+that respects the following expected behaviour:
+-y = x.copy()
+-if do some inplace change of y, the changes are not done in x.</p>
+<p>Returns: a new object from which you can manipulate attributes without changing the original object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution.is_allocated">
+<span class="sig-name descname"><span class="pre">is_allocated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Customer" title="discrete_optimization.facility.problem.Customer"><span class="pre">Customer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Facility" title="discrete_optimization.facility.problem.Facility"><span class="pre">Facility</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilitySolution.is_allocated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution.is_allocated" title="Link to this definition"></a></dt>
+<dd><p>Return the usage of the unary resource for the given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.FacilitySolution.lazy_copy">
+<span class="sig-name descname"><span class="pre">lazy_copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#FacilitySolution.lazy_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.FacilitySolution.lazy_copy" title="Link to this definition"></a></dt>
+<dd><p>This function should return a new object but possibly with mutable attributes from the original objects.</p>
+<p>A typical use of lazy copy is in evolutionary algorithms or genetic algorithm where the use of
+local move don’t need to do a possibly costly deepcopy.</p>
+<p>Returns (Solution): copy (possibly shallow) of the Solution</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Point">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.problem.</span></span><span class="sig-name descname"><span class="pre">Point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#Point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.Point" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Point.x">
+<span class="sig-name descname"><span class="pre">x</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#discrete_optimization.facility.problem.Point.x" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.Point.y">
+<span class="sig-name descname"><span class="pre">y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#discrete_optimization.facility.problem.Point.y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.problem.length">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.problem.</span></span><span class="sig-name descname"><span class="pre">length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><span class="pre">Point</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">point2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><span class="pre">Point</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/problem.html#length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.problem.length" title="Link to this definition"></a></dt>
+<dd><p>Classic euclidian distance between two points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>point1</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><em>Point</em></a>) – origin point</p></li>
+<li><p><strong>point2</strong> (<a class="reference internal" href="#discrete_optimization.facility.problem.Point" title="discrete_optimization.facility.problem.Point"><em>Point</em></a>) – target point</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns (float): euclidian distance between the 2 points</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.facility.solvers_map">
+<span id="discrete-optimization-facility-solvers-map-module"></span><h2>discrete_optimization.facility.solvers_map module<a class="headerlink" href="#module-discrete_optimization.facility.solvers_map" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.solvers_map.look_for_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.solvers_map.</span></span><span class="sig-name descname"><span class="pre">look_for_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_solver.FacilitySolver" title="discrete_optimization.facility.solvers.facility_solver.FacilitySolver"><span class="pre">FacilitySolver</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/solvers_map.html#look_for_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.solvers_map.look_for_solver" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.solvers_map.look_for_solver_class">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.solvers_map.</span></span><span class="sig-name descname"><span class="pre">look_for_solver_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_solver.FacilitySolver" title="discrete_optimization.facility.solvers.facility_solver.FacilitySolver"><span class="pre">FacilitySolver</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/solvers_map.html#look_for_solver_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.solvers_map.look_for_solver_class" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.solvers_map.return_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.solvers_map.</span></span><span class="sig-name descname"><span class="pre">return_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_solver.FacilitySolver" title="discrete_optimization.facility.solvers.facility_solver.FacilitySolver"><span class="pre">FacilitySolver</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_solver.FacilitySolver" title="discrete_optimization.facility.solvers.facility_solver.FacilitySolver"><span class="pre">FacilitySolver</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/solvers_map.html#return_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.solvers_map.return_solver" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.solvers_map.solve">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.solvers_map.</span></span><span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_solver.FacilitySolver" title="discrete_optimization.facility.solvers.facility_solver.FacilitySolver"><span class="pre">FacilitySolver</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/facility/solvers_map.html#solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.solvers_map.solve" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.facility.utils">
+<span id="discrete-optimization-facility-utils-module"></span><h2>discrete_optimization.facility.utils module<a class="headerlink" href="#module-discrete_optimization.facility.utils" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.facility.utils.compute_matrix_distance_facility_problem">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.facility.utils.</span></span><span class="sig-name descname"><span class="pre">compute_matrix_distance_facility_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/facility/utils.html#compute_matrix_distance_facility_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.facility.utils.compute_matrix_distance_facility_problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.facility">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.facility" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.coloring.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.coloring.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.facility.solvers.html" class="btn btn-neutral float-right" title="discrete_optimization.facility.solvers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

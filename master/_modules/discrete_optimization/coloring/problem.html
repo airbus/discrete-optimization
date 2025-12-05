@@ -1,0 +1,696 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring.problem &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.coloring.problem</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Implementation of the famous graph coloring problem (https://en.wikipedia.org/wiki/Graph_coloring).</span>
+
+<span class="sd">Graph coloring problem consists at assigning different colors to vertexes in a graph.</span>
+<span class="sd">The only constraint is that adjacent vertices should be colored by different colors</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationProblem</span><span class="p">,</span>
+    <span class="n">AllocationSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.graph_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+
+<span class="n">Node</span> <span class="o">=</span> <span class="n">Hashable</span>  <span class="c1"># node to color</span>
+<span class="n">Color</span> <span class="o">=</span> <span class="nb">int</span>  <span class="c1"># color</span>
+
+
+<div class="viewcode-block" id="ColoringSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ColoringSolution</span><span class="p">(</span><span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Color</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution class for graph coloring problem.</span>
+
+<span class="sd">    The object contains a pointer to the problem instance,</span>
+<span class="sd">    a list or numpy array giving colors values to each vertices of the graph.</span>
+<span class="sd">    number of different colors or violation can also be stored to avoid some unnecessary computation</span>
+<span class="sd">    (think about local search algorithms).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        problem (ColoringProblem): instance of the graph coloring problem</span>
+<span class="sd">        colors (Union[list[int], np.array]): list/array of the same size of problem.number_of_nodes number.</span>
+<span class="sd">                                             It should contain integer values representing discrete colors.</span>
+<span class="sd">        nb_color (Optional[int]): number of different colors present in colors attributes. can be used directly</span>
+<span class="sd">                                  by the problem.evaluate function if this attribute is provided</span>
+<span class="sd">                                  (be careful to keep coherence between colors and nb_color !)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">ColoringProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+        <span class="n">colors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">nb_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">nb_violations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Init of ColoringSolution.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="n">colors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_color</span> <span class="o">=</span> <span class="n">nb_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_violations</span> <span class="o">=</span> <span class="n">nb_violations</span>
+
+<div class="viewcode-block" id="ColoringSolution.copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ColoringSolution&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Efficient way of copying a coloring solution without deepcopying unnecessary attribute (problem).</span>
+
+<span class="sd">        Algorithms can therefore copy this object, modify mutable attributes of interest (i.e colors)</span>
+<span class="sd">        without modifying the initial object.</span>
+
+<span class="sd">        Returns: A copy that can be considered as a deep copy of the current object.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">colors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">colors</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">colors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">colors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ColoringSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span>
+            <span class="n">nb_color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_color</span><span class="p">,</span>
+            <span class="n">nb_violations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_violations</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ColoringSolution.lazy_copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringSolution.lazy_copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lazy_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ColoringSolution&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shallow copy of the coloring solution object.</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">            x = y.lozy_copy()</span>
+<span class="sd">            id(x) == id(y)  # will be false</span>
+<span class="sd">            x.colors==y.colors # will be true</span>
+<span class="sd">        Returns: a new ColoringSolution object where the mutable attributes will point to the same object</span>
+<span class="sd">                 than the original.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ColoringSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">,</span>
+            <span class="n">nb_color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_color</span><span class="p">,</span>
+            <span class="n">nb_violations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_violations</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ColoringSolution.to_reformated_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringSolution.to_reformated_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_reformated_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ColoringSolution&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Computes a new solution where the colors array has a value precede chain (see more details https://www.minizinc.org/doc-2.5.3/en/lib-globals.html#index-62) property.</span>
+
+<span class="sd">         Examples : [1, 4, 4, 3, 2, 4] doesnt respect the value_precede_chain because 4 appears before 2 and 3.</span>
+<span class="sd">         A transformed vector would be : [1, 2, 2, 3, 4, 2].</span>
+<span class="sd">         For the coloring problem it is the same solution but this time we respect value_precede.</span>
+
+<span class="sd">        The resulting solution is equivalent for the optimization problem to solve, but can reduce a lot the search space</span>
+<span class="sd">        Returns: New ColoringSolution object with value precede chain property.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">colors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;self.colors should not be None when calling to_reformated_solution()&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">ColoringSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">transform_color_values_to_value_precede</span><span class="p">(</span><span class="n">colors</span><span class="p">),</span>
+            <span class="n">nb_color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_color</span><span class="p">,</span>
+            <span class="n">nb_violations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_violations</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">&quot;nb_color = &quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_color</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;nb_violations=&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_violations</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;colors=&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ColoringSolution.change_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringSolution.change_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Change the reference to the problem instance of the solution.</span>
+
+<span class="sd">        If two coloring problems have the same number of nodes, we can build a solution of the problem</span>
+<span class="sd">        from the solution of another one.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            new_problem: One another ColoringProblem.</span>
+
+<span class="sd">        Returns: None, but change in place the object</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_problem</span><span class="p">,</span> <span class="n">ColoringProblem</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;new_problem must a ColoringProblem for a ColoringSolution.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">colors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">new_problem</span></div>
+
+
+<div class="viewcode-block" id="ColoringSolution.is_allocated">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringSolution.is_allocated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">Color</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">i_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span> <span class="o">==</span> <span class="n">unary_resource</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="transform_color_values_to_value_precede">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.transform_color_values_to_value_precede">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_color_values_to_value_precede</span><span class="p">(</span><span class="n">color_vector</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;See method ColoringSolution.to_reformated_solution().</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        color_vector (list[int]): vector representing colors of vertices</span>
+
+<span class="sd">    Returns: A vector with value precede chain property</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index_value_color</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">new_value</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">new_colors_vector</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">color_vector</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">color_vector</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index_value_color</span><span class="p">:</span>
+            <span class="n">index_value_color</span><span class="p">[</span><span class="n">color_vector</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_value</span>
+            <span class="n">new_value</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">new_colors_vector</span> <span class="o">+=</span> <span class="p">[</span><span class="n">index_value_color</span><span class="p">[</span><span class="n">color_vector</span><span class="p">[</span><span class="n">k</span><span class="p">]]]</span>
+    <span class="k">return</span> <span class="n">new_colors_vector</span></div>
+
+
+
+<div class="viewcode-block" id="transform_color_values_to_value_precede_on_other_node_order">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.transform_color_values_to_value_precede_on_other_node_order">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_color_values_to_value_precede_on_other_node_order</span><span class="p">(</span>
+    <span class="n">color_vector</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">nodes_ordering</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;See method ColoringSolution.to_reformated_solution().</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        color_vector (list[int]): vector representing colors of vertices</span>
+<span class="sd">        nodes_ordering (list[int]): vector representing the order of index to look when building the value-precede rule</span>
+
+<span class="sd">    Returns: A vector with value precede chain property, when looking at nodes in another order</span>
+<span class="sd">    example if nodes_ordering = [1, 0, 2]</span>
+<span class="sd">    then the solution [0, 1, 1] does not respect the value precede property because</span>
+<span class="sd">    solution[nodes_ordering[0]] &gt; solution[nodes_ordering[1]]</span>
+<span class="sd">    but, [1, 0, 1] respects it.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index_value_color</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">new_value</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">new_colors_vector</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">color_vector</span><span class="p">))]</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">color_vector</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">color_vector</span><span class="p">[</span><span class="n">nodes_ordering</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index_value_color</span><span class="p">:</span>
+            <span class="n">index_value_color</span><span class="p">[</span><span class="n">color_vector</span><span class="p">[</span><span class="n">nodes_ordering</span><span class="p">[</span><span class="n">k</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">new_value</span>
+            <span class="n">new_value</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">new_colors_vector</span><span class="p">[</span><span class="n">nodes_ordering</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">index_value_color</span><span class="p">[</span>
+            <span class="n">color_vector</span><span class="p">[</span><span class="n">nodes_ordering</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span>
+        <span class="p">]</span>
+    <span class="k">return</span> <span class="n">new_colors_vector</span></div>
+
+
+
+<div class="viewcode-block" id="ColoringConstraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringConstraints">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ColoringConstraints</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Data structure to store additional constraints. Attributes will grow</span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        color_constraint (dict[Hashable, int]): dictionary filled with color constraint.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color_constraint</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color_constraint</span> <span class="o">=</span> <span class="n">color_constraint</span>
+
+<div class="viewcode-block" id="ColoringConstraints.nodes_fixed">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringConstraints.nodes_fixed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nodes_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">color_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">color_constraint</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ColoringProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ColoringProblem</span><span class="p">(</span><span class="n">AllocationProblem</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Color</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coloring problem class implementation.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        graph (Graph): a graph object representing vertices and edges.</span>
+<span class="sd">        number_of_nodes (int): number of nodes in the graph</span>
+<span class="sd">        subset_nodes (set[Hashable]): subset of nodes id to take into account in the optimisation.</span>
+<span class="sd">        nodes_name (list[Hashable]): list of id of the graph vertices.</span>
+<span class="sd">        index_nodes_name (dict[Hashable, int]): dictionary node_name-&gt;index</span>
+<span class="sd">        index_to_nodes_name (dict[int, Hashable]): index-&gt;node_name</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">graph</span><span class="p">:</span> <span class="n">Graph</span><span class="p">,</span>
+        <span class="n">subset_nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraints_coloring</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ColoringConstraints</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_to_nodes_name</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subset_nodes</span> <span class="o">=</span> <span class="n">subset_nodes</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subset_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_subset_nodes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_nodes</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_subset</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_nodes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_coloring</span> <span class="o">=</span> <span class="n">constraints_coloring</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_constraints_coloring</span> <span class="o">=</span> <span class="n">constraints_coloring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasks_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unary_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Color</span><span class="p">]:</span>
+        <span class="n">max_nb_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_nb_colors</span><span class="p">))</span>
+
+<div class="viewcode-block" id="ColoringProblem.is_in_subset_index">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.is_in_subset_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_in_subset_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_subset</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset_nodes</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.is_in_subset_nodes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.is_in_subset_nodes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_in_subset_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_subset</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_nodes</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.count_colors">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.count_colors">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_colors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colors_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_subset</span><span class="p">:</span>
+            <span class="n">nb_color</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">colors_list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset_nodes</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nb_color</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">colors_list</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">nb_color</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.count_colors_all_index">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.count_colors_all_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_colors_all_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colors_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">colors_list</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">ColoringSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>  <span class="c1"># type: ignore # avoid isinstance checks for efficiency</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluation implementation for ColoringProblem.</span>
+
+<span class="sd">        Compute number of colors and violation of the current solution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">nb_color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;variable.colors must not be None if variable.nb_color is None.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_subset</span><span class="p">:</span>
+                    <span class="n">variable</span><span class="o">.</span><span class="n">nb_color</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+                        <span class="nb">set</span><span class="p">([</span><span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_subset_nodes</span><span class="p">])</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">variable</span><span class="o">.</span><span class="n">nb_color</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">nb_violations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;variable.colors must not be None if variable.nb_color is None.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">variable</span><span class="o">.</span><span class="n">nb_violations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_violations</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;nb_colors&quot;</span><span class="p">:</span> <span class="n">variable</span><span class="o">.</span><span class="n">nb_color</span><span class="p">,</span> <span class="s2">&quot;nb_violations&quot;</span><span class="p">:</span> <span class="n">variable</span><span class="o">.</span><span class="n">nb_violations</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">ColoringSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore  # avoid isinstance checks for efficiency</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check the color constraint of the solution.</span>
+
+<span class="sd">        Check for each edges in the graph if the allocated color of the vertices are different.</span>
+<span class="sd">        When one counterexample is found, the function directly returns False.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable (ColoringSolution): the solution object we want to check the feasibility</span>
+
+<span class="sd">        Returns: boolean indicating if the solution fulfills the constraint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;variable.colors must not be None&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+                    <span class="o">==</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+                <span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_constraints_coloring</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">compute_constraints_penalty</span><span class="p">(</span>
+                <span class="n">coloring_solution</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span>
+                <span class="n">coloring_problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">constraints_coloring</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints_coloring</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attribute documenation for ColoringSolution object.</span>
+
+<span class="sd">        Returns: an EncodingRegister specifying the colors attribute.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dict_register</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;colors&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;colors&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER</span><span class="p">],</span>
+                <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">,</span>
+                <span class="s2">&quot;arity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">,</span>
+                <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># integer</span>
+                <span class="s2">&quot;up&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">,</span>  <span class="c1"># integer</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span><span class="n">dict_register</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.get_solution_type">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the class of a solution instance for ColoringProblem.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ColoringSolution</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.get_objective_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Specifies the default objective settings to be used with the evaluate function output.&quot;&quot;&quot;</span>
+        <span class="n">dict_objective</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;nb_colors&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">1.0</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;nb_violations&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">100.0</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="n">dict_objective</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.get_dummy_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.get_dummy_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColoringSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a dummy solution.</span>
+
+<span class="sd">        A dummy feasible solution consists in giving one different color per vertices.</span>
+<span class="sd">        Returns: A feasible and dummiest ColoringSolution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">))</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">ColoringSolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colors</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.count_violations">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.count_violations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_violations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">ColoringSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count number of violation in graph coloring solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable: ColoringSolution to evaluate the number of violation to the color constraint</span>
+
+<span class="sd">        Returns: an integer representing the number of edges (link between 2 vertices) where the colors are equal (thus being a violation)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">color</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;variable.colors must not be None.&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+                    <span class="o">==</span> <span class="n">variable</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+                <span class="p">):</span>
+                    <span class="n">val</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_constraints_coloring</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">+=</span> <span class="n">compute_constraints_penalty</span><span class="p">(</span>
+                <span class="n">coloring_solution</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span>
+                <span class="n">coloring_problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">constraints_coloring</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints_coloring</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">val</span></div>
+
+
+<div class="viewcode-block" id="ColoringProblem.evaluate_from_encoding">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.ColoringProblem.evaluate_from_encoding">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_from_encoding</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">int_vector</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">encoding_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Can be used in GA algorithm to build an object solution and evaluate from a int_vector representation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            int_vector: representing the colors vector of our problem</span>
+<span class="sd">            encoding_name: name of the attribute in ColoringSolution corresponding to the int_vector given.</span>
+<span class="sd">             In our case, will only work for encoding_name=&quot;colors&quot;</span>
+<span class="sd">        Returns: the evaluation of the (int_vector, encoding) object on the coloring problem.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">coloring_sol</span><span class="p">:</span> <span class="n">ColoringSolution</span>
+        <span class="k">if</span> <span class="n">encoding_name</span> <span class="o">==</span> <span class="s2">&quot;colors&quot;</span><span class="p">:</span>
+            <span class="n">coloring_sol</span> <span class="o">=</span> <span class="n">ColoringSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">int_vector</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">encoding_name</span> <span class="o">==</span> <span class="s2">&quot;custom&quot;</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">encoding_name</span><span class="p">:</span> <span class="n">int_vector</span><span class="p">}</span>
+            <span class="n">coloring_sol</span> <span class="o">=</span> <span class="n">ColoringSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;encoding_name can only be &#39;colors&#39; or &#39;custom&#39;.&quot;</span><span class="p">)</span>
+        <span class="n">objectives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">coloring_sol</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objectives</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="compute_constraints_penalty">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.compute_constraints_penalty">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_constraints_penalty</span><span class="p">(</span>
+    <span class="n">coloring_solution</span><span class="p">:</span> <span class="n">ColoringSolution</span><span class="p">,</span>
+    <span class="n">coloring_problem</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+    <span class="n">constraints_coloring</span><span class="p">:</span> <span class="n">ColoringConstraints</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">violations</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">constraints_coloring</span><span class="o">.</span><span class="n">color_constraint</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">coloring_solution</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">coloring_problem</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">n</span><span class="p">]]</span>
+            <span class="o">!=</span> <span class="n">constraints_coloring</span><span class="o">.</span><span class="n">color_constraint</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">violations</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">violations</span></div>
+
+
+
+<div class="viewcode-block" id="transform_coloring_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.coloring.html#discrete_optimization.coloring.problem.transform_coloring_problem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_coloring_problem</span><span class="p">(</span>
+    <span class="n">coloring_problem</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+    <span class="n">subset_nodes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">constraints_coloring</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ColoringConstraints</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColoringProblem</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">ColoringProblem</span><span class="p">(</span>
+        <span class="n">graph</span><span class="o">=</span><span class="n">coloring_problem</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span>
+        <span class="n">subset_nodes</span><span class="o">=</span><span class="n">subset_nodes</span><span class="p">,</span>
+        <span class="n">constraints_coloring</span><span class="o">=</span><span class="n">constraints_coloring</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

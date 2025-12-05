@@ -1,0 +1,536 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring.solvers.lp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring.solvers.lp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.coloring.solvers.lp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Linear programming models and solve functions for Coloring problem.&quot;&quot;&quot;</span>
+
+<span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.math_opt.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">mathopt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.coloring.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColoringProblem</span><span class="p">,</span> <span class="n">ColoringSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.coloring.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColoringSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.coloring.solvers.greedy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GreedyColoringSolver</span><span class="p">,</span>
+    <span class="n">NxGreedyColoringMethod</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstraintType</span><span class="p">,</span>
+    <span class="n">GurobiMilpSolver</span><span class="p">,</span>
+    <span class="n">MilpSolver</span><span class="p">,</span>
+    <span class="n">OrtoolsMathOptMilpSolver</span><span class="p">,</span>
+    <span class="n">VariableType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.unsat_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetaConstraint</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">gurobipy</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">OneColorConstraints</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ConstraintType</span><span class="p">]</span>
+<span class="n">NeighborsConstraints</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">ConstraintType</span><span class="p">]</span>
+<span class="n">VariableDecision</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">VariableType</span><span class="p">]]</span>
+
+
+<div class="viewcode-block" id="ConstraintsDict">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.lp.ConstraintsDict">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstraintsDict</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">one_color_constraints</span><span class="p">:</span> <span class="n">OneColorConstraints</span>
+    <span class="n">constraints_neighbors</span><span class="p">:</span> <span class="n">NeighborsConstraints</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_BaseLpColoringSolver</span><span class="p">(</span><span class="n">MilpSolver</span><span class="p">,</span> <span class="n">ColoringSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Coloring LP solvers.&quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;greedy_start&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_cliques&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_of_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_to_nodes_name</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">:</span> <span class="n">VariableDecision</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">one_color_constraints</span><span class="p">:</span> <span class="n">OneColorConstraints</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">constraints_neighbors</span><span class="p">:</span> <span class="n">NeighborsConstraints</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_dict</span><span class="p">:</span> <span class="n">ConstraintsDict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;one_color_constraints&quot;</span><span class="p">:</span> <span class="n">one_color_constraints</span><span class="p">,</span>
+            <span class="s2">&quot;constraints_neighbors&quot;</span><span class="p">:</span> <span class="n">constraints_neighbors</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_variable_description</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;colors_vars&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+                <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;for each node and each color, a binary indicator&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_constraint</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sense_optim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">sense_function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ColoringSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the internal model.</span>
+
+<span class="sd">        Keyword Args:</span>
+<span class="sd">            greedy_start (bool): if True, a greedy solution is computed (using GreedyColoring solver)</span>
+<span class="sd">                and used as warm start for the LP.</span>
+<span class="sd">            use_cliques (bool): if True, compute cliques of the coloring problem and add constraints to the model.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">greedy_start</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;greedy_start&quot;</span><span class="p">]</span>
+        <span class="n">use_cliques</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_cliques&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">greedy_start</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing greedy solution&quot;</span><span class="p">)</span>
+            <span class="n">greedy_solver</span> <span class="o">=</span> <span class="n">GreedyColoringSolver</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">greedy_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">strategy</span><span class="o">=</span><span class="n">NxGreedyColoringMethod</span><span class="o">.</span><span class="n">best</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">get_best_solution</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">sol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;greedy_solver.solve(strategy=NxGreedyColoringMethod.best).get_best_solution() &quot;</span>
+                    <span class="s2">&quot;should not be None.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">ColoringSolution</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;greedy_solver.solve(strategy=NxGreedyColoringMethod.best).get_best_solution() &quot;</span>
+                    <span class="s2">&quot;should be a ColoringSolution.&quot;</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_solution</span> <span class="o">=</span> <span class="n">sol</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Get dummy solution&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">()</span>
+        <span class="n">nb_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_solution</span><span class="o">.</span><span class="n">nb_color</span>
+        <span class="n">nb_colors_subset</span> <span class="o">=</span> <span class="n">nb_colors</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">use_subset</span><span class="p">:</span>
+            <span class="n">nb_colors_subset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">count_colors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_solution</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+            <span class="n">nb_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">count_colors_all_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_solution</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">nb_colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;self.start_solution.nb_color should not be None.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_empty_model</span><span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">)</span>
+        <span class="n">colors_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">VariableType</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">range_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span>
+        <span class="n">range_color</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors</span><span class="p">)</span>
+        <span class="n">range_color_subset</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors_subset</span><span class="p">)</span>
+        <span class="n">range_color_per_node</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">meta_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">:</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_range_color</span><span class="p">(</span>
+                <span class="n">node_name</span><span class="o">=</span><span class="n">node</span><span class="p">,</span>
+                <span class="n">range_color_subset</span><span class="o">=</span><span class="n">range_color_subset</span><span class="p">,</span>
+                <span class="n">range_color_all</span><span class="o">=</span><span class="n">range_color</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">color</span> <span class="ow">in</span> <span class="n">rng</span><span class="p">:</span>
+                <span class="n">colors_var</span><span class="p">[</span><span class="n">node</span><span class="p">,</span> <span class="n">color</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_binary_variable</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;x_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">((</span><span class="n">node</span><span class="p">,</span> <span class="n">color</span><span class="p">))</span>
+                <span class="p">)</span>
+            <span class="n">range_color_per_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">rng</span><span class="p">)</span>
+        <span class="n">one_color_constraints</span><span class="p">:</span> <span class="n">OneColorConstraints</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">range_node</span><span class="p">:</span>
+            <span class="n">one_color_constraints</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">colors_var</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">range_color_per_node</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="o">==</span> <span class="mi">1</span>
+            <span class="p">)</span>
+        <span class="n">meta_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">MetaConstraint</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;One color per node&quot;</span><span class="p">,</span>
+                <span class="n">constraints</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">one_color_constraints</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">cliques</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">to_networkx</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">use_cliques</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">nx</span><span class="o">.</span><span class="n">algorithms</span><span class="o">.</span><span class="n">clique</span><span class="o">.</span><span class="n">find_cliques</span><span class="p">(</span><span class="n">g</span><span class="p">):</span>
+                <span class="n">cliques</span> <span class="o">+=</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span>
+            <span class="n">cliques</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">cliques</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cliques</span> <span class="o">=</span> <span class="p">[[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()]</span>
+        <span class="n">cliques_constraint</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">ConstraintType</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">index_c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">nb_colors</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;nb_colors&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_cliques</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cliques</span><span class="p">[:</span><span class="mi">100</span><span class="p">]:</span>
+                <span class="n">cliques_constraint</span><span class="p">[</span><span class="n">index_c</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">color_i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">colors_var</span><span class="p">[</span><span class="n">node</span><span class="p">,</span> <span class="n">color_i</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">c</span>
+                        <span class="k">for</span> <span class="n">color_i</span> <span class="ow">in</span> <span class="n">range_color_per_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="o">&gt;=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">))])</span>
+                <span class="p">)</span>
+                <span class="n">cliques_constraint</span><span class="p">[(</span><span class="n">index_c</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                        <span class="n">colors_var</span><span class="p">[</span><span class="n">node</span><span class="p">,</span> <span class="n">color_i</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">c</span>
+                        <span class="k">for</span> <span class="n">color_i</span> <span class="ow">in</span> <span class="n">range_color_per_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="o">&lt;=</span> <span class="n">opt</span>
+                <span class="p">)</span>
+                <span class="n">meta_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">MetaConstraint</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;clique(</span><span class="si">{</span><span class="n">index_c</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                        <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">cliques_constraint</span><span class="p">[</span><span class="n">index_c</span><span class="p">],</span>
+                            <span class="n">cliques_constraint</span><span class="p">[(</span><span class="n">index_c</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">index_c</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span>
+        <span class="n">constraints_neighbors</span><span class="p">:</span> <span class="n">NeighborsConstraints</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">meta_constraints_neighbors</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">MetaConstraint</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;neighbours colors of node </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_nodes_name</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">range_color_per_node</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]:</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">range_color_per_node</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]:</span>
+                    <span class="n">cstr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                        <span class="n">colors_var</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">c</span><span class="p">]</span> <span class="o">+</span> <span class="n">colors_var</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+                    <span class="p">)</span>
+                    <span class="n">constraints_neighbors</span><span class="p">[(</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="n">cstr</span>
+                    <span class="n">meta_constraints_neighbors</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+                    <span class="n">meta_constraints_neighbors</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+        <span class="n">meta_constraints</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">meta_constraints_neighbors</span><span class="p">)</span>
+        <span class="n">opt_meta_constraint</span> <span class="o">=</span> <span class="n">MetaConstraint</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;optimality constraint&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">range_node</span><span class="p">:</span>
+            <span class="n">opt_constraint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">color_i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">colors_var</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">color_i</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">color_i</span> <span class="ow">in</span> <span class="n">range_color_per_node</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="o">&lt;=</span> <span class="n">opt</span>
+            <span class="p">)</span>
+            <span class="n">opt_meta_constraint</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">opt_constraint</span><span class="p">)</span>
+        <span class="n">meta_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">opt_meta_constraint</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_model_objective</span><span class="p">(</span><span class="n">opt</span><span class="p">,</span> <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;colors_var&quot;</span><span class="p">:</span> <span class="n">colors_var</span><span class="p">,</span> <span class="s2">&quot;nb_colors&quot;</span><span class="p">:</span> <span class="n">opt</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;one_color_constraints&quot;</span><span class="p">:</span> <span class="n">one_color_constraints</span><span class="p">,</span>
+            <span class="s2">&quot;constraints_neighbors&quot;</span><span class="p">:</span> <span class="n">constraints_neighbors</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_variable_description</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;colors_var&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">,</span> <span class="n">nb_colors</span><span class="p">),</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+                <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;for each node and each color, a binary indicator&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_constraint</span><span class="p">[</span><span class="s2">&quot;one_color_constraints&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;one and only one color should be assignated to a node&quot;</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description_constraint</span><span class="p">[</span><span class="s2">&quot;constraints_neighbors&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="s2">&quot;no neighbors can have same color&quot;</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_constraints</span> <span class="o">=</span> <span class="n">meta_constraints</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_meta_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaConstraint</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_constraints</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ColoringSolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start().</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Init all variables to 0</span>
+        <span class="n">hinted_variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">var</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;colors_var&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Set var(node, color) to 1 according to the solution</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">colors</span><span class="p">):</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_to_nodes_name</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">variable_decision_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
+            <span class="n">hinted_variables</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;colors_var&quot;</span><span class="p">][</span><span class="n">variable_decision_key</span><span class="p">]</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">hinted_variables</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;nb_colors&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">nb_color</span>
+
+        <span class="k">return</span> <span class="n">hinted_variables</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">get_var_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">get_obj_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColoringSolution</span><span class="p">:</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span>
+        <span class="k">for</span> <span class="p">(</span>
+            <span class="n">variable_decision_key</span><span class="p">,</span>
+            <span class="n">variable_decision_value</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_decision</span><span class="p">[</span><span class="s2">&quot;colors_var&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">get_var_value_for_current_solution</span><span class="p">(</span><span class="n">variable_decision_value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">variable_decision_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="n">variable_decision_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">colors</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">node</span><span class="p">]]</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="k">return</span> <span class="n">ColoringSolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">colors</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_range_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">range_color_subset</span><span class="p">,</span> <span class="n">range_color_all</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">has_constraints_coloring</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">constraints_coloring</span><span class="o">.</span><span class="n">nodes_fixed</span><span class="p">():</span>
+                <span class="k">return</span> <span class="nb">range</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">constraints_coloring</span><span class="o">.</span><span class="n">color_constraint</span><span class="p">[</span><span class="n">node_name</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">constraints_coloring</span><span class="o">.</span><span class="n">color_constraint</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">use_subset</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">range_color_subset</span>
+                <span class="k">if</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">subset_nodes</span>
+                <span class="k">else</span> <span class="n">range_color_all</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">range_color_all</span>
+
+
+<div class="viewcode-block" id="GurobiColoringSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.lp.GurobiColoringSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiColoringSolver</span><span class="p">(</span><span class="n">_BaseLpColoringSolver</span><span class="p">,</span> <span class="n">GurobiMilpSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coloring LP solver based on gurobipy library.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        problem (ColoringProblem): coloring problem instance to solve</span>
+<span class="sd">        params_objective_function (ParamsObjectiveFunction): objective function parameters</span>
+<span class="sd">                (however this is just used for the ResultStorage creation, not in the optimisation)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="n">_BaseLpColoringSolver</span><span class="o">.</span><span class="n">hyperparameters</span>
+
+<div class="viewcode-block" id="GurobiColoringSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.lp.GurobiColoringSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the gurobi model.</span>
+
+<span class="sd">        Keyword Args:</span>
+<span class="sd">            greedy_start (bool): if True, a greedy solution is computed (using GreedyColoring solver)</span>
+<span class="sd">                and used as warm start for the LP.</span>
+<span class="sd">            use_cliques (bool): if True, compute cliques of the coloring problem and add constraints to the model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_BaseLpColoringSolver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">Threads</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">Method</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="s2">&quot;Heuristics&quot;</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GurobiColoringSolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.lp.GurobiColoringSolver.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ColoringSolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start().</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_BaseLpColoringSolver</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MathOptColoringSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.lp.MathOptColoringSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathOptColoringSolver</span><span class="p">(</span><span class="n">_BaseLpColoringSolver</span><span class="p">,</span> <span class="n">OrtoolsMathOptMilpSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coloring LP solver based on pymip library.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Gurobi and CBC are available as backend solvers.</span>
+
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        problem (ColoringProblem): coloring problem instance to solve</span>
+<span class="sd">        params_objective_function (ParamsObjectiveFunction): objective function parameters</span>
+<span class="sd">                    (however this is just used for the ResultStorage creation, not in the optimisation)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="n">_BaseLpColoringSolver</span><span class="o">.</span><span class="n">hyperparameters</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">ColoringProblem</span>
+
+<div class="viewcode-block" id="MathOptColoringSolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.lp.MathOptColoringSolver.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ColoringSolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.</span>
+<span class="sd">        See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</span>
+<span class="sd">        for more information.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_BaseLpColoringSolver</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

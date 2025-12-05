@@ -1,0 +1,133 @@
+discrete\_optimization.rcpsp package
+====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.rcpsp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.fast\_function module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.fast_function
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.mutation module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.mutation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.parser module
+------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.problem module
+-------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.problem\_preemptive module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.problem_preemptive
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.problem\_robust module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.problem_robust
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.problem\_specialized\_constraints module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.problem_specialized_constraints
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.sgs\_without\_array module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.sgs_without_array
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solution module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solution
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers\_map module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers_map
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.special\_constraints module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.special_constraints
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.transform\_problem module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.transform_problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.utils module
+-----------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.utils\_preemptive module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.utils_preemptive
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp
+   :members:
+   :show-inheritance:
+   :undoc-members:

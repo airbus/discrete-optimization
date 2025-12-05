@@ -1,0 +1,707 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.graph_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_graph_rcpsp_object</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericRcpspSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OptionNeighborRandom</span><span class="p">,</span>
+    <span class="n">build_neighbor_mixing_cut_parts</span><span class="p">,</span>
+    <span class="n">build_neighbor_mixing_methods</span><span class="p">,</span>
+    <span class="n">build_neighbor_random</span><span class="p">,</span>
+    <span class="n">mix_both</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BasicConstraintBuilder</span><span class="p">,</span>
+    <span class="n">ConstraintHandlerScheduling</span><span class="p">,</span>
+    <span class="n">NeighborBuilderMix</span><span class="p">,</span>
+    <span class="n">NeighborBuilderSubPart</span><span class="p">,</span>
+    <span class="n">NeighborConstraintBreaks</span><span class="p">,</span>
+    <span class="n">NeighborRandomAndNeighborGraph</span><span class="p">,</span>
+    <span class="n">ParamsConstraintBuilder</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NeighborRepairProblems</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.solvers.ls</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LsGenericRcpspSolver</span><span class="p">,</span>
+    <span class="n">LsSolverType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ANY_RCPSP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSolverName</span><span class="p">,</span> <span class="n">MinizincCpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+    <span class="n">EnumHyperparameter</span><span class="p">,</span>
+    <span class="n">FloatHyperparameter</span><span class="p">,</span>
+    <span class="n">IntegerHyperparameter</span><span class="p">,</span>
+    <span class="n">SubBrickKwargsHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lns_cp</span><span class="w"> </span><span class="kn">import</span> <span class="n">LnsCpMzn</span><span class="p">,</span> <span class="n">MznConstraintHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lns_mip</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InitialSolution</span><span class="p">,</span>
+    <span class="n">PostProcessSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lns_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitialSolutionFromSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.cp_mzn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpMultimodePreemptiveRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpMultimodeRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpPreemptiveRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpRcpspSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.lns_cp</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostProcessLeftShift</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.lns_cp_preemptive</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostProLeftShift</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.solvers.cp_mzn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpMultiskillRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.solvers.lns_post_process</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultiskillRcpspPostProcessSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ConstraintHandlerType">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver.ConstraintHandlerType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstraintHandlerType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">MIX_SUBPROBLEMS</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SOLUTION_REPAIR</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="build_default_cp_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver.build_default_cp_model">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_default_cp_model</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span> <span class="n">partial_solution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_preemptive</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+            <span class="n">solver</span> <span class="o">=</span> <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cp_solver_name&quot;</span><span class="p">,</span> <span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+                <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;ms_rcpsp_preemptive&quot;</span><span class="p">,</span>
+                <span class="n">nb_preemptive</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_preemptive&quot;</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+                <span class="n">max_preempted</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_preempted&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+                <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                <span class="n">possibly_preemptive</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">preemptive_indicator</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                <span class="p">],</span>
+                <span class="n">unit_usage_preemptive</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;unit_usage_preemptive&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+                <span class="n">exact_skills_need</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">add_calendar_constraint_unit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">add_partial_solution_hard_constraint</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span> <span class="kc">False</span>
+                <span class="p">),</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="n">x</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                    <span class="k">if</span> <span class="n">x</span>
+                    <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+                        <span class="s2">&quot;nb_preemptive&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;max_preempted&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;fake_tasks&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span>
+                    <span class="p">]</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">solver</span>
+    <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_preemptive</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_rcpsp_multimode</span><span class="p">():</span>
+                <span class="n">solver</span> <span class="o">=</span> <span class="n">CpMultimodePreemptiveRcpspSolver</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                    <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cp_solver_name&quot;</span><span class="p">,</span> <span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+                    <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;multi-preemptive&quot;</span><span class="p">,</span>
+                    <span class="n">nb_preemptive</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_preemptive&quot;</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+                    <span class="n">max_preempted</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_preempted&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+                    <span class="n">fake_tasks</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fake_tasks&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+                    <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                    <span class="n">possibly_preemptive</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">preemptive_indicator</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                    <span class="p">],</span>
+                    <span class="n">add_partial_solution_hard_constraint</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span> <span class="kc">False</span>
+                    <span class="p">),</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="n">x</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                        <span class="k">if</span> <span class="n">x</span>
+                        <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+                            <span class="s2">&quot;nb_preemptive&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;max_preempted&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;fake_tasks&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span>
+                        <span class="p">]</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">solver</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_rcpsp_multimode</span><span class="p">():</span>
+                <span class="n">solver</span> <span class="o">=</span> <span class="n">CpPreemptiveRcpspSolver</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                    <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cp_solver_name&quot;</span><span class="p">,</span> <span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+                    <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;single-preemptive&quot;</span><span class="p">,</span>
+                    <span class="n">nb_preemptive</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_preemptive&quot;</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+                    <span class="n">max_preempted</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_preempted&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+                    <span class="n">fake_tasks</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fake_tasks&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+                    <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                    <span class="n">possibly_preemptive</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">preemptive_indicator</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                    <span class="p">],</span>
+                    <span class="n">add_partial_solution_hard_constraint</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span> <span class="kc">False</span>
+                    <span class="p">),</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="n">x</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                        <span class="k">if</span> <span class="n">x</span>
+                        <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+                            <span class="s2">&quot;nb_preemptive&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;max_preempted&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;fake_tasks&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span>
+                        <span class="p">]</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">solver</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_preemptive</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+            <span class="n">solver</span> <span class="o">=</span> <span class="n">CpMultiskillRcpspSolver</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cp_solver_name&quot;</span><span class="p">,</span> <span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">),</span>
+                <span class="n">one_ressource_per_task</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">&quot;one_ressource_per_task&quot;</span><span class="p">,</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">one_unit_per_task_max</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+                <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">exact_skills_need</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                <span class="n">add_partial_solution_hard_constraint</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span> <span class="kc">False</span>
+                <span class="p">),</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="n">x</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                    <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">]</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">solver</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_rcpsp_multimode</span><span class="p">():</span>
+                <span class="n">solver</span> <span class="o">=</span> <span class="n">CpMultimodeRcpspSolver</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                    <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cp_solver_name&quot;</span><span class="p">,</span> <span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+                    <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                    <span class="n">add_partial_solution_hard_constraint</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span> <span class="kc">False</span>
+                    <span class="p">),</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="n">x</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                        <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">]</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">solver</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_rcpsp_multimode</span><span class="p">():</span>
+                <span class="n">solver</span> <span class="o">=</span> <span class="n">CpRcpspSolver</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                    <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cp_solver_name&quot;</span><span class="p">,</span> <span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+                    <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                    <span class="n">add_partial_solution_hard_constraint</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">,</span> <span class="kc">False</span>
+                    <span class="p">),</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="n">x</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                        <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;add_partial_solution_hard_constraint&quot;</span><span class="p">]</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">solver</span></div>
+
+
+
+<div class="viewcode-block" id="build_default_postpro">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver.build_default_postpro">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_default_postpro</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span> <span class="n">partial_solution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_preemptive</span><span class="p">():</span>
+            <span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">PostProLeftShift</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">do_ls</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;do_ls&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">post_process_solution</span>
+        <span class="k">if</span> <span class="n">partial_solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_preemptive</span><span class="p">():</span>
+            <span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">PostProcessLeftShift</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span> <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">post_process_solution</span>
+    <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_preemptive</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">MultiskillRcpspPostProcessSolution</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">post_process_solution</span></div>
+
+
+
+<div class="viewcode-block" id="build_default_initial_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver.build_default_initial_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_default_initial_solution</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+        <span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">InitialSolutionFromSolver</span><span class="p">(</span>
+            <span class="n">LsGenericRcpspSolver</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span> <span class="n">ls_solver</span><span class="o">=</span><span class="n">LsSolverType</span><span class="o">.</span><span class="n">SA</span><span class="p">),</span>
+            <span class="n">nb_iteration_max</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">initial_solution_provider</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">():</span>
+        <span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">InitialSolutionFromSolver</span><span class="p">(</span>
+            <span class="n">LsGenericRcpspSolver</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span> <span class="n">ls_solver</span><span class="o">=</span><span class="n">LsSolverType</span><span class="o">.</span><span class="n">SA</span><span class="p">),</span>
+            <span class="n">nb_iteration_max</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">initial_solution_provider</span></div>
+
+
+
+<div class="viewcode-block" id="build_constraint_handler">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver.build_constraint_handler">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_constraint_handler</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">constraint_handler_type</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;constraint_handler_type&quot;</span><span class="p">,</span> <span class="n">ConstraintHandlerType</span><span class="o">.</span><span class="n">MIX_SUBPROBLEMS</span>
+    <span class="p">)</span>
+    <span class="n">constraint_handler</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">constraint_handler_type</span> <span class="o">==</span> <span class="n">ConstraintHandlerType</span><span class="o">.</span><span class="n">MIX_SUBPROBLEMS</span><span class="p">:</span>
+        <span class="n">n1</span> <span class="o">=</span> <span class="n">NeighborBuilderSubPart</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+            <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+            <span class="n">nb_cut_part</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_cut_part&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">n2</span> <span class="o">=</span> <span class="n">NeighborRandomAndNeighborGraph</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+            <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+            <span class="n">fraction_subproblem</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fraction_subproblem&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">includes_special_constraint</span><span class="p">():</span>
+            <span class="n">n3</span> <span class="o">=</span> <span class="n">NeighborConstraintBreaks</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+                <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+                <span class="n">fraction_subproblem</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fraction_subproblem&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+                <span class="n">other_constraint_handler</span><span class="o">=</span><span class="n">n1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">n_mix</span> <span class="o">=</span> <span class="n">NeighborBuilderMix</span><span class="p">(</span>
+                <span class="n">list_neighbor</span><span class="o">=</span><span class="p">[</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">n3</span><span class="p">],</span> <span class="n">weight_neighbor</span><span class="o">=</span><span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_mix</span> <span class="o">=</span> <span class="n">NeighborBuilderMix</span><span class="p">(</span>
+                <span class="n">list_neighbor</span><span class="o">=</span><span class="p">[</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">],</span> <span class="n">weight_neighbor</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">basic_constraint_builder</span> <span class="o">=</span> <span class="n">BasicConstraintBuilder</span><span class="p">(</span>
+            <span class="n">neighbor_builder</span><span class="o">=</span><span class="n">n_mix</span><span class="p">,</span>
+            <span class="n">preemptive</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;preemptive&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="n">multiskill</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;multiskill&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;params_list&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">params_list</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_list&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_0_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">params_0</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                    <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                    <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                    <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                    <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                    <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params_0_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_0_kwargs&quot;</span><span class="p">]</span>
+                <span class="n">params_0</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span><span class="o">**</span><span class="n">params_0_kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_1_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">params_1</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                    <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                    <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                    <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params_1_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_1_kwargs&quot;</span><span class="p">]</span>
+                <span class="n">params_1</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span><span class="o">**</span><span class="n">params_1_kwargs</span><span class="p">)</span>
+            <span class="n">params_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">params_0</span><span class="p">,</span> <span class="n">params_1</span><span class="p">]</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">ConstraintHandlerScheduling</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+            <span class="n">basic_constraint_builder</span><span class="o">=</span><span class="n">basic_constraint_builder</span><span class="p">,</span>
+            <span class="n">params_list</span><span class="o">=</span><span class="n">params_list</span><span class="p">,</span>
+            <span class="n">use_makespan_of_subtasks</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_makespan_of_subtasks&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">constraint_handler_type</span> <span class="o">==</span> <span class="n">ConstraintHandlerType</span><span class="o">.</span><span class="n">SOLUTION_REPAIR</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;params_list&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">params_list</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_list&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_0_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">params_0</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                    <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                    <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                    <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                    <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                    <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params_0_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_0_kwargs&quot;</span><span class="p">]</span>
+                <span class="n">params_0</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span><span class="o">**</span><span class="n">params_0_kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_1_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">params_1</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                    <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+                    <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+                    <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params_1_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;params_1_kwargs&quot;</span><span class="p">]</span>
+                <span class="n">params_1</span> <span class="o">=</span> <span class="n">ParamsConstraintBuilder</span><span class="p">(</span><span class="o">**</span><span class="n">params_1_kwargs</span><span class="p">)</span>
+            <span class="n">params_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">params_0</span><span class="p">,</span> <span class="n">params_1</span><span class="p">]</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">NeighborRepairProblems</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span> <span class="n">params_list</span><span class="o">=</span><span class="n">params_list</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">constraint_handler</span></div>
+
+
+
+<div class="viewcode-block" id="build_constraint_handler_helper">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver.build_constraint_handler_helper">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_constraint_handler_helper</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">option</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;option_neighbor_operator&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">constraint_handler</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">build_neighbor_random</span><span class="p">(</span>
+            <span class="n">option_neighbor</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;option_neighbor_random&quot;</span><span class="p">,</span> <span class="n">OptionNeighborRandom</span><span class="o">.</span><span class="n">MIX_ALL</span>
+            <span class="p">),</span>
+            <span class="n">rcpsp_problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">mix_both</span><span class="p">(</span>
+            <span class="n">rcpsp_problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+            <span class="n">option_neighbor_random</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;option_neighbor_random&quot;</span><span class="p">,</span> <span class="n">OptionNeighborRandom</span><span class="o">.</span><span class="n">MIX_ALL</span>
+            <span class="p">),</span>
+            <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+            <span class="n">fraction_subproblem</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fraction_subproblem&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+            <span class="n">cut_part</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cut_part&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+            <span class="n">params_list</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;params_list&quot;</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                        <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                        <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                        <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                        <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">build_neighbor_mixing_methods</span><span class="p">(</span>
+            <span class="n">rcpsp_problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+            <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+            <span class="n">fraction_subproblem</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fraction_subproblem&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+            <span class="n">cut_part</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cut_part&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+            <span class="n">params_list</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;params_list&quot;</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                        <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                        <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                        <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                        <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">build_neighbor_mixing_cut_parts</span><span class="p">(</span>
+            <span class="n">rcpsp_problem</span><span class="o">=</span><span class="n">rcpsp_problem</span><span class="p">,</span>
+            <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+            <span class="n">params_list</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;params_list&quot;</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                        <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                        <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                        <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">ParamsConstraintBuilder</span><span class="p">(</span>
+                        <span class="n">minus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">plus_delta_primary</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                        <span class="n">minus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">plus_delta_secondary</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">constraint_max_time_to_current_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">constraint_handler</span></div>
+
+
+
+<div class="viewcode-block" id="LnsCpMznGenericRcpspSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.html#discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver.LnsCpMznGenericRcpspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LnsCpMznGenericRcpspSolver</span><span class="p">(</span><span class="n">LnsCpMzn</span><span class="p">,</span> <span class="n">GenericRcpspSolver</span><span class="p">):</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cp_solver_name&quot;</span><span class="p">,</span> <span class="n">enum</span><span class="o">=</span><span class="n">CpSolverName</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;do_ls&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;constraint_handler_type&quot;</span><span class="p">,</span>
+            <span class="n">enum</span><span class="o">=</span><span class="n">ConstraintHandlerType</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">ConstraintHandlerType</span><span class="o">.</span><span class="n">MIX_SUBPROBLEMS</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">FloatHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fraction_subproblem&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;constraint_handler_type&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="n">ConstraintHandlerType</span><span class="o">.</span><span class="n">MIX_SUBPROBLEMS</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;nb_cut_part&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;constraint_handler_type&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="n">ConstraintHandlerType</span><span class="o">.</span><span class="n">MIX_SUBPROBLEMS</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_makespan_of_subtasks&quot;</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
+            <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;constraint_handler_type&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="n">ConstraintHandlerType</span><span class="o">.</span><span class="n">MIX_SUBPROBLEMS</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">SubBrickKwargsHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;params_0_kwargs&quot;</span><span class="p">,</span> <span class="n">subbrick_cls</span><span class="o">=</span><span class="n">ParamsConstraintBuilder</span>
+        <span class="p">),</span>
+        <span class="n">SubBrickKwargsHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;params_1_kwargs&quot;</span><span class="p">,</span> <span class="n">subbrick_cls</span><span class="o">=</span><span class="n">ParamsConstraintBuilder</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span>
+        <span class="n">partial_solution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">subsolver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MinizincCpSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">initial_solution_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InitialSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MznConstraintHandler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">post_process_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PostProcessSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">GenericRcpspSolver</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph_rcpsp_object</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">subsolver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subsolver</span> <span class="o">=</span> <span class="n">build_default_cp_model</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsolver</span> <span class="o">=</span> <span class="n">subsolver</span>
+
+        <span class="k">if</span> <span class="n">constraint_handler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">build_constraint_handler</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+                <span class="n">multiskill</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_multiskill</span><span class="p">(),</span>
+                <span class="n">preemptive</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_preemptive</span><span class="p">(),</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">constraint_handler</span>
+
+        <span class="k">if</span> <span class="n">post_process_solution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">build_default_postpro</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">post_process_solution</span>
+
+        <span class="k">if</span> <span class="n">initial_solution_provider</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">build_default_initial_solution</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">initial_solution_provider</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

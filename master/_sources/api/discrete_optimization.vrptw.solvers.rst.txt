@@ -1,0 +1,37 @@
+discrete\_optimization.vrptw.solvers package
+============================================
+
+Submodules
+----------
+
+discrete\_optimization.vrptw.solvers.cpsat module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.vrptw.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrptw.solvers.dp module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.vrptw.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrptw.solvers.ortools\_routing module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrptw.solvers.ortools_routing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrptw.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

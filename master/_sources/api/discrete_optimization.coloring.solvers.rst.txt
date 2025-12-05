@@ -1,0 +1,117 @@
+discrete\_optimization.coloring.solvers package
+===============================================
+
+Submodules
+----------
+
+discrete\_optimization.coloring.solvers.asp module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.asp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.coloring\_solver module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.coloring_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.cp\_mzn module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.cp_mzn
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.cpmpy module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.cpmpy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.cpsat module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.dp module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.greedy module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.lns\_cp module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.lns_cp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.lns\_lp module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.lns_lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.lp module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.quantum module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.quantum
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.starting\_solution module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.starting_solution
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.coloring.solvers.toulbar module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.coloring.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

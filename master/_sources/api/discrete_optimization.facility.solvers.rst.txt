@@ -1,0 +1,93 @@
+discrete\_optimization.facility.solvers package
+===============================================
+
+Submodules
+----------
+
+discrete\_optimization.facility.solvers.cp\_mzn module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.cp_mzn
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.cpsat module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.dp module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.facility\_solver module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.facility_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.gphh module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.gphh
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.greedy module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.lns\_lp module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.lns_lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.lp module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.quantum module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.quantum
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers.toulbar module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.facility.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

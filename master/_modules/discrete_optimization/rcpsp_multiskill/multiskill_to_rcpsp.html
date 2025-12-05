@@ -1,0 +1,299 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSolverName</span><span class="p">,</span> <span class="n">ParametersCp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.solvers.cp_mzn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">PrecomputeEmployeesForTasks</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="MultiSkillToRcpsp">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp_multiskill.html#discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp.MultiSkillToRcpsp">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultiSkillToRcpsp</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">multiskill_model</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span> <span class="o">=</span> <span class="n">multiskill_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">worker_type_to_worker</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MultiSkillToRcpsp.is_compatible">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp_multiskill.html#discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp.MultiSkillToRcpsp.is_compatible">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_compatible</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task_requirements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+        <span class="n">ressource_availability</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">],</span>
+        <span class="n">duration_task</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">non_zeros_res</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">task_requirements</span> <span class="k">if</span> <span class="n">task_requirements</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">ressource_availability</span><span class="p">[</span><span class="n">non_zeros_res</span><span class="p">[</span><span class="n">j</span><span class="p">]][:</span><span class="n">horizon</span><span class="p">]</span>
+                <span class="o">&gt;=</span> <span class="n">task_requirements</span><span class="p">[</span><span class="n">non_zeros_res</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">non_zeros_res</span><span class="p">))</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s</span> <span class="o">&gt;=</span> <span class="n">duration_task</span></div>
+
+
+<div class="viewcode-block" id="MultiSkillToRcpsp.construct_rcpsp_by_worker_type">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp_multiskill.html#discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp.MultiSkillToRcpsp.construct_rcpsp_by_worker_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_rcpsp_by_worker_type</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">limit_number_of_mode_per_task</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_number_of_mode</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">check_resource_compliance</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">one_worker_type_per_task</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">params_cp</span> <span class="o">=</span> <span class="n">ParametersCp</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="n">params_cp</span><span class="o">.</span><span class="n">intermediate_solution</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">PrecomputeEmployeesForTasks</span><span class="p">(</span>
+            <span class="n">ms_rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="p">,</span> <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span>
+        <span class="p">)</span>
+        <span class="n">worker_type_name</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">skills_dict</span><span class="p">)</span>
+        <span class="n">worker_type_container</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">skills_representation_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">skills_dict</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">skills_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">skills_representation_str</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">skills_representation_str</span>
+        <span class="n">calendar_worker_type</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">map_names_to_understandable</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">worker_type_name</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="s2">&quot;WorkerType-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">worker_type_name</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map_names_to_understandable</span> <span class="o">=</span> <span class="n">map_names_to_understandable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">worker_type_to_worker</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">map_names_to_understandable</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span> <span class="n">solver</span><span class="o">.</span><span class="n">skills_representation_str</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_names_to_understandable</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">worker_type</span> <span class="ow">in</span> <span class="n">worker_type_name</span><span class="p">:</span>
+            <span class="n">employees</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">worker_type_container</span><span class="p">[</span><span class="n">worker_type</span><span class="p">])</span>
+            <span class="n">calend</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span><span class="n">employees</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">calendar_employee</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">employees</span><span class="p">)):</span>
+                <span class="n">calend</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span><span class="n">employees</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span><span class="o">.</span><span class="n">calendar_employee</span><span class="p">,</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">calendar_worker_type</span><span class="p">[</span><span class="n">map_names_to_understandable</span><span class="p">[</span><span class="n">worker_type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">calend</span>
+        <span class="n">resources_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">resources_availability</span>
+        <span class="n">usage_worker_in_chosen_modes</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">calendar_worker_type</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">calendar_worker_type</span><span class="p">:</span>
+            <span class="n">resources_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">calendar_worker_type</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">initial_mode_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">mode_details</span>
+        <span class="n">mode_details_post_compute</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dictionnary_precompute</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+                <span class="n">tasks_of_interest</span><span class="o">=</span><span class="p">[</span><span class="n">task</span><span class="p">],</span>
+                <span class="n">consider_units</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">consider_worker_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">one_ressource_per_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">one_unit_per_task_max</span><span class="p">,</span>
+                <span class="n">one_worker_type_per_task</span><span class="o">=</span><span class="n">one_worker_type_per_task</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">parameters_cp</span><span class="o">=</span><span class="n">params_cp</span><span class="p">,</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                <span class="n">all_solutions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">nr_solutions</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">best_overskill_results</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">overskill_type</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">overskill_type</span>
+            <span class="n">pruned_results</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">overskill_type</span> <span class="o">==</span> <span class="n">best_overskill_results</span>
+            <span class="p">]</span>
+            <span class="n">dictionnary_precompute</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">pruned_results</span>
+            <span class="n">mode_details_post_compute</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">task_requirement_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pruned_results</span><span class="p">)):</span>
+                <span class="n">ddd</span> <span class="o">=</span> <span class="n">initial_mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">pruned_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">mode_dict</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+                <span class="n">ddd</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">key</span><span class="p">:</span> <span class="n">ddd</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ddd</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">skills_set</span>
+                <span class="p">}</span>  <span class="c1"># remove the skills</span>
+                <span class="n">wtype_used</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">pruned_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">worker_type_used</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pruned_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">worker_type_used</span><span class="p">))</span>
+                <span class="p">]</span>
+                <span class="n">index_non_zeros</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">wtype_used</span> <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+                <span class="n">task_requirement</span> <span class="o">=</span> <span class="n">ddd</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">index_non_zeros</span><span class="p">:</span>
+                    <span class="n">task_requirement</span><span class="p">[</span>
+                        <span class="n">map_names_to_understandable</span><span class="p">[</span><span class="n">worker_type_name</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+                <span class="n">task_requirement_list</span> <span class="o">+=</span> <span class="p">[</span><span class="n">task_requirement</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">check_resource_compliance</span><span class="p">:</span>
+                <span class="n">tt</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">task_requirement_list</span><span class="p">:</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_compatible</span><span class="p">(</span>
+                        <span class="n">task_requirements</span><span class="o">=</span><span class="p">{</span><span class="n">r</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">t</span> <span class="k">if</span> <span class="n">r</span> <span class="o">!=</span> <span class="s2">&quot;duration&quot;</span><span class="p">},</span>
+                        <span class="n">duration_task</span><span class="o">=</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">],</span>
+                        <span class="n">horizon</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+                        <span class="n">ressource_availability</span><span class="o">=</span><span class="n">resources_dict</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">b</span><span class="p">:</span>
+                        <span class="n">tt</span> <span class="o">+=</span> <span class="p">[</span><span class="n">t</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tt</span> <span class="o">=</span> <span class="n">task_requirement_list</span>
+            <span class="n">tt</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="n">tt</span><span class="p">,</span>
+                <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">usage_worker_in_chosen_modes</span><span class="p">[</span><span class="n">y</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span>
+                        <span class="k">if</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">usage_worker_in_chosen_modes</span>
+                    <span class="p">],</span>
+                    <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">limit_number_of_mode_per_task</span><span class="p">:</span>
+                <span class="n">number_of_modes</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_number_of_mode</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tt</span><span class="p">))</span>
+                <span class="n">tt</span> <span class="o">=</span> <span class="n">tt</span><span class="p">[:</span><span class="n">number_of_modes</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">number_of_modes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_modes</span><span class="p">):</span>
+                <span class="n">mode_details_post_compute</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">tt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">yy</span> <span class="ow">in</span> <span class="n">tt</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">yy</span> <span class="ow">in</span> <span class="n">usage_worker_in_chosen_modes</span><span class="p">:</span>
+                        <span class="n">usage_worker_in_chosen_modes</span><span class="p">[</span><span class="n">yy</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">rcpsp_problem</span> <span class="o">=</span> <span class="n">RcpspProblem</span><span class="p">(</span>
+            <span class="n">resources</span><span class="o">=</span><span class="n">resources_dict</span><span class="p">,</span>
+            <span class="n">non_renewable_resources</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">),</span>
+            <span class="n">mode_details</span><span class="o">=</span><span class="n">mode_details_post_compute</span><span class="p">,</span>
+            <span class="n">successors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">successors</span><span class="p">,</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+            <span class="n">horizon_multiplier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">horizon_multiplier</span><span class="p">,</span>
+            <span class="n">tasks_list</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+            <span class="n">source_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+            <span class="n">sink_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiskill_model</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">rcpsp_problem</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

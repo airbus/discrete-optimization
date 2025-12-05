@@ -1,0 +1,985 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.maximum_independent_set.solvers package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.rcpsp package" href="discrete_optimization.rcpsp.html" />
+    <link rel="prev" title="discrete_optimization.maximum_independent_set package" href="discrete_optimization.maximum_independent_set.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.maximum_independent_set.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-maximum-independent-set-solvers-package">
+<h1>discrete_optimization.maximum_independent_set.solvers package<a class="headerlink" href="#discrete-optimization-maximum-independent-set-solvers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.asp">
+<span id="discrete-optimization-maximum-independent-set-solvers-asp-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.asp module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.asp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.asp.</span></span><span class="sig-name descname"><span class="pre">AspMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/asp.html#AspMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.asp_tools.AspClingoSolver" title="discrete_optimization.generic_tools.asp_tools.AspClingoSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AspClingoSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.build_data_string">
+<span class="sig-name descname"><span class="pre">build_data_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/asp.html#AspMisSolver.build_data_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.build_data_string" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/asp.html#AspMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/asp.html#AspMisSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.asp.AspMisSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from a clingo model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> – the current constructed clingo model</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.cpsat">
+<span id="discrete-optimization-maximum-independent-set-solvers-cpsat-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.cpsat module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.cpsat" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">CpSatMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/cpsat.html#CpSatMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/cpsat.html#CpSatMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/cpsat.html#CpSatMisSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/cpsat.html#CpSatMisSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.decomposition">
+<span id="discrete-optimization-maximum-independent-set-solvers-decomposition-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.decomposition module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.decomposition" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.decomposition.</span></span><span class="sig-name descname"><span class="pre">DecomposedMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/decomposition.html#DecomposedMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<p>This solver is based on the current observation. From a given mis model and one current solution,
+if we decide to freeze the decision variable for a subset of items, the remaining problem to solve is also a
+mis problem, with fewer nodes.
+DecomposedMisSolver is a basic iterative solver that starts from a given solution, then freeze random items,
+solve subproblem with a custom root solver, rebuild original solution and repeat the process.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='proportion_to_remove',</span> <span class="pre">default=0.7,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='proportion_to_remove',</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False),</span> <span class="pre">IntegerHyperparameter(name='nb_iteration',</span> <span class="pre">default=100,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='nb_iteration',</span> <span class="pre">low=0,</span> <span class="pre">high=10000000,</span> <span class="pre">step=1,</span> <span class="pre">log=False),</span> <span class="pre">SubBrickHyperparameter(name='initial_solver',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver'&gt;,</span> <span class="pre">kwargs={},</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='initial_solver'),</span> <span class="pre">SubBrickHyperparameter(name='root_solver',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver'&gt;,</span> <span class="pre">kwargs={},</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='root_solver')]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.initial_solution">
+<span class="sig-name descname"><span class="pre">initial_solution</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.initial_solution" title="Link to this definition"></a></dt>
+<dd><p>Initial solution used for warm start.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.rebuild_sol">
+<span class="sig-name descname"><span class="pre">rebuild_sol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_mis_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_to_remove</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/decomposition.html#DecomposedMisSolver.rebuild_sol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.rebuild_sol" title="Link to this definition"></a></dt>
+<dd><p>Rebuild a full Mus solution object from a partial solution.
+:param sol: solution to a sub-mis problem
+:param original_knapsack_problem: original knapsack model to solve
+:param original_solution: original base solution
+:param indexes_to_remove: indexes of item removed when building the sub-knapsack problem.
+:return: A new solution object for the original problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/decomposition.html#DecomposedMisSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+<p>Will be ignored if arg <cite>initial_solver</cite> is set and not None in call to <cite>solve()</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/decomposition.html#DecomposedMisSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.decomposition.DecomposedMisSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.dp">
+<span id="discrete-optimization-maximum-independent-set-solvers-dp-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.dp module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.dp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.dp.</span></span><span class="sig-name descname"><span class="pre">DpMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#DpMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.dyn_prog_tools.DpSolver" title="discrete_optimization.generic_tools.dyn_prog_tools.DpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DpSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='solver',</span> <span class="pre">default=&lt;class</span> <span class="pre">'builtins.CABS'&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='solver'),</span> <span class="pre">EnumHyperparameter(name='modeling',</span> <span class="pre">default=&lt;DpModeling.ORDER:</span> <span class="pre">0&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='modeling'),</span> <span class="pre">EnumHyperparameter(name='order_method',</span> <span class="pre">default=&lt;FixedOrderMethod.ORIGINAL_ORDER:</span> <span class="pre">0&gt;,</span> <span class="pre">depends_on=('modeling',</span> <span class="pre">&lt;DpModeling.ORDER:</span> <span class="pre">0&gt;),</span> <span class="pre">name_in_kwargs='order_method')]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_any_order">
+<span class="sig-name descname"><span class="pre">init_any_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#DpMisSolver.init_any_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_any_order" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_in_order">
+<span class="sig-name descname"><span class="pre">init_in_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#DpMisSolver.init_in_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_in_order" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#DpMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.modeling">
+<span class="sig-name descname"><span class="pre">modeling</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpModeling" title="discrete_optimization.maximum_independent_set.solvers.dp.DpModeling"><span class="pre">DpModeling</span></a></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.modeling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.nodes_convention">
+<span class="sig-name descname"><span class="pre">nodes_convention</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.nodes_convention" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#DpMisSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#DpMisSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.transitions">
+<span class="sig-name descname"><span class="pre">transitions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpMisSolver.transitions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpModeling">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.dp.</span></span><span class="sig-name descname"><span class="pre">DpModeling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#DpModeling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpModeling" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpModeling.ANY_ORDER">
+<span class="sig-name descname"><span class="pre">ANY_ORDER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpModeling.ANY_ORDER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.DpModeling.ORDER">
+<span class="sig-name descname"><span class="pre">ORDER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.DpModeling.ORDER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.dp.</span></span><span class="sig-name descname"><span class="pre">FixedOrderMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/dp.html#FixedOrderMethod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod.DEGREE">
+<span class="sig-name descname"><span class="pre">DEGREE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod.DEGREE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod.ORIGINAL_ORDER">
+<span class="sig-name descname"><span class="pre">ORIGINAL_ORDER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.dp.FixedOrderMethod.ORIGINAL_ORDER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.gurobi">
+<span id="discrete-optimization-maximum-independent-set-solvers-gurobi-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.gurobi module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.gurobi" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.gurobi.</span></span><span class="sig-name descname"><span class="pre">GurobiMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/gurobi.html#GurobiMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver" title="discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMilpSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver" title="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLpMisSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Var</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/gurobi.html#GurobiMisSolver.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by set_warm_start().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/gurobi.html#GurobiMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.gurobi.</span></span><span class="sig-name descname"><span class="pre">GurobiQuadraticMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/gurobi.html#GurobiQuadraticMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver" title="discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMilpSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver" title="discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseQuadMisSolver</span></code></a></p>
+<p>Quadratic solver with gurobi.</p>
+<p>Work only for graph without weight on nodes.
+If there are weights, it’s going to ignore them.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Var</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/gurobi.html#GurobiQuadraticMisSolver.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by set_warm_start().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.create_vars_node_matrix">
+<span class="sig-name descname"><span class="pre">create_vars_node_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gurobipy.MVar</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/gurobi.html#GurobiQuadraticMisSolver.create_vars_node_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.create_vars_node_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/gurobi.html#GurobiQuadraticMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.vars_node_matrix">
+<span class="sig-name descname"><span class="pre">vars_node_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">gurobipy.MVar</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.gurobi.GurobiQuadraticMisSolver.vars_node_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.kamis">
+<span id="discrete-optimization-maximum-independent-set-solvers-kamis-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.kamis module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.kamis" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.kamis.</span></span><span class="sig-name descname"><span class="pre">KamisMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/kamis.html#KamisMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a></p>
+<p>To use Kamis Solver you need to define an environment variable “KAMIS_DEPLOY” who is the path
+to the folder where are Kamis executable.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='method',</span> <span class="pre">default='weighted',</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='method')]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/kamis.html#KamisMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/kamis.html#KamisMisSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.kamis.KamisMisSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.lns">
+<span id="discrete-optimization-maximum-independent-set-solvers-lns-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.lns module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.lns" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.lns.</span></span><span class="sig-name descname"><span class="pre">AllVarsOrtoolsCpSatMisConstraintHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#AllVarsOrtoolsCpSatMisConstraintHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler" title="discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatConstraintHandler</span></code></a></p>
+<p>Fix fraction of all variables, not only the ones already chosen.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver" title="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver"><span class="pre">CpSatMisSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage_last_iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Constraint</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#AllVarsOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd><p>Add constraints to the internal model of a solver based on previous solutions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solver</strong> – solver whose internal model is updated</p></li>
+<li><p><strong>result_storage</strong> – all results so far</p></li>
+<li><p><strong>result_storage_last_iteration</strong> – results from last LNS iteration only</p></li>
+<li><p><strong>**kwargs</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of added constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='fraction_to_fix',</span> <span class="pre">default=0.9,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='fraction_to_fix',</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.AllVarsOrtoolsCpSatMisConstraintHandler.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.lns.</span></span><span class="sig-name descname"><span class="pre">DestroyOrtoolsCpSatMisConstraintHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#DestroyOrtoolsCpSatMisConstraintHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler" title="discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatConstraintHandler</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver" title="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver"><span class="pre">CpSatMisSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage_last_iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Constraint</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#DestroyOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd><p>Add constraints to the internal model of a solver based on previous solutions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solver</strong> – solver whose internal model is updated</p></li>
+<li><p><strong>result_storage</strong> – all results so far</p></li>
+<li><p><strong>result_storage_last_iteration</strong> – results from last LNS iteration only</p></li>
+<li><p><strong>**kwargs</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of added constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='fraction_to_fix',</span> <span class="pre">default=0.9,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='fraction_to_fix',</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.DestroyOrtoolsCpSatMisConstraintHandler.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id9"><span class="problematic" id="id10">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.lns.</span></span><span class="sig-name descname"><span class="pre">LocalMovesOrtoolsCpSatMisConstraintHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_moves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#LocalMovesOrtoolsCpSatMisConstraintHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler" title="discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatConstraintHandler</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver" title="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver"><span class="pre">CpSatMisSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage_last_iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Constraint</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#LocalMovesOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd><p>Add constraints to the internal model of a solver based on previous solutions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solver</strong> – solver whose internal model is updated</p></li>
+<li><p><strong>result_storage</strong> – all results so far</p></li>
+<li><p><strong>result_storage_last_iteration</strong> – results from last LNS iteration only</p></li>
+<li><p><strong>**kwargs</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of added constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[IntegerHyperparameter(name='nb_moves',</span> <span class="pre">default=1,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='nb_moves',</span> <span class="pre">low=0,</span> <span class="pre">high=10,</span> <span class="pre">step=1,</span> <span class="pre">log=False),</span> <span class="pre">FloatHyperparameter(name='fraction_to_fix',</span> <span class="pre">default=0.9,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='fraction_to_fix',</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.LocalMovesOrtoolsCpSatMisConstraintHandler.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.lns.</span></span><span class="sig-name descname"><span class="pre">OrtoolsCpSatMisConstraintHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#OrtoolsCpSatMisConstraintHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler" title="discrete_optimization.generic_tools.lns_cp.OrtoolsCpSatConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatConstraintHandler</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver" title="discrete_optimization.maximum_independent_set.solvers.cpsat.CpSatMisSolver"><span class="pre">CpSatMisSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage_last_iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Constraint</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lns.html#OrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd><p>Add constraints to the internal model of a solver based on previous solutions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solver</strong> – solver whose internal model is updated</p></li>
+<li><p><strong>result_storage</strong> – all results so far</p></li>
+<li><p><strong>result_storage_last_iteration</strong> – results from last LNS iteration only</p></li>
+<li><p><strong>**kwargs</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of added constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='fraction_to_fix',</span> <span class="pre">default=0.9,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='fraction_to_fix',</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lns.OrtoolsCpSatMisConstraintHandler.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.lp">
+<span id="discrete-optimization-maximum-independent-set-solvers-lp-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.lp module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.lp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">BaseLpMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lp.html#BaseLpMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver" title="discrete_optimization.generic_tools.lp_tools.MilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MilpSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lp.html#BaseLpMisSolver.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by set_warm_start().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lp.html#BaseLpMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.retrieve_current_solution">
+<span class="sig-name descname"><span class="pre">retrieve_current_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_var_value_for_current_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_obj_value_for_current_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lp.html#BaseLpMisSolver.retrieve_current_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.retrieve_current_solution" title="Link to this definition"></a></dt>
+<dd><p>Retrieve current solution from internal gurobi solution.</p>
+<p>This converts internal gurobi solution into a discrete-optimization Solution.
+This method can be called after the solve in <cite>retrieve_solutions()</cite>
+or during solve within a gurobi/pymilp/cplex callback. The difference will be the
+<cite>get_var_value_for_current_solution</cite> and <cite>get_obj_value_for_current_solution</cite> callables passed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>get_var_value_for_current_solution</strong> – function extracting the value of the given variable for the current solution
+will be different when inside a callback or after the solve is finished</p></li>
+<li><p><strong>get_obj_value_for_current_solution</strong> – function extracting the value of the objective for the current solution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the converted solution at d-o format</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.vars_node">
+<span class="sig-name descname"><span class="pre">vars_node</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver.vars_node" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">BaseQuadMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lp.html#BaseQuadMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver" title="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLpMisSolver</span></code></a></p>
+<p>Base class for quadratic solvers with gurobi or mathopt.</p>
+<p>Work only for graph without weight on nodes.
+If there are weights, it’s going to ignore them.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.create_vars_node_matrix">
+<span class="sig-name descname"><span class="pre">create_vars_node_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">array</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lp.html#BaseQuadMisSolver.create_vars_node_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.create_vars_node_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/lp.html#BaseQuadMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.vars_node">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">vars_node</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.vars_node" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.vars_node_matrix">
+<span class="sig-name descname"><span class="pre">vars_node_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">array</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver.vars_node_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.mathopt">
+<span id="discrete-optimization-maximum-independent-set-solvers-mathopt-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.mathopt module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.mathopt" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.mathopt.</span></span><span class="sig-name descname"><span class="pre">MathOptMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/mathopt.html#MathOptMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver" title="discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsMathOptMilpSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver" title="discrete_optimization.maximum_independent_set.solvers.lp.BaseLpMisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLpMisSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptMisSolver.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Variable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/mathopt.html#MathOptMisSolver.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptMisSolver.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.
+See <a class="reference external" href="https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint">https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</a>
+for more information.</p>
+<p>Override it in subclasses to have a proper warm start.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.mathopt.</span></span><span class="sig-name descname"><span class="pre">MathOptQuadraticMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/mathopt.html#MathOptQuadraticMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver" title="discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsMathOptMilpSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver" title="discrete_optimization.maximum_independent_set.solvers.lp.BaseQuadMisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseQuadMisSolver</span></code></a></p>
+<p>Quadratic solver mathopt.</p>
+<p>Work only for graph without weight on nodes.
+If there are weights, it’s going to ignore them.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Variable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/mathopt.html#MathOptQuadraticMisSolver.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.
+See <a class="reference external" href="https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint">https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</a>
+for more information.</p>
+<p>Override it in subclasses to have a proper warm start.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver.has_quadratic_objective">
+<span class="sig-name descname"><span class="pre">has_quadratic_objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.mathopt.MathOptQuadraticMisSolver.has_quadratic_objective" title="Link to this definition"></a></dt>
+<dd><p>Flag telling that the objective is a quadratic expression.</p>
+<p>This is use to pass the proper function to <cite>retrieve_current_solution</cite> for the objective.
+Should be overriden to True in solvers with quadratic objectives.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.mis_solver">
+<span id="discrete-optimization-maximum-independent-set-solvers-mis-solver-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.mis_solver module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.mis_solver" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.mis_solver.</span></span><span class="sig-name descname"><span class="pre">MisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/mis_solver.html#MisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.networkx">
+<span id="discrete-optimization-maximum-independent-set-solvers-networkx-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.networkx module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.networkx" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.networkx.</span></span><span class="sig-name descname"><span class="pre">NetworkxMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/networkx.html#NetworkxMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/networkx.html#NetworkxMisSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.networkx.NetworkxMisSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.quantum">
+<span id="discrete-optimization-maximum-independent-set-solvers-quantum-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.quantum module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.quantum" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.quantum.</span></span><span class="sig-name descname"><span class="pre">MisQiskit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#MisQiskit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit.interpret">
+<span class="sig-name descname"><span class="pre">interpret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#MisQiskit.interpret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit.interpret" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit.to_quadratic_program">
+<span class="sig-name descname"><span class="pre">to_quadratic_program</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">object</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#MisQiskit.to_quadratic_program"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.MisQiskit.to_quadratic_program" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.quantum.</span></span><span class="sig-name descname"><span class="pre">QaoaMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#QaoaMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.qiskit_tools.QiskitQaoaSolver" title="discrete_optimization.generic_tools.qiskit_tools.QiskitQaoaSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">QiskitQaoaSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#QaoaMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver.retrieve_current_solution">
+<span class="sig-name descname"><span class="pre">retrieve_current_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#QaoaMisSolver.retrieve_current_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.QaoaMisSolver.retrieve_current_solution" title="Link to this definition"></a></dt>
+<dd><p>Retrieve current solution from qiskit result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>result</strong> – list of value for each binary variable of the problem</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the converted solution at d-o format</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.quantum.</span></span><span class="sig-name descname"><span class="pre">VqeMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisProblem" title="discrete_optimization.maximum_independent_set.problem.MisProblem"><span class="pre">MisProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#VqeMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.qiskit_tools.QiskitVqeSolver" title="discrete_optimization.generic_tools.qiskit_tools.QiskitVqeSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">QiskitVqeSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#VqeMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver.retrieve_current_solution">
+<span class="sig-name descname"><span class="pre">retrieve_current_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/quantum.html#VqeMisSolver.retrieve_current_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.quantum.VqeMisSolver.retrieve_current_solution" title="Link to this definition"></a></dt>
+<dd><p>Retrieve current solution from qiskit result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>result</strong> – list of value for each binary variable of the problem</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the converted solution at d-o format</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers.toulbar">
+<span id="discrete-optimization-maximum-independent-set-solvers-toulbar-module"></span><h2>discrete_optimization.maximum_independent_set.solvers.toulbar module<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers.toulbar" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.toulbar.MisConstraintHandlerToulbar">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.toulbar.</span></span><span class="sig-name descname"><span class="pre">MisConstraintHandlerToulbar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fraction_node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/toulbar.html#MisConstraintHandlerToulbar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.toulbar.MisConstraintHandlerToulbar" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_tools.ConstraintHandler" title="discrete_optimization.generic_tools.lns_tools.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.toulbar.MisConstraintHandlerToulbar.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver:</span> <span class="pre">~discrete_optimization.generic_tools.toulbar_tools.to_lns_toulbar.&lt;locals&gt;.ToulbarSolverLns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage:</span> <span class="pre">~discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage_last_iteration:</span> <span class="pre">~discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs:</span> <span class="pre">~typing.Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/toulbar.html#MisConstraintHandlerToulbar.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.toulbar.MisConstraintHandlerToulbar.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd><p>Add constraints to the internal model of a solver based on previous solutions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solver</strong> – solver whose internal model is updated</p></li>
+<li><p><strong>result_storage</strong> – all results so far</p></li>
+<li><p><strong>result_storage_last_iteration</strong> – results from last LNS iteration only</p></li>
+<li><p><strong>**kwargs</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of added constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.maximum_independent_set.solvers.toulbar.</span></span><span class="sig-name descname"><span class="pre">ToulbarMisSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/toulbar.html#ToulbarMisSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.toulbar_tools.ToulbarSolver" title="discrete_optimization.generic_tools.toulbar_tools.ToulbarSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">ToulbarSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver" title="discrete_optimization.maximum_independent_set.solvers.mis_solver.MisSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MisSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='vns',</span> <span class="pre">default=None,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='vns')]</span></em><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/toulbar.html#ToulbarMisSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution_from_toulbar2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/toulbar.html#ToulbarMisSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html#discrete_optimization.maximum_independent_set.problem.MisSolution" title="discrete_optimization.maximum_independent_set.problem.MisSolution"><span class="pre">MisSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/maximum_independent_set/solvers/toulbar.html#ToulbarMisSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.maximum_independent_set.solvers.toulbar.ToulbarMisSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.maximum_independent_set.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.maximum_independent_set.solvers" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.maximum_independent_set.html" class="btn btn-neutral float-left" title="discrete_optimization.maximum_independent_set package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.rcpsp.html" class="btn btn-neutral float-right" title="discrete_optimization.rcpsp package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

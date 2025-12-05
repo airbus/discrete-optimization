@@ -1,0 +1,37 @@
+discrete\_optimization.workforce.allocation.solvers package
+===========================================================
+
+Submodules
+----------
+
+discrete\_optimization.workforce.allocation.solvers.cpmpy module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.solvers.cpmpy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.allocation.solvers.cpsat module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.allocation.solvers.dp module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.allocation.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

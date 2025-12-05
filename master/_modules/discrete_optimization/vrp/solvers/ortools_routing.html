@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.vrp.solvers.ortools_routing &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.vrp.solvers.ortools_routing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.vrp.solvers.ortools_routing</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.constraint_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">pywrapcp</span><span class="p">,</span> <span class="n">routing_enums_pb2</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResultStorage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">VrpSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrp.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">VrpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrp.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_graph</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FirstSolutionStrategy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrp.solvers.html#discrete_optimization.vrp.solvers.ortools_routing.FirstSolutionStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FirstSolutionStrategy</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">SAVINGS</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">PATH_MOST_CONSTRAINED_ARC</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="LocalSearchMetaheuristic">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrp.solvers.html#discrete_optimization.vrp.solvers.ortools_routing.LocalSearchMetaheuristic">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LocalSearchMetaheuristic</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">GUIDED_LOCAL_SEARCH</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SIMULATED_ANNEALING</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+
+<span class="n">first_solution_map</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">FirstSolutionStrategy</span><span class="o">.</span><span class="n">SAVINGS</span><span class="p">:</span> <span class="n">routing_enums_pb2</span><span class="o">.</span><span class="n">FirstSolutionStrategy</span><span class="o">.</span><span class="n">SAVINGS</span><span class="p">,</span>
+    <span class="n">FirstSolutionStrategy</span><span class="o">.</span><span class="n">PATH_MOST_CONSTRAINED_ARC</span><span class="p">:</span> <span class="n">routing_enums_pb2</span><span class="o">.</span><span class="n">FirstSolutionStrategy</span><span class="o">.</span><span class="n">PATH_MOST_CONSTRAINED_ARC</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">metaheuristic_map</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">LocalSearchMetaheuristic</span><span class="o">.</span><span class="n">GUIDED_LOCAL_SEARCH</span><span class="p">:</span> <span class="n">routing_enums_pb2</span><span class="o">.</span><span class="n">LocalSearchMetaheuristic</span><span class="o">.</span><span class="n">GUIDED_LOCAL_SEARCH</span><span class="p">,</span>
+    <span class="n">LocalSearchMetaheuristic</span><span class="o">.</span><span class="n">SIMULATED_ANNEALING</span><span class="p">:</span> <span class="n">routing_enums_pb2</span><span class="o">.</span><span class="n">LocalSearchMetaheuristic</span><span class="o">.</span><span class="n">SIMULATED_ANNEALING</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">status_description</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">val</span><span class="p">:</span> <span class="n">key</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingModel</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ROUTING_&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;Mapping from status integer to description string.</span>
+
+<span class="sd">This maps the integer returned by routing_model.status to the corresponding string.</span>
+
+<span class="sd">We use the attributes of RoutingModel to construct the dictionary.</span>
+<span class="sd">https://developers.google.com/optimization/routing/routing_options#search_status</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="BasicRoutingMonitor">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrp.solvers.html#discrete_optimization.vrp.solvers.ortools_routing.BasicRoutingMonitor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BasicRoutingMonitor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_solver</span><span class="p">:</span> <span class="s2">&quot;OrtoolsVrpSolver&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">routing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_best_objective</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_counter_limit</span> <span class="o">=</span> <span class="mi">10000000</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;New solution found : --Cur objective : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">CostVar</span><span class="p">()</span><span class="o">.</span><span class="n">Max</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="OrtoolsVrpSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrp.solvers.html#discrete_optimization.vrp.solvers.ortools_routing.OrtoolsVrpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrtoolsVrpSolver</span><span class="p">(</span><span class="n">VrpSolver</span><span class="p">):</span>
+    <span class="n">manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingIndexManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="OrtoolsVrpSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrp.solvers.html#discrete_optimization.vrp.solvers.ortools_routing.OrtoolsVrpSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">first_solution_strategy</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;first_solution_strategy&quot;</span><span class="p">,</span> <span class="n">FirstSolutionStrategy</span><span class="o">.</span><span class="n">SAVINGS</span>
+        <span class="p">)</span>
+        <span class="n">local_search_metaheuristic</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;local_search_metaheuristic&quot;</span><span class="p">,</span> <span class="n">LocalSearchMetaheuristic</span><span class="o">.</span><span class="n">GUIDED_LOCAL_SEARCH</span>
+        <span class="p">)</span>
+        <span class="n">first_solution_strategy</span> <span class="o">=</span> <span class="n">first_solution_map</span><span class="p">[</span><span class="n">first_solution_strategy</span><span class="p">]</span>
+        <span class="n">local_search_metaheuristic</span> <span class="o">=</span> <span class="n">metaheuristic_map</span><span class="p">[</span><span class="n">local_search_metaheuristic</span><span class="p">]</span>
+        <span class="n">G</span><span class="p">,</span> <span class="n">matrix_distance</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="n">matrix_distance_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="mi">5</span> <span class="o">*</span> <span class="n">matrix_distance</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+        <span class="n">demands</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">demand</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="c1"># Create the routing index manager.</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingIndexManager</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">routing</span> <span class="o">=</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">RoutingModel</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
+        <span class="c1"># Create and register a transit callback.</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">distance_callback</span><span class="p">(</span><span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">to_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Returns the distance between the two nodes.&quot;&quot;&quot;</span>
+            <span class="c1"># Convert from routing variable Index to distance matrix NodeIndex.</span>
+            <span class="n">from_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">from_index</span><span class="p">)</span>
+            <span class="n">to_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">to_index</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">matrix_distance_int</span><span class="p">[</span><span class="n">from_node</span><span class="p">,</span> <span class="n">to_node</span><span class="p">]</span>
+
+        <span class="n">transit_callback_index</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">RegisterTransitCallback</span><span class="p">(</span><span class="n">distance_callback</span><span class="p">)</span>
+        <span class="c1"># Define cost of each arc.</span>
+        <span class="n">routing</span><span class="o">.</span><span class="n">SetArcCostEvaluatorOfAllVehicles</span><span class="p">(</span><span class="n">transit_callback_index</span><span class="p">)</span>
+
+        <span class="c1"># Add Capacity constraint.</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">demand_callback</span><span class="p">(</span><span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Returns the demand of the node.&quot;&quot;&quot;</span>
+            <span class="c1"># Convert from routing variable Index to demands NodeIndex.</span>
+            <span class="n">from_node</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">from_index</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">demands</span><span class="p">[</span><span class="n">from_node</span><span class="p">]</span>
+
+        <span class="n">demand_callback_index</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">RegisterUnaryTransitCallback</span><span class="p">(</span><span class="n">demand_callback</span><span class="p">)</span>
+        <span class="n">routing</span><span class="o">.</span><span class="n">AddDimensionWithVehicleCapacity</span><span class="p">(</span>
+            <span class="n">demand_callback_index</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>  <span class="c1"># null capacity slack</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_capacities</span><span class="p">,</span>  <span class="c1"># vehicle maximum capacities</span>
+            <span class="kc">True</span><span class="p">,</span>  <span class="c1"># start cumul to zero</span>
+            <span class="s2">&quot;Capacity&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Setting first solution heuristic.</span>
+        <span class="n">search_parameters</span> <span class="o">=</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">DefaultRoutingSearchParameters</span><span class="p">()</span>
+        <span class="n">search_parameters</span><span class="o">.</span><span class="n">first_solution_strategy</span> <span class="o">=</span> <span class="n">first_solution_strategy</span>
+        <span class="n">search_parameters</span><span class="o">.</span><span class="n">local_search_metaheuristic</span> <span class="o">=</span> <span class="n">local_search_metaheuristic</span>
+        <span class="c1"># Solve the problem.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing</span> <span class="o">=</span> <span class="n">routing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span> <span class="o">=</span> <span class="n">search_parameters</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initialized ...&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsVrpSolver.retrieve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrp.solvers.html#discrete_optimization.vrp.solvers.ortools_routing.OrtoolsVrpSolver.retrieve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">Assignment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VrpSolution</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;self.manager should be not None when calling self.retrieve().&quot;</span>
+            <span class="p">)</span>
+        <span class="n">vehicle_tours</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">vehicle_tours_all</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">vehicle_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">route_distance</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">vehicle_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vehicle_count</span><span class="p">):</span>
+            <span class="n">vehicle_tours</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="n">vehicle_tours_all</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="n">vehicle_id</span><span class="p">)</span>
+            <span class="n">plan_output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Route for vehicle </span><span class="si">{</span><span class="n">vehicle_id</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">route_load</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">IsEnd</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+                <span class="n">node_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cnt</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">vehicle_tours</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">node_index</span><span class="p">]</span>
+                <span class="n">vehicle_tours_all</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">node_index</span><span class="p">]</span>
+                <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">route_load</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">node_index</span><span class="p">]</span><span class="o">.</span><span class="n">demand</span>
+                <span class="n">plan_output</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">node_index</span><span class="si">}</span><span class="s2"> Load(</span><span class="si">{</span><span class="n">route_load</span><span class="si">}</span><span class="s2">) -&gt; &quot;</span>
+                <span class="n">previous_index</span> <span class="o">=</span> <span class="n">index</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">NextVar</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+                <span class="n">route_distance</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">GetArcCostForVehicle</span><span class="p">(</span>
+                    <span class="n">previous_index</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">vehicle_id</span>
+                <span class="p">)</span>
+                <span class="n">objective</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate_function_indexes</span><span class="p">(</span>
+                    <span class="n">node_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">vehicle_tours_all</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">IndexToNode</span><span class="p">(</span><span class="n">index</span><span class="p">)]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Route distance : </span><span class="si">{</span><span class="n">route_distance</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vehicle tours : </span><span class="si">{</span><span class="n">vehicle_tours</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective : </span><span class="si">{</span><span class="n">objective</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vehicle tours all : </span><span class="si">{</span><span class="n">vehicle_tours_all</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">variable_vrp</span> <span class="o">=</span> <span class="n">VrpSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">list_start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">,</span>
+            <span class="n">list_end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">,</span>
+            <span class="n">list_paths</span><span class="o">=</span><span class="n">vehicle_tours</span><span class="p">,</span>
+            <span class="n">length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">lengths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">capacities</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">variable_vrp</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsVrpSolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrp.solvers.html#discrete_optimization.vrp.solvers.ortools_routing.OrtoolsVrpSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.manager should be not None after self.init_model() being called.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">time_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span><span class="o">.</span><span class="n">time_limit</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">time_limit</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verbose&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">callback</span> <span class="o">=</span> <span class="n">BasicRoutingMonitor</span><span class="p">(</span><span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">AddAtSolutionCallback</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+        <span class="n">solution</span><span class="p">:</span> <span class="n">pywrapcp</span><span class="o">.</span><span class="n">Assignment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing</span><span class="o">.</span><span class="n">SolveWithParameters</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span>
+        <span class="p">)</span>
+        <span class="n">variable_vrp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">variable_vrp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span>
+            <span class="p">[(</span><span class="n">variable_vrp</span><span class="p">,</span> <span class="n">fit</span><span class="p">)],</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

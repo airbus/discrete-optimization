@@ -1,0 +1,782 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.datasets &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.datasets</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.datasets</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Fetch datasets for examples and tests.&quot;&quot;&quot;</span>
+
+
+<span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tarfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.request</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlcleanup</span><span class="p">,</span> <span class="n">urlretrieve</span>
+
+<span class="n">DO_DEFAULT_DATAHOME</span> <span class="o">=</span> <span class="s2">&quot;~/discrete_optimization_data&quot;</span>
+<span class="n">DO_DEFAULT_DATAHOME_ENVVARNAME</span> <span class="o">=</span> <span class="s2">&quot;DISCRETE_OPTIMIZATION_DATA&quot;</span>
+
+<span class="n">OR_LIBRARY_ROOT_URL</span> <span class="o">=</span> <span class="s2">&quot;https://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/&quot;</span>
+
+<span class="n">COURSERA_REPO_URL</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/discreteoptimization/assignment&quot;</span>
+<span class="n">COURSERA_REPO_URL_SHA1</span> <span class="o">=</span> <span class="s2">&quot;f69378420ce2bb845abaef0f448eab303aa7a7e7&quot;</span>
+<span class="n">COURSERA_DATASETS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;coloring&quot;</span><span class="p">,</span> <span class="s2">&quot;facility&quot;</span><span class="p">,</span> <span class="s2">&quot;knapsack&quot;</span><span class="p">,</span> <span class="s2">&quot;tsp&quot;</span><span class="p">,</span> <span class="s2">&quot;vrp&quot;</span><span class="p">]</span>
+<span class="n">COURSERA_DATADIRNAME</span> <span class="o">=</span> <span class="s2">&quot;data&quot;</span>
+
+<span class="n">SOLUTIONSUPDATE_BASE_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;http://solutionsupdate.ugent.be/sites/default/files/datasets/instances&quot;</span>
+<span class="p">)</span>
+<span class="n">SOLUTIONSUPDATE_DATASETS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RG30&quot;</span><span class="p">,</span> <span class="s2">&quot;RG300&quot;</span><span class="p">]</span>
+
+<span class="n">PSPLIB_FILES_BASE_URL</span> <span class="o">=</span> <span class="s2">&quot;https://www.om-db.wi.tum.de/psplib/files&quot;</span>
+<span class="n">PSPLIB_DATASETS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;j10.mm&quot;</span><span class="p">:</span> <span class="s2">&quot;j1010_&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;j120.sm&quot;</span><span class="p">:</span> <span class="s2">&quot;j1201_&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;j30.sm&quot;</span><span class="p">:</span> <span class="s2">&quot;j301_&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;j60.sm&quot;</span><span class="p">:</span> <span class="s2">&quot;j601_&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="n">IMOPSE_REPO_URL</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/imopse/iMOPSE&quot;</span>
+<span class="n">IMOPSE_REPO_URL_SHA1</span> <span class="o">=</span> <span class="s2">&quot;e58ace53202ec29aa548dd0678ae3164d8349f4e&quot;</span>
+<span class="n">IMOPSE_DATASET_RELATIVE_PATH</span> <span class="o">=</span> <span class="s2">&quot;configurations/problems/MSRCPSP/Regular&quot;</span>
+
+<span class="n">MSPSPLIB_REPO_URL</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/youngkd/MSPSP-InstLib&quot;</span>
+<span class="n">MSPSPLIB_REPO_URL_SHA1</span> <span class="o">=</span> <span class="s2">&quot;f77644175b84beed3bd365315412abee1a15eea1&quot;</span>
+
+<span class="n">JSPLIB_REPO_URL</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/tamy0612/JSPLIB&quot;</span>
+<span class="n">JSPLIB_REPO_URL_SHA1</span> <span class="o">=</span> <span class="s2">&quot;eea2b60dd7e2f5c907ff7302662c61812eb7efdf&quot;</span>
+
+<span class="n">MSLIB_DATASET_URL</span> <span class="o">=</span> <span class="s2">&quot;http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip&quot;</span>
+<span class="n">MSLIB_DATASET_RELATIVE_PATH</span> <span class="o">=</span> <span class="s2">&quot;MSLIB.zip&quot;</span>
+
+<span class="n">MIS_FILES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1dc.64.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1dc.128.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1dc.256.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1dc.512.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1dc.1024.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1dc.2048.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_2dc.128.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_2dc.256.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_2dc.512.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_2dc.1024.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_2dc.2048.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.8.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.16.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.32.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.64.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.128.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.256.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.512.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.1024.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1tc.2048.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1et.64.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1et.128.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1et.256.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1et.512.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1et.1024.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1et.2048.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1zc.128.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1zc.256.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1zc.512.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1zc.1024.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1zc.2048.txt.gz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://oeis.org/A265032/a265032_1zc.4096.txt.gz&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">BPPC_ZIP</span> <span class="o">=</span> <span class="s2">&quot;https://site.unibo.it/operations-research/en/research/library-of-codes-and-instances-1/bppc.zip/@@download/file/BPPC.zip&quot;</span>
+
+
+<span class="n">FJSP_DATASET_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;jfsp_openhsu&quot;</span>
+<span class="n">MIS_DATASET_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;mis&quot;</span>
+<span class="n">VRPTW_DATASET_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;vrptw/homberger_200_customer_instances&quot;</span>
+
+
+<span class="n">ERROR_MSG_MISSING_DATASETS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">You probably have not downloaded the needed dataset.</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="s2">&quot;You can do it by using the proper function in discrete_optimization.datasets.</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="s1">&#39;Fetch all datasets used by discrete-optimization with the command &quot;python -m discrete_optimization.datasets&quot;.&#39;</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_data_home">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.get_data_home">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the path of the discrete-optimization data directory.</span>
+
+<span class="sd">    This folder is used by some large dataset loaders to avoid downloading the</span>
+<span class="sd">    data several times.</span>
+<span class="sd">    By default the data dir is set to a folder named &#39;discrete_optimization_data&#39; in the</span>
+<span class="sd">    user home folder.</span>
+<span class="sd">    Alternatively, it can be set by the &#39;DISCRETE_OPTIMIZATION_DATA&#39; environment</span>
+<span class="sd">    variable or programmatically by giving an explicit folder path. The &#39;~&#39;</span>
+<span class="sd">    symbol is expanded to the user home folder.</span>
+<span class="sd">    If the folder does not already exist, it is automatically created.</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home : The path to discrete-optimization data directory. If `None`, the default path</span>
+<span class="sd">        is `~/discrete_optimization_data`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">data_home</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DO_DEFAULT_DATAHOME_ENVVARNAME</span><span class="p">,</span> <span class="n">DO_DEFAULT_DATAHOME</span><span class="p">)</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">data_home</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data_home</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_coursera">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_coursera">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_coursera</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data from coursera repo.</span>
+
+<span class="sd">    https://github.com/discreteoptimization/assignment</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#  get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># download in a temporary file the repo data</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">COURSERA_REPO_URL</span><span class="si">}</span><span class="s2">/archive/</span><span class="si">{</span><span class="n">COURSERA_REPO_URL_SHA1</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c1"># extract only data</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+            <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">rootdir</span> <span class="o">=</span> <span class="n">namelist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">COURSERA_DATASETS</span><span class="p">:</span>
+                <span class="n">dataset_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">dataset_prefix_in_zip</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rootdir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">COURSERA_DATADIRNAME</span><span class="si">}</span><span class="s2">/&quot;</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">dataset_prefix_in_zip</span><span class="p">):</span>
+                        <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">datafile</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">/*&quot;</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                        <span class="n">src</span><span class="o">=</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">removedirs</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_solutionsupdate">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_solutionsupdate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_solutionsupdate</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data for rcpsp examples from solutionsupdate.</span>
+
+<span class="sd">    cf http://solutionsupdate.ugent.be/index.php/solutions-update</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># get rcpsp data directory</span>
+    <span class="n">rcpsp_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/rcpsp&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">rcpsp_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># download each datasets</span>
+        <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">SOLUTIONSUPDATE_DATASETS</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SOLUTIONSUPDATE_BASE_URL</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+            <span class="n">local_file_path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+                <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                    <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">rcpsp_dir</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># remove temporary files</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_psplib">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_psplib">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_psplib</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data for rcpsp examples from psplib.</span>
+
+<span class="sd">    cf https://www.om-db.wi.tum.de/psplib/data.html</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#  get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># get rcpsp data directory</span>
+    <span class="n">rcpsp_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/rcpsp&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">rcpsp_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># download each datasets</span>
+        <span class="k">for</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">PSPLIB_DATASETS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">PSPLIB_FILES_BASE_URL</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+            <span class="n">local_file_path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+                <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+                        <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">rcpsp_dir</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># remove temporary files</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_imopse">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_imopse">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_imopse</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data from iMOPSE repo for rcpsp_multiskill examples.</span>
+
+<span class="sd">    https://github.com/imopse/iMOPSE</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># get rcpsp_multiskill data directory</span>
+    <span class="n">rcpsp_multiskill_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/rcpsp_multiskill&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">rcpsp_multiskill_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">rcpsp_multiskill_dir</span>
+
+    <span class="c1"># download in a temporary file the repo data</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">IMOPSE_REPO_URL</span><span class="si">}</span><span class="s2">/archive/</span><span class="si">{</span><span class="n">IMOPSE_REPO_URL_SHA1</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c1"># extract only data</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+            <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">rootdir</span> <span class="o">=</span> <span class="n">namelist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dataset_prefix_in_zip</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rootdir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">IMOPSE_DATASET_RELATIVE_PATH</span><span class="si">}</span><span class="s2">/&quot;</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">dataset_prefix_in_zip</span><span class="p">):</span>
+                    <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">datafile</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">/*&quot;</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="n">src</span><span class="o">=</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">removedirs</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_mspsplib_repo">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_mspsplib_repo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_mspsplib_repo</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data from youngkd repo. (for multiskill rcpsp)</span>
+
+<span class="sd">    https://github.com/youngkd/MSPSP-InstLib</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># download in a temporary file the repo data</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">MSPSPLIB_REPO_URL</span><span class="si">}</span><span class="s2">/archive/</span><span class="si">{</span><span class="n">MSPSPLIB_REPO_URL_SHA1</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c1"># extract only data</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+            <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">rootdir</span> <span class="o">=</span> <span class="n">namelist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dataset_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/MSPSP_Instances&quot;</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">dataset_prefix_in_zip</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rootdir</span><span class="si">}</span><span class="s2">/instances/&quot;</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">dataset_prefix_in_zip</span><span class="p">):</span>
+                    <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">datafile</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">/*&quot;</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="n">src</span><span class="o">=</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">removedirs</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_mslib">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_mslib">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_mslib</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data from MSLIB for rcpsp_multiskill examples.</span>
+<span class="sd">    cf https://www.projectmanagement.ugent.be/research/project_scheduling/MSRCPSP</span>
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#  get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># get rcpsp_multiskill data directory</span>
+    <span class="n">rcpsp_multiskill_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/rcpsp_multiskill_mslib&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">rcpsp_multiskill_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># download dataset</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">MSLIB_DATASET_URL</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
+            <span class="c1"># extract only data</span>
+            <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+                <span class="n">zipf</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">rcpsp_multiskill_dir</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># remove temporary files</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="decompress_gz_to_folder">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.decompress_gz_to_folder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">decompress_gz_to_folder</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="n">output_folder</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">:</span>
+        <span class="c1"># Get the base name of the gzipped file without the .gz extension</span>
+        <span class="n">base_name</span> <span class="o">=</span> <span class="n">url</span><span class="p">[</span><span class="mi">33</span><span class="p">:]</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">base_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Create the output folder if it doesn&#39;t exist</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_folder</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Construct the output file path for each extracted file</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_folder</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Open the output file in write-binary mode (&#39;wb&#39;)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_out</span><span class="p">:</span>
+            <span class="c1"># Write the extracted file data to the output file</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">f_in</span><span class="p">,</span> <span class="n">f_out</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_for_mis">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_for_mis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_for_mis</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="c1">#  get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># get mis data directory</span>
+    <span class="n">mis_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">MIS_DATASET_PREFIX</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">mis_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># download each datasets</span>
+        <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">MIS_FILES</span><span class="p">:</span>
+            <span class="n">filename</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="n">decompress_gz_to_folder</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mis_dir</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># remove temporary files</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_mis_from_repo">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_mis_from_repo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_mis_from_repo</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch mis dataset stored in g-poveda repo.&quot;&quot;&quot;</span>
+    <span class="n">fetch_datasets_from_repo</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">,</span> <span class="n">dataset_prefixes</span><span class="o">=</span><span class="p">[</span><span class="n">MIS_DATASET_PREFIX</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_fjsp_from_repo">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_fjsp_from_repo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_fjsp_from_repo</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch fjsp dataset stored in g-poveda repo.&quot;&quot;&quot;</span>
+    <span class="n">fetch_datasets_from_repo</span><span class="p">(</span>
+        <span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">,</span> <span class="n">dataset_prefixes</span><span class="o">=</span><span class="p">[</span><span class="n">FJSP_DATASET_PREFIX</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_datasets_from_repo">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_datasets_from_repo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_datasets_from_repo</span><span class="p">(</span>
+    <span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">dataset_prefixes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch all datasets stored in g-poveda repo.&quot;&quot;&quot;</span>
+    <span class="n">url_repo</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/g-poveda/do-data&quot;</span>
+    <span class="n">sha_url_repo</span> <span class="o">=</span> <span class="s2">&quot;f078cf0ee5440aeae72af9b6c5c83c14acbb2888&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">url_repo</span><span class="si">}</span><span class="s2">/archive/</span><span class="si">{</span><span class="n">sha_url_repo</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+    <span class="k">if</span> <span class="n">dataset_prefixes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dataset_prefixes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">FJSP_DATASET_PREFIX</span><span class="p">,</span>
+            <span class="n">MIS_DATASET_PREFIX</span><span class="p">,</span>
+            <span class="n">VRPTW_DATASET_PREFIX</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">dataset_prefix</span> <span class="ow">in</span> <span class="n">dataset_prefixes</span><span class="p">:</span>
+            <span class="n">_extract_dataset_from_zipped_repo</span><span class="p">(</span>
+                <span class="n">zipped_repo_path</span><span class="o">=</span><span class="n">local_file_path</span><span class="p">,</span>
+                <span class="n">dataset_prefix</span><span class="o">=</span><span class="n">dataset_prefix</span><span class="p">,</span>
+                <span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_dataset_from_zipped_repo</span><span class="p">(</span>
+    <span class="n">zipped_repo_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset_prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="c1"># extract only dataset with given prefix</span>
+    <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">zipped_repo_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+        <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+        <span class="n">rootdir</span> <span class="o">=</span> <span class="n">namelist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dataset_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dataset_prefix_in_zip</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rootdir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="n">filename_to_move</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">dataset_prefix_in_zip</span><span class="p">):</span>
+                <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+                <span class="n">filename_to_move</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">datafile</span> <span class="ow">in</span> <span class="n">filename_to_move</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">datafile</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">destination</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">dataset_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">dataset_prefix_in_zip</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">destination</span><span class="p">)):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">destination</span><span class="p">))</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">datafile</span><span class="p">),</span> <span class="n">dst</span><span class="o">=</span><span class="n">destination</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="fetch_data_from_jsplib_repo">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_jsplib_repo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_jsplib_repo</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data from jsplib repo. (for jobshop problems)</span>
+
+<span class="sd">    https://github.com/tamy0612/JSPLIB</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># download in a temporary file the repo data</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">JSPLIB_REPO_URL</span><span class="si">}</span><span class="s2">/archive/</span><span class="si">{</span><span class="n">JSPLIB_REPO_URL_SHA1</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c1"># extract only data</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+            <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">rootdir</span> <span class="o">=</span> <span class="n">namelist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dataset_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/jobshop&quot;</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">dataset_prefix_in_zip</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rootdir</span><span class="si">}</span><span class="s2">/instances/&quot;</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">dataset_prefix_in_zip</span><span class="p">):</span>
+                    <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">datafile</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">/*&quot;</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="n">src</span><span class="o">=</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">removedirs</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_fjsp">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_fjsp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_fjsp</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://openhsu.ub.hsu-hh.de/bitstreams/4ed8d5b1-2546-4a30-8f3a-a8f3732ffbbd/download&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c1"># extract only data</span>
+        <span class="n">dataset_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">FJSP_DATASET_PREFIX</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+            <span class="n">zipf</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_bppc">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_bppc">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_bppc</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data from bin packing problem with conflicts benchmark&quot;&quot;&quot;</span>
+    <span class="c1"># get the proper data directory</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+
+    <span class="c1"># download in a temporary file the repo data</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">BPPC_ZIP</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c1"># extract only data</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+            <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">rootdir</span> <span class="o">=</span> <span class="n">namelist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dataset_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/bppc&quot;</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># dataset_prefix_in_zip = f&quot;{rootdir}/Istanze/&quot;</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;Istanze&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">datafile</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/Istanze/*&quot;</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="n">src</span><span class="o">=</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">removedirs</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/Istanze&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_from_cp25">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_from_cp25">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_from_cp25</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">CP25_REPO_URL</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/ML-KULeuven/Explainable-Workforce-Scheduling/&quot;</span>
+    <span class="n">CP25_REPO_URL_SHA1</span> <span class="o">=</span> <span class="s2">&quot;9b1fc7e38fa7e80f75de88ee206f7cd8a9cf51a9&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">CP25_REPO_URL</span><span class="si">}</span><span class="s2">/archive/</span><span class="si">{</span><span class="n">CP25_REPO_URL_SHA1</span><span class="si">}</span><span class="s2">.zip&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">local_file_path</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c1"># extract only data</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
+            <span class="n">namelist</span> <span class="o">=</span> <span class="n">zipf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">rootdir</span> <span class="o">=</span> <span class="n">namelist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dataset_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/workforce&quot;</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">dataset_prefix_in_zip</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rootdir</span><span class="si">}</span><span class="s2">/data/anon_jsons&quot;</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">namelist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">dataset_prefix_in_zip</span><span class="p">):</span>
+                    <span class="n">zipf</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">dataset_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">datafile</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">/*&quot;</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="n">src</span><span class="o">=</span><span class="n">datafile</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">removedirs</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_prefix_in_zip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_weighted_tardiness_single_machine">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_weighted_tardiness_single_machine">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_weighted_tardiness_single_machine</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_home</span><span class="p">,</span> <span class="s2">&quot;wt/&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;wt40&quot;</span><span class="p">,</span> <span class="s2">&quot;wt50&quot;</span><span class="p">,</span> <span class="s2">&quot;wt100&quot;</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">urlretrieve</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">OR_LIBRARY_ROOT_URL</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="s2">&quot;.txt&quot;</span><span class="p">,</span>
+                <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">file</span> <span class="o">+</span> <span class="s2">&quot;.txt&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_data_tsptw">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_data_tsptw">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_tsptw</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">tsp_tw_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_home</span><span class="p">,</span> <span class="s2">&quot;tsptw&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">tsp_tw_folder</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">tsp_tw_folder</span><span class="p">)</span>
+    <span class="n">urls</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;SolomonPotvinBengio.tar.gz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Langevin.tar.gz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Dumas.tar.gz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;GendreauDumasExtended.tar.gz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OhlmannThomas.tar.gz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;AFG.tar.gz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SolomonPesant.tar.gz&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">base_url</span> <span class="o">=</span> <span class="s2">&quot;https://lopez-ibanez.eu/files/TSPTW/&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
+            <span class="c1"># base_name = url.removesuffix(&quot;.tar.gz&quot;)</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tsp_tw_folder</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+            <span class="n">urlretrieve</span><span class="p">(</span><span class="n">base_url</span> <span class="o">+</span> <span class="n">url</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">file_name</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">&quot;r:gz&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
+                <span class="n">tar</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">tsp_tw_folder</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">urlcleanup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_all_datasets">
+<a class="viewcode-back" href="../../api/discrete_optimization.html#discrete_optimization.datasets.fetch_all_datasets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_all_datasets</span><span class="p">(</span><span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch data used by examples for all packages.</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_home: Specify the cache folder for the datasets. By default</span>
+<span class="sd">            all discrete-optimization data is stored in &#39;~/discrete_optimization_data&#39; subfolders.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fetch_data_from_coursera</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_psplib</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_imopse</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_solutionsupdate</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_datasets_from_repo</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_jsplib_repo</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_bppc</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_cp25</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_weighted_tardiness_single_machine</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_tsptw</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_mslib</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+    <span class="n">fetch_data_from_mspsplib_repo</span><span class="p">(</span><span class="n">data_home</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">fetch_all_datasets</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

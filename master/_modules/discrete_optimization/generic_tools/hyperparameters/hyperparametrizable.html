@@ -1,0 +1,451 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.hyperparameters.hyperparametrizable &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.hyperparameters.hyperparametrizable</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.hyperparameters.hyperparametrizable</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2024 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>  <span class="c1"># see annotations as str</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChainMap</span><span class="p">,</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Hyperparameter</span><span class="p">,</span>
+    <span class="n">SubBrickKwargsHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># only for type checkers</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">optuna</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Hyperparametrizable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Hyperparametrizable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for classes like SolverDO having (tunable) hyperparmeters.</span>
+
+<span class="sd">    They have utility methods to</span>
+<span class="sd">    - retrieve available hyperparameters</span>
+<span class="sd">    - fill kwargs with default hyperparameters values</span>
+<span class="sd">    - suggest hyperparameters by making use of optuna trials methods</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hyperparameter</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameters available for this solver.</span>
+
+<span class="sd">    These hyperparameters are to be feed to **kwargs found in</span>
+<span class="sd">        - __init__()</span>
+<span class="sd">        - init_model() (when available)</span>
+<span class="sd">        - solve()</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Hyperparametrizable.get_hyperparameters_names">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameters_names">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hyperparameters_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List of hyperparameters names.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hyperparameters</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Hyperparametrizable.get_hyperparameters_by_name">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameters_by_name">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hyperparameters_by_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hyperparameter</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mapping from name to corresponding hyperparameter.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hyperparameters</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Hyperparametrizable.get_hyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameter">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hyperparameter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hyperparameter</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get hyperparameter from given name.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameters_by_name</span><span class="p">()[</span><span class="n">name</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Hyperparametrizable.copy_and_update_hyperparameters">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.copy_and_update_hyperparameters">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy_and_update_hyperparameters</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_by_name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hyperparameter</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Copy hyperparameters definition of this class and update them with specified kwargs.</span>
+
+<span class="sd">        This is useful to define hyperparameters for a child class</span>
+<span class="sd">        for which only choices of the hyperparameter change for instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            names: names of hyperparameters to copy. Default to all.</span>
+<span class="sd">            **kwargs_by_name: for each hyperparameter specified by its name,</span>
+<span class="sd">                the attributes to update. If a given hyperparameter name is not specified,</span>
+<span class="sd">                the hyperparameter is copied without further update.</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameters_names</span><span class="p">()</span>
+        <span class="n">kwargs_by_name</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">kwargs_by_name</span><span class="p">)</span>  <span class="c1"># add missing names</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">copy_and_update_attributes</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs_by_name</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hyperparameters</span>
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">names</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Hyperparametrizable.get_default_hyperparameters">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_default_hyperparameters">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_default_hyperparameters</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get hyperparameters default values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            names: names of the hyperparameters to choose.</span>
+<span class="sd">                By default, all available hyperparameters will be suggested.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a mapping between hyperparameter&#39;s name_in_kwargs and its default value (None if not specified)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameters_names</span><span class="p">()</span>
+        <span class="n">hyperparameters_by_names</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameters_by_name</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">hyperparameters_by_names</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">hyperparameters_by_names</span><span class="p">[</span>
+                <span class="n">name</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">default</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Hyperparametrizable.complete_with_default_hyperparameters">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.complete_with_default_hyperparameters">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">complete_with_default_hyperparameters</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add missing hyperparameters to kwargs by using default values</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kwargs: keyword arguments to complete (e.g. for `__init__`, `init_model`, or `solve`)</span>
+<span class="sd">            names: names of the hyperparameters to add if missing.</span>
+<span class="sd">                By default, all available hyperparameters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">             a new dictionary, completion of kwargs</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs_complete</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_default_hyperparameters</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">kwargs_complete</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># ensure preferring values from kwargs</span>
+        <span class="k">return</span> <span class="n">kwargs_complete</span></div>
+
+
+<div class="viewcode-block" id="Hyperparametrizable.suggest_hyperparameter_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.suggest_hyperparameter_with_optuna">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_hyperparameter_with_optuna</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value during an Optuna trial.</span>
+
+<span class="sd">        This can be used during Optuna hyperparameters tuning.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna trial during hyperparameters tuning</span>
+<span class="sd">            name: name of the hyperparameter to choose</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: options for optuna hyperparameter suggestions</span>
+
+<span class="sd">        Returns:</span>
+
+
+<span class="sd">        kwargs can be used to pass relevant arguments to</span>
+<span class="sd">        - trial.suggest_float()</span>
+<span class="sd">        - trial.suggest_int()</span>
+<span class="sd">        - trial.suggest_categorical()</span>
+
+<span class="sd">        For instance it can</span>
+<span class="sd">        - add a low/high value if not existing for the hyperparameter</span>
+<span class="sd">          or override it to narrow the search. (for float or int hyperparameters)</span>
+<span class="sd">        - add a step or log argument (for float or int hyperparameters,</span>
+<span class="sd">          see optuna.trial.Trial.suggest_float())</span>
+<span class="sd">        - override choices for categorical or enum parameters to narrow the search</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">suggest_with_optuna</span><span class="p">(</span>
+            <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Hyperparametrizable.suggest_hyperparameters_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.suggest_hyperparameters_with_optuna">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_hyperparameters_with_optuna</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kwargs_by_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameters values during an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna trial during hyperparameters tuning</span>
+<span class="sd">            names: names of the hyperparameters to choose.</span>
+<span class="sd">                By default, all available hyperparameters will be suggested.</span>
+<span class="sd">                If `fixed_hyperparameters` is provided, the corresponding names are removed from `names`.</span>
+<span class="sd">            kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name</span>
+<span class="sd">            fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,</span>
+<span class="sd">                if the subbrick class is not suggested by this method, but already fixed.</span>
+<span class="sd">                Will be added to the suggested hyperparameters.</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameters</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+
+
+<span class="sd">        Returns:</span>
+<span class="sd">            mapping between the hyperparameter name and its suggested value.</span>
+<span class="sd">            If the hyperparameter has an attribute `name_in_kwargs`, this is used as the key in the mapping</span>
+<span class="sd">            instead of the actual hyperparameter name.</span>
+<span class="sd">            the mapping is updated with `fixed_hyperparameters`.</span>
+
+<span class="sd">        kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_with_optuna(name=some_name)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameters_names</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">kwargs_by_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs_by_name</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">fixed_hyperparameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fixed_hyperparameters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Remove fixed hyperparameters from names of hyperparameters to suggest</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_hyperparameters</span><span class="p">]</span>
+
+        <span class="c1"># We suggest the hyperparameters by batch so that hyperparameters depending on other</span>
+        <span class="c1"># are suggested in a batch after batches involving their depending hyperparameters.</span>
+        <span class="c1"># Dependency can come from `depends_on` attribute or, in case of `SubBrickKwargsHyperparameter`,</span>
+        <span class="c1"># from `subbrick_hyperparameter` attribute.</span>
+        <span class="n">name2hyperparameter</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameters_by_name</span><span class="p">()</span>
+        <span class="n">suggested_hyperparameters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">suggested_and_fixed_hyperparameters</span> <span class="o">=</span> <span class="n">ChainMap</span><span class="p">(</span>
+            <span class="n">suggested_hyperparameters</span><span class="p">,</span> <span class="n">fixed_hyperparameters</span>
+        <span class="p">)</span>
+        <span class="n">skipped_hyperparameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_sort_hyperparameters_by_dependency</span><span class="p">():</span>
+            <span class="n">hyperparameter</span> <span class="o">=</span> <span class="n">name2hyperparameter</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">kwargs_for_optuna_suggestion</span> <span class="o">=</span> <span class="n">kwargs_by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">kwargs_for_optuna_suggestion</span><span class="p">[</span><span class="s2">&quot;prefix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prefix</span>
+
+            <span class="c1"># check if dependency condition is fulfilled or not</span>
+            <span class="k">if</span> <span class="n">hyperparameter</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">previous_hp_name</span><span class="p">,</span> <span class="n">possible_values</span> <span class="o">=</span> <span class="n">hyperparameter</span><span class="o">.</span><span class="n">depends_on</span>
+                <span class="k">if</span> <span class="n">previous_hp_name</span> <span class="ow">in</span> <span class="n">skipped_hyperparameters</span> <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">previous_hp_name</span> <span class="ow">in</span> <span class="n">suggested_and_fixed_hyperparameters</span>
+                    <span class="ow">and</span> <span class="n">suggested_and_fixed_hyperparameters</span><span class="p">[</span><span class="n">previous_hp_name</span><span class="p">]</span>
+                    <span class="ow">not</span> <span class="ow">in</span> <span class="n">possible_values</span>
+                <span class="p">):</span>
+                    <span class="c1"># condition unfulfilled: do not suggest hyperparameter</span>
+                    <span class="n">skipped_hyperparameters</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">elif</span> <span class="n">previous_hp_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suggested_and_fixed_hyperparameters</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">hyperparameter</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; depends on &#39;</span><span class="si">{</span><span class="n">previous_hp_name</span><span class="si">}</span><span class="s2">&#39;, &quot;</span>
+                        <span class="s2">&quot;but the latter has not been suggested by this method &quot;</span>
+                        <span class="s2">&quot;with `names` including it or being None, nor has it been &quot;</span>
+                        <span class="s2">&quot;provided via `fixed_hyperparameters`.&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># subbrickkwargs: add subbrick choice</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hyperparameter</span><span class="p">,</span> <span class="n">SubBrickKwargsHyperparameter</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">hyperparameter</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">kwargs_for_optuna_suggestion</span><span class="p">[</span><span class="s2">&quot;subbrick&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">hyperparameter</span><span class="o">.</span><span class="n">subbrick_cls</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="p">(</span>
+                    <span class="n">hyperparameter</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span>
+                    <span class="ow">in</span> <span class="n">suggested_and_fixed_hyperparameters</span>
+                <span class="p">):</span>
+                    <span class="n">kwargs_for_optuna_suggestion</span><span class="p">[</span><span class="s2">&quot;subbrick&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">suggested_and_fixed_hyperparameters</span><span class="p">[</span>
+                            <span class="n">hyperparameter</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="n">hyperparameter</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span> <span class="ow">in</span> <span class="n">skipped_hyperparameters</span><span class="p">:</span>
+                    <span class="c1"># subbrick_kwargs must be skipped if subbrick itself is skipped</span>
+                    <span class="n">skipped_hyperparameters</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">hyperparameter</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; needs the choice of &#39;</span><span class="si">{</span><span class="n">hyperparameter</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span><span class="si">}</span><span class="s2">&#39;, &quot;</span>
+                        <span class="s2">&quot;but the latter has not been suggested by this method &quot;</span>
+                        <span class="s2">&quot;with `names` including it or being None, nor has it been &quot;</span>
+                        <span class="s2">&quot;provided via `fixed_hyperparameters`.&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># suggest the hyperparameter with optuna if needed</span>
+            <span class="c1"># NB: we filter the name only now in order to have the skip decision taken before</span>
+            <span class="c1"># as it could have consequences on hyperparameters further in the dependency graph</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">hyperparameter</span><span class="o">.</span><span class="n">name_in_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">name</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">hyperparameter</span><span class="o">.</span><span class="n">name_in_kwargs</span>
+                <span class="n">suggested_and_fixed_hyperparameters</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">cls</span><span class="o">.</span><span class="n">suggest_hyperparameter_with_optuna</span><span class="p">(</span>
+                        <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_for_optuna_suggestion</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">suggested_and_fixed_hyperparameters</span><span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_hyperparameters_dependency_graph</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">get_hyperparameters_names</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">hp</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hyperparameters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">hp</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">previous_hp_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hp</span><span class="o">.</span><span class="n">depends_on</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">previous_hp_name</span><span class="p">,</span> <span class="n">hp</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">hp</span><span class="p">,</span> <span class="n">SubBrickKwargsHyperparameter</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">hp</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span><span class="p">,</span> <span class="n">hp</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sort_hyperparameters_by_dependency</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">nx</span><span class="o">.</span><span class="n">algorithms</span><span class="o">.</span><span class="n">dag</span><span class="o">.</span><span class="n">topological_sort</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_hyperparameters_dependency_graph</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

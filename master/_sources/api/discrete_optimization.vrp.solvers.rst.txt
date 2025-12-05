@@ -1,0 +1,69 @@
+discrete\_optimization.vrp.solvers package
+==========================================
+
+Submodules
+----------
+
+discrete\_optimization.vrp.solvers.cpsat module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.solvers.dp module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.solvers.greedy module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.solvers.lns\_cpsat module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers.lns_cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.solvers.lp\_iterative module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers.lp_iterative
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.solvers.ortools\_routing module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers.ortools_routing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.solvers.vrp\_solver module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers.vrp_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrp.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

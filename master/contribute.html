@@ -1,0 +1,552 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contributing &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=30d551ce"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/versions.js?v=dd1a30db"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="discrete_optimization.workforce.scheduling.solvers package" href="api/discrete_optimization.workforce.scheduling.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setting-up-your-development-environment">Setting up your development environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#minizinc-2-8-optional">Minizinc 2.8+ [optional]</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python-3-10-environment-deprecated">Python 3.10+ environment [deprecated]</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-the-library-from-source-in-developer-mode">Installing the library from source in developer mode</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#with-pip-deprecated">With pip [deprecated]</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#managing-the-project-with-uv">Managing the project with uv</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#building-the-docs-locally">Building the docs locally</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#define-environment-variables-for-notebook-github-links">Define environment variables for notebook github links</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#build-the-docs">Build the docs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#running-unit-tests">Running unit tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-notebooks-as-tests">Running notebooks as tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#guidelines-to-follow-when-preparing-a-contribution">Guidelines to follow when preparing a contribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#coding-style-and-code-linting">Coding style and code linting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#notebooks">Notebooks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adding-unit-tests">Adding unit tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#writing-the-documentation">Writing the documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#in-code-docstrings">In-code docstrings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#doc-pages">Doc pages</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#submitting-pull-requests">Submitting pull requests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prior-checks">Prior checks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reorganizing-commits">Reorganizing commits</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Contributing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h1>
+<p>We welcome all contributions to discrete-optimization.</p>
+<p>You can help by:</p>
+<ul class="simple">
+<li><p>fixing bugs (see <a class="reference external" href="https://github.com/airbus/discrete-optimization/issues">issues</a> with label “bug”),</p></li>
+<li><p>improving the documentation,</p></li>
+<li><p>adding and improving educational notebooks in <code class="docutils literal notranslate"><span class="pre">notebooks/</span></code>.</p></li>
+</ul>
+<p>This is not exhaustive.</p>
+<p>The project is hosted on <a class="reference external" href="https://github.com/airbus/discrete-optimization">https://github.com/airbus/discrete-optimization</a>.
+Contributions to the repository are made by submitting pull requests.</p>
+<p>This guide is organized as follows:</p>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#setting-up-your-development-environment" id="id1">Setting up your development environment</a></p>
+<ul>
+<li><p><a class="reference internal" href="#prerequisites" id="id2">Prerequisites</a></p></li>
+<li><p><a class="reference internal" href="#installing-the-library-from-source-in-developer-mode" id="id3">Installing the library from source in developer mode</a></p></li>
+<li><p><a class="reference internal" href="#building-the-docs-locally" id="id4">Building the docs locally</a></p></li>
+<li><p><a class="reference internal" href="#running-unit-tests" id="id5">Running unit tests</a></p></li>
+<li><p><a class="reference internal" href="#running-notebooks-as-tests" id="id6">Running notebooks as tests</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#guidelines-to-follow-when-preparing-a-contribution" id="id7">Guidelines to follow when preparing a contribution</a></p>
+<ul>
+<li><p><a class="reference internal" href="#coding-style-and-code-linting" id="id8">Coding style and code linting</a></p></li>
+<li><p><a class="reference internal" href="#notebooks" id="id9">Notebooks</a></p></li>
+<li><p><a class="reference internal" href="#examples" id="id10">Examples</a></p></li>
+<li><p><a class="reference internal" href="#adding-unit-tests" id="id11">Adding unit tests</a></p></li>
+<li><p><a class="reference internal" href="#writing-the-documentation" id="id12">Writing the documentation</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#submitting-pull-requests" id="id13">Submitting pull requests</a></p>
+<ul>
+<li><p><a class="reference internal" href="#prior-checks" id="id14">Prior checks</a></p></li>
+<li><p><a class="reference internal" href="#reorganizing-commits" id="id15">Reorganizing commits</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="setting-up-your-development-environment">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Setting up your development environment</a><a class="headerlink" href="#setting-up-your-development-environment" title="Link to this heading"></a></h2>
+<section id="prerequisites">
+<h3><a class="toc-backref" href="#id2" role="doc-backlink">Prerequisites</a><a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
+<section id="minizinc-2-8-optional">
+<h4>Minizinc 2.8+ [optional]<a class="headerlink" href="#minizinc-2-8-optional" title="Link to this heading"></a></h4>
+<p>If you want to use the minizinc based solver of the library,
+you need to install <a class="reference external" href="https://www.minizinc.org/">minizinc</a> (version greater than 2.8) and update the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> environment variable
+so that it can be found by Python.
+See <a class="reference external" href="https://www.minizinc.org/doc-latest/en/installation.html">minizinc documentation</a> for more details.</p>
+</section>
+<section id="python-3-10-environment-deprecated">
+<h4>Python 3.10+ environment [deprecated]<a class="headerlink" href="#python-3-10-environment-deprecated" title="Link to this heading"></a></h4>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>You can skip this step if you choose to manage the project with uv as now recommended.
+Indeed uv will automatically create the virtual environment.
+Go directly to Section <a class="reference internal" href="#Managing-the-project-with-uv"><span class="xref myst">“Managing the project with uv”</span></a> in that case.</p>
+</div>
+<p>The use of a virtual environment is recommended, and you will need to ensure that the environment use a Python version
+greater than 3.10.
+This can be achieved for instance either by using <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> or by using <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> (or <a class="reference external" href="https://github.com/pyenv-win/pyenv-win">pyenv-win</a> on windows)
+and <a class="reference external" href="https://docs.python.org/fr/3/library/venv.html">venv</a> module, or by using <a class="reference external" href="https://docs.astral.sh/uv/">uv</a>.</p>
+<p>The following examples show how to create a virtual environment with Python version 3.12 with the mentioned methods.</p>
+<section id="with-conda">
+<h5>With conda<a class="headerlink" href="#with-conda" title="Link to this heading"></a></h5>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="k">do</span>-env<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12
+conda<span class="w"> </span>activate<span class="w"> </span><span class="k">do</span>-env
+</pre></div>
+</div>
+</section>
+<section id="with-pyenv-venv">
+<h5>With pyenv + venv<a class="headerlink" href="#with-pyenv-venv" title="Link to this heading"></a></h5>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyenv<span class="w"> </span>install<span class="w"> </span><span class="m">3</span>.12
+pyenv<span class="w"> </span>shell<span class="w"> </span><span class="m">3</span>.12
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span><span class="k">do</span>-venv
+<span class="nb">source</span><span class="w"> </span><span class="k">do</span>-venv/bin/activate<span class="w">  </span><span class="c1"># do-venv\Scripts\activate on windows</span>
+</pre></div>
+</div>
+</section>
+<section id="with-uv">
+<h5>With uv<a class="headerlink" href="#with-uv" title="Link to this heading"></a></h5>
+<p><em>NB: use the command below only if you want to install manually (e.g. with <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span></code>) the library.
+Else go directly to Section <a class="reference internal" href="#Managing-the-project-with-uv"><span class="xref myst">“Managing the project with uv”</span></a>.</em></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv<span class="w"> </span><span class="k">do</span>-venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<span class="nb">source</span><span class="w"> </span><span class="k">do</span>-venv/bin/activate<span class="w">  </span><span class="c1"># do-venv\Scripts\activate on windows</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="installing-the-library-from-source-in-developer-mode">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Installing the library from source in developer mode</a><a class="headerlink" href="#installing-the-library-from-source-in-developer-mode" title="Link to this heading"></a></h3>
+<section id="with-pip-deprecated">
+<h4>With pip [deprecated]<a class="headerlink" href="#with-pip-deprecated" title="Link to this heading"></a></h4>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The preferred process is now using <a class="reference internal" href="#Managing-the-project-with-uv"><span class="xref myst">uv for managing the project</span></a>
+but you can still install it with pip.</p>
+</div>
+<p>We use the option <code class="docutils literal notranslate"><span class="pre">--editable</span></code> (or <code class="docutils literal notranslate"><span class="pre">-e</span></code>) of <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code>.
+We can also install</p>
+<ul class="simple">
+<li><p>dependencies for testing via <code class="docutils literal notranslate"><span class="pre">--group</span> <span class="pre">test</span></code> (see <a class="reference external" href="https://packaging.python.org/en/latest/specifications/dependency-groups/#dependency-groups">[dependency-groups]</a> in pyproject.toml),</p></li>
+<li><p>dependencies for building doc via <code class="docutils literal notranslate"><span class="pre">--group</span> <span class="pre">doc</span></code>,</p></li>
+<li><p>other dev dependencies via <code class="docutils literal notranslate"><span class="pre">--group</span> <span class="pre">dev</span></code>,</p></li>
+<li><p>optional dependencies to make use of all solvers, by using the corresponding extras.</p></li>
+</ul>
+<p>Update the following command if you do not need all features from extras and dependency groups,
+and want not to install corresponding dependencies.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/airbus/discrete-optimization.git
+<span class="nb">cd</span><span class="w"> </span>discrete-optimization
+pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>gurobi,<span class="w"> </span>quantum,<span class="w"> </span>dashboard,<span class="w"> </span>optuna,<span class="w"> </span>toulbar<span class="o">]</span><span class="w"> </span>--group<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--group<span class="w"> </span>dev<span class="w"> </span>--group<span class="w"> </span>doc
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>pip version must be &gt;= 25.1 to use <code class="docutils literal notranslate"><span class="pre">--group</span></code> option.</p></li>
+<li><p>“toulbar” extra will not work on windows.</p></li>
+</ul>
+</div>
+</section>
+<section id="managing-the-project-with-uv">
+<h4>Managing the project with uv<a class="headerlink" href="#managing-the-project-with-uv" title="Link to this heading"></a></h4>
+<p>We can also let <code class="docutils literal notranslate"><span class="pre">uv</span></code> manage the project. This is now the preferred process.</p>
+<p>You can install all dependencies (including dependency groups and extras) via</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync<span class="w"> </span>--python<span class="o">=</span><span class="m">3</span>.12<span class="w"> </span>--all-extras
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul>
+<li><p>You can skip the python version, it will choose the current python or a version specified in the file “.python-version” if existing.</p></li>
+<li><p>If you want to avoid some extras (like “toulbar” on windows), you can specify the ones you need:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>gurobi<span class="w"> </span>--extra<span class="w"> </span>dashboard
+</pre></div>
+</div>
+</li>
+</ul>
+<p>You can actually even skip this step as any call to <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span></code> will install necessary dependencies
+(but do not forget to add your extras to the first <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span></code> in that case).</p>
+<p>To learn how to add/update dependencies with uv, refer to its documentation.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>In the following sections, we assume that you chose to use <code class="docutils literal notranslate"><span class="pre">uv</span></code>.
+Else, you generally only need to remove <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> </code> or <code class="docutils literal notranslate"><span class="pre">uvx</span> </code> from the commands.</p>
+</div>
+</section>
+</section>
+<section id="building-the-docs-locally">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">Building the docs locally</a><a class="headerlink" href="#building-the-docs-locally" title="Link to this heading"></a></h3>
+<p>The documentation is using <a class="reference external" href="https://www.sphinx-doc.org/en/master/index.html">Sphinx</a> to generate
+the html pages, and in particular the autogenerated API doc from in-code docstrings.</p>
+<section id="define-environment-variables-for-notebook-github-links">
+<h4>Define environment variables for notebook github links<a class="headerlink" href="#define-environment-variables-for-notebook-github-links" title="Link to this heading"></a></h4>
+<p>In order to define appropriate github and binder links for notebooks,
+we need several environment variables:</p>
+<ul class="simple">
+<li><p>AUTODOC_BINDER_ENV_GH_REPO_NAME: name of the github repository hosting the binder environment</p></li>
+<li><p>AUTODOC_BINDER_ENV_GH_BRANCH: branch hosting the binder environment</p></li>
+<li><p>AUTODOC_NOTEBOOKS_REPO_URL: url of the content repository for the notebooks</p></li>
+<li><p>AUTODOC_NOTEBOOKS_BRANCH: branch containing the notebooks</p></li>
+</ul>
+<p>For instance:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">AUTODOC_BINDER_ENV_GH_REPO_NAME</span><span class="o">=</span><span class="s2">&quot;airbus/discrete-optimization&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AUTODOC_BINDER_ENV_GH_BRANCH</span><span class="o">=</span><span class="s2">&quot;binder&quot;</span>
+<span class="nv">current_repo_url_withdotgit</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>remote<span class="w"> </span>get-url<span class="w"> </span>origin<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AUTODOC_NOTEBOOKS_REPO_URL</span><span class="o">=</span><span class="si">${</span><span class="nv">current_repo_url_withdotgit</span><span class="p">/.git/</span><span class="si">}</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AUTODOC_NOTEBOOKS_BRANCH</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>branch<span class="w"> </span>--show-current<span class="k">)</span>
+</pre></div>
+</div>
+</section>
+<section id="build-the-docs">
+<h4>Build the docs<a class="headerlink" href="#build-the-docs" title="Link to this heading"></a></h4>
+<p>On Linux or Mac, or with <a class="reference external" href="https://gitforwindows.org/">git-bash</a> on windows, make the documentation with</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+<span class="c1"># generate api doc source files</span>
+rm<span class="w"> </span>source/api/discrete_optimization*.rst
+uv<span class="w"> </span>run<span class="w"> </span>sphinx-apidoc<span class="w"> </span>-o<span class="w"> </span>source/api<span class="w"> </span>-f<span class="w"> </span>-T<span class="w"> </span>../src/discrete_optimization
+<span class="c1"># generate available notebooks list</span>
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>generate_nb_index.py
+<span class="c1"># remove previous build</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>build
+<span class="c1"># build doc html pages</span>
+uv<span class="w"> </span>run<span class="w"> </span>sphinx-build<span class="w"> </span>-M<span class="w"> </span>html<span class="w"> </span><span class="nb">source</span><span class="w"> </span>build
+</pre></div>
+</div>
+<p>The index of the built documentation is then available at <code class="docutils literal notranslate"><span class="pre">build/html/index.html</span></code>
+from the <code class="docutils literal notranslate"><span class="pre">docs/</span></code> repository. You can for instance browse the documentation by running</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span>-d<span class="w"> </span>build/html
+</pre></div>
+</div>
+<p>and go to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a>. Doing this, rather than just opening <code class="docutils literal notranslate"><span class="pre">index.html</span></code> directly in you browser,
+make javascript work properly.</p>
+<p>On windows with standard command prompt, the same lines work except that you have to use <code class="docutils literal notranslate"><span class="pre">rm</span></code> equivalent command to remove files and directories.</p>
+<div class="admonition-notes admonition">
+<p class="admonition-title">Notes</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code> is used to generate the source files for api doc. It is necessary to launch it
+each time a new subpackage/module is added to the code.</p></li>
+<li><p>The line before is useful to avoid having source file corresponding to previous subpackage/module
+that have been removed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generate_nb_index.py</span></code> update the list of notebooks in the generated file notebooks.md that is
+the source file of notebooks page. The command has to be launched when a new notebook is added.</p></li>
+<li><p>The last command actually build the html outputs and is required each time a doc page has a change
+(either because a source file has changed or the docstrings in the code have been modified).</p></li>
+<li><p>To update the doc faster when testing changes, launch only the last command
+without the previous <code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">[...]</span></code>.</p></li>
+</ul>
+</div>
+</section>
+</section>
+<section id="running-unit-tests">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Running unit tests</a><a class="headerlink" href="#running-unit-tests" title="Link to this heading"></a></h3>
+<p>The unit tests are gathered in <code class="docutils literal notranslate"><span class="pre">tests/</span></code> folder and run with <a class="reference external" href="https://docs.pytest.org/">pytest</a>.</p>
+<p>Then, from the “discrete-optimization” root directory, run unit tests with:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+<section id="running-notebooks-as-tests">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">Running notebooks as tests</a><a class="headerlink" href="#running-notebooks-as-tests" title="Link to this heading"></a></h3>
+<p>One can test programmatically that notebooks are not broken thanks to <a class="reference external" href="https://github.com/treebeardtech/nbmake">nbmake</a> extension for pytest.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>--nbmake<span class="w"> </span>notebooks<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+</section>
+<section id="guidelines-to-follow-when-preparing-a-contribution">
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Guidelines to follow when preparing a contribution</a><a class="headerlink" href="#guidelines-to-follow-when-preparing-a-contribution" title="Link to this heading"></a></h2>
+<section id="coding-style-and-code-linting">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Coding style and code linting</a><a class="headerlink" href="#coding-style-and-code-linting" title="Link to this heading"></a></h3>
+<p>To help maintaining the same coding style across the project, some code linters are used via <a class="reference external" href="https://pre-commit.com/">pre-commit</a>.</p>
+<p>It is used by CI to run checks at each push, but can also be used locally.</p>
+<p>Once installed, you can run it on all files with</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</pre></div>
+</div>
+<p>Beware that doing so, you are actually modifying the files.</p>
+<p>You can also use it when committing:</p>
+<ul class="simple">
+<li><p>stage your changes: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span> <span class="pre">your_files</span></code>,</p></li>
+<li><p>run pre-commit on the staged files: <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">run</span></code>,</p></li>
+<li><p>check the changes made,</p></li>
+<li><p>accept them by adding modified files: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span> <span class="pre">-u</span></code>,</p></li>
+<li><p>commit: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span></code>.</p></li>
+</ul>
+<p>This can also be done automatically at each commit if you add pre-commit to git hooks with <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">install</span></code>.
+Beware that when doing so,</p>
+<ul class="simple">
+<li><p>the changes will be refused if pre-commit actually modifies the files,</p></li>
+<li><p>you can then accept the modifications with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span> <span class="pre">-u</span></code>,</p></li>
+<li><p>you can still force a commit that violates pre-commit checks with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-n</span></code> or <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">--no-verify</span></code>.</p></li>
+</ul>
+<p>If you prefer run pre-commit manually, you can remove the hooks with <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">uninstall</span></code>.</p>
+</section>
+<section id="notebooks">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Notebooks</a><a class="headerlink" href="#notebooks" title="Link to this heading"></a></h3>
+<p>We try to give some introductory examples via notebooks available in the corresponding <code class="docutils literal notranslate"><span class="pre">notebooks/</span></code> directory.</p>
+<p>The list of these notebooks is automatically inserted in the documentation with a title and a description.
+These are actually extracted from the first cell. To enable that, each notebook should</p>
+<ul class="simple">
+<li><p>start with a markdown cell,</p></li>
+<li><p>its first line being the title starting with one number sign (”# “),</p></li>
+<li><p>the remaining lines being used as the description.</p></li>
+</ul>
+<p>For instance:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Great notebook title</span>
+
+A quick description of the main features of the notebook.
+Can be on several lines.
+
+Can include a nice thumbnail.
+![<span class="nt">Notebook_thumbnail</span>](<span class="na">https://airbus.github.io/scikit-decide/maze.png</span>)
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Examples</a><a class="headerlink" href="#examples" title="Link to this heading"></a></h3>
+<p>With regards to examples that are not notebooks, such python scripts should be stored in exmaples/ directory.
+Be aware that all the examples are imported in the test suite (to check that the imports at least are still working
+with current version of the library), so you should:</p>
+<ul class="simple">
+<li><p>wrap any actual (and memory/time-consuming) statements in a <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">__name__==&quot;__main_&quot;:</span></code> block to avoid running really the examples when importing them
+(cf this <a class="reference external" href="https://docs.python.org/3/library/__main__.html#idiomatic-usage">explanation</a>),</p></li>
+<li><p>wrap any import of additional depedencies in a <code class="docutils literal notranslate"><span class="pre">try:</span> <span class="pre">...</span> <span class="pre">except</span> <span class="pre">ImportError:</span> <span class="pre">...</span></code> block,
+and potentially raise a warning when the dependency is not installed, to avoid having the import test fail
+(cf management of cartopy dependency in “examples/gpdp/plots_wip/run_animated_plot.py”).</p></li>
+</ul>
+</section>
+<section id="adding-unit-tests">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Adding unit tests</a><a class="headerlink" href="#adding-unit-tests" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Whenever adding some code, think to add some tests to the <code class="docutils literal notranslate"><span class="pre">tests/</span></code> folder.</p></li>
+<li><p>Whenever fixing a bug, think to add a test that crashes before fixing the bug and does not afterwards.</p></li>
+</ul>
+<p>Follow <a class="reference internal" href="#running-unit-tests">above instructions</a> to run them with pytest.</p>
+</section>
+<section id="writing-the-documentation">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">Writing the documentation</a><a class="headerlink" href="#writing-the-documentation" title="Link to this heading"></a></h3>
+<section id="in-code-docstrings">
+<h4>In-code docstrings<a class="headerlink" href="#in-code-docstrings" title="Link to this heading"></a></h4>
+<p>The API is self-documented thanks to in-code docstrings and annotations. Whenever adding/fixing some code, you should add/update
+doctrings and annotations.</p>
+<p>In order to generate properly the API doc, some guidelines should be followed:</p>
+<ul>
+<li><p>Docstrings should follow <a class="reference external" href="https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings">Google style</a> docstrings
+(see this <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google">example</a>),
+parsed thanks to <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html?highlight=napoleon#module-sphinx.ext.napoleon">napoleon extension</a>.
+This can be checked thanks to <a class="reference external" href="https://docs.astral.sh/ruff/">ruff</a> tool via the option <code class="docutils literal notranslate"><span class="pre">--select=&quot;D&quot;</span></code>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>uvx<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>--select<span class="o">=</span><span class="s2">&quot;D&quot;</span><span class="w"> </span>src/discrete_optimization/path/to/your/files
+</pre></div>
+</div>
+</li>
+<li><p>As we use type annotations in the code, types hints should not be added to the docstrings in order to avoid duplicates,
+and potentially inconsistencies.</p></li>
+<li><p>You should use <a class="reference external" href="https://peps.python.org/pep-0484/">annotations</a> to explicit the types of public variables and of the inputs, outputs of public methods/functions.</p></li>
+</ul>
+</section>
+<section id="doc-pages">
+<h4>Doc pages<a class="headerlink" href="#doc-pages" title="Link to this heading"></a></h4>
+<p>Natively, sphinx is meant to parse <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html">reStructuredText files</a>.</p>
+<p>To be able to directly reuse materials already written in markdown format, we use here the <a class="reference external" href="https://myst-parser.readthedocs.io/en/latest/intro.html">myST extension</a>,
+that allows to write <a class="reference external" href="https://myst-parser.readthedocs.io/en/latest/syntax/syntax.html">makdown files</a>.</p>
+<p>In markdown files, we can still write sphinx directives and roles as explained in <a class="reference external" href="https://myst-parser.readthedocs.io/en/latest/syntax/roles-and-directives.html">myST documentation</a>.
+For instance a sphinx table of contents tree can be inserted in a markodown file with a code block like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>```{toctree}
+---
+maxdepth: 2
+caption: Contents
+---
+install
+getting_started
+notebooks
+api/modules
+contribute
+```
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="submitting-pull-requests">
+<h2><a class="toc-backref" href="#id13" role="doc-backlink">Submitting pull requests</a><a class="headerlink" href="#submitting-pull-requests" title="Link to this heading"></a></h2>
+<p>When you think you are ready to merge your modifications into the main repository, you will have to open a pull request (PR).
+We can summarize the process as follows:</p>
+<ul class="simple">
+<li><p>Fork the repository on github.</p></li>
+<li><p>Clone your fork on your computer.</p></li>
+<li><p>Make your changes and push them to your fork.</p></li>
+<li><p>Do the necessary checks (see <a class="reference internal" href="#prior-checks">below</a>).</p></li>
+<li><p>Reorganize your commits (see <a class="reference internal" href="#reorganizing-commits">below</a>).</p></li>
+<li><p>Submit your pull request (see <a class="reference external" href="https://help.github.com/articles/creating-a-pull-request-from-a-fork/">github documentation</a>).</p></li>
+<li><p>See if all CI checks passed on your PR.</p></li>
+<li><p>Wait for a review.</p></li>
+<li><p>Take the comments and required changes into account.</p></li>
+</ul>
+<p>Note that a PR needs at least one review by a core developer to be merged.</p>
+<p>You may want to add a reference to the main repository to fetch from it and (re)base your changes on it:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/airbus/discrete-optimization
+</pre></div>
+</div>
+<p>This <a class="reference external" href="https://medium.com/google-developer-experts/how-to-pull-request-d75ac81449a5">post</a> points out good practices to follow to submit great pull requests and review them efficiently.</p>
+<section id="prior-checks">
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">Prior checks</a><a class="headerlink" href="#prior-checks" title="Link to this heading"></a></h3>
+<p>Before submitting your pull request, think to</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#running-unit-tests">run the unit tests</a>,</p></li>
+<li><p><a class="reference internal" href="#building-the-docs-locally">check the documentation locally</a> if you modified it,</p></li>
+<li><p>check you respect the coding styles by <a class="reference internal" href="#coding-style-and-code-linting">running linters</a>.</p></li>
+</ul>
+<p>If you do not, you will still be able to see the status of your PR as CI will do these checks for you.</p>
+</section>
+<section id="reorganizing-commits">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">Reorganizing commits</a><a class="headerlink" href="#reorganizing-commits" title="Link to this heading"></a></h3>
+<p>On your way to implement your contribution, you will probably have lots of commits,
+some modifying other ones from the same PR, or only modifying the code style.</p>
+<p>At the end of your work, consider reorganizing them by</p>
+<ul class="simple">
+<li><p>squashing them into one or only a few logical commits,</p></li>
+<li><p>having a separate commit to reformat previous existing code if necessary,</p></li>
+<li><p>rewritting commit messages so that it explains the changes made and why, the “how” part being explained by the code itself
+(see this <a class="reference external" href="https://chris.beams.io/posts/git-commit/">post</a> about what a commit message should and should not contain),</p></li>
+<li><p>rebasing on upstream repository master branch if it diverged too much by the time you finished.</p></li>
+</ul>
+<p>You can use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rebase</span> <span class="pre">-i</span></code> to do that, as explained in <a class="reference external" href="https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History">git documentation</a>.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api/discrete_optimization.workforce.scheduling.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.workforce.scheduling.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

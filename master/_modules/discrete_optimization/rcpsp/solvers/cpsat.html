@@ -1,0 +1,989 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.solvers.cpsat &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.solvers.cpsat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.solvers.cpsat</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2024 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="c1">#  Native ortools-cpsat implementation for multimode rcpsp with resource calendar.</span>
+<span class="c1">#  Note : Model could most likely be improved with</span>
+<span class="c1">#  https://github.com/google/or-tools/blob/stable/examples/python/rcpsp_sat.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Constraint</span><span class="p">,</span>
+    <span class="n">CpModel</span><span class="p">,</span>
+    <span class="n">CpSolver</span><span class="p">,</span>
+    <span class="n">CpSolverSolutionCallback</span><span class="p">,</span>
+    <span class="n">IntervalVar</span><span class="p">,</span>
+    <span class="n">IntVar</span><span class="p">,</span>
+    <span class="n">LinearExpr</span><span class="p">,</span>
+    <span class="n">LinearExprT</span><span class="p">,</span>
+    <span class="n">ObjLinearExprT</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cpsat</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultimodeCpSatSolver</span><span class="p">,</span>
+    <span class="n">SchedulingCpSatSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">StatusSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.special_constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">PairModeConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">create_fake_tasks</span><span class="p">,</span>
+    <span class="n">get_end_bounds_from_additional_constraint</span><span class="p">,</span>
+    <span class="n">get_start_bounds_from_additional_constraint</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpSatRcpspSolver</span><span class="p">(</span>
+    <span class="n">SchedulingCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">MultimodeCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">RcpspSolver</span><span class="p">,</span>
+    <span class="n">WarmstartMixin</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CpModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CpSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StatusSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CpSatRcpspSolver.get_task_start_or_end_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.get_task_start_or_end_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;start&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;end&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">task</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.get_task_mode_is_present_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.get_task_mode_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_mode_is_present_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.init_temporal_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.init_temporal_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_temporal_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntervalVar</span><span class="p">],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+    <span class="p">]:</span>
+        <span class="n">starts_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ends_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">is_present_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">interval_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">lbs</span><span class="p">,</span> <span class="n">ubs</span> <span class="o">=</span> <span class="n">get_start_bounds_from_additional_constraint</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">activity</span><span class="o">=</span><span class="n">task</span>
+            <span class="p">)</span>
+            <span class="n">lbe</span><span class="p">,</span> <span class="n">ube</span> <span class="o">=</span> <span class="n">get_end_bounds_from_additional_constraint</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">activity</span><span class="o">=</span><span class="n">task</span>
+            <span class="p">)</span>
+            <span class="n">starts_var</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">lbs</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ubs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;start_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">ends_var</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">lbe</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ube</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;end_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">interval_per_tasks</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">:</span>
+            <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+                <span class="n">is_present_var</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;is_present_</span><span class="si">{</span><span class="n">task</span><span class="p">,</span><span class="w"> </span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">interval_var</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">NewOptionalIntervalVar</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">starts_var</span><span class="p">[</span><span class="n">task</span><span class="p">],</span>
+                    <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">],</span>
+                    <span class="n">end</span><span class="o">=</span><span class="n">ends_var</span><span class="p">[</span><span class="n">task</span><span class="p">],</span>
+                    <span class="n">is_present</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">)],</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;interval_</span><span class="si">{</span><span class="n">task</span><span class="p">,</span><span class="w"> </span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">starts_var</span><span class="p">,</span> <span class="n">ends_var</span><span class="p">,</span> <span class="n">is_present_var</span><span class="p">,</span> <span class="n">interval_var</span><span class="p">,</span> <span class="n">interval_per_tasks</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.add_classical_precedence_constraints">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.add_classical_precedence_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_classical_precedence_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span><span class="p">,</span>
+        <span class="n">starts_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">ends_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="c1"># Precedence constraints</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">successor_task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">starts_var</span><span class="p">[</span><span class="n">successor_task</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ends_var</span><span class="p">[</span><span class="n">task</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.add_one_mode_selected_per_task">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.add_one_mode_selected_per_task">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_one_mode_selected_per_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span><span class="p">,</span>
+        <span class="n">is_present_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">interval_per_tasks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+    <span class="p">):</span>
+        <span class="c1"># 1 mode selected</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">interval_per_tasks</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">AddExactlyOne</span><span class="p">([</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task</span><span class="p">]])</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.create_fake_tasks">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.create_fake_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_fake_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create tasks representing the variable resource availability.</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_calendar</span><span class="p">:</span>
+            <span class="n">fake_task</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">create_fake_tasks</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fake_task</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="n">fake_task</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.create_cumulative_constraint">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.create_cumulative_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cumulative_constraint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">interval_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntervalVar</span><span class="p">],</span>
+        <span class="n">is_present_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">fake_task</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">:</span>
+            <span class="n">task_modes_consuming</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                <span class="nb">sum</span><span class="p">([</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">])</span>
+                <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">task_modes_consuming</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">fake_task_res</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">NewFixedSizeIntervalVar</span><span class="p">(</span>
+                        <span class="n">start</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;res_&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fake_task</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">],</span>
+                    <span class="n">demands</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">],</span>
+                    <span class="n">capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddNoOverlap</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">]</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.create_mode_pair_constraint">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.create_mode_pair_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_mode_pair_constraint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span><span class="p">,</span>
+        <span class="n">interval_per_tasks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+        <span class="n">is_present_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">pair_mode_constraint</span><span class="p">:</span> <span class="n">PairModeConstraint</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">task1</span><span class="p">,</span> <span class="n">task2</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span><span class="p">:</span>
+                <span class="n">pairs_allowed</span> <span class="o">=</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="n">all_modes_task1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pairs_allowed</span><span class="p">])</span>
+                <span class="n">all_modes_task2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pairs_allowed</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task1</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_modes_task1</span><span class="p">:</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task2</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_modes_task2</span><span class="p">:</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">mode1</span><span class="p">,</span> <span class="n">mode2</span> <span class="ow">in</span> <span class="n">pairs_allowed</span><span class="p">:</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">AddAllowedAssignments</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="n">is_present_var</span><span class="p">[(</span><span class="n">task1</span><span class="p">,</span> <span class="n">mode1</span><span class="p">)],</span>
+                            <span class="n">is_present_var</span><span class="p">[(</span><span class="n">task2</span><span class="p">,</span> <span class="n">mode2</span><span class="p">)],</span>
+                        <span class="p">],</span>
+                        <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span>
+                    <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">score_task</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">task_mode_score</span> <span class="o">=</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">score_mode</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_mode_score</span><span class="p">]):</span>
+                <span class="n">min_score</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">task_mode_score</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                <span class="n">max_score</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">task_mode_score</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                <span class="n">score_task</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                    <span class="n">lb</span><span class="o">=</span><span class="n">min_score</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">max_score</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;score_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="n">score_task</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                    <span class="o">==</span> <span class="nb">sum</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="n">task_mode_score</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interval_per_tasks</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task1</span><span class="p">,</span> <span class="n">task2</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">same_score_mode</span><span class="p">:</span>
+                <span class="c1"># way 1</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">score_task</span><span class="p">[</span><span class="n">task1</span><span class="p">]</span> <span class="o">==</span> <span class="n">score_task</span><span class="p">[</span><span class="n">task2</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Init CP model.&quot;&quot;&quot;</span>
+        <span class="n">include_special_constraints</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;include_special_constraints&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">includes_special_constraint</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span>
+        <span class="p">(</span>
+            <span class="n">starts_var</span><span class="p">,</span>
+            <span class="n">ends_var</span><span class="p">,</span>
+            <span class="n">is_present_var</span><span class="p">,</span>
+            <span class="n">interval_var</span><span class="p">,</span>
+            <span class="n">interval_per_tasks</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temporal_variable</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">starts_var</span><span class="p">,</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">ends_var</span><span class="p">,</span>
+            <span class="s2">&quot;is_present&quot;</span><span class="p">:</span> <span class="n">is_present_var</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_one_mode_selected_per_task</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+            <span class="n">interval_per_tasks</span><span class="o">=</span><span class="n">interval_per_tasks</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_classical_precedence_constraints</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">starts_var</span><span class="o">=</span><span class="n">starts_var</span><span class="p">,</span> <span class="n">ends_var</span><span class="o">=</span><span class="n">ends_var</span>
+        <span class="p">)</span>
+        <span class="n">fake_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_fake_tasks</span><span class="p">()</span>
+        <span class="n">resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_list</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_cumulative_constraint</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+                <span class="n">interval_var</span><span class="o">=</span><span class="n">interval_var</span><span class="p">,</span>
+                <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+                <span class="n">fake_task</span><span class="o">=</span><span class="n">fake_task</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_special_constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_mode_pair_constraint</span><span class="p">(</span>
+                    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                    <span class="n">interval_per_tasks</span><span class="o">=</span><span class="n">interval_per_tasks</span><span class="p">,</span>
+                    <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+                    <span class="n">pair_mode_constraint</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_global_makespan_variable</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minimize_variable</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.get_global_makespan_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.get_global_makespan_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_global_makespan_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make the solver warm start from the given solution.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">clear_hints</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">],</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">],</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span><span class="p">,</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddHint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcpspSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatRcpspSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a do solution from the cpsat solver internal solution.</span>
+
+<span class="sd">        It will be called each time the cpsat solver find a new solution.</span>
+<span class="sd">        At that point, value of internal variables are accessible via `cpsolvercb.Value(VARIABLE_NAME)`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cpsolvercb: the ortools callback called when the cpsat solver finds a new solution.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the intermediate solution, at do format.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">modes_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]:</span>
+            <span class="n">schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]),</span>
+                <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]),</span>
+            <span class="p">}</span>
+        <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_present&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">]):</span>
+                <span class="n">modes_dict</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="k">return</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">rcpsp_schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
+            <span class="n">rcpsp_modes</span><span class="o">=</span><span class="p">[</span><span class="n">modes_dict</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span><span class="p">],</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpSatResourceRcpspSolver</span><span class="p">(</span><span class="n">CpSatRcpspSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Specific solver to minimize the minimum resource amount needed to accomplish the scheduling problem.</span>
+<span class="sd">    In this version we don&#39;t sum up the resource at a given time, and it suits/makes sense mostly</span>
+<span class="sd">    for disjunctive resource (machines)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.create_cumulative_constraint_and_used_resource">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.create_cumulative_constraint_and_used_resource">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cumulative_constraint_and_used_resource</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">is_used_resource</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">interval_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntervalVar</span><span class="p">],</span>
+        <span class="n">is_present_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">fake_task</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">:</span>
+            <span class="n">task_modes_consuming</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">),</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                <span class="nb">sum</span><span class="p">([</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">])</span>
+                <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">))</span>
+            <span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                <span class="n">is_used_resource</span><span class="p">[</span><span class="n">resource</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">task_modes_consuming</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">),</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">task_modes_consuming</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># when empty, the constraints don&#39;t work !</span>
+                <span class="k">return</span>
+            <span class="n">fake_task_res</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">NewFixedSizeIntervalVar</span><span class="p">(</span>
+                        <span class="n">start</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;res_&quot;</span>
+                    <span class="p">),</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fake_task</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">],</span>
+                    <span class="n">demands</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">],</span>
+                    <span class="n">capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddNoOverlap</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                <span class="n">is_used_resource</span><span class="p">[</span><span class="n">resource</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">],</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">include_special_constraints</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;include_special_constraints&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">includes_special_constraint</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">weight_on_makespan</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight_on_makespan&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">weight_on_used_resource</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight_on_used_resource&quot;</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span>
+        <span class="p">(</span>
+            <span class="n">starts_var</span><span class="p">,</span>
+            <span class="n">ends_var</span><span class="p">,</span>
+            <span class="n">is_present_var</span><span class="p">,</span>
+            <span class="n">interval_var</span><span class="p">,</span>
+            <span class="n">interval_per_tasks</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temporal_variable</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_one_mode_selected_per_task</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+            <span class="n">interval_per_tasks</span><span class="o">=</span><span class="n">interval_per_tasks</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_classical_precedence_constraints</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">starts_var</span><span class="o">=</span><span class="n">starts_var</span><span class="p">,</span> <span class="n">ends_var</span><span class="o">=</span><span class="n">ends_var</span>
+        <span class="p">)</span>
+        <span class="n">fake_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_fake_tasks</span><span class="p">()</span>
+        <span class="n">resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_list</span>
+        <span class="n">is_used_resource</span> <span class="o">=</span> <span class="p">{</span><span class="n">res</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;used_</span><span class="si">{</span><span class="n">res</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_cumulative_constraint_and_used_resource</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+                <span class="n">is_used_resource</span><span class="o">=</span><span class="n">is_used_resource</span><span class="p">,</span>
+                <span class="n">interval_var</span><span class="o">=</span><span class="n">interval_var</span><span class="p">,</span>
+                <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+                <span class="n">fake_task</span><span class="o">=</span><span class="n">fake_task</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_special_constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_mode_pair_constraint</span><span class="p">(</span>
+                    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                    <span class="n">interval_per_tasks</span><span class="o">=</span><span class="n">interval_per_tasks</span><span class="p">,</span>
+                    <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+                    <span class="n">pair_mode_constraint</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span>
+            <span class="n">weight_on_used_resource</span>
+            <span class="o">*</span> <span class="nb">sum</span><span class="p">([</span><span class="n">is_used_resource</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">is_used_resource</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">weight_on_makespan</span> <span class="o">*</span> <span class="n">starts_var</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">starts_var</span><span class="p">,</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">ends_var</span><span class="p">,</span>
+            <span class="s2">&quot;is_present&quot;</span><span class="p">:</span> <span class="n">is_present_var</span><span class="p">,</span>
+            <span class="s2">&quot;is_used_resource&quot;</span><span class="p">:</span> <span class="n">is_used_resource</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_internal_used_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;is_used_resource&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_internal_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjLinearExprT</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="o">==</span> <span class="s2">&quot;makespan&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_global_makespan_variable</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">obj</span> <span class="o">==</span> <span class="s2">&quot;used_resource&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_internal_used_resource</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown objective &#39;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.set_lexico_objective">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.set_lexico_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_lexico_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update internal model objective.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: a string representing the desired objective.</span>
+<span class="sd">                Should be one of &quot;makespan&quot; or &quot;used_resource&quot;.</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_internal_objective</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.add_lexico_constraint">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.add_lexico_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_lexico_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: a string representing the desired objective.</span>
+<span class="sd">                Should be one of `self.problem.get_objective_names()`.</span>
+<span class="sd">            value: the limiting value.</span>
+<span class="sd">                If the optimization direction is maximizing, this is a lower bound,</span>
+<span class="sd">                else this is an upper bound.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the created constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_internal_objective</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">))]</span></div>
+
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.implements_lexico_api">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.implements_lexico_api">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">implements_lexico_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspSolution</span><span class="p">:</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">retrieve_solution</span><span class="p">(</span><span class="n">cpsolvercb</span><span class="p">)</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">_internal_objectives</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">obj</span><span class="p">:</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_internal_objective</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lexico_objectives_available</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.get_lexico_objectives_available">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.get_lexico_objectives_available">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lexico_objectives_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">,</span> <span class="s2">&quot;used_resource&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpSatResourceRcpspSolver.get_lexico_objective_value">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatResourceRcpspSolver.get_lexico_objective_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lexico_objective_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">sol</span><span class="o">.</span><span class="n">_internal_objectives</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span> <span class="k">for</span> <span class="n">sol</span><span class="p">,</span> <span class="n">fit</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">list_solution_fits</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpSatCumulativeResourceRcpspSolver</span><span class="p">(</span><span class="n">CpSatRcpspSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Specific solver to minimize the minimum resource amount needed to accomplish the scheduling problem.</span>
+<span class="sd">    In this version we sum up the resource for each given time to do the resource optimisation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_overlap_for_disjunctive_resource&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.create_resource_capacity_var">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.create_resource_capacity_var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_resource_capacity_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span><span class="p">):</span>
+        <span class="n">resource_capacity_var</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">:</span>
+            <span class="n">resource_capacity_var</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;res_</span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">resource_capacity_var</span></div>
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.create_cumulative_constraint_and_resource_capa">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.create_cumulative_constraint_and_resource_capa">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cumulative_constraint_and_resource_capa</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">CpModel</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">resource_capacity_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">interval_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntervalVar</span><span class="p">],</span>
+        <span class="n">is_present_var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">IntVar</span><span class="p">],</span>
+        <span class="n">fake_task</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+        <span class="n">use_overlap_for_disjunctive_resource</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">:</span>
+            <span class="n">task_modes_consuming</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                <span class="nb">sum</span><span class="p">([</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">])</span>
+                <span class="o">&lt;=</span> <span class="n">resource_capacity_var</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">task_modes_consuming</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">task_modes_consuming</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># when empty, the constraints don&#39;t work !</span>
+                <span class="k">return</span>
+            <span class="n">fake_task_res</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">NewFixedSizeIntervalVar</span><span class="p">(</span>
+                        <span class="n">start</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;res_&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fake_task</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">capacity</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">use_overlap_for_disjunctive_resource</span>
+            <span class="p">):</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">],</span>
+                    <span class="n">demands</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">],</span>
+                    <span class="n">capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="c1"># We need to add 2 of this constraint,</span>
+                <span class="c1"># With the var capacity we ignore the fake tasks.</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">],</span>
+                    <span class="n">demands</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">],</span>
+                    <span class="n">capacity</span><span class="o">=</span><span class="n">resource_capacity_var</span><span class="p">[</span><span class="n">resource</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">:</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="n">resource_capacity_var</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">capacity</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddNoOverlap</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">interval_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fake_task_res</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                    <span class="n">resource_capacity_var</span><span class="p">[</span><span class="n">resource</span><span class="p">],</span>
+                    <span class="p">[</span><span class="n">is_present_var</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">task_modes_consuming</span><span class="p">],</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">include_special_constraints</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;include_special_constraints&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">includes_special_constraint</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">weight_on_makespan</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight_on_makespan&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">weight_on_used_resource</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight_on_used_resource&quot;</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+        <span class="n">use_overlap_for_disjunctive_resource</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;use_overlap_for_disjunctive_resource&quot;</span><span class="p">,</span> <span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span>
+        <span class="p">(</span>
+            <span class="n">starts_var</span><span class="p">,</span>
+            <span class="n">ends_var</span><span class="p">,</span>
+            <span class="n">is_present_var</span><span class="p">,</span>
+            <span class="n">interval_var</span><span class="p">,</span>
+            <span class="n">interval_per_tasks</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_temporal_variable</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="n">resource_capacity_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_resource_capacity_var</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_classical_precedence_constraints</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">starts_var</span><span class="o">=</span><span class="n">starts_var</span><span class="p">,</span> <span class="n">ends_var</span><span class="o">=</span><span class="n">ends_var</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_one_mode_selected_per_task</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+            <span class="n">interval_per_tasks</span><span class="o">=</span><span class="n">interval_per_tasks</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fake_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_fake_tasks</span><span class="p">()</span>
+        <span class="n">resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_list</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_cumulative_constraint_and_resource_capa</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+                <span class="n">resource_capacity_var</span><span class="o">=</span><span class="n">resource_capacity_var</span><span class="p">,</span>
+                <span class="n">interval_var</span><span class="o">=</span><span class="n">interval_var</span><span class="p">,</span>
+                <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+                <span class="n">fake_task</span><span class="o">=</span><span class="n">fake_task</span><span class="p">,</span>
+                <span class="n">use_overlap_for_disjunctive_resource</span><span class="o">=</span><span class="n">use_overlap_for_disjunctive_resource</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_special_constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_mode_pair_constraint</span><span class="p">(</span>
+                    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                    <span class="n">interval_per_tasks</span><span class="o">=</span><span class="n">interval_per_tasks</span><span class="p">,</span>
+                    <span class="n">is_present_var</span><span class="o">=</span><span class="n">is_present_var</span><span class="p">,</span>
+                    <span class="n">pair_mode_constraint</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span>
+            <span class="n">weight_on_used_resource</span>
+            <span class="o">*</span> <span class="nb">sum</span><span class="p">([</span><span class="n">resource_capacity_var</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">resource_capacity_var</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">weight_on_makespan</span> <span class="o">*</span> <span class="n">starts_var</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">starts_var</span><span class="p">,</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">ends_var</span><span class="p">,</span>
+            <span class="s2">&quot;is_present&quot;</span><span class="p">:</span> <span class="n">is_present_var</span><span class="p">,</span>
+            <span class="s2">&quot;resource_capacity&quot;</span><span class="p">:</span> <span class="n">resource_capacity_var</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_internal_used_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;resource_capacity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_internal_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjLinearExprT</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="o">==</span> <span class="s2">&quot;makespan&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_global_makespan_variable</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">obj</span> <span class="o">==</span> <span class="s2">&quot;used_resource&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_internal_used_resource</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown objective &#39;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.set_lexico_objective">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.set_lexico_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_lexico_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update internal model objective.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: a string representing the desired objective.</span>
+<span class="sd">                Should be one of &quot;makespan&quot; or &quot;used_resource&quot;.</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_internal_objective</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.add_lexico_constraint">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.add_lexico_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_lexico_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: a string representing the desired objective.</span>
+<span class="sd">                Should be one of &quot;makespan&quot; or &quot;used_resource&quot;.</span>
+<span class="sd">            value: the limiting value.</span>
+<span class="sd">                If the optimization direction is maximizing, this is a lower bound,</span>
+<span class="sd">                else this is an upper bound.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the created constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_internal_objective</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">))]</span></div>
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.implements_lexico_api">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.implements_lexico_api">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">implements_lexico_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspSolution</span><span class="p">:</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">retrieve_solution</span><span class="p">(</span><span class="n">cpsolvercb</span><span class="p">)</span>
+        <span class="n">sol</span><span class="o">.</span><span class="n">_internal_objectives</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">obj</span><span class="p">:</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_internal_objective</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lexico_objectives_available</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.get_lexico_objectives_available">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.get_lexico_objectives_available">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lexico_objectives_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">,</span> <span class="s2">&quot;used_resource&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpSatCumulativeResourceRcpspSolver.get_lexico_objective_value">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solvers.html#discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver.get_lexico_objective_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lexico_objective_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">sol</span><span class="o">.</span><span class="n">_internal_objectives</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span> <span class="k">for</span> <span class="n">sol</span><span class="p">,</span> <span class="n">fit</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">list_solution_fits</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

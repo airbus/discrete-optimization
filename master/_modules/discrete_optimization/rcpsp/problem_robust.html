@@ -1,0 +1,469 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.problem_robust &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.problem_robust</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.problem_robust</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2023 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">poisson</span><span class="p">,</span> <span class="n">randint</span><span class="p">,</span> <span class="n">rv_discrete</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MethodAggregating</span><span class="p">,</span>
+    <span class="n">RobustProblem</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolution</span>
+
+
+<div class="viewcode-block" id="tree">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.tree">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tree</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AggregRcpspProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.AggregRcpspProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AggregRcpspProblem</span><span class="p">(</span><span class="n">RobustProblem</span><span class="p">,</span> <span class="n">RcpspProblem</span><span class="p">):</span>
+    <span class="n">list_problem</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">list_problem</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">],</span>
+        <span class="n">method_aggregating</span><span class="p">:</span> <span class="n">MethodAggregating</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">RobustProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">list_problem</span><span class="o">=</span><span class="n">list_problem</span><span class="p">,</span> <span class="n">method_aggregating</span><span class="o">=</span><span class="n">method_aggregating</span>
+        <span class="p">)</span>
+        <span class="n">RcpspProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">resources</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">resources</span><span class="p">,</span>
+            <span class="n">non_renewable_resources</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">,</span>
+            <span class="n">mode_details</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mode_details</span><span class="p">,</span>
+            <span class="n">successors</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">successors</span><span class="p">,</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+            <span class="n">horizon_multiplier</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">horizon_multiplier</span><span class="p">,</span>
+            <span class="n">tasks_list</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+            <span class="n">source_task</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+            <span class="n">sink_task</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+            <span class="n">name_task</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name_task</span><span class="p">,</span>
+            <span class="n">calendar_details</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">calendar_details</span><span class="p">,</span>
+            <span class="n">special_constraints</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">special_constraints</span>
+            <span class="k">if</span> <span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">do_special_constraints</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">relax_the_start_at_end</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">relax_the_start_at_end</span><span class="p">,</span>
+            <span class="n">fixed_permutation</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fixed_permutation</span><span class="p">,</span>
+            <span class="n">fixed_modes</span><span class="o">=</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fixed_modes</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="AggregRcpspProblem.get_dummy_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.AggregRcpspProblem.get_dummy_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspSolution</span><span class="p">:</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">RcpspSolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">()</span>
+        <span class="n">a</span><span class="o">.</span><span class="n">_schedule_to_recompute</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">a</span></div>
+
+
+<div class="viewcode-block" id="AggregRcpspProblem.get_unique_rcpsp_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.AggregRcpspProblem.get_unique_rcpsp_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_unique_rcpsp_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspProblem</span><span class="p">:</span>
+        <span class="c1"># Create a unique rcpsp instance coherent with the aggregating method.</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_problem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">]:</span>
+                    <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">list_problem</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">res</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_problem</span><span class="p">)</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">agg</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">agg_vec</span><span class="p">(</span><span class="n">rs</span><span class="p">))</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg</span>
+        <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="AggregRcpspProblem.evaluate_from_encoding">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.AggregRcpspProblem.evaluate_from_encoding">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_from_encoding</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">int_vector</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">encoding_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="n">fits</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">list_problem</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate_from_encoding</span><span class="p">(</span><span class="n">int_vector</span><span class="p">,</span> <span class="n">encoding_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_problem</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">fits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">aggreg</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fit</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">fit</span> <span class="ow">in</span> <span class="n">fits</span><span class="p">])</span>
+            <span class="n">aggreg</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agg_vec</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aggreg</span></div>
+
+
+<div class="viewcode-block" id="AggregRcpspProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.AggregRcpspProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
+        <span class="n">fits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_problem</span><span class="p">):</span>
+            <span class="n">var</span><span class="p">:</span> <span class="n">RcpspSolution</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">lazy_copy</span><span class="p">()</span>
+            <span class="n">var</span><span class="o">.</span><span class="n">rcpsp_schedule</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">var</span><span class="o">.</span><span class="n">_schedule_to_recompute</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">var</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_problem</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_problem</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+            <span class="n">fits</span> <span class="o">+=</span> <span class="p">[</span><span class="n">fit</span><span class="p">]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">fits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">aggreg</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fit</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">fit</span> <span class="ow">in</span> <span class="n">fits</span><span class="p">])</span>
+            <span class="n">aggreg</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agg_vec</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aggreg</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MethodBaseRobustification">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.MethodBaseRobustification">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodBaseRobustification</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">AVERAGE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">WORST_CASE</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">BEST_CASE</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">PERCENTILE</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">SAMPLE</span> <span class="o">=</span> <span class="mi">4</span></div>
+
+
+
+<div class="viewcode-block" id="MethodRobustification">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.MethodRobustification">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodRobustification</span><span class="p">:</span>
+    <span class="n">method_base</span><span class="p">:</span> <span class="n">MethodBaseRobustification</span>
+    <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_base</span><span class="p">:</span> <span class="n">MethodBaseRobustification</span><span class="p">,</span> <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method_base</span> <span class="o">=</span> <span class="n">method_base</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">percentile</span> <span class="o">=</span> <span class="n">percentile</span></div>
+
+
+
+<div class="viewcode-block" id="create_poisson_laws_duration">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.create_poisson_laws_duration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_poisson_laws_duration</span><span class="p">(</span>
+    <span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">range_around_mean</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]]:</span>
+    <span class="n">poisson_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">source_task</span>
+    <span class="n">sink</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">sink_task</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">:</span>
+        <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">]:</span>
+            <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">job</span> <span class="ow">in</span> <span class="p">{</span><span class="n">source</span><span class="p">,</span> <span class="n">sink</span><span class="p">}:</span>
+                <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">min_duration</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">duration</span> <span class="o">-</span> <span class="n">range_around_mean</span><span class="p">)</span>
+                <span class="n">max_duration</span> <span class="o">=</span> <span class="n">duration</span> <span class="o">+</span> <span class="n">range_around_mean</span>
+                <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">min_duration</span><span class="p">,</span>
+                    <span class="n">duration</span><span class="p">,</span>
+                    <span class="n">max_duration</span><span class="p">,</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">poisson_dict</span></div>
+
+
+
+<div class="viewcode-block" id="create_poisson_laws_resource">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.create_poisson_laws_resource">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_poisson_laws_resource</span><span class="p">(</span>
+    <span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">range_around_mean</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]]:</span>
+    <span class="n">poisson_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">source_task</span>
+    <span class="n">sink</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">sink_task</span>
+    <span class="n">limit_resource</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources</span>
+    <span class="n">resources_non_renewable</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">non_renewable_resources</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">:</span>
+        <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">]:</span>
+            <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">resource</span> <span class="o">==</span> <span class="s2">&quot;duration&quot;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources_non_renewable</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">resource_consumption</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">job</span> <span class="ow">in</span> <span class="p">{</span><span class="n">source</span><span class="p">,</span> <span class="n">sink</span><span class="p">}:</span>
+                    <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">resource_consumption</span><span class="p">,</span>
+                        <span class="n">resource_consumption</span><span class="p">,</span>
+                        <span class="n">resource_consumption</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">min_rc</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">resource_consumption</span> <span class="o">-</span> <span class="n">range_around_mean</span><span class="p">)</span>
+                    <span class="n">max_rc</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="n">resource_consumption</span> <span class="o">+</span> <span class="n">range_around_mean</span><span class="p">,</span>
+                        <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">poisson_dict</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">min_rc</span><span class="p">,</span>
+                        <span class="n">resource_consumption</span><span class="p">,</span>
+                        <span class="n">max_rc</span><span class="p">,</span>
+                    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">poisson_dict</span></div>
+
+
+
+<div class="viewcode-block" id="create_poisson_laws">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.create_poisson_laws">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_poisson_laws</span><span class="p">(</span>
+    <span class="n">base_rcpsp_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+    <span class="n">range_around_mean_resource</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">range_around_mean_duration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">do_uncertain_resource</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">do_uncertain_duration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]]:</span>
+    <span class="n">poisson_laws</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]]</span> <span class="o">=</span> <span class="n">tree</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">do_uncertain_duration</span><span class="p">:</span>
+        <span class="n">poisson_laws_duration</span> <span class="o">=</span> <span class="n">create_poisson_laws_duration</span><span class="p">(</span>
+            <span class="n">base_rcpsp_problem</span><span class="p">,</span> <span class="n">range_around_mean</span><span class="o">=</span><span class="n">range_around_mean_duration</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">poisson_laws_duration</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">poisson_laws_duration</span><span class="p">[</span><span class="n">job</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">poisson_laws_duration</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">]:</span>
+                    <span class="n">poisson_laws</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="n">poisson_laws_duration</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">res</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">do_uncertain_resource</span><span class="p">:</span>
+        <span class="n">poisson_laws_resource</span> <span class="o">=</span> <span class="n">create_poisson_laws_resource</span><span class="p">(</span>
+            <span class="n">base_rcpsp_problem</span><span class="p">,</span> <span class="n">range_around_mean</span><span class="o">=</span><span class="n">range_around_mean_resource</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">poisson_laws_resource</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">poisson_laws_resource</span><span class="p">[</span><span class="n">job</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">poisson_laws_resource</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">]:</span>
+                    <span class="n">poisson_laws</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="n">poisson_laws_resource</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">res</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">poisson_laws</span></div>
+
+
+
+<div class="viewcode-block" id="UncertainRcpspProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.UncertainRcpspProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UncertainRcpspProblem</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_rcpsp_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+        <span class="n">poisson_laws</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]],</span>
+        <span class="n">uniform_law</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_rcpsp_problem</span> <span class="o">=</span> <span class="n">base_rcpsp_problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">poisson_laws</span> <span class="o">=</span> <span class="n">poisson_laws</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">activity</span> <span class="ow">in</span> <span class="n">poisson_laws</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">poisson_laws</span><span class="p">[</span><span class="n">activity</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">detail</span> <span class="ow">in</span> <span class="n">poisson_laws</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">]:</span>
+                    <span class="n">min_</span><span class="p">,</span> <span class="n">mean_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">poisson_laws</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">uniform_law</span><span class="p">:</span>
+                        <span class="n">rv</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">min_</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">max_</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">rv</span> <span class="o">=</span> <span class="n">poisson</span><span class="p">(</span><span class="n">mean_</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="s2">&quot;proba&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">max_</span> <span class="o">-</span> <span class="n">min_</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span>
+                    <span class="p">}</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;value&quot;</span><span class="p">])):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;proba&quot;</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">rv</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;value&quot;</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+                        <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;proba&quot;</span><span class="p">]</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;proba&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;prob-distribution&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">rv_discrete</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">activity</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">detail</span><span class="p">),</span>
+                            <span class="n">values</span><span class="o">=</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;value&quot;</span><span class="p">],</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;proba&quot;</span><span class="p">],</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+<div class="viewcode-block" id="UncertainRcpspProblem.create_rcpsp_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem_robust.UncertainRcpspProblem.create_rcpsp_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_rcpsp_problem</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">method_robustification</span><span class="p">:</span> <span class="n">MethodRobustification</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspProblem</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_rcpsp_problem</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">activity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">activity</span> <span class="ow">in</span> <span class="p">{</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_rcpsp_problem</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_rcpsp_problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+            <span class="p">}:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">detail</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">method_robustification</span><span class="o">.</span><span class="n">method_base</span>
+                        <span class="o">==</span> <span class="n">MethodBaseRobustification</span><span class="o">.</span><span class="n">AVERAGE</span>
+                    <span class="p">):</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span>
+                                <span class="s2">&quot;prob-distribution&quot;</span>
+                            <span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">method_robustification</span><span class="o">.</span><span class="n">method_base</span>
+                        <span class="o">==</span> <span class="n">MethodBaseRobustification</span><span class="o">.</span><span class="n">WORST_CASE</span>
+                    <span class="p">):</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span>
+                            <span class="n">activity</span>
+                        <span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;prob-distribution&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">support</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">method_robustification</span><span class="o">.</span><span class="n">method_base</span>
+                        <span class="o">==</span> <span class="n">MethodBaseRobustification</span><span class="o">.</span><span class="n">BEST_CASE</span>
+                    <span class="p">):</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span>
+                            <span class="n">activity</span>
+                        <span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;prob-distribution&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">support</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">method_robustification</span><span class="o">.</span><span class="n">method_base</span>
+                        <span class="o">==</span> <span class="n">MethodBaseRobustification</span><span class="o">.</span><span class="n">PERCENTILE</span>
+                    <span class="p">):</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                            <span class="nb">int</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span>
+                                    <span class="s2">&quot;prob-distribution&quot;</span>
+                                <span class="p">]</span><span class="o">.</span><span class="n">isf</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">method_robustification</span><span class="o">.</span><span class="n">percentile</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+                            <span class="p">),</span>
+                            <span class="mi">1</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">method_robustification</span><span class="o">.</span><span class="n">method_base</span>
+                        <span class="o">==</span> <span class="n">MethodBaseRobustification</span><span class="o">.</span><span class="n">SAMPLE</span>
+                    <span class="p">):</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probas</span><span class="p">[</span>
+                            <span class="n">activity</span>
+                        <span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">detail</span><span class="p">][</span><span class="s2">&quot;prob-distribution&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">model</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

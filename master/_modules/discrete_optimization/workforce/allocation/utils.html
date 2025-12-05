@@ -1,0 +1,742 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.workforce.allocation.utils &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.workforce.allocation.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.workforce.allocation.utils</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.graph_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">from_networkx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.workforce.allocation.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationAdditionalConstraint</span><span class="p">,</span>
+    <span class="n">GraphBipartite</span><span class="p">,</span>
+    <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+    <span class="n">TeamAllocationProblemMultiobj</span><span class="p">,</span>
+    <span class="n">TeamAllocationSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.express</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">px</span>
+<span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="subgraph_teams">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.subgraph_teams">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">subgraph_teams</span><span class="p">(</span>
+    <span class="n">graph_allocation</span><span class="p">:</span> <span class="n">GraphBipartite</span><span class="p">,</span>
+    <span class="n">nb_teams_keep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">subset_teams_keep</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GraphBipartite</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">subset_teams_keep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">subset_teams_keep</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nb_team</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">nb_teams_keep</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">graph_allocation</span><span class="o">.</span><span class="n">nodes_team</span><span class="p">))</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">graph_allocation</span><span class="o">.</span><span class="n">nodes_team_list</span><span class="o">.</span><span class="n">teams_name</span><span class="p">[:</span><span class="n">nb_team</span><span class="p">])</span>
+    <span class="n">nodes_activity</span> <span class="o">=</span> <span class="n">graph_allocation</span><span class="o">.</span><span class="n">nodes_activity</span>
+    <span class="n">new_list_nodes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph_allocation</span><span class="o">.</span><span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">nodes_activity</span> <span class="ow">or</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">sub</span>
+    <span class="p">]</span>
+    <span class="n">new_nodes_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">new_list_nodes</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">GraphBipartite</span><span class="p">(</span>
+        <span class="n">nodes</span><span class="o">=</span><span class="n">new_list_nodes</span><span class="p">,</span>
+        <span class="n">edges</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">x</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">graph_allocation</span><span class="o">.</span><span class="n">edges</span>
+            <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">new_nodes_names</span> <span class="ow">and</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">new_nodes_names</span>
+        <span class="p">],</span>
+        <span class="n">nodes_activity</span><span class="o">=</span><span class="n">nodes_activity</span><span class="p">,</span>
+        <span class="n">nodes_team</span><span class="o">=</span><span class="n">sub</span><span class="p">,</span>
+        <span class="n">undirected</span><span class="o">=</span><span class="n">graph_allocation</span><span class="o">.</span><span class="n">undirected</span><span class="p">,</span>
+        <span class="n">compute_predecessors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="subgraph_activities">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.subgraph_activities">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">subgraph_activities</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">subset_tasks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">graph_nx</span>
+    <span class="n">new_g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">subgraph</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">subset_tasks</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">from_networkx</span><span class="p">(</span><span class="n">new_g</span><span class="p">,</span> <span class="n">undirected</span><span class="o">=</span><span class="n">graph</span><span class="o">.</span><span class="n">undirected</span><span class="p">,</span> <span class="n">compute_predecessors</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="subgraph_bipartite_activities">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.subgraph_bipartite_activities">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">subgraph_bipartite_activities</span><span class="p">(</span>
+    <span class="n">graph_allocation</span><span class="p">:</span> <span class="n">GraphBipartite</span><span class="p">,</span> <span class="n">subset_tasks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
+    <span class="c1"># g = graph.graph_nx</span>
+    <span class="c1"># ss = subset_tasks</span>
+    <span class="c1"># new_g = nx.subgraph(g, subset_tasks.union(graph.nodes_team))</span>
+    <span class="c1"># return from_networkx(new_g, undirected=graph.undirected,</span>
+    <span class="c1">#                      compute_predecessors=False)</span>
+    <span class="n">nodes_activity</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph_allocation</span><span class="o">.</span><span class="n">nodes_activity</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">subset_tasks</span><span class="p">]</span>
+    <span class="n">nodes_team</span> <span class="o">=</span> <span class="n">graph_allocation</span><span class="o">.</span><span class="n">nodes_team</span>
+    <span class="n">new_list_nodes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">n</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph_allocation</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">nodes_activity</span> <span class="ow">or</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">nodes_team</span>
+    <span class="p">]</span>
+    <span class="n">new_nodes_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">new_list_nodes</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">GraphBipartite</span><span class="p">(</span>
+        <span class="n">nodes</span><span class="o">=</span><span class="n">new_list_nodes</span><span class="p">,</span>
+        <span class="n">edges</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">x</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">graph_allocation</span><span class="o">.</span><span class="n">edges</span>
+            <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">new_nodes_names</span> <span class="ow">and</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">new_nodes_names</span>
+        <span class="p">],</span>
+        <span class="n">nodes_activity</span><span class="o">=</span><span class="n">nodes_activity</span><span class="p">,</span>
+        <span class="n">nodes_team</span><span class="o">=</span><span class="n">nodes_team</span><span class="p">,</span>
+        <span class="n">undirected</span><span class="o">=</span><span class="n">graph_allocation</span><span class="o">.</span><span class="n">undirected</span><span class="p">,</span>
+        <span class="n">compute_predecessors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="allocation_additional_constraint_subset_tasks">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.allocation_additional_constraint_subset_tasks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">allocation_additional_constraint_subset_tasks</span><span class="p">(</span>
+    <span class="n">allocation_additional_constraint</span><span class="p">:</span> <span class="n">AllocationAdditionalConstraint</span><span class="p">,</span>
+    <span class="n">subset_tasks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">],</span>
+<span class="p">):</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;same_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">same_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;all_diff_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">all_diff_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;forced_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;forbidden_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;disjunction&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">disjunction</span><span class="p">,</span>
+        <span class="s2">&quot;nb_max_teams&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">nb_max_teams</span><span class="p">,</span>
+        <span class="s2">&quot;allowed_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_forced_allocation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">act</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span><span class="p">[</span><span class="n">act</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span>
+            <span class="k">if</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">subset_tasks</span>
+        <span class="p">}</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;forced_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_forced_allocation</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_forbidden_allocation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">act</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span><span class="p">[</span><span class="n">act</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span>
+            <span class="k">if</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">subset_tasks</span>
+        <span class="p">}</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;forbidden_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_forbidden_allocation</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">disjunction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_disjunction</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[(</span><span class="n">ac</span><span class="p">,</span> <span class="n">team</span><span class="p">)</span> <span class="k">for</span> <span class="n">ac</span><span class="p">,</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">if</span> <span class="n">ac</span> <span class="ow">in</span> <span class="n">subset_tasks</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">disjunction</span>
+        <span class="p">]</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;disjunction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_disjunction</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">all_diff_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_all_diff_allocation</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span><span class="n">ac</span> <span class="k">for</span> <span class="n">ac</span> <span class="ow">in</span> <span class="n">ad</span> <span class="k">if</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">subset_tasks</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">all_diff_allocation</span>
+        <span class="p">]</span>
+        <span class="n">new_all_diff_allocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">new_all_diff_allocation</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;all_diff_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_all_diff_allocation</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">same_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_same_allocation</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span><span class="n">ac</span> <span class="k">for</span> <span class="n">ac</span> <span class="ow">in</span> <span class="n">ad</span> <span class="k">if</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">subset_tasks</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">same_allocation</span>
+        <span class="p">]</span>
+        <span class="n">new_same_allocation</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">new_same_allocation</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;same_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_same_allocation</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_allowed_allocation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">act</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span><span class="p">[</span><span class="n">act</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span>
+            <span class="k">if</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">subset_tasks</span>
+        <span class="p">}</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;allowed_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_allowed_allocation</span>
+
+    <span class="k">return</span> <span class="n">AllocationAdditionalConstraint</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_subproblem_allocation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.create_subproblem_allocation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_subproblem_allocation</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span> <span class="n">subset_tasks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]</span>
+<span class="p">):</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">subgraph_activities</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="p">,</span> <span class="n">subset_tasks</span><span class="o">=</span><span class="n">subset_tasks</span><span class="p">)</span>
+    <span class="n">g_alloc</span> <span class="o">=</span> <span class="n">subgraph_bipartite_activities</span><span class="p">(</span>
+        <span class="n">graph_allocation</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">graph_allocation</span><span class="p">,</span> <span class="n">subset_tasks</span><span class="o">=</span><span class="n">subset_tasks</span>
+    <span class="p">)</span>
+    <span class="n">allocation_constraint</span> <span class="o">=</span> <span class="n">allocation_additional_constraint_subset_tasks</span><span class="p">(</span>
+        <span class="n">allocation_additional_constraint</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">allocation_additional_constraint</span><span class="p">,</span>
+        <span class="n">subset_tasks</span><span class="o">=</span><span class="n">subset_tasks</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">TeamAllocationProblem</span><span class="p">(</span>
+        <span class="n">graph_activity</span><span class="o">=</span><span class="n">g</span><span class="p">,</span>
+        <span class="n">graph_allocation</span><span class="o">=</span><span class="n">g_alloc</span><span class="p">,</span>
+        <span class="n">allocation_additional_constraint</span><span class="o">=</span><span class="n">allocation_constraint</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="additional_constraint_subset_teams">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.additional_constraint_subset_teams">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">additional_constraint_subset_teams</span><span class="p">(</span>
+    <span class="n">allocation_additional_constraint</span><span class="p">:</span> <span class="n">AllocationAdditionalConstraint</span><span class="p">,</span>
+    <span class="n">subset_teams_keep</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">],</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">allocation_additional_constraint</span> <span class="o">=</span> <span class="n">AllocationAdditionalConstraint</span><span class="p">()</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;same_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">same_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;all_diff_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">all_diff_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;forced_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;forbidden_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span><span class="p">,</span>
+        <span class="s2">&quot;disjunction&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">disjunction</span><span class="p">,</span>
+        <span class="s2">&quot;nb_max_teams&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">nb_max_teams</span><span class="p">,</span>
+        <span class="s2">&quot;allowed_allocation&quot;</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_forced_allocation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">act</span><span class="p">:</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span><span class="p">[</span><span class="n">act</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span>
+            <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forced_allocation</span><span class="p">[</span><span class="n">act</span><span class="p">]</span>
+            <span class="ow">in</span> <span class="n">subset_teams_keep</span>
+        <span class="p">}</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;forced_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_forced_allocation</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_forbidden_allocation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">act</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">s</span>
+                    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span><span class="p">[</span><span class="n">act</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">subset_teams_keep</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">forbidden_allocation</span>
+        <span class="p">}</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;forbidden_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_forbidden_allocation</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">disjunction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_disjunction</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[(</span><span class="n">ac</span><span class="p">,</span> <span class="n">team</span><span class="p">)</span> <span class="k">for</span> <span class="n">ac</span><span class="p">,</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">if</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">subset_teams_keep</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">disjunction</span>
+        <span class="p">]</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;disjunction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_disjunction</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">nb_max_teams</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;nb_max_teams&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s2">&quot;nb_max_teams&quot;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">subset_teams_keep</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_allowed_allocation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">act</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">t</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span><span class="p">[</span><span class="n">act</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">subset_teams_keep</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">allocation_additional_constraint</span><span class="o">.</span><span class="n">allowed_allocation</span>
+        <span class="p">}</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;allowed_allocation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_allowed_allocation</span>
+    <span class="k">return</span> <span class="n">AllocationAdditionalConstraint</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="cut_number_of_team">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.cut_number_of_team">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cut_number_of_team</span><span class="p">(</span>
+    <span class="n">team_allocation</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+    <span class="n">nb_teams_keep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">subset_teams_keep</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">subset_teams_keep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">subset_teams_keep</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nb_team</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">nb_teams_keep</span><span class="p">,</span> <span class="n">team_allocation</span><span class="o">.</span><span class="n">number_of_teams</span><span class="p">)</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">teams_name</span><span class="p">[:</span><span class="n">nb_team</span><span class="p">])</span>
+    <span class="n">new_graph_allocation</span> <span class="o">=</span> <span class="n">subgraph_teams</span><span class="p">(</span>
+        <span class="n">graph_allocation</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">graph_allocation</span><span class="p">,</span> <span class="n">subset_teams_keep</span><span class="o">=</span><span class="n">sub</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">team_allocation</span><span class="p">,</span> <span class="n">TeamAllocationProblemMultiobj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">TeamAllocationProblemMultiobj</span><span class="p">(</span>
+            <span class="n">graph_activity</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">graph_activity</span><span class="p">,</span>
+            <span class="n">graph_allocation</span><span class="o">=</span><span class="n">new_graph_allocation</span><span class="p">,</span>
+            <span class="n">allocation_additional_constraint</span><span class="o">=</span><span class="n">additional_constraint_subset_teams</span><span class="p">(</span>
+                <span class="n">team_allocation</span><span class="o">.</span><span class="n">allocation_additional_constraint</span><span class="p">,</span> <span class="n">subset_teams_keep</span><span class="o">=</span><span class="n">sub</span>
+            <span class="p">),</span>
+            <span class="n">attributes_cumul_activities</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">attributes_cumul_activities</span><span class="p">,</span>
+            <span class="n">activities_name</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">activities_name</span><span class="p">,</span>
+            <span class="n">schedule_activity</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">schedule</span><span class="p">,</span>
+            <span class="n">calendar_team</span><span class="o">=</span><span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">team_allocation</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">},</span>
+            <span class="n">objective_doc_cumul_activities</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">objective_doc_cumul_activities</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">TeamAllocationProblem</span><span class="p">(</span>
+        <span class="n">graph_activity</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">graph_activity</span><span class="p">,</span>
+        <span class="n">graph_allocation</span><span class="o">=</span><span class="n">new_graph_allocation</span><span class="p">,</span>
+        <span class="n">allocation_additional_constraint</span><span class="o">=</span><span class="n">additional_constraint_subset_teams</span><span class="p">(</span>
+            <span class="n">team_allocation</span><span class="o">.</span><span class="n">allocation_additional_constraint</span><span class="p">,</span> <span class="n">subset_teams_keep</span><span class="o">=</span><span class="n">sub</span>
+        <span class="p">),</span>
+        <span class="n">schedule_activity</span><span class="o">=</span><span class="n">team_allocation</span><span class="o">.</span><span class="n">schedule</span><span class="p">,</span>
+        <span class="n">calendar_team</span><span class="o">=</span><span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">team_allocation</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_equivalent_teams">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_equivalent_teams">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_equivalent_teams</span><span class="p">(</span>
+    <span class="n">team_allocation_problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a list of disjoint set of teams index, that can be considered as indistinguishable</span>
+<span class="sd">    from a solution point of view. Example : in the pure coloring problem all the colors/team are equivalent</span>
+<span class="sd">    In the team allocation problem, due to restricted compatible teams to task, the equivalent class are different</span>
+<span class="sd">    Adaptation from the notebook/test_models.ipynb</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">allowed_teams</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">set</span><span class="p">(</span><span class="n">indexes</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">indexes</span> <span class="ow">in</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">compute_allowed_team_index_all_task</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">equiv_teams</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">all_teams</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">index_to_teams_name</span><span class="p">)</span>
+    <span class="c1"># for each team t, compute the intersection of teams that can do the same task as t.</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">index_to_teams_name</span><span class="p">:</span>
+        <span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_teams</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">allowed_teams</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">s</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">equiv_teams</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">et</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">equiv_teams</span><span class="p">[</span><span class="n">et</span><span class="p">]:</span>
+                <span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">et</span><span class="p">)</span>
+    <span class="n">all_symm_teams</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">equiv_teams</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">equiv_teams</span><span class="p">])</span>
+    <span class="n">symm_groups</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">group</span><span class="p">))</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">all_symm_teams</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">symm_groups</span></div>
+
+
+
+<div class="viewcode-block" id="compute_overlapping_activities_on_start_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_overlapping_activities_on_start_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_overlapping_activities_on_start_time</span><span class="p">(</span>
+    <span class="n">team_allocation_problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span> <span class="n">activity</span><span class="p">:</span> <span class="n">Hashable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Look at overlapping task at starting time of task</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">n</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span>
+        <span class="k">if</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">start</span>
+        <span class="ow">and</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">start</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="compute_overlapping_activities_on_end_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_overlapping_activities_on_end_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_overlapping_activities_on_end_time</span><span class="p">(</span>
+    <span class="n">team_allocation_problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span> <span class="n">activity</span><span class="p">:</span> <span class="n">Hashable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Look at overlapping task at starting time of task</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">n</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span>
+        <span class="k">if</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+        <span class="o">&lt;</span> <span class="n">end</span>
+        <span class="o">&lt;=</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="compute_active_activities_on_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_active_activities_on_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_active_activities_on_time</span><span class="p">(</span>
+    <span class="n">team_allocation_problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+    <span class="n">time</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">],</span>
+    <span class="n">side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="s2">&quot;left&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">n</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span>
+            <span class="k">if</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+            <span class="o">&lt;</span> <span class="n">time</span>
+            <span class="o">&lt;=</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+    <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="s2">&quot;right&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">n</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span>
+            <span class="k">if</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+            <span class="o">&lt;=</span> <span class="n">time</span>
+            <span class="o">&lt;</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+        <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="compute_all_overlapping">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_all_overlapping">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_all_overlapping</span><span class="p">(</span>
+    <span class="n">team_allocation_problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">]:</span>
+    <span class="n">set_overlaps</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">team_allocation_problem</span><span class="o">.</span><span class="n">activities_name</span><span class="p">:</span>
+        <span class="n">set_overlaps</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="nb">frozenset</span><span class="p">(</span>
+                <span class="n">compute_overlapping_activities_on_start_time</span><span class="p">(</span>
+                    <span class="n">team_allocation_problem</span><span class="p">,</span> <span class="n">task</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">set_overlaps</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="nb">frozenset</span><span class="p">(</span>
+                <span class="n">compute_overlapping_activities_on_end_time</span><span class="p">(</span>
+                    <span class="n">team_allocation_problem</span><span class="p">,</span> <span class="n">task</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">set_overlaps</span></div>
+
+
+
+<div class="viewcode-block" id="compute_changes_between_solution_alloc">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.compute_changes_between_solution_alloc">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_changes_between_solution_alloc</span><span class="p">(</span>
+    <span class="n">solution_a</span><span class="p">:</span> <span class="n">TeamAllocationSolution</span><span class="p">,</span>
+    <span class="n">solution_b</span><span class="p">:</span> <span class="n">TeamAllocationSolution</span><span class="p">,</span>
+    <span class="n">problem_a</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">problem_b</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">problem_a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">problem_a</span> <span class="o">=</span> <span class="n">solution_a</span><span class="o">.</span><span class="n">problem</span>
+    <span class="k">if</span> <span class="n">problem_b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">problem_b</span> <span class="o">=</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">problem</span>
+
+    <span class="n">common_activities</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">problem_a</span><span class="o">.</span><span class="n">activities_name</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+        <span class="n">problem_b</span><span class="o">.</span><span class="n">activities_name</span>
+    <span class="p">)</span>
+    <span class="n">alloc_a</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">solution_a</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">problem_a</span><span class="o">.</span><span class="n">index_activities_name</span><span class="p">[</span><span class="n">a</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">common_activities</span>
+    <span class="p">}</span>
+    <span class="n">alloc_b</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">solution_b</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">problem_b</span><span class="o">.</span><span class="n">index_activities_name</span><span class="p">[</span><span class="n">a</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">common_activities</span>
+    <span class="p">}</span>
+    <span class="n">changes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">common_activities</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">problem_b</span><span class="o">.</span><span class="n">index_to_teams_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">alloc_b</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="kc">None</span>
+        <span class="p">)</span> <span class="o">!=</span> <span class="n">problem_a</span><span class="o">.</span><span class="n">index_to_teams_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">alloc_a</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">a</span><span class="p">,</span>
+                    <span class="n">alloc_a</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+                    <span class="n">alloc_b</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+                    <span class="n">problem_a</span><span class="o">.</span><span class="n">teams_name</span><span class="p">[</span><span class="n">alloc_a</span><span class="p">[</span><span class="n">a</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="n">alloc_a</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">problem_b</span><span class="o">.</span><span class="n">teams_name</span><span class="p">[</span><span class="n">alloc_b</span><span class="p">[</span><span class="n">a</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="n">alloc_b</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">problem_a</span><span class="o">.</span><span class="n">index_activities_name</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+                    <span class="n">problem_b</span><span class="o">.</span><span class="n">index_activities_name</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="c1"># nb_changes = len(changes)</span>
+    <span class="k">return</span> <span class="n">changes</span></div>
+
+
+
+<div class="viewcode-block" id="plot_allocation_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.plot_allocation_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_allocation_solution</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">TeamAllocationProblem</span><span class="p">,</span>
+    <span class="n">sol</span><span class="p">:</span> <span class="n">TeamAllocationSolution</span><span class="p">,</span>
+    <span class="n">index_team_to_other_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_color_map</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">category</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">display</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">plot_breaks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">color_break</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ignore_unallocated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">name_unallocated</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Unset&quot;</span><span class="p">,</span>
+    <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ref_date</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">showlegend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">ref_date</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ref_date</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="mi">2025</span><span class="p">,</span> <span class="n">month</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">day</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index_team_to_other_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">index_team_to_other_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_teams_name</span><span class="p">}</span>
+    <span class="n">schedule_per_team</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i_task</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">allocation</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">sol</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">team</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_teams_name</span><span class="p">[</span><span class="n">sol</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">i_task</span><span class="p">]]</span>
+            <span class="n">activity</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_activities_name</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">team</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">schedule_per_team</span><span class="p">:</span>
+                <span class="n">schedule_per_team</span><span class="p">[</span><span class="n">team</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">df</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;team&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Team </span><span class="si">{</span><span class="n">index_team_to_other_index</span><span class="p">[</span><span class="n">sol</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">i_task</span><span class="p">]]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;team_name&quot;</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">teams_name</span><span class="p">[</span><span class="n">sol</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">i_task</span><span class="p">]],</span>
+                    <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="n">activity</span><span class="p">,</span>
+                    <span class="s2">&quot;activity_index&quot;</span><span class="p">:</span> <span class="n">i_task</span><span class="p">,</span>
+                    <span class="s2">&quot;index_team&quot;</span><span class="p">:</span> <span class="n">index_team_to_other_index</span><span class="p">[</span><span class="n">sol</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">i_task</span><span class="p">]],</span>
+                    <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+                    <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">ref_date</span>
+                    <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span>
+                        <span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">],</span>
+                        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">ref_date</span>
+                    <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span>
+                        <span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">],</span>
+                        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ignore_unallocated</span><span class="p">:</span>
+                <span class="n">activity</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_to_activities_name</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span>
+                <span class="n">df</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;team&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Team </span><span class="si">{</span><span class="n">name_unallocated</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;team_name&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Team </span><span class="si">{</span><span class="n">name_unallocated</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="n">activity</span><span class="p">,</span>
+                        <span class="s2">&quot;activity_index&quot;</span><span class="p">:</span> <span class="n">i_task</span><span class="p">,</span>
+                        <span class="s2">&quot;index_team&quot;</span><span class="p">:</span> <span class="n">name_unallocated</span><span class="p">,</span>
+                        <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+                        <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">ref_date</span>
+                        <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span>
+                            <span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">],</span>
+                            <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">ref_date</span>
+                        <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span>
+                            <span class="n">problem</span><span class="o">.</span><span class="n">graph_activity</span><span class="o">.</span><span class="n">nodes_infos_dict</span><span class="p">[</span><span class="n">activity</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">],</span>
+                            <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">]</span>
+    <span class="k">if</span> <span class="n">plot_breaks</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">index_team_to_other_index</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">index_teams_name</span><span class="p">[</span><span class="n">team</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">i_slot</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">team</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">df</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;team&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Break&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;team_name&quot;</span><span class="p">:</span> <span class="n">team</span><span class="p">,</span>
+                        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;break_</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i_slot</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;activity_index&quot;</span><span class="p">:</span> <span class="s2">&quot;nan&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;index_team&quot;</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span>
+                        <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+                        <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">ref_date</span>
+                        <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span>
+                            <span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">team</span><span class="p">][</span><span class="n">i_slot</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">ref_date</span>
+                        <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span>
+                            <span class="n">problem</span><span class="o">.</span><span class="n">calendar_team</span><span class="p">[</span><span class="n">team</span><span class="p">][</span><span class="n">i_slot</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">]</span>
+    <span class="n">hover_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;team&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;activity_index&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;index_team&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">use_color_map</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">timeline</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span>
+            <span class="n">x_start</span><span class="o">=</span><span class="s2">&quot;start&quot;</span><span class="p">,</span>
+            <span class="n">x_end</span><span class="o">=</span><span class="s2">&quot;end&quot;</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="s2">&quot;index_team&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;team&quot;</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+            <span class="n">hover_data</span><span class="o">=</span><span class="n">hover_data</span><span class="p">,</span>
+            <span class="c1"># category_orders={&quot;index_team&quot;: df[&quot;index_team&quot;]},</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">color_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="s2">&quot;rgba(0, 128, 0, 0.6)&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;team&quot;</span><span class="p">]}</span>
+        <span class="n">color_mapping</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Team </span><span class="si">{</span><span class="n">name_unallocated</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;rgba(255, 0, 0, 0.1)&quot;</span>
+        <span class="n">color_mapping</span><span class="p">[</span><span class="s2">&quot;Break&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;rgba(0, 0, 0, 1)&quot;</span>
+        <span class="k">if</span> <span class="n">color_break</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">color_mapping</span><span class="p">[</span><span class="s2">&quot;Break&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">color_break</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">timeline</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span>
+            <span class="n">x_start</span><span class="o">=</span><span class="s2">&quot;start&quot;</span><span class="p">,</span>
+            <span class="n">x_end</span><span class="o">=</span><span class="s2">&quot;end&quot;</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="s2">&quot;index_team&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;team&quot;</span><span class="p">,</span>
+            <span class="n">color_discrete_map</span><span class="o">=</span><span class="n">color_mapping</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+            <span class="n">hover_data</span><span class="o">=</span><span class="n">hover_data</span><span class="p">,</span>
+            <span class="c1"># category_orders={&quot;index_team&quot;: df[&quot;index_team&quot;]},</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">modify_graph</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+    <span class="c1"># Update the layout to reorder the legend entries alphabetically</span>
+    <span class="k">if</span> <span class="n">category</span><span class="p">:</span>
+        <span class="c1"># df = pd.DataFrame(df)</span>
+        <span class="n">cat</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;index_team&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">int</span><span class="p">)])</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="n">name_unallocated</span>
+        <span class="p">]</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>  <span class="c1"># type=&quot;category&quot;,</span>
+            <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;category&quot;</span><span class="p">,</span>
+            <span class="n">categoryorder</span><span class="o">=</span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+            <span class="n">categoryarray</span><span class="o">=</span><span class="n">cat</span><span class="p">,</span>
+            <span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Team&quot;</span><span class="p">,</span>
+            <span class="n">showgrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_legends</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">showlegend</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="modify_graph">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.workforce.allocation.html#discrete_optimization.workforce.allocation.utils.modify_graph">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">modify_graph</span><span class="p">(</span><span class="n">fig</span><span class="p">):</span>
+    <span class="c1"># vertical line in graph that follows cursor</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span>
+        <span class="n">showgrid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">showspikes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">spikemode</span><span class="o">=</span><span class="s2">&quot;across&quot;</span><span class="p">,</span>
+        <span class="n">spikesnap</span><span class="o">=</span><span class="s2">&quot;cursor&quot;</span><span class="p">,</span>
+        <span class="n">spikecolor</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
+        <span class="n">spikedash</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">,</span>
+        <span class="n">spikethickness</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">showline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># make borders around boxes # rgb(0, 48, 107)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">marker_line_color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">marker_line_width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># rename y axes title</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Team&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

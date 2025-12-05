@@ -1,0 +1,615 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="c1"># Binding to use the mzn model provided by</span>
+<span class="c1"># https://github.com/youngkd/MSPSP-InstLib</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">minizinc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">Solver</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.graph_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_graph_rcpsp_object</span><span class="p">,</span>
+    <span class="n">build_unrelated_task</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSolverName</span><span class="p">,</span>
+    <span class="n">MinizincCpSolver</span><span class="p">,</span>
+    <span class="n">SignEnum</span><span class="p">,</span>
+    <span class="n">find_right_minizinc_solver_name</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">MultiskillRcpspSolution</span><span class="p">,</span>
+    <span class="n">SkillDetail</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">this_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+<span class="n">files_mzn</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;mspsp&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">this_path</span><span class="p">,</span> <span class="s2">&quot;../minizinc/mspsp.mzn&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;mspsp_compatible&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">this_path</span><span class="p">,</span> <span class="s2">&quot;../minizinc/mspsp_compatible_all_solvers.mzn&quot;</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_minzinc_result</span><span class="p">(</span><span class="n">_output_item</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;One solution </span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;objective&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;nb_preemption_subtasks&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">((</span><span class="s2">&quot;nb_preemption_subtasks&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;nb_preemption_subtasks&quot;</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="s2">&quot;nb_small_tasks&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">((</span><span class="s2">&quot;nb_small_tasks&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;nb_small_tasks&quot;</span><span class="p">]))</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">if</span> <span class="s2">&quot;penalty&quot;</span> <span class="ow">in</span> <span class="n">k</span><span class="p">]</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; : &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">_output_item</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="create_usefull_res_data">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.create_usefull_res_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_usefull_res_data</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span><span class="p">):</span>
+    <span class="c1"># USEFUL_RES  : array[ACT] of set of RESOURCE</span>
+    <span class="c1"># POTENTIAL_ACT : array[RESOURCE] of set of ACT</span>
+    <span class="n">employees_position</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">nb_employees</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">non_zero_skills</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span>
+                <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">get_non_zero_skills</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">nb_employees</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">useful_res</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)]</span>
+    <span class="n">potential_act</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">nb_employees</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">task_number</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">):</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">task_number</span><span class="p">]</span>
+        <span class="n">skills_required</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">sk</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">sk</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">skills_set</span>
+            <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sk</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="n">possibly_interested_employee</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">emp</span>
+            <span class="k">for</span> <span class="n">emp</span> <span class="ow">in</span> <span class="n">non_zero_skills</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">sk</span> <span class="ow">in</span> <span class="n">non_zero_skills</span><span class="p">[</span><span class="n">emp</span><span class="p">]</span> <span class="k">for</span> <span class="n">sk</span> <span class="ow">in</span> <span class="n">skills_required</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">useful_res</span><span class="p">[</span><span class="n">task_number</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">([</span><span class="n">employees_position</span><span class="p">[</span><span class="n">emp</span><span class="p">]</span> <span class="k">for</span> <span class="n">emp</span> <span class="ow">in</span> <span class="n">possibly_interested_employee</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">emp</span> <span class="ow">in</span> <span class="n">possibly_interested_employee</span><span class="p">:</span>
+            <span class="n">potential_act</span><span class="p">[</span><span class="n">employees_position</span><span class="p">[</span><span class="n">emp</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task_number</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">useful_res</span><span class="p">,</span> <span class="n">potential_act</span></div>
+
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpMspspMznMultiskillRcpspSolver</span><span class="p">(</span><span class="n">MinizincCpSolver</span><span class="p">):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+        <span class="n">cp_solver_name</span><span class="p">:</span> <span class="n">CpSolverName</span> <span class="o">=</span> <span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">ParamsObjectiveFunction</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">silent_solve_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">silent_solve_error</span> <span class="o">=</span> <span class="n">silent_solve_error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_solver_name</span> <span class="o">=</span> <span class="n">cp_solver_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_decision_variable</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mrun&quot;</span><span class="p">,</span>
+        <span class="p">]</span>  <span class="c1"># For now, I&#39;ve put the var names of the CP model (not the rcpsp_problem)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">one_ressource_per_task</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;one_ressource_per_task&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources_index</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">model_type</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model_type&quot;</span><span class="p">,</span> <span class="s2">&quot;mspsp&quot;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">files_mzn</span><span class="p">[</span><span class="n">model_type</span><span class="p">])</span>
+
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">find_right_minizinc_solver_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_solver_name</span><span class="p">))</span>
+        <span class="n">dzn_file</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dzn_file&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dzn_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_file</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dzn_file&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dict_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_from_model</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dict_data</span><span class="p">:</span>
+                <span class="n">instance</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="n">add_objective_makespan</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;add_objective_makespan&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;add_objective_makespan&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">add_objective_makespan</span>
+        <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;ignore_sec_objective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ignore_sec_objective&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">resources_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources_index</span> <span class="o">=</span> <span class="n">resources_list</span>
+        <span class="n">sorted_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="n">all_modes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">act</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">act</span><span class="p">][</span><span class="n">mode</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">sorted_tasks</span>
+            <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">act</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;task&quot;</span><span class="p">:</span> <span class="n">all_modes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;original_mode_index&quot;</span><span class="p">:</span> <span class="n">all_modes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_modes</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">modes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sorted_tasks</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span><span class="p">:</span>
+            <span class="n">modes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_task</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;task&quot;</span><span class="p">]]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode_dict_task_mode_to_index_minizinc</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span><span class="p">:</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="s2">&quot;task&quot;</span><span class="p">]</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="s2">&quot;original_mode_index&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mode_dict_task_mode_to_index_minizinc</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">)]</span> <span class="o">=</span> <span class="n">ind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">employees_position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_employees_in_minizinc</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">task</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">return_index_task</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.init_from_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.init_from_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">dict_data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">list_skills</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">skills_set</span><span class="p">))</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;mint&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">10</span>  <span class="c1"># here put a better number (from critical path method for example)</span>
+        <span class="p">)</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;nActs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;dur&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">]</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;nSkills&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">skills_set</span><span class="p">)</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;sreq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sk</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">sk</span> <span class="ow">in</span> <span class="n">list_skills</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">]</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;nResources&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_employees</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;mastery&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+                <span class="o">.</span><span class="n">dict_skill</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">SkillDetail</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">skill_value</span>
+                <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">list_skills</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_employees</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;nPrecs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">n</span><span class="p">])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">task</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">return_index_task</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">}</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">succ</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">pred</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+            <span class="n">succ</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">successor</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">successor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;pred&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pred</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;succ&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">succ</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph_rcpsp_object</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">unrelated</span> <span class="o">=</span> <span class="n">build_unrelated_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="p">)</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;nUnrels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unrelated</span><span class="p">)</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;unpred&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">unrelated</span><span class="p">]</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;unsucc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">unrelated</span><span class="p">]</span>
+        <span class="n">useful_res</span><span class="p">,</span> <span class="n">potential_act</span> <span class="o">=</span> <span class="n">create_usefull_res_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;USEFUL_RES&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">useful_res</span>
+        <span class="n">dict_data</span><span class="p">[</span><span class="s2">&quot;POTENTIAL_ACT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">potential_act</span>
+        <span class="k">return</span> <span class="n">dict_data</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_task_to_mode">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_task_to_mode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_task_to_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_start_time_string">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_start_time_string">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_start_time_string</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span> <span class="o">=</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">&quot;constraint start[&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sign</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_end_time_string">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_end_time_string">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_end_time_string</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span> <span class="o">=</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">&quot;constraint start[&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s2">&quot;]+dur[&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sign</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_objective_equal_makespan">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_objective_equal_makespan">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_objective_equal_makespan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_sink</span><span class="p">):</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">task_sink</span><span class="p">]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;constraint start[&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]==objective;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_objective_makespan">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_objective_makespan">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_objective_makespan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraint_objective_equal_makespan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_used_employee">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_used_employee">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_used_employee</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">employee</span><span class="p">,</span> <span class="n">indicator</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">id_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="n">id_employee</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_employees_in_minizinc</span><span class="p">[</span><span class="n">employee</span><span class="p">]</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span> <span class="k">if</span> <span class="n">indicator</span> <span class="k">else</span> <span class="s2">&quot;false&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">&quot;constraint assign[&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">id_task</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;,&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">id_employee</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;]==&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_objective_max_time_set_of_jobs">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_objective_max_time_set_of_jobs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_objective_max_time_set_of_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_of_jobs</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">set_of_jobs</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="s2">&quot;constraint start[&quot;</span>
+                <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                <span class="o">+</span> <span class="s2">&quot;]+dur[&quot;</span>
+                <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                <span class="o">+</span> <span class="s2">&quot;]&lt;=objective;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_sum_of_ending_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_sum_of_ending_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_sum_of_ending_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_subtasks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]):</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">set_subtasks</span><span class="p">]</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span> <span class="k">else</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">set_subtasks</span><span class="p">]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;int: nb_indexes=&quot;&quot;&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">))</span>
+            <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">               array[1..nb_indexes] of int: weights = &quot;&quot;&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">               array[1..nb_indexes] of ACT: index_tasks=&quot;&quot;&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">indexes</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">               constraint objective&gt;=sum(j in 1..nb_indexes)(weights[j]*(start[index_tasks[j]]+dur[index_tasks[j]]));</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.constraint_sum_of_starting_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.constraint_sum_of_starting_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constraint_sum_of_starting_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_subtasks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]):</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_in_minizinc</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">set_subtasks</span><span class="p">]</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">sink_task</span> <span class="k">else</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">set_subtasks</span><span class="p">]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;int: nb_indexes=&quot;&quot;&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">))</span>
+            <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">               array[1..nb_indexes] of int: weights = &quot;&quot;&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">               array[1..nb_indexes] of ACT: index_tasks=&quot;&quot;&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">indexes</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;&quot;&quot;;</span><span class="se">\n</span>
+<span class="s2">               constraint objective&gt;=sum(j in 1..nb_indexes)(weights[j]*start[index_tasks[j]]);</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpMspspMznMultiskillRcpspSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.CpMspspMznMultiskillRcpspSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">_output_item</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiskillRcpspSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a d-o solution from the variables computed by minizinc.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor</span>
+<span class="sd">            **kwargs: keyword arguments passed by minzinc to the solution contructor</span>
+<span class="sd">                containing the objective value (key &quot;objective&quot;),</span>
+<span class="sd">                and the computed variables as defined in minizinc model.</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_log_minzinc_result</span><span class="p">(</span><span class="n">_output_item</span><span class="o">=</span><span class="n">_output_item</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># array[ACT,RESOURCE] of var bool: assign; % assignment of resources to activities</span>
+        <span class="c1"># array[ACT,RESOURCE,SKILL] of var bool: contrib; % skill contribution assignment</span>
+        <span class="n">start_times</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+        <span class="n">mrun</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)</span>
+        <span class="n">unit_used</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;assign&quot;</span><span class="p">]</span>
+        <span class="n">skills_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">skills_set</span><span class="p">))</span>
+        <span class="n">usage</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">modes_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mrun</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">mrun</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">modes_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="s2">&quot;task&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeindex_map</span><span class="p">[</span>
+                    <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">][</span><span class="s2">&quot;original_mode_index&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unit_used</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unit_used</span><span class="p">)):</span>
+                <span class="n">task_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">unit_used</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">w</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;contrib&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                        <span class="n">intersection</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">skills_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;contrib&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">w</span><span class="p">]))</span>
+                            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;contrib&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">w</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+                        <span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">mode</span> <span class="o">=</span> <span class="n">modes_dict</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span>
+                        <span class="n">skills_needed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                            <span class="p">[</span>
+                                <span class="n">s</span>
+                                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">skills_set</span>
+                                <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task_id</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span>
+                                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task_id</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                            <span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="n">skills_worker</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                            <span class="p">[</span>
+                                <span class="n">s</span>
+                                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">employees_position</span><span class="p">[</span><span class="n">w</span><span class="p">]</span>
+                                <span class="p">]</span><span class="o">.</span><span class="n">dict_skill</span>
+                                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">employees_position</span><span class="p">[</span><span class="n">w</span><span class="p">]]</span>
+                                <span class="o">.</span><span class="n">dict_skill</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+                                <span class="o">.</span><span class="n">skill_value</span>
+                                <span class="o">&gt;</span> <span class="mi">0</span>
+                            <span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="n">intersection</span> <span class="o">=</span> <span class="n">skills_needed</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">skills_worker</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">intersection</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">task_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">usage</span><span class="p">:</span>
+                            <span class="n">usage</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                        <span class="n">usage</span><span class="p">[</span><span class="n">task_id</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">employees_position</span><span class="p">[</span><span class="n">w</span><span class="p">]]</span> <span class="o">=</span> <span class="n">intersection</span>
+        <span class="n">rcpsp_schedule</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">start_times</span><span class="p">)):</span>
+            <span class="n">task_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">start_times</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">start_times</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task_id</span><span class="p">][</span><span class="n">modes_dict</span><span class="p">[</span><span class="n">task_id</span><span class="p">]][</span><span class="s2">&quot;duration&quot;</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">MultiskillRcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">modes</span><span class="o">=</span><span class="n">modes_dict</span><span class="p">,</span>
+            <span class="n">schedule</span><span class="o">=</span><span class="n">rcpsp_schedule</span><span class="p">,</span>
+            <span class="n">employee_usage</span><span class="o">=</span><span class="n">usage</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="chuffed_specific_code">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib.chuffed_specific_code">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">chuffed_specific_code</span><span class="p">():</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;include &quot;chuffed.mzn&quot;;</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;% Priority Searches</span><span class="se">\n</span>
+<span class="s2">          ann: priority_search;</span>
+
+<span class="s2">          ann: priority_input_order =</span>
+<span class="s2">            priority_search(start,</span>
+<span class="s2">                            [seq_search([</span>
+<span class="s2">                                int_search([start[a]], input_order, indomain_min, complete),</span>
+<span class="s2">                                bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],</span>
+<span class="s2">                                            input_order, indomain_max, complete)])</span>
+<span class="s2">                             | a in ACT ],</span>
+<span class="s2">                             input_order, complete);</span><span class="se">\n</span>
+<span class="s2">          ann: priority_smallest =</span>
+<span class="s2">            priority_search(start,</span>
+<span class="s2">                              [seq_search([</span>
+<span class="s2">                                  int_search([start[a]], input_order, indomain_min, complete),</span>
+<span class="s2">                                  bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],</span>
+<span class="s2">                                              input_order, indomain_max, complete)])</span>
+<span class="s2">                               | a in ACT ],</span>
+<span class="s2">                               smallest, complete);</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;ann: priority_smallest_load =</span>
+<span class="s2">            priority_search(start,</span>
+<span class="s2">                [</span>
+<span class="s2">                    seq_search([</span>
+<span class="s2">                        int_search([start[a]], input_order, indomain_min, complete),</span>
+<span class="s2">                        priority_search(res_load,</span>
+<span class="s2">                            [</span>
+<span class="s2">                                seq_search([</span>
+<span class="s2">                                    bool_search([assign[a,r]], input_order, indomain_max, complete),</span>
+<span class="s2">                                    bool_search([contrib[a,r,s] | s in SKILL],  input_order, indomain_max, complete)</span>
+<span class="s2">                                ])</span>
+<span class="s2">                            | r in RESOURCE],</span>
+<span class="s2">                            smallest, complete)</span>
+<span class="s2">                    ])</span>
+<span class="s2">                | a in ACT ],</span>
+<span class="s2">                smallest, complete);</span><span class="se">\n</span>
+
+<span class="s2">        ann: priority_smallest_largest =</span>
+<span class="s2">          priority_search(start,</span>
+<span class="s2">                          [seq_search([</span>
+<span class="s2">                              int_search([start[a]], input_order, indomain_min, complete),</span>
+<span class="s2">                              bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],</span>
+<span class="s2">                                          input_order, indomain_max, complete)])</span>
+<span class="s2">                           | a in ACT ],</span>
+<span class="s2">                           smallest_largest, complete);</span><span class="se">\n</span>
+
+<span class="s2">        ann: priority_first_fail =</span>
+<span class="s2">          priority_search(start,</span>
+<span class="s2">                          [seq_search([</span>
+<span class="s2">                              int_search([start[a]], input_order, indomain_min, complete),</span>
+<span class="s2">                              bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],</span>
+<span class="s2">                                          input_order, indomain_max, complete)])</span>
+<span class="s2">                           | a in ACT ],</span>
+<span class="s2">                           first_fail, complete);</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

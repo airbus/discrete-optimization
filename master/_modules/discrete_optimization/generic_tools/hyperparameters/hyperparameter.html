@@ -1,0 +1,1328 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.hyperparameters.hyperparameter &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.hyperparameters.hyperparameter</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.hyperparameters.hyperparameter</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2024 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>  <span class="c1"># see annotations as str</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Container</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># only for type checkers</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparametrizable</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">Hyperparametrizable</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">optuna</span>  <span class="c1"># not necessary to import this module</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Hyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Hyperparameter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter base class used to specify d-o solver hyperparameters.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the hyperparameter.</span>
+
+<span class="sd">    Should correspond to how the hyperparameter is specified in the solver</span>
+<span class="sd">    `__init__()`, `init_model()`, or `solve()` keywords arguments.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default value for the hyperparameter.</span>
+
+<span class="sd">    None means &quot;no default value&quot;.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Other hyperparameter on which this ones depends on.</span>
+
+<span class="sd">    If None: this hyperparameter is always needed.</span>
+<span class="sd">    Else:</span>
+<span class="sd">        depends_on = hyperparameter2.name, possible_values</span>
+<span class="sd">        this hyperparameter is needed if hyperparameter2 value is in possible_values.</span>
+
+<span class="sd">    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - How to define possible_values?</span>
+<span class="sd">          - Usually a set or a list can be used. But sometime we need something smarter.</span>
+<span class="sd">          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)</span>
+<span class="sd">        - For now, only simple dependency on a single hyperparameter, and a &quot;set&quot; of values is possible.</span>
+<span class="sd">          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Corresponding key in generated kwargs.</span>
+
+<span class="sd">    Used for kwargs generated by</span>
+<span class="sd">    - `solver.suggest_hyperparameters_with_optuna()`</span>
+<span class="sd">    - `solver.get_default_hyperparameters()`</span>
+<span class="sd">    - `solver.complete_with_default_hyperparameters()`</span>
+
+<span class="sd">    Default to hyperparemeter name. Can be used to have several hyperparameter with different limits/types</span>
+<span class="sd">    depending on other hyperparameters value but supposed to share the same name in kwargs for solver initialization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_in_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_in_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<div class="viewcode-block" id="Hyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_xxx()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="Hyperparameter.copy_and_update_attributes">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.copy_and_update_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy_and_update_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hyperparameter</span><span class="p">:</span>
+        <span class="n">hyperparameter_cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="n">init_args_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">init_args_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">h_new</span> <span class="o">=</span> <span class="n">hyperparameter_cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">h_new</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="IntegerHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IntegerHyperparameter</span><span class="p">(</span><span class="n">Hyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integer hyperparameter.&quot;&quot;&quot;</span>
+
+    <span class="n">low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lower bound.</span>
+
+<span class="sd">    If None, the hyperparameter value has no lower bound.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upper bound.</span>
+
+<span class="sd">    If None, the hyperparameter value has no upper bound.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;step to discretize.&quot;&quot;&quot;</span>
+
+    <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether to sample the value in a logarithmic scale.&quot;&quot;&quot;</span>
+
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default value for the hyperparameter.</span>
+
+<span class="sd">    None means &quot;no default value&quot;.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Other hyperparameter on which this ones depends on.</span>
+
+<span class="sd">    If None: this hyperparameter is always needed.</span>
+<span class="sd">    Else:</span>
+<span class="sd">        depends_on = hyperparameter2.name, possible_values</span>
+<span class="sd">        this hyperparameter is needed if hyperparameter2 value is in possible_values.</span>
+
+<span class="sd">    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - How to define possible_values?</span>
+<span class="sd">          - Usually a set or a list can be used. But sometime we need something smarter.</span>
+<span class="sd">          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)</span>
+<span class="sd">        - For now, only simple dependency on a single hyperparameter, and a &quot;set&quot; of values is possible.</span>
+<span class="sd">          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Corresponding key in kwargs when suggested via `solver.suggest_hyperparameters_with_optuna().`</span>
+
+<span class="sd">    Default to hyperparemeter name. Can be used to have several hyperparameter with different limits/types</span>
+<span class="sd">    depending on other hyperparameters value but supposed to share the same name in kwargs for solver initialization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="IntegerHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">log</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            low: can be used to restrict lower bound</span>
+<span class="sd">            high: can be used to restrict upper bound</span>
+<span class="sd">            step: can be used to discretize by a given step</span>
+<span class="sd">            log: whether to sample the value in a logarithmic scale</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_int()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">low</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">low</span>
+        <span class="k">if</span> <span class="n">high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">high</span>
+        <span class="k">if</span> <span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+        <span class="k">if</span> <span class="n">log</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="k">return</span> <span class="n">trial</span><span class="o">.</span><span class="n">suggest_int</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">high</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="n">log</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FloatHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FloatHyperparameter</span><span class="p">(</span><span class="n">Hyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Float parameter.&quot;&quot;&quot;</span>
+
+    <span class="n">low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lower bound.</span>
+
+<span class="sd">    If None, the hyperparameter value has no lower bound.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upper bound.</span>
+
+<span class="sd">    If None, the hyperparameter value has no upper bound.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">suggest_low</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether to potentially suggest the lower bound.</span>
+
+<span class="sd">    If step is None, optuna will suggest a float inside the range (low, high),</span>
+<span class="sd">    but will never suggest exactly the lower bound by default.</span>
+<span class="sd">    To force the behaviour, we will introduce a derived categorical hyperparameter</span>
+<span class="sd">    whose name will be the hyperparameter name suffixed with &quot;.suggest_bound&quot;.</span>
+
+<span class="sd">    If step is not None, this attribute should probably be let to False.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">suggest_high</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether to potentially suggest the upper bound.</span>
+
+<span class="sd">    If step is None, optuna will suggest a float inside the range (low, high),</span>
+<span class="sd">    but will never suggest exactly the upper bound by default.</span>
+<span class="sd">    To force the behaviour, we will introduce a derived categorical hyperparameter</span>
+<span class="sd">    whose name will be the hyperparameter name suffixed with &quot;.suggest_bound&quot;.</span>
+
+<span class="sd">    If step is not None, this attribute should probably be let to False.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;step to discretize if not None.&quot;&quot;&quot;</span>
+
+    <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether to sample the value in a logarithmic scale.&quot;&quot;&quot;</span>
+
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default value for the hyperparameter.</span>
+
+<span class="sd">    None means &quot;no default value&quot;.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Other hyperparameter on which this ones depends on.</span>
+
+<span class="sd">    If None: this hyperparameter is always needed.</span>
+<span class="sd">    Else:</span>
+<span class="sd">        depends_on = hyperparameter2.name, possible_values</span>
+<span class="sd">        this hyperparameter is needed if hyperparameter2 value is in possible_values.</span>
+
+<span class="sd">    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - How to define possible_values?</span>
+<span class="sd">          - Usually a set or a list can be used. But sometime we need something smarter.</span>
+<span class="sd">          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)</span>
+<span class="sd">        - For now, only simple dependency on a single hyperparameter, and a &quot;set&quot; of values is possible.</span>
+<span class="sd">          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Corresponding key in kwargs when suggested via `solver.suggest_hyperparameters_with_optuna().`</span>
+
+<span class="sd">    Default to hyperparemeter name. Can be used to have several hyperparameter with different limits/types</span>
+<span class="sd">    depending on other hyperparameters value but supposed to share the same name in kwargs for solver initialization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="FloatHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">log</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">suggest_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">suggest_high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            low: can be used to restrict lower bound</span>
+<span class="sd">            high: can be used to restrict upper bound</span>
+<span class="sd">            log: whether to sample the value in a logarithmic scale</span>
+<span class="sd">            step: step of discretization if specified.</span>
+<span class="sd">                If explicitely set to None, no discretization performed.</span>
+<span class="sd">                By default, use self.step (and thus default discretization only if self.step not None)</span>
+<span class="sd">            suggest_low: if set, will override `suggest_low` attribute. See its documentation.</span>
+<span class="sd">            suggest_high: if set, will override `suggest_high` attribute. See its documentation.</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_float()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">low</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">low</span>
+        <span class="k">if</span> <span class="n">high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">high</span>
+        <span class="k">if</span> <span class="n">log</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span>
+        <span class="k">if</span> <span class="s2">&quot;step&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;step&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+        <span class="k">if</span> <span class="n">suggest_low</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">suggest_low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">suggest_low</span>
+        <span class="k">if</span> <span class="n">suggest_high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">suggest_high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">suggest_high</span>
+
+        <span class="k">if</span> <span class="n">suggest_low</span> <span class="ow">or</span> <span class="n">suggest_high</span><span class="p">:</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">suggest_low</span><span class="p">:</span>
+                <span class="n">choices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;low&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">suggest_high</span><span class="p">:</span>
+                <span class="n">choices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;high&quot;</span><span class="p">)</span>
+            <span class="n">suggest_bound</span> <span class="o">=</span> <span class="n">trial</span><span class="o">.</span><span class="n">suggest_categorical</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.suggest_bound&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">choices</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">suggest_bound</span> <span class="o">==</span> <span class="s2">&quot;low&quot;</span><span class="p">:</span>
+                <span class="n">high</span> <span class="o">=</span> <span class="n">low</span>  <span class="c1"># restrict range to a singleton {low}</span>
+            <span class="k">elif</span> <span class="n">suggest_bound</span> <span class="o">==</span> <span class="s2">&quot;high&quot;</span><span class="p">:</span>
+                <span class="n">low</span> <span class="o">=</span> <span class="n">high</span>  <span class="c1"># restrict range to a singleton {high}</span>
+
+        <span class="k">return</span> <span class="n">trial</span><span class="o">.</span><span class="n">suggest_float</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="n">low</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="n">high</span><span class="p">,</span>
+            <span class="n">log</span><span class="o">=</span><span class="n">log</span><span class="p">,</span>
+            <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">LabelType</span> <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+<span class="sd">&quot;&quot;&quot;Licit labels type for categorical hyperparameter.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="CategoricalHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CategoricalHyperparameter</span><span class="p">(</span><span class="n">Hyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Categorical hyperparameter.&quot;&quot;&quot;</span>
+
+    <span class="n">choices</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">LabelType</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mapping lables to corresponding possible choices.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">LabelType</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">LabelType</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
+            <span class="n">name_in_kwargs</span><span class="o">=</span><span class="n">name_in_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">choices</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># list given instead of a mapping: choices should already be suitable labels</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+
+<div class="viewcode-block" id="CategoricalHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">LabelType</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">LabelType</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            choices: restricts choices</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_categorical()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">choices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+
+        <span class="n">label</span> <span class="o">=</span> <span class="n">trial</span><span class="o">.</span><span class="n">suggest_categorical</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">choices</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="n">choices</span><span class="p">[</span><span class="n">label</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EnumHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.EnumHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnumHyperparameter</span><span class="p">(</span><span class="n">CategoricalHyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter taking value among an enumeration.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        enum: enumeration used to create the hyperparameter</span>
+<span class="sd">        choices: subset of the enumeration allowed. By default, the whole enumeration.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">enum</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Enum</span><span class="p">],</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Enum</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">choices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">enum</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="n">choices</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
+            <span class="n">name_in_kwargs</span><span class="o">=</span><span class="n">name_in_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># `Hyperparametrizable.copy_and_update_hyperparameters()` need that __init__ args are also attributes:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enum</span> <span class="o">=</span> <span class="n">enum</span>
+
+<div class="viewcode-block" id="EnumHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.EnumHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Enum</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Enum</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            choices: restricts list of choices among the enumeration `self.enum`</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_categorical()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">choices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">suggest_with_optuna</span><span class="p">(</span>
+            <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">choices</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SubBrickClsHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickClsHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubBrickClsHyperparameter</span><span class="p">(</span><span class="n">CategoricalHyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter whose values are Hyperparametrizable subclasses themselves.</span>
+
+<span class="sd">    For instance subsolvers for meta-solvers.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">choices</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mapping of labelled Hyperparametrizable subclasses to choose from for the subbrick.</span>
+
+<span class="sd">    NB: for now, it is not possible to pick the metasolver itself as a choice for its subbrick,</span>
+<span class="sd">    in order to avoid infinite recursivity issues.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">include_module_in_labels</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag to include module path in Hyperparametrizable labels used by optuna to select the value.</span>
+
+<span class="sd">    This is useful if 2 hypermarametrizable classes share the same name but come from different modules.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]]</span>
+        <span class="p">],</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_module_in_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">include_module_in_labels</span><span class="p">:</span>
+                <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="n">choices</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
+            <span class="n">name_in_kwargs</span><span class="o">=</span><span class="n">name_in_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># `Hyperparametrizable.copy_and_update_hyperparameters()` need that __init__ args are also attributes:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">include_module_in_labels</span> <span class="o">=</span> <span class="n">include_module_in_labels</span>
+
+<div class="viewcode-block" id="SubBrickClsHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickClsHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="n">Union</span><span class="p">[</span>
+                <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]],</span>
+                <span class="n">Iterable</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]],</span>
+            <span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            choices: restricts list of subbricks to choose from</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_categorical()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">choices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_module_in_labels</span><span class="p">:</span>
+                <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">choices</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">}</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">suggest_with_optuna</span><span class="p">(</span>
+            <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">choices</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SubBrickKwargsHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickKwargsHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubBrickKwargsHyperparameter</span><span class="p">(</span><span class="n">Hyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keyword arguments for subbricks.</span>
+
+<span class="sd">    This hyperparameter defines kwargs to be passed to the subbrick defined by another hyperparameter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        subbrick_hyperparameter: name of the SubBrickHyperparameter this hyperparameter corresponds to.</span>
+<span class="sd">            If None, this means the subbrick is always constructed from the same class which should be then specified</span>
+<span class="sd">            via `subbrick_cls`.</span>
+<span class="sd">        subbrick_cls: class of the subbrick.</span>
+<span class="sd">            Relevant only if `subbrick_hyperparmeter` is None. This means the class of the subbrick is always the same.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">subbrick_hyperparameter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">subbrick_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
+            <span class="n">name_in_kwargs</span><span class="o">=</span><span class="n">name_in_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_cls</span> <span class="o">=</span> <span class="n">subbrick_cls</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span> <span class="o">=</span> <span class="n">subbrick_hyperparameter</span>
+        <span class="k">if</span> <span class="n">subbrick_cls</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">subbrick_hyperparameter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;subbricl_cls and subbrick_hyperparameter cannot be both None.&quot;</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="SubBrickKwargsHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickKwargsHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">subbrick</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">names_by_subbrick</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kwargs_by_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kwargs_by_name_by_subbrick</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_hyperparameters_by_subbrick</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            subbrick: subbrick chosen as hyperparameter value for `self.subbrick_hyperparameter`.</span>
+<span class="sd">                Can be None only if `self.subbrick_hyperparameter` is None and the subbrick class has already</span>
+<span class="sd">                been specified by `self.subbrick_cls`.</span>
+<span class="sd">            names: names of the hyperparameters to choose for the subbrick.</span>
+<span class="sd">                Only relevant names will be considered (i.e. corresponding to existing hyperparameters names for the chosen subbrick),</span>
+<span class="sd">                the other will be discarded (potentially, being meaningful for other subbricks).</span>
+<span class="sd">                By default, all available hyperparameters will be suggested.</span>
+<span class="sd">                Passed to `subbrick.suggest_hyperparameters_with_optuna()`.</span>
+<span class="sd">            names_by_subbrick: similar to `names` but depending on type of subbrick chosen.</span>
+<span class="sd">                `names` will be extended by `names_by_subbrick[subbrick]` (if the key exists)</span>
+<span class="sd">                where `subbrick` is either the argument of this function, or (if None) `self.subbrick_cls`.</span>
+<span class="sd">            kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name.</span>
+<span class="sd">                Passed to `subbrick.suggest_hyperparameters_with_optuna()`.</span>
+<span class="sd">            kwargs_by_name_by_subbrick: same as `kwargs_by_name` but depending on type of subbrick chosen.</span>
+<span class="sd">                `kwargs_by_name` will be updated by `kwargs_by_name_by_subbrick[subbrick]` (if the key exists)</span>
+<span class="sd">                where `subbrick` is either the argument of this function, or (if None) `self.subbrick_cls`.</span>
+<span class="sd">            fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,</span>
+<span class="sd">                if the subbrick class is not suggested by this method, but already fixed.</span>
+<span class="sd">            fixed_hyperparameters_by_subbrick: same as `fixed_hyperparameters` but depending on type of subbrick chosen.</span>
+<span class="sd">                `fixed_hyperparameters` will be updated by `fixed_hyperparameters_by_subbrick[subbrick]` (if the key exists)</span>
+<span class="sd">                where `subbrick` is either the argument of this function, or (if None) `self.subbrick_cls`.</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_categorical()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">subbrick</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;`subbrick` cannot be None if `self.subbrick_cls` is None.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subbrick</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_cls</span>
+
+        <span class="c1"># kwargs_by_name updated according to subbrick</span>
+        <span class="k">if</span> <span class="n">kwargs_by_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs_by_name_updated</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs_by_name_updated</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs_by_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kwargs_by_name_by_subbrick</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs_by_name_updated</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs_by_name_by_subbrick</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">subbrick</span><span class="p">,</span> <span class="p">{}))</span>
+
+        <span class="c1"># fixed_hyperparameters updated according to subbrick</span>
+        <span class="k">if</span> <span class="n">fixed_hyperparameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fixed_hyperparameters_updated</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fixed_hyperparameters_updated</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fixed_hyperparameters</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fixed_hyperparameters_by_subbrick</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fixed_hyperparameters_updated</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">fixed_hyperparameters_by_subbrick</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">subbrick</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="p">)</span>
+
+        <span class="c1"># names updated according to subbrick</span>
+        <span class="n">subbrick_hyperparameter_names</span> <span class="o">=</span> <span class="n">subbrick</span><span class="o">.</span><span class="n">get_hyperparameters_names</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names_updated</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subbrick_hyperparameter_names</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">names_updated</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">subbrick_hyperparameter_names</span>
+            <span class="p">]</span>
+        <span class="k">if</span> <span class="n">names_by_subbrick</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names_updated</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">names_by_subbrick</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">subbrick</span><span class="p">,</span> <span class="p">[]))</span>
+
+        <span class="c1"># update prefix with subbrick name and class (if not fixed class)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">subbrick_hyperparameter</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">subbrick</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+
+        <span class="c1"># use subbrick suggest method</span>
+        <span class="k">return</span> <span class="n">subbrick</span><span class="o">.</span><span class="n">suggest_hyperparameters_with_optuna</span><span class="p">(</span>
+            <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span>
+            <span class="n">names</span><span class="o">=</span><span class="n">names_updated</span><span class="p">,</span>
+            <span class="n">kwargs_by_name</span><span class="o">=</span><span class="n">kwargs_by_name_updated</span><span class="p">,</span>
+            <span class="n">fixed_hyperparameters</span><span class="o">=</span><span class="n">fixed_hyperparameters_updated</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SubBrickHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubBrickHyperparameter</span><span class="p">(</span><span class="n">Hyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter whose values are SubBrick instances.</span>
+
+<span class="sd">    That is to say</span>
+<span class="sd">        - a hyperparametrizable class</span>
+<span class="sd">        - a kwargs dict to be used for it in __init_(), init_model(), solve(), ...</span>
+
+
+<span class="sd">    This is useful to suggest subsolvers for meta-solvers.</span>
+
+<span class="sd">    Under the hood, this hyperparameter will generate the corresponding SubBrickClsHyperparameter and</span>
+<span class="sd">    SubBrickKwargsHyperparameter.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]]</span>
+        <span class="p">],</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubBrick</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_module_in_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: see Hyperparameter doc.</span>
+<span class="sd">            choices: see SubBrickClsHyperparameter doc.</span>
+<span class="sd">            default: see Hyperparameter doc.</span>
+<span class="sd">            depends_on: see Hyperparameter doc.</span>
+<span class="sd">            name_in_kwargs: see Hyperparameter doc.</span>
+<span class="sd">            include_module_in_labels: See SubBrickClsHyperparameter doc.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
+            <span class="n">name_in_kwargs</span><span class="o">=</span><span class="n">name_in_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_cls_hp</span> <span class="o">=</span> <span class="n">SubBrickClsHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.cls&quot;</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="n">choices</span><span class="p">,</span>
+            <span class="n">include_module_in_labels</span><span class="o">=</span><span class="n">include_module_in_labels</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_kwargs_hp</span> <span class="o">=</span> <span class="n">SubBrickKwargsHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.kwargs&quot;</span><span class="p">,</span>
+            <span class="n">subbrick_hyperparameter</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># `Hyperparametrizable.copy_and_update_hyperparameters()` need that __init__ args are also attributes:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_cls_hp</span><span class="o">.</span><span class="n">choices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">include_module_in_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_cls_hp</span><span class="o">.</span><span class="n">include_module_in_labels</span>
+
+<div class="viewcode-block" id="SubBrickHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="n">Union</span><span class="p">[</span>
+                <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]],</span>
+                <span class="n">Iterable</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]],</span>
+            <span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">names_by_subbrick</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kwargs_by_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kwargs_by_name_by_subbrick</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_hyperparameters_by_subbrick</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubBrick</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: see Hyperparameter doc</span>
+<span class="sd">            choices: used by underlying SubBrickClsHyperparameter.suggest_with_optuna</span>
+<span class="sd">            names: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna</span>
+<span class="sd">            names_by_subbrick: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna</span>
+<span class="sd">            kwargs_by_name: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna</span>
+<span class="sd">            kwargs_by_name_by_subbrick: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna</span>
+<span class="sd">            fixed_hyperparameters: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna</span>
+<span class="sd">            fixed_hyperparameters_by_subbrick: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna</span>
+<span class="sd">            prefix: see Hyperparameter doc.</span>
+<span class="sd">            **kwargs: passed to SubBrickClsHyperparameter.suggest_with_optuna</span>
+<span class="sd">                and SubBrickKwargsHyperparameter.suggest_with_optuna</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">subbrick_cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_cls_hp</span><span class="o">.</span><span class="n">suggest_with_optuna</span><span class="p">(</span>
+            <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">choices</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="n">subbrick_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subbrick_kwargs_hp</span><span class="o">.</span><span class="n">suggest_with_optuna</span><span class="p">(</span>
+            <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span>
+            <span class="n">subbrick</span><span class="o">=</span><span class="n">subbrick_cls</span><span class="p">,</span>
+            <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span>
+            <span class="n">names_by_subbrick</span><span class="o">=</span><span class="n">names_by_subbrick</span><span class="p">,</span>
+            <span class="n">kwargs_by_name</span><span class="o">=</span><span class="n">kwargs_by_name</span><span class="p">,</span>
+            <span class="n">kwargs_by_name_by_subbrick</span><span class="o">=</span><span class="n">kwargs_by_name_by_subbrick</span><span class="p">,</span>
+            <span class="n">fixed_hyperparameters</span><span class="o">=</span><span class="n">fixed_hyperparameters</span><span class="p">,</span>
+            <span class="n">fixed_hyperparameters_by_subbrick</span><span class="o">=</span><span class="n">fixed_hyperparameters_by_subbrick</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">SubBrick</span><span class="p">(</span><span class="bp">cls</span><span class="o">=</span><span class="n">subbrick_cls</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">subbrick_kwargs</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SubBrick">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrick">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubBrick</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper class for a hyperparametrizable class and its kwargs.</span>
+
+<span class="sd">    Meant to be used as output by `SubBrickHyperparameter.suggest_with_optuna()`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Hyperparametrizable</span><span class="p">]</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">kwargs_from_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ListHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.ListHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ListHyperparameter</span><span class="p">(</span><span class="n">Hyperparameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Variable list of hyperparameters.</span>
+
+<span class="sd">    This represents a list of hyperparameters that are copies of a given template, with a bounded variable length.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameter_template</span><span class="p">:</span> <span class="n">Hyperparameter</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter template to fill the list.&quot;&quot;&quot;</span>
+
+    <span class="n">length_high</span><span class="p">:</span> <span class="nb">int</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upper bound on list length.&quot;&quot;&quot;</span>
+
+    <span class="n">length_low</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="s2">&quot;Lower bound for list length.&quot;</span>
+
+    <span class="n">numbering_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The numbering of the generated hyperparameters will start from this number.&quot;&quot;&quot;</span>
+
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default value for the hyperparameter.</span>
+
+<span class="sd">    None means &quot;no default value&quot;.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Other hyperparameter on which this ones depends on.</span>
+
+<span class="sd">    If None: this hyperparameter is always needed.</span>
+<span class="sd">    Else:</span>
+<span class="sd">        depends_on = hyperparameter2.name, possible_values</span>
+<span class="sd">        this hyperparameter is needed if hyperparameter2 value is in possible_values.</span>
+
+<span class="sd">    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - How to define possible_values?</span>
+<span class="sd">          - Usually a set or a list can be used. But sometime we need something smarter.</span>
+<span class="sd">          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)</span>
+<span class="sd">        - For now, only simple dependency on a single hyperparameter, and a &quot;set&quot; of values is possible.</span>
+<span class="sd">          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Corresponding key in generated kwargs.</span>
+
+<span class="sd">    Used for kwargs generated by</span>
+<span class="sd">    - `solver.suggest_hyperparameters_with_optuna()`</span>
+<span class="sd">    - `solver.get_default_hyperparameters()`</span>
+<span class="sd">    - `solver.complete_with_default_hyperparameters()`</span>
+
+<span class="sd">    Default to hyperparemeter name. Can be used to have several hyperparameter with different limits/types</span>
+<span class="sd">    depending on other hyperparameters value but supposed to share the same name in kwargs for solver initialization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">hyperparameter_template</span><span class="p">:</span> <span class="n">Hyperparameter</span><span class="p">,</span>
+        <span class="n">length_high</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">length_low</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">numbering_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">default</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
+            <span class="n">name_in_kwargs</span><span class="o">=</span><span class="n">name_in_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hyperparameter_template</span> <span class="o">=</span> <span class="n">hyperparameter_template</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_low</span> <span class="o">=</span> <span class="n">length_low</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_high</span> <span class="o">=</span> <span class="n">length_high</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numbering_start</span> <span class="o">=</span> <span class="n">numbering_start</span>
+
+<div class="viewcode-block" id="ListHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.ListHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">length_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">length_high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">numbering_start</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            length_low: overrides `self.length_low`</span>
+<span class="sd">            length_high: overrides `self.length_high`</span>
+<span class="sd">            numbering_start: overrides `self.numbering_start`</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_xxx()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">length_low</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">length_low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_low</span>
+        <span class="k">if</span> <span class="n">length_high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">length_high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_high</span>
+        <span class="k">if</span> <span class="n">numbering_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">numbering_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">numbering_start</span>
+        <span class="n">list_length_name</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.length&quot;</span>
+        <span class="n">list_length</span> <span class="o">=</span> <span class="n">trial</span><span class="o">.</span><span class="n">suggest_int</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">list_length_name</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="n">length_low</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">length_high</span>
+        <span class="p">)</span>
+        <span class="n">list_hp</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">list_length</span><span class="p">):</span>
+            <span class="n">hp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hyperparameter_template</span><span class="o">.</span><span class="n">copy_and_update_attributes</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hyperparameter_template</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">numbering_start</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">list_hp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">suggest_with_optuna</span><span class="p">(</span><span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">list_hp</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BaseListWithoutReplacementHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.BaseListWithoutReplacementHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseListWithoutReplacementHyperparameter</span><span class="p">(</span><span class="n">ListHyperparameter</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for variable list of categorical or subbrick hyperparameters, without replacement.</span>
+
+<span class="sd">    This represents a list of hyperparameters that are copies of a given template, with a bounded variable length.</span>
+<span class="sd">    Hyperparameters in the list cannot have twice the same value.</span>
+
+<span class="sd">    As we cannot dynamically restrict the choices with optuna (because it would modify the underlying distribution</span>
+<span class="sd">    of second element of the list), illicit suggestion (repeating same choices) will raise a `TrialDropped` exception,</span>
+<span class="sd">    sot that the study generated by `generic_optuna_experiment_monoproblem()`</span>
+<span class="sd">    or `generic_optuna_experiment_multiproblem()` will skip such cases.</span>
+
+<span class="sd">    To achieve this, we use `study.optimize(..., catch=TrialDropped)`, so that the study carry on after such exceptions.</span>
+
+<span class="sd">    Child classes need to implement `has_duplicates()`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameter_template</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CategoricalHyperparameter</span><span class="p">,</span> <span class="n">SubBrickHyperparameter</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter template to fill the list.&quot;&quot;&quot;</span>
+
+    <span class="n">length_high</span><span class="p">:</span> <span class="nb">int</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upper bound on list length.</span>
+
+<span class="sd">    NB: the list length will also be limited by the number of available choices.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">hyperparameter_template</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">CategoricalHyperparameter</span><span class="p">,</span> <span class="n">SubBrickHyperparameter</span>
+        <span class="p">],</span>
+        <span class="n">length_high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">length_low</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">numbering_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">default</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Container</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_in_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">length_high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">length_high</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hyperparameter_template</span><span class="o">.</span><span class="n">choices</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">hyperparameter_template</span><span class="o">=</span><span class="n">hyperparameter_template</span><span class="p">,</span>
+            <span class="n">length_high</span><span class="o">=</span><span class="n">length_high</span><span class="p">,</span>
+            <span class="n">length_low</span><span class="o">=</span><span class="n">length_low</span><span class="p">,</span>
+            <span class="n">numbering_start</span><span class="o">=</span><span class="n">numbering_start</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
+            <span class="n">name_in_kwargs</span><span class="o">=</span><span class="n">name_in_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="BaseListWithoutReplacementHyperparameter.suggest_with_optuna">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.BaseListWithoutReplacementHyperparameter.suggest_with_optuna">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_with_optuna</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">trial</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">Trial</span><span class="p">,</span>
+        <span class="n">length_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">length_high</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">numbering_start</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Suggest hyperparameter value for an Optuna trial.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            trial: optuna Trial used for choosing the hyperparameter value</span>
+<span class="sd">            prefix: prefix to add to optuna corresponding parameter name</span>
+<span class="sd">              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</span>
+<span class="sd">            length_low: overrides `self.length_low`</span>
+<span class="sd">            length_high: overrides `self.length_high`</span>
+<span class="sd">            numbering_start: overrides `self.numbering_start`</span>
+<span class="sd">            **kwargs: passed to `trial.suggest_xxx()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">length_high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">length_high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_high</span>
+        <span class="c1"># limit by the number of choices</span>
+        <span class="n">length_high</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">length_high</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hyperparameter_template</span><span class="o">.</span><span class="n">choices</span><span class="p">))</span>
+
+        <span class="n">list_values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">suggest_with_optuna</span><span class="p">(</span>
+            <span class="n">trial</span><span class="o">=</span><span class="n">trial</span><span class="p">,</span>
+            <span class="n">length_low</span><span class="o">=</span><span class="n">length_low</span><span class="p">,</span>
+            <span class="n">length_high</span><span class="o">=</span><span class="n">length_high</span><span class="p">,</span>
+            <span class="n">numbering_start</span><span class="o">=</span><span class="n">numbering_start</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_duplicates</span><span class="p">(</span><span class="n">list_values</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">TrialDropped</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Dropping trial with hyperparameter repetition in list </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">list_values</span></div>
+
+
+<div class="viewcode-block" id="BaseListWithoutReplacementHyperparameter.has_duplicates">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.BaseListWithoutReplacementHyperparameter.has_duplicates">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_duplicates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">True</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the list contains duplicates</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            list_choices: list of values taken from choices</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CategoricalListWithoutReplacementHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalListWithoutReplacementHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CategoricalListWithoutReplacementHyperparameter</span><span class="p">(</span>
+    <span class="n">BaseListWithoutReplacementHyperparameter</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Variable list of categorical hyperparameters, without replacement.</span>
+
+<span class="sd">    This represents a list of hyperparameters that are copies of a given template, with a bounded variable length.</span>
+<span class="sd">    Hyperparameters in the list cannot have twice the same value.</span>
+
+<span class="sd">    As we cannot dynamically restrict the choices with optuna (because it would modify the underlying distribution</span>
+<span class="sd">    of second element of the list), illicit suggestion (repeating same choices) will raise a `TrialDropped` exception,</span>
+<span class="sd">    sot that the study generated by `generic_optuna_experiment_monoproblem()`</span>
+<span class="sd">    or `generic_optuna_experiment_multiproblem()` will skip such cases.</span>
+
+<span class="sd">    To achieve this, we use `study.optimize(..., catch=TrialDropped)`, so that the study carry on after such exceptions.</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameter_template</span><span class="p">:</span> <span class="n">CategoricalHyperparameter</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter template to fill the list.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CategoricalListWithoutReplacementHyperparameter.has_duplicates">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalListWithoutReplacementHyperparameter.has_duplicates">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_duplicates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">True</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the list contains duplicates</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            list_choices: list of values taken from choices</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">list_choices</span><span class="p">))</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_choices</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SubBrickListWithoutReplacementHyperparameter">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickListWithoutReplacementHyperparameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubBrickListWithoutReplacementHyperparameter</span><span class="p">(</span>
+    <span class="n">BaseListWithoutReplacementHyperparameter</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Variable list of subbrick hyperparameters, without replacement.</span>
+
+<span class="sd">    This represents a list of hyperparameters that are copies of a given template, with a bounded variable length.</span>
+<span class="sd">    Hyperparameters in the list cannot have twice the same value.</span>
+
+<span class="sd">    As we cannot dynamically restrict the choices with optuna (because it would modify the underlying distribution</span>
+<span class="sd">    of second element of the list), illicit suggestion (repeating same choices) will raise a `TrialDropped` exception,</span>
+<span class="sd">    sot that the study generated by `generic_optuna_experiment_monoproblem()`</span>
+<span class="sd">    or `generic_optuna_experiment_multiproblem()` will skip such cases.</span>
+
+<span class="sd">    To achieve this, we use `study.optimize(..., catch=TrialDropped)`, so that the study carry on after such exceptions.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameter_template</span><span class="p">:</span> <span class="n">SubBrickHyperparameter</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameter template to fill the list.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SubBrickListWithoutReplacementHyperparameter.has_duplicates">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickListWithoutReplacementHyperparameter.has_duplicates">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_duplicates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">True</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the list contains duplicates</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            list_choices: list of subbricks as produced by `hyperparameter_template.suggest_with_optuna()`</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        NB: subbrick.kwargs can contain any kind of values, potentially not hashable.</span>
+<span class="sd">        So this is easier to check equality (more often implemented than hash)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i_subbrick</span><span class="p">,</span> <span class="n">subbrick</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_choices</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">next_subbrick</span> <span class="ow">in</span> <span class="n">list_choices</span><span class="p">[</span><span class="n">i_subbrick</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]:</span>
+                <span class="k">if</span> <span class="n">subbrick</span> <span class="o">==</span> <span class="n">next_subbrick</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TrialDropped">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.TrialDropped">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TrialDropped</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="o">...</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1592 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.lp_tools &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.lp_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.lp_tools</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.math_opt.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">mathopt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BoundsProviderMixin</span><span class="p">,</span>
+    <span class="n">SolverDO</span><span class="p">,</span>
+    <span class="n">StatusSolver</span><span class="p">,</span>
+    <span class="n">WarmstartMixin</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolveEarlyStop</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EnumHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.multiobj_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TupleFitness</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.unsat_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetaConstraint</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">gurobipy</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">map_gurobi_status_to_do_status</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">StatusSolver</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">,</span>
+            <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">INFEASIBLE</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span>
+            <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">SUBOPTIMAL</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">docplex</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">docplex.mp.progress</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolutionListener</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">docplex.mp.solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolveSolution</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">cplex_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">cplex_available</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># types aliases</span>
+<span class="k">if</span> <span class="n">gurobi_available</span><span class="p">:</span>
+    <span class="n">VariableType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">,</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+    <span class="n">ConstraintType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">gurobipy</span><span class="o">.</span><span class="n">Constr</span><span class="p">,</span>
+        <span class="n">gurobipy</span><span class="o">.</span><span class="n">MConstr</span><span class="p">,</span>
+        <span class="n">gurobipy</span><span class="o">.</span><span class="n">QConstr</span><span class="p">,</span>
+        <span class="n">gurobipy</span><span class="o">.</span><span class="n">GenConstr</span><span class="p">,</span>
+        <span class="n">mathopt</span><span class="o">.</span><span class="n">LinearConstraint</span><span class="p">,</span>
+    <span class="p">]</span>
+
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">VariableType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+    <span class="n">ConstraintType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">LinearConstraint</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ParametersMilp">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.ParametersMilp">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParametersMilp</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pool_solutions</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">mip_gap_abs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mip_gap</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">retrieve_all_solution</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">pool_search_mode</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_solutions</span> <span class="o">=</span> <span class="n">pool_solutions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mip_gap_abs</span> <span class="o">=</span> <span class="n">mip_gap_abs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mip_gap</span> <span class="o">=</span> <span class="n">mip_gap</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_all_solution</span> <span class="o">=</span> <span class="n">retrieve_all_solution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_search_mode</span> <span class="o">=</span> <span class="n">pool_search_mode</span>
+
+<div class="viewcode-block" id="ParametersMilp.default">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.ParametersMilp.default">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;ParametersMilp&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ParametersMilp</span><span class="p">(</span>
+            <span class="n">pool_solutions</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+            <span class="n">mip_gap_abs</span><span class="o">=</span><span class="mf">0.0000001</span><span class="p">,</span>
+            <span class="n">mip_gap</span><span class="o">=</span><span class="mf">0.000001</span><span class="p">,</span>
+            <span class="n">retrieve_all_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="InequalitySense">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.InequalitySense">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InequalitySense</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sense of an inequality/equality.&quot;&quot;&quot;</span>
+
+    <span class="n">LOWER_OR_EQUAL</span> <span class="o">=</span> <span class="s2">&quot;&lt;=&quot;</span>
+    <span class="n">GREATER_OR_EQUAL</span> <span class="o">=</span> <span class="s2">&quot;&gt;=&quot;</span>
+    <span class="n">EQUAL</span> <span class="o">=</span> <span class="s2">&quot;==&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="MilpSolver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MilpSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MilpSolver.init_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.init_model">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.retrieve_solutions">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.retrieve_solutions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">ParametersMilp</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve solutions found by internal solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameters_milp:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">retrieve_all_solution</span><span class="p">:</span>
+            <span class="n">n_solutions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_solutions</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">list_solution_fits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">TupleFitness</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_solutions</span><span class="p">):</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_ith_solution</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="n">list_solution_fits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">solution</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span>
+            <span class="n">list_solution_fits</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.retrieve_current_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.retrieve_current_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">get_var_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">get_obj_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve current solution from internal gurobi solution.</span>
+
+<span class="sd">        This converts internal gurobi solution into a discrete-optimization Solution.</span>
+<span class="sd">        This method can be called after the solve in `retrieve_solutions()`</span>
+<span class="sd">        or during solve within a gurobi/pymilp/cplex callback. The difference will be the</span>
+<span class="sd">        `get_var_value_for_current_solution` and `get_obj_value_for_current_solution` callables passed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            get_var_value_for_current_solution: function extracting the value of the given variable for the current solution</span>
+<span class="sd">                will be different when inside a callback or after the solve is finished</span>
+<span class="sd">            get_obj_value_for_current_solution: function extracting the value of the objective for the current solution.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the converted solution at d-o format</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.retrieve_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.retrieve_ith_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve i-th solution from internal milp model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            i:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">get_var_value_for_current_solution</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_var_value_for_ith_solution</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">get_obj_value_for_current_solution</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_obj_value_for_ith_solution</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">(</span>
+            <span class="n">get_var_value_for_current_solution</span><span class="o">=</span><span class="n">get_var_value_for_current_solution</span><span class="p">,</span>
+            <span class="n">get_obj_value_for_current_solution</span><span class="o">=</span><span class="n">get_obj_value_for_current_solution</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.solve">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span></div>
+
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="MilpSolver.get_var_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.get_var_value_for_ith_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_value_for_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get value for i-th solution of a given variable.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.get_obj_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.get_obj_value_for_ith_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_obj_value_for_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get objective value for i-th solution.&quot;&quot;&quot;</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nb_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of solutions found by the solver.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MilpSolver.create_empty_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.create_empty_model">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_empty_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate an empty milp model.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.add_linear_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.add_linear_constraint">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_linear_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a linear constraint to the model.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.add_binary_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.add_binary_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_binary_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a binary variable to the model.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.add_integer_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.add_integer_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_integer_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an integer variable to the model.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lb: lower bound</span>
+<span class="sd">            ub: upper bound</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.add_continuous_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.add_continuous_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_continuous_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a continuous variable to the model.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lb: lower bound</span>
+<span class="sd">            ub: upper bound</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.set_model_objective">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.set_model_objective">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_model_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">minimize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define the model objective.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            expr:</span>
+<span class="sd">            minimize: if True, objective will be minimized, else maximized</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.construct_linear_sum">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.construct_linear_sum">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_linear_sum</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a linear sum (with variables) ready for the internal model.&quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.add_linear_constraint_with_indicator">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.add_linear_constraint_with_indicator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_linear_constraint_with_indicator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">binvar</span><span class="p">:</span> <span class="n">VariableType</span><span class="p">,</span>
+        <span class="n">binval</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">lhs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">sense</span><span class="p">:</span> <span class="n">InequalitySense</span><span class="p">,</span>
+        <span class="n">rhs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">penalty_coeff</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConstraintType</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a linear constraint depending on the value of an indicator (boolean var)</span>
+
+<span class="sd">        This mirrors `gurobipy.Model.addGenConstrIndicator().</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            binvar:</span>
+<span class="sd">            binval:</span>
+<span class="sd">            lhs:</span>
+<span class="sd">            sense:</span>
+<span class="sd">            rhs:</span>
+<span class="sd">            penalty_coeff:</span>
+<span class="sd">            name:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">binval</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="n">penalty_coeff</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">binvar</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">binval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="n">penalty_coeff</span> <span class="o">*</span> <span class="p">(</span><span class="n">binvar</span> <span class="o">-</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;binval should only be 0 or 1.&quot;</span><span class="p">)</span>
+
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">sense</span> <span class="ow">in</span> <span class="p">[</span><span class="n">InequalitySense</span><span class="o">.</span><span class="n">LOWER_OR_EQUAL</span><span class="p">,</span> <span class="n">InequalitySense</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                <span class="n">name_lower</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_lower&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">name_lower</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">lhs</span> <span class="o">&lt;=</span> <span class="n">rhs</span> <span class="o">+</span> <span class="n">penalty</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name_lower</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sense</span> <span class="ow">in</span> <span class="p">[</span><span class="n">InequalitySense</span><span class="o">.</span><span class="n">GREATER_OR_EQUAL</span><span class="p">,</span> <span class="n">InequalitySense</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                <span class="n">name_upper</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_upper&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">name_upper</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">lhs</span> <span class="o">&gt;=</span> <span class="n">rhs</span> <span class="o">-</span> <span class="n">penalty</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name_upper</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">constraints</span></div>
+
+
+<div class="viewcode-block" id="MilpSolver.set_warm_start_from_values">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver.set_warm_start_from_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start_from_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variable_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">VariableType</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make the model variables warm start from the given values.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrtoolsMathOptMilpSolver</span><span class="p">(</span><span class="n">MilpSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">,</span> <span class="n">BoundsProviderMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Milp solver wrapping a solver from pymip library.&quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mathopt_solver_type&quot;</span><span class="p">,</span>
+            <span class="n">enum</span><span class="o">=</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="n">solution_hint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolutionHint</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">termination</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Termination</span>
+    <span class="n">early_stopping_exception</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">Exception</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">has_quadratic_objective</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag telling that the objective is a quadratic expression.</span>
+
+<span class="sd">    This is use to pass the proper function to `retrieve_current_solution` for the objective.</span>
+<span class="sd">    Should be overriden to True in solvers with quadratic objectives.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">random_seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mathopt_res</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolveResult</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_current_internal_objective_best_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_current_internal_objective_best_bound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.remove_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.remove_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">delete_linear_constraint</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.convert_to_variable_values">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.</span>
+<span class="sd">        See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</span>
+<span class="sd">        for more information.</span>
+
+<span class="sd">        Override it in subclasses to have a proper warm start.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.convert_to_dual_values">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.convert_to_dual_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_dual_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model contraints and their values.</span>
+
+<span class="sd">        Will be used by set_warm_start() to provide a suitable SolutionHint.dual_values.</span>
+<span class="sd">        See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</span>
+<span class="sd">        for more information.</span>
+<span class="sd">        Generally MIP solvers do not need this part, but LP solvers do.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.set_warm_start">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make the solver warm start from the given solution.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_warm_start_from_values</span><span class="p">(</span>
+            <span class="n">variable_values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="n">solution</span><span class="p">),</span>
+            <span class="n">dual_values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_to_dual_values</span><span class="p">(</span><span class="n">solution</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.set_warm_start_from_values">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.set_warm_start_from_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start_from_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">dual_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dual_values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dual_values</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solution_hint</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolutionHint</span><span class="p">(</span>
+            <span class="n">variable_values</span><span class="o">=</span><span class="n">variable_values</span><span class="p">,</span>
+            <span class="n">dual_values</span><span class="o">=</span><span class="n">dual_values</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.get_var_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.get_var_value_for_ith_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_value_for_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.get_obj_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.get_obj_value_for_ith_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_obj_value_for_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nb_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mathopt_solver_type</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="o">.</span><span class="n">CP_SAT</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+        <span class="n">mathopt_enable_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">mathopt_model_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">ModelSolveParameters</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mathopt_additional_solve_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolveParameters</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">store_mathopt_res</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">extract_solutions_from_mathopt_res</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve with OR-Tools MathOpt API</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callbacks: list of callbacks used to hook into the various stage of the solve</span>
+<span class="sd">            parameters_milp: parameters passed to the MILP solver</span>
+<span class="sd">            mathopt_solver_type: underlying solver type to use.</span>
+<span class="sd">                Passed as `solver_type` to `mathopt.solve()`</span>
+<span class="sd">            time_limit: the solve process stops after this time limit (in seconds).</span>
+<span class="sd">                If None, no time limit is applied.</span>
+<span class="sd">            mathopt_enable_output: turn on mathopt logging</span>
+<span class="sd">            mathopt_model_parameters: passed to `mathopt.solve()` as `model_params`</span>
+<span class="sd">            mathopt_additional_solve_parameters: passed to `mathopt.solve()` as `params`,</span>
+<span class="sd">                except that parameters defined by above `time_limit` and `parameters_milp`</span>
+<span class="sd">                will be overriden by them.</span>
+<span class="sd">            store_mathopt_res: whether to store the `mathopt.SolveResult` generated by `mathopt.solve()`</span>
+<span class="sd">            extract_solutions_from_mathopt_res: whether to extract solutions from the `mathopt.SolveResult` generated by `mathopt.solve()`.</span>
+<span class="sd">                If False, the solutions are rather extracted on the fly inside a callback at each mip solution improvement.</span>
+<span class="sd">                By default, this is False except for HiGHS solver type, as its OR-Tools wrapper does not yet integrate callbacks.</span>
+<span class="sd">            **kwargs: passed to init_model() if model not yet existing</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Default parameters</span>
+        <span class="k">if</span> <span class="n">extract_solutions_from_mathopt_res</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">extract_solutions_from_mathopt_res</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">mathopt_solver_type</span> <span class="o">==</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="o">.</span><span class="n">HIGHS</span>
+            <span class="p">)</span>
+
+        <span class="c1"># reset best bound and obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">callbacks_list</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
+
+        <span class="c1"># callback: solve start</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># wrap user callback in a mathopt callback</span>
+        <span class="n">mathopt_cb</span> <span class="o">=</span> <span class="n">MathOptCallback</span><span class="p">(</span>
+            <span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">callback</span><span class="o">=</span><span class="n">callbacks_list</span><span class="p">,</span>
+            <span class="n">mathopt_solver_type</span><span class="o">=</span><span class="n">mathopt_solver_type</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># optimize</span>
+        <span class="n">mathopt_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_model</span><span class="p">(</span>
+            <span class="n">parameters_milp</span><span class="o">=</span><span class="n">parameters_milp</span><span class="p">,</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit</span><span class="p">,</span>
+            <span class="n">mathopt_solver_type</span><span class="o">=</span><span class="n">mathopt_solver_type</span><span class="p">,</span>
+            <span class="n">mathopt_cb</span><span class="o">=</span><span class="n">mathopt_cb</span><span class="p">,</span>
+            <span class="n">mathopt_enable_output</span><span class="o">=</span><span class="n">mathopt_enable_output</span><span class="p">,</span>
+            <span class="n">mathopt_model_parameters</span><span class="o">=</span><span class="n">mathopt_model_parameters</span><span class="p">,</span>
+            <span class="n">mathopt_additional_solve_parameters</span><span class="o">=</span><span class="n">mathopt_additional_solve_parameters</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">store_mathopt_res</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mathopt_res</span> <span class="o">=</span> <span class="n">mathopt_res</span>
+
+        <span class="c1"># update best bound and obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="n">mathopt_res</span><span class="o">.</span><span class="n">primal_bound</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="n">mathopt_res</span><span class="o">.</span><span class="n">dual_bound</span><span class="p">()</span>
+
+        <span class="c1"># get result storage</span>
+        <span class="k">if</span> <span class="n">extract_solutions_from_mathopt_res</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_result_storage</span><span class="p">(</span><span class="n">mathopt_res</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">mathopt_cb</span><span class="o">.</span><span class="n">res</span>
+
+        <span class="c1"># callback: solve end</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.set_random_seed">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.set_random_seed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_random_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="n">random_seed</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.optimize_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.optimize_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mathopt_solver_type</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="o">.</span><span class="n">CP_SAT</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+        <span class="n">mathopt_cb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolveCallback</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mathopt_enable_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">mathopt_model_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">ModelSolveParameters</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mathopt_additional_solve_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolveParameters</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolveResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameters_milp: parameters for the milp solver</span>
+<span class="sd">            mathopt_solver_type: underlying solver type to use.</span>
+<span class="sd">                Passed as `solver_type` to `mathopt.solve()`</span>
+<span class="sd">            time_limit: the solve process stops after this time limit (in seconds).</span>
+<span class="sd">                If None, no time limit is applied.</span>
+<span class="sd">            mathopt_cb: a mathopt callback passed to `mathopt.solve()` called at each new solution found</span>
+<span class="sd">            mathopt_enable_output: turn on mathopt logging</span>
+<span class="sd">            mathopt_model_parameters: passed to `mathopt.solve()` as `model_params`</span>
+<span class="sd">            mathopt_additional_solve_parameters: passed to `mathopt.solve()` as `params`,</span>
+<span class="sd">                except that parameters defined by above `time_limit`, `parameters_milp`, and `mathopt_enable_output`</span>
+<span class="sd">                will be overriden by them.</span>
+<span class="sd">            **kwargs: passed to init_model() if model not yet existing</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.model must not be None after self.init_model().&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">parameters_milp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_milp</span> <span class="o">=</span> <span class="n">ParametersMilp</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+
+        <span class="c1"># solve parameters</span>
+        <span class="k">if</span> <span class="n">mathopt_additional_solve_parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolveParameters</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">mathopt_additional_solve_parameters</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">time_limit</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">time_limit</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">absolute_gap_tolerance</span> <span class="o">=</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">mip_gap_abs</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">relative_gap_tolerance</span> <span class="o">=</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">mip_gap</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">enable_output</span> <span class="o">=</span> <span class="n">mathopt_enable_output</span>
+        <span class="k">if</span> <span class="n">mathopt_solver_type</span> <span class="o">!=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="o">.</span><span class="n">HIGHS</span><span class="p">:</span>
+            <span class="c1"># solution_pool_size not supported for HIGHS solver</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">solution_pool_size</span> <span class="o">=</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">pool_solutions</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span>
+
+        <span class="c1"># model specific solve parameters</span>
+        <span class="k">if</span> <span class="n">mathopt_model_parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_params</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">ModelSolveParameters</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">model_params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">mathopt_model_parameters</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solution_hint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># warm start: add a solution hint corresponding to the warm start</span>
+            <span class="n">model_params</span><span class="o">.</span><span class="n">solution_hints</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solution_hint</span>
+            <span class="p">]</span> <span class="o">+</span> <span class="n">model_params</span><span class="o">.</span><span class="n">solution_hints</span>
+
+        <span class="n">callback_reg</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackRegistration</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><span class="p">{</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">MIP_SOLUTION</span><span class="p">})</span>
+        <span class="n">mathopt_res</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">solver_type</span><span class="o">=</span><span class="n">mathopt_solver_type</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">model_params</span><span class="o">=</span><span class="n">model_params</span><span class="p">,</span>
+            <span class="n">callback_reg</span><span class="o">=</span><span class="n">callback_reg</span><span class="p">,</span>
+            <span class="n">cb</span><span class="o">=</span><span class="n">mathopt_cb</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">termination</span> <span class="o">=</span> <span class="n">mathopt_res</span><span class="o">.</span><span class="n">termination</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">map_mathopt_status_to_do_status</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">termination</span><span class="o">.</span><span class="n">reason</span><span class="p">]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Solver found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mathopt_res</span><span class="o">.</span><span class="n">solutions</span><span class="p">)</span><span class="si">}</span><span class="s2"> solutions&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mathopt_res</span><span class="o">.</span><span class="n">termination</span><span class="o">.</span><span class="n">reason</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">,</span>
+            <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">FEASIBLE</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective : </span><span class="si">{</span><span class="n">mathopt_res</span><span class="o">.</span><span class="n">objective_value</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># raise potential exception found during callback (useful for optuna pruning, and debugging)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">,</span> <span class="n">SolveEarlyStop</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span>
+
+        <span class="k">return</span> <span class="n">mathopt_res</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.create_empty_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.create_empty_model">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_empty_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.add_linear_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.add_linear_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_linear_constraint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">LinearConstraint</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.add_binary_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.add_binary_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_binary_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_binary_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.add_integer_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.add_integer_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_integer_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.add_continuous_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.add_continuous_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_continuous_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_variable</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span> <span class="n">is_integer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.set_model_objective">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.set_model_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_model_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">minimize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define the model objective.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            expr:</span>
+<span class="sd">            minimize: if True, objective will be minimized, else maximized</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">is_maximize</span><span class="o">=</span><span class="ow">not</span> <span class="n">minimize</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.construct_linear_sum">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.construct_linear_sum">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_linear_sum</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a linear sum (with variables) ready for the internal model.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">LinearSum</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_result_storage</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mathopt_res</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolveResult</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">list_solution_fits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">internal_sol</span> <span class="ow">in</span> <span class="n">mathopt_res</span><span class="o">.</span><span class="n">solutions</span><span class="p">:</span>
+            <span class="n">get_var_value_for_current_solution</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">internal_sol</span><span class="o">.</span><span class="n">primal_solution</span><span class="o">.</span><span class="n">variable_values</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">get_obj_value_for_current_solution</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">internal_sol</span><span class="o">.</span><span class="n">primal_solution</span><span class="o">.</span><span class="n">objective_value</span>
+            <span class="p">)</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">(</span>
+                <span class="n">get_var_value_for_current_solution</span><span class="o">=</span><span class="n">get_var_value_for_current_solution</span><span class="p">,</span>
+                <span class="n">get_obj_value_for_current_solution</span><span class="o">=</span><span class="n">get_obj_value_for_current_solution</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+            <span class="n">list_solution_fits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">list_solution_fits</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.get_current_best_internal_objective_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.get_current_best_internal_objective_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span></div>
+
+
+<div class="viewcode-block" id="OrtoolsMathOptMilpSolver.get_current_best_internal_objective_value">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver.get_current_best_internal_objective_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span></div>
+</div>
+
+
+
+<span class="n">map_mathopt_status_to_do_status</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="p">,</span> <span class="n">StatusSolver</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">INFEASIBLE</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">INFEASIBLE_OR_UNBOUNDED</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">UNBOUNDED</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">FEASIBLE</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">NO_SOLUTION_FOUND</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">IMPRECISE</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">NUMERICAL_ERROR</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+    <span class="n">mathopt</span><span class="o">.</span><span class="n">TerminationReason</span><span class="o">.</span><span class="n">OTHER_ERROR</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="MathOptCallback">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MathOptCallback">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathOptCallback</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">do_solver</span><span class="p">:</span> <span class="n">OrtoolsMathOptMilpSolver</span><span class="p">,</span>
+        <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">,</span>
+        <span class="n">mathopt_solver_type</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver_type</span> <span class="o">=</span> <span class="n">mathopt_solver_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback_data</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackResult</span><span class="p">:</span>
+        <span class="n">cb_sol</span> <span class="o">=</span> <span class="n">callback_data</span><span class="o">.</span><span class="n">solution</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># retrieve and store new solution</span>
+            <span class="n">get_var_value_for_current_solution</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">cb_sol</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">has_quadratic_objective</span><span class="p">:</span>
+                <span class="n">get_obj_value_for_current_solution</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">as_quadratic_expression</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+                        <span class="n">cb_sol</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">get_obj_value_for_current_solution</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">as_linear_expression</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+                        <span class="n">cb_sol</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">(</span>
+                <span class="n">get_var_value_for_current_solution</span><span class="o">=</span><span class="n">get_var_value_for_current_solution</span><span class="p">,</span>
+                <span class="n">get_obj_value_for_current_solution</span><span class="o">=</span><span class="n">get_obj_value_for_current_solution</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c1"># store mip stats</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_type</span> <span class="o">!=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="o">.</span><span class="n">CP_SAT</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">callback_data</span><span class="o">.</span><span class="n">mip_stats</span><span class="o">.</span><span class="n">primal_bound</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">callback_data</span><span class="o">.</span><span class="n">mip_stats</span><span class="o">.</span><span class="n">dual_bound</span>
+                <span class="p">)</span>
+            <span class="c1"># end of step callback: stopping?</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+                <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># catch exceptions because gurobi ignore them and do not stop solving</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">SolveEarlyStop</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.solve() stopped by user callback.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackResult</span><span class="p">(</span><span class="n">terminate</span><span class="o">=</span><span class="n">stopping</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="GurobiMilpSolver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiMilpSolver</span><span class="p">(</span><span class="n">MilpSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">,</span> <span class="n">BoundsProviderMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Milp solver wrapping a solver from gurobi library.&quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;gurobipy.Model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">early_stopping_exception</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">Exception</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_current_internal_objective_best_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_current_internal_objective_best_bound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="GurobiMilpSolver.remove_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.remove_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">constraints</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># reset best bound and obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">callbacks_list</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
+
+        <span class="c1"># callback: solve start</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># wrap user callback in a gurobi callback</span>
+        <span class="n">gurobi_callback</span> <span class="o">=</span> <span class="n">GurobiCallback</span><span class="p">(</span><span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callbacks_list</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimize_model</span><span class="p">(</span>
+            <span class="n">parameters_milp</span><span class="o">=</span><span class="n">parameters_milp</span><span class="p">,</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit</span><span class="p">,</span>
+            <span class="n">gurobi_callback</span><span class="o">=</span><span class="n">gurobi_callback</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># update best bound and obj</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;ObjVal&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ObjVal</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;ObjBound&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ObjBound</span>
+
+        <span class="c1"># get result storage</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">gurobi_callback</span><span class="o">.</span><span class="n">res</span>
+
+        <span class="c1"># callback: solve end</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.explain_unsat_fine">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.explain_unsat_fine">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">explain_unsat_fine</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Explain unsatisfiability of the problem via fine constraints.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            subset minimal list of constraints leading to unsatisfiability.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            running several times may lead to a different (minimal) subset of constraints.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">==</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;self.solve() must have been run &quot;</span>
+            <span class="s2">&quot;and self.status_solver must be SolverStatus.UNSATISFIABLE&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">computeIIS</span><span class="p">()</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># linear constraints</span>
+        <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">getConstrs</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">cstr</span><span class="o">.</span><span class="n">IISConstr</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+        <span class="c1"># quadratic constraints</span>
+        <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">getQConstrs</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">cstr</span><span class="o">.</span><span class="n">IISQConstr</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+        <span class="c1"># generic constraints</span>
+        <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">getGenConstrs</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">cstr</span><span class="o">.</span><span class="n">IISGenConstr</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+        <span class="c1"># SOS constraints</span>
+        <span class="k">for</span> <span class="n">cstr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">getSOSs</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">cstr</span><span class="o">.</span><span class="n">IISSOS</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cstr</span><span class="p">)</span>
+        <span class="c1"># lower and upper bounds</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">getVars</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">IISLB</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span> <span class="o">&gt;=</span> <span class="n">var</span><span class="o">.</span><span class="n">LB</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">IISUB</span><span class="p">:</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span> <span class="o">&lt;=</span> <span class="n">var</span><span class="o">.</span><span class="n">UB</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">constraints</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.explain_unsat_deduced_meta">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.explain_unsat_deduced_meta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">explain_unsat_deduced_meta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">meta_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetaConstraint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Explain unsatisfiability of the problem via meta-constraints.</span>
+
+<span class="sd">        Meta-constraints are gathering several finer constraints in order to be more human readable.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            meta_constraints: list of meta-constraints.</span>
+<span class="sd">                Default to the ones returned by `get_default_meta_constraints()`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            subset of meta-constraints leading to unsatisfiability (corresponding fine constraints subset being minimal).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">meta_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">meta_constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_meta_constraints</span><span class="p">()</span>
+        <span class="n">mus_constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">explain_unsat_fine</span><span class="p">()</span>
+        <span class="n">mus_meta_constraints</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">mus_constraints</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">meta_constraints</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+                    <span class="n">mus_meta_constraints</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">mus_meta_constraints</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.get_meta_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.get_meta_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_meta_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaConstraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get meta-constraints defining the internal model.</span>
+
+<span class="sd">        To be used to explain unsatisfiability. See `explain_unsat_meta()`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            default set of meta-constraints defining the problem</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;No meta constraints defined for this model.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.set_random_seed">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.set_random_seed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_random_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">Seed</span><span class="p">,</span> <span class="n">random_seed</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.prepare_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.prepare_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set Gurobi Model parameters according to parameters_milp&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.model must not be None after self.init_model().&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">parameters_milp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_milp</span> <span class="o">=</span> <span class="n">ParametersMilp</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">time_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">TimeLimit</span><span class="p">,</span> <span class="n">time_limit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">MIPGapAbs</span><span class="p">,</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">mip_gap_abs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">MIPGap</span><span class="p">,</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">mip_gap</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span>
+            <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">PoolSolutions</span><span class="p">,</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">pool_solutions</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="s2">&quot;PoolSearchMode&quot;</span><span class="p">,</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">pool_search_mode</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.optimize_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.optimize_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+        <span class="n">gurobi_callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GurobiCallback</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize the Gurobi Model.</span>
+
+<span class="sd">        The solutions are yet to be retrieved via `self.retrieve_solutions()`.</span>
+<span class="sd">        No callbacks are passed to the internal solver, and no result_storage is created</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.model must not be None after self.init_model().&quot;</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepare_model</span><span class="p">(</span>
+            <span class="n">parameters_milp</span><span class="o">=</span><span class="n">parameters_milp</span><span class="p">,</span> <span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">gurobi_callback</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">map_gurobi_status_to_do_status</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Status</span><span class="p">]</span>
+
+        <span class="c1"># raise potential exception found during callback (useful for optuna pruning, and debugging)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">,</span> <span class="n">SolveEarlyStop</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.get_var_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.get_var_value_for_ith_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_value_for_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="s2">&quot;gurobipy.Var&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>  <span class="c1"># type: ignore # avoid isinstance checks for efficiency</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get value for i-th solution of a given variable.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;self.model should not be None when calling this method.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">SolutionNumber</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">&quot;Xn&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.get_obj_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.get_obj_value_for_ith_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_obj_value_for_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get objective value for i-th solution.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;self.model should not be None when calling this method.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">SolutionNumber</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">&quot;PoolObjVal&quot;</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nb_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of solutions found by the solver.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">SolCount</span>
+
+<div class="viewcode-block" id="GurobiMilpSolver.create_empty_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.create_empty_model">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_empty_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.add_linear_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.add_linear_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_linear_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">Constr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">addLConstr</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.add_binary_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.add_binary_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_binary_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span><span class="n">vtype</span><span class="o">=</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.add_integer_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.add_integer_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_integer_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span><span class="n">vtype</span><span class="o">=</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.add_continuous_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.add_continuous_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_continuous_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span><span class="n">vtype</span><span class="o">=</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.set_model_objective">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.set_model_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_model_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">minimize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define the model objective.</span>
+
+<span class="sd">        Useful to write an `init_model()` common to gurobi and ortools/mathopt.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            expr:</span>
+<span class="sd">            minimize: if True, objective will be minimized, else maximized</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">minimize</span><span class="p">:</span>
+            <span class="n">sense</span> <span class="o">=</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">MINIMIZE</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sense</span> <span class="o">=</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">MAXIMIZE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">sense</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.construct_linear_sum">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.construct_linear_sum">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_linear_sum</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a linear sum (with variables) ready for the internal model.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">quicksum</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.add_linear_constraint_with_indicator">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.add_linear_constraint_with_indicator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_linear_constraint_with_indicator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">binvar</span><span class="p">:</span> <span class="n">VariableType</span><span class="p">,</span>
+        <span class="n">binval</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">lhs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">sense</span><span class="p">:</span> <span class="n">InequalitySense</span><span class="p">,</span>
+        <span class="n">rhs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">penalty_coeff</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConstraintType</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a linear constraint dependending on the value of an indicator (boolean var)</span>
+
+<span class="sd">        This wraps `gurobipy.Model.addGenConstrIndicator().</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            binvar:</span>
+<span class="sd">            binval:</span>
+<span class="sd">            lhs:</span>
+<span class="sd">            sense:</span>
+<span class="sd">            rhs:</span>
+<span class="sd">            penalty_coeff:</span>
+<span class="sd">            name:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">sense</span> <span class="o">==</span> <span class="n">InequalitySense</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">lhs</span> <span class="o">==</span> <span class="n">rhs</span>
+        <span class="k">elif</span> <span class="n">sense</span> <span class="o">==</span> <span class="n">InequalitySense</span><span class="o">.</span><span class="n">LOWER_OR_EQUAL</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">lhs</span> <span class="o">&lt;=</span> <span class="n">rhs</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">lhs</span> <span class="o">&gt;=</span> <span class="n">rhs</span>
+
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">addGenConstrIndicator</span><span class="p">(</span>
+                <span class="n">binvar</span><span class="p">,</span>
+                <span class="n">binval</span><span class="p">,</span>
+                <span class="n">expr</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.convert_to_variable_values">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a solution to a mapping between model variables and their values.</span>
+
+<span class="sd">        Will be used by `set_warm_start()`.</span>
+
+<span class="sd">        Override it in subclasses to have a proper warm start. You can also override</span>
+<span class="sd">        `set_warm_start()` if default behaviour is not sufficient.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.set_warm_start">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make the solver warm start from the given solution.</span>
+
+<span class="sd">        By default, this is using `convert_to_variable_values()`. If not sufficient,</span>
+<span class="sd">        you can override it. (And for instance make implementation of `convert_to_variable_values()`</span>
+<span class="sd">        raise a `NotImplementedError`.)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_warm_start_from_values</span><span class="p">(</span>
+            <span class="n">variable_values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="n">solution</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.set_warm_start_from_values">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.set_warm_start_from_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start_from_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variable_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">gurobipy</span><span class="o">.</span><span class="n">Var</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">variable_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">var</span><span class="o">.</span><span class="n">Start</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="n">var</span><span class="o">.</span><span class="n">VarHintVal</span> <span class="o">=</span> <span class="n">val</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.get_current_best_internal_objective_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.get_current_best_internal_objective_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span></div>
+
+
+<div class="viewcode-block" id="GurobiMilpSolver.get_current_best_internal_objective_value">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver.get_current_best_internal_objective_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GurobiCallback">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiCallback">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiCallback</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_solver</span><span class="p">:</span> <span class="n">GurobiMilpSolver</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">where</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">where</span> <span class="o">==</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Callback</span><span class="o">.</span><span class="n">MIPSOL</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># retrieve and store new solution</span>
+                <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">(</span>
+                    <span class="n">get_var_value_for_current_solution</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">cbGetSolution</span><span class="p">,</span>
+                    <span class="n">get_obj_value_for_current_solution</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">cbGet</span><span class="p">(</span>
+                        <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Callback</span><span class="o">.</span><span class="n">MIPSOL_OBJ</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># store mip stats</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">cbGet</span><span class="p">(</span>
+                    <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Callback</span><span class="o">.</span><span class="n">MIPSOL_OBJ</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">cbGet</span><span class="p">(</span>
+                    <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Callback</span><span class="o">.</span><span class="n">MIPSOL_OBJBND</span>
+                <span class="p">)</span>
+                <span class="c1"># end of step callback: stopping?</span>
+                <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+                    <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># catch exceptions because gurobi ignore them and do not stop solving</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">e</span>
+                <span class="n">stopping</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">SolveEarlyStop</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.solve() stopped by user callback.&quot;</span>
+                    <span class="p">)</span>
+            <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="CplexMilpSolver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CplexMilpSolver</span><span class="p">(</span><span class="n">MilpSolver</span><span class="p">):</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;docplex.mp.model.Model&quot;</span><span class="p">]</span>
+    <span class="n">results_solve</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="s2">&quot;SolveSolution&quot;</span><span class="p">]]</span>
+
+<div class="viewcode-block" id="CplexMilpSolver.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersMilp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cplex_available</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;One or several docplex didn&#39;t work, therefore your script might crash.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.model must not be None after self.init_model().&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">parameters_milp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_milp</span> <span class="o">=</span> <span class="n">ParametersMilp</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">time_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">time_limit</span> <span class="o">=</span> <span class="n">time_limit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">mip</span><span class="o">.</span><span class="n">tolerances</span><span class="o">.</span><span class="n">mipgap</span> <span class="o">=</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">mip_gap</span>
+        <span class="n">listener</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">parameters_milp</span><span class="o">.</span><span class="n">retrieve_all_solution</span><span class="p">:</span>
+
+            <span class="k">class</span><span class="w"> </span><span class="nc">SolutionStorage</span><span class="p">(</span><span class="n">SolutionListener</span><span class="p">):</span>
+                <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_solutions</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">def</span><span class="w"> </span><span class="nf">notify_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_solutions</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sol</span><span class="p">]</span>
+
+            <span class="n">listener</span> <span class="o">=</span> <span class="n">SolutionStorage</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_progress_listener</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+        <span class="n">results</span><span class="p">:</span> <span class="s2">&quot;SolveSolution&quot;</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">log_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">listener</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results_solve</span> <span class="o">=</span> <span class="p">[</span><span class="n">results</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results_solve</span> <span class="o">=</span> <span class="n">listener</span><span class="o">.</span><span class="n">intermediate_solutions</span> <span class="o">+</span> <span class="p">[</span><span class="n">results</span><span class="p">]</span>
+        <span class="c1"># logger.info(f&quot;Solver found {results.get()} solutions&quot;)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">results_solve</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get_objective_value</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_solutions</span><span class="p">(</span><span class="n">parameters_milp</span><span class="o">=</span><span class="n">parameters_milp</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.get_var_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.get_var_value_for_ith_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_value_for_ith_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="s2">&quot;docplex.mp.dvar.Var&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_solve</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get_var_value</span><span class="p">(</span><span class="n">var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.get_obj_value_for_ith_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.get_obj_value_for_ith_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_obj_value_for_ith_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_solve</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nb_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of solutions found by the solver.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_solve</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results_solve</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CplexMilpSolver.create_empty_model">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.create_empty_model">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_empty_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.add_linear_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.add_linear_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_linear_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.add_binary_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.add_binary_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_binary_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.add_integer_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.add_integer_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_integer_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.add_continuous_variable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.add_continuous_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_continuous_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.set_model_objective">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.set_model_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_model_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">minimize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CplexMilpSolver.construct_linear_sum">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.CplexMilpSolver.construct_linear_sum">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_linear_sum</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

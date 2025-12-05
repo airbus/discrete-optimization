@@ -1,0 +1,324 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.tsp.solvers.quantum &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.tsp.solvers.quantum</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.tsp.solvers.quantum</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2024 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.qiskit_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QiskitQaoaSolver</span><span class="p">,</span>
+    <span class="n">QiskitVqeSolver</span><span class="p">,</span>
+    <span class="n">qiskit_available</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.tsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Point2DTspProblem</span><span class="p">,</span> <span class="n">TspSolution</span><span class="p">,</span> <span class="n">length</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.tsp.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TspSolver</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">qiskit_available</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticProgram</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationResult</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationApplication</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;Tsp2dQiskit, QaoaTspSolver, VqeTspSolver, &quot;</span>
+        <span class="s2">&quot;need qiskit, qiskit_aer, qiskit_algorithms, qiskit_ibm_runtime, &quot;</span>
+        <span class="s2">&quot;and qiskit_optimization to be installed.&quot;</span>
+        <span class="s2">&quot;You can use the command `pip install discrete-optimization[quantum]` to install them.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">OptimizationApplication</span> <span class="o">=</span> <span class="nb">object</span>
+    <span class="n">OptimizationResult</span> <span class="o">=</span> <span class="nb">object</span>
+    <span class="n">QuadraticProgram</span> <span class="o">=</span> <span class="nb">object</span>
+
+
+<div class="viewcode-block" id="Tsp2dQiskit">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.Tsp2dQiskit">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Tsp2dQiskit</span><span class="p">(</span><span class="n">OptimizationApplication</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Point2DTspProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            problem : the TSP problem instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+
+<div class="viewcode-block" id="Tsp2dQiskit.to_quadratic_program">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.Tsp2dQiskit.to_quadratic_program">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_quadratic_program</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuadraticProgram</span><span class="p">:</span>
+        <span class="n">quadratic_program</span> <span class="o">=</span> <span class="n">QuadraticProgram</span><span class="p">()</span>
+
+        <span class="c1"># X_i,j == 1 if the point i is take in j_ième position</span>
+
+        <span class="n">var_names</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+                <span class="n">x_new</span> <span class="o">=</span> <span class="n">quadratic_program</span><span class="o">.</span><span class="n">binary_var</span><span class="p">(</span><span class="s2">&quot;x&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">))</span>
+                <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="n">x_new</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="n">constant</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">quadratic</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+            <span class="n">coeff</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_index</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">quadratic</span><span class="p">[</span><span class="n">var</span><span class="p">,</span> <span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">coeff</span>
+
+            <span class="n">var</span> <span class="o">=</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">coeff</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_index</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">quadratic</span><span class="p">[</span><span class="n">var</span><span class="p">,</span> <span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">coeff</span>
+
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
+                        <span class="n">var1</span> <span class="o">=</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span>
+                        <span class="n">var2</span> <span class="o">=</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+                        <span class="n">coeff</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                            <span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                            <span class="p">],</span>
+                        <span class="p">)</span>
+                        <span class="n">quadratic</span><span class="p">[</span><span class="n">var1</span><span class="p">,</span> <span class="n">var2</span><span class="p">]</span> <span class="o">=</span> <span class="n">coeff</span>
+
+        <span class="c1"># each point must be taken exactly one times ( indice i )</span>
+        <span class="c1"># each position must be chosen exactly one times ( indice j )</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">())[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">quadratic</span><span class="p">[</span><span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)],</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]]</span> <span class="o">=</span> <span class="o">-</span><span class="n">p</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">quadratic</span><span class="p">[</span><span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)],</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]]</span> <span class="o">+=</span> <span class="o">-</span><span class="n">p</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+                    <span class="n">quadratic</span><span class="p">[</span><span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)],</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">)]]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">p</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+                <span class="n">quadratic</span><span class="p">[</span><span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)],</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]]</span> <span class="o">+=</span> <span class="o">-</span><span class="n">p</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+                    <span class="n">quadratic</span><span class="p">[</span><span class="n">var_names</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)],</span> <span class="n">var_names</span><span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">)]]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">p</span>
+
+        <span class="n">quadratic_program</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="n">linear</span><span class="p">,</span> <span class="n">quadratic</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">quadratic_program</span></div>
+
+
+<div class="viewcode-block" id="Tsp2dQiskit.interpret">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.Tsp2dQiskit.interpret">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interpret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_result_to_x</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="n">start_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_index</span>
+        <span class="n">end_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_index</span>
+        <span class="n">permutation</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span>
+
+        <span class="n">index_curr</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="n">index_curr</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+                    <span class="n">permutation</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">index_curr</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">TspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">start_index</span><span class="o">=</span><span class="n">start_index</span><span class="p">,</span>
+            <span class="n">end_index</span><span class="o">=</span><span class="n">end_index</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">permutation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sol</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="QaoaTspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.QaoaTspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QaoaTspSolver</span><span class="p">(</span><span class="n">TspSolver</span><span class="p">,</span> <span class="n">QiskitQaoaSolver</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Point2DTspProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsp_qiskit</span> <span class="o">=</span> <span class="n">Tsp2dQiskit</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+
+<div class="viewcode-block" id="QaoaTspSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.QaoaTspSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quadratic_programm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tsp_qiskit</span><span class="o">.</span><span class="n">to_quadratic_program</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="QaoaTspSolver.retrieve_current_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.QaoaTspSolver.retrieve_current_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tsp_qiskit</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="VqeTspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.VqeTspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VqeTspSolver</span><span class="p">(</span><span class="n">TspSolver</span><span class="p">,</span> <span class="n">QiskitVqeSolver</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Point2DTspProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsp_qiskit</span> <span class="o">=</span> <span class="n">Tsp2dQiskit</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VqeTspSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.VqeTspSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quadratic_programm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tsp_qiskit</span><span class="o">.</span><span class="n">to_quadratic_program</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="VqeTspSolver.retrieve_current_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsp.solvers.html#discrete_optimization.tsp.solvers.quantum.VqeTspSolver.retrieve_current_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tsp_qiskit</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

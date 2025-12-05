@@ -1,0 +1,1127 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.gpdp.problem &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.gpdp.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.gpdp.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="c1"># Generic pickup and delivery problem</span>
+<span class="c1"># The General Pickup and Delivery Problem</span>
+<span class="c1"># February 1995 Transportation Science 29(1):17-29</span>
+<span class="c1"># https://www.researchgate.net/publication/239063487_The_General_Pickup_and_Delivery_Problem</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">KeysView</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.graph_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.tsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Point2DTspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Customer2DVrpProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrptw.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">VRPTWProblem</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">Node</span> <span class="o">=</span> <span class="n">Hashable</span>
+<span class="n">Edge</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="GpdpSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GpdpSolution</span><span class="p">(</span><span class="n">Solution</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;GpdpProblem&quot;</span><span class="p">,</span>
+        <span class="n">trajectories</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]],</span>
+        <span class="n">times</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">resource_evolution</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trajectories</span> <span class="o">=</span> <span class="n">trajectories</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="n">times</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resource_evolution</span> <span class="o">=</span> <span class="n">resource_evolution</span>
+
+<div class="viewcode-block" id="GpdpSolution.copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GpdpSolution&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">GpdpSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">trajectories</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectories</span><span class="p">,</span>
+            <span class="n">times</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="p">,</span>
+            <span class="n">resource_evolution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resource_evolution</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GpdpSolution.check_pickup_deliverable">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution.check_pickup_deliverable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_pickup_deliverable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">pickup</span><span class="p">,</span> <span class="n">deliverable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_pickup_deliverable</span><span class="p">:</span>
+            <span class="n">index_vehicles_pickup</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">traj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectories</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">traj</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pickup</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">index_vehicles_deliverable</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">traj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectories</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">traj</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deliverable</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">ok</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">index_vehicles_pickup</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">index_vehicles_deliverable</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="n">vehicle_p</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">index_vehicles_pickup</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">vehicle_d</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">index_vehicles_deliverable</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">ok</span> <span class="ow">and</span> <span class="n">vehicle_p</span> <span class="o">==</span> <span class="n">vehicle_d</span>
+            <span class="n">index_p</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectories</span><span class="p">[</span><span class="n">vehicle_p</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pickup</span><span class="p">]</span>
+            <span class="n">index_d</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectories</span><span class="p">[</span><span class="n">vehicle_d</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deliverable</span><span class="p">]</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">ok</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">index_p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">min</span><span class="p">(</span><span class="n">index_d</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ok</span></div>
+
+
+<div class="viewcode-block" id="GpdpSolution.change_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution.change_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_problem</span><span class="p">,</span> <span class="n">GpdpProblem</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;new_problem must be a GpdpProblem for GpdpSolution.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">new_problem</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GpdpProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GpdpProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+    <span class="n">MAX_VALUE</span> <span class="o">=</span> <span class="mf">10e9</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">number_vehicle</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">nodes_transportation</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span>
+        <span class="n">nodes_origin</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span>
+        <span class="n">nodes_target</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span>
+        <span class="n">list_pickup_deliverable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]],</span>
+        <span class="n">origin_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">],</span>
+        <span class="n">target_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">],</span>
+        <span class="n">resources_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">capacities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
+        <span class="n">resources_flow_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">resources_flow_edges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Edge</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">distance_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">time_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">time_delta_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">coordinates_2d</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">clusters_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># For each node, returns an ID of a cluster associated. # This can modelize selective TSP</span>
+        <span class="n">list_pickup_deliverable_per_cluster</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mandatory_node_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="c1"># indicated for each node if the node is optional (=False) or mandatory (=True)</span>
+        <span class="n">cumulative_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_windows_nodes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_windows_cluster</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">group_identical_vehicles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">slack_time_bound_per_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">node_vehicle</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">compute_graph</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        number_vehicle = M in the paper</span>
+<span class="sd">        nodes_transportation = V in the paper</span>
+<span class="sd">        nodes_origin = M+ in the paper</span>
+<span class="sd">        nodes_target = M- in the paper</span>
+<span class="sd">        list_pickup_deliverable : List of Ni- and Ni+</span>
+<span class="sd">        depart_vehicle : {vehicle: k-} in the paper</span>
+<span class="sd">        resources_set : additional thing from the paper (we consider different ressource)</span>
+<span class="sd">        capacities : give the capacities of vehicles and for different ressources.</span>
+<span class="sd">        resources_flow_node: {node: {resource: q_node,resource}} (positive for pickup, negative for delivery)</span>
+<span class="sd">        resources_flow_edges: {edge: {resource: q_edge,resource}} (optional, can modelize fuel burn during a travel)</span>
+<span class="sd">        :param number_vehicle:</span>
+<span class="sd">        :param nodes_transportation:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_vehicle</span> <span class="o">=</span> <span class="n">number_vehicle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_transportation</span> <span class="o">=</span> <span class="n">nodes_transportation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_origin</span> <span class="o">=</span> <span class="n">nodes_origin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_target</span> <span class="o">=</span> <span class="n">nodes_target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coordinates_2d</span> <span class="o">=</span> <span class="n">coordinates_2d</span>  <span class="c1"># can be none if it doesn&#39;t make sense.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_vehicle</span> <span class="o">=</span> <span class="n">node_vehicle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_pickup_deliverable</span> <span class="o">=</span> <span class="n">list_pickup_deliverable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_pickup_deliverable_per_cluster</span> <span class="o">=</span> <span class="n">list_pickup_deliverable_per_cluster</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">origin_vehicle</span> <span class="o">=</span> <span class="n">origin_vehicle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_vehicle</span> <span class="o">=</span> <span class="n">target_vehicle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources_set</span> <span class="o">=</span> <span class="n">resources_set</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">capacities</span> <span class="o">=</span> <span class="n">capacities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources_flow_node</span> <span class="o">=</span> <span class="n">resources_flow_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources_flow_edges</span> <span class="o">=</span> <span class="n">resources_flow_edges</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distance_delta</span> <span class="o">=</span> <span class="n">distance_delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_delta</span> <span class="o">=</span> <span class="n">time_delta</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes_origin</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes_target</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes_transportation</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">time_delta_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_delta_node</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_delta_node</span> <span class="o">=</span> <span class="n">time_delta_node</span>
+
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;origin&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;vehicle&quot;</span><span class="p">:</span> <span class="n">v</span><span class="p">,</span>
+                <span class="s2">&quot;time_delta_node&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]],</span>
+            <span class="p">}</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;target&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;vehicle&quot;</span><span class="p">:</span> <span class="n">v</span><span class="p">,</span>
+                <span class="s2">&quot;time_delta_node&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]],</span>
+            <span class="p">}</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes_transportation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;customer&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;time_delta_node&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="n">n</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources_flow_node</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources_flow_node</span><span class="p">[</span><span class="n">node</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources_flow_node</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">res</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">edges_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_edges</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Graph</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">compute_graph</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;compute graph&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_graph</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clusters_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">clusters_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clusters_dict</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clusters_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clusters_dict</span> <span class="o">=</span> <span class="n">clusters_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clusters_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clusters_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clusters_set</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clusters_dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">clusters_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mandatory_node_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mandatory_node_info</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="kc">True</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mandatory_node_info</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mandatory_node_info</span> <span class="o">=</span> <span class="n">mandatory_node_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">cumulative_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_constraints</span> <span class="o">=</span> <span class="n">cumulative_constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_windows_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span>
+        <span class="k">if</span> <span class="n">time_windows_nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_windows_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_windows_nodes</span> <span class="o">=</span> <span class="n">time_windows_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_windows_cluster</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span>
+        <span class="k">if</span> <span class="n">time_windows_cluster</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_windows_cluster</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clusters_set</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_windows_cluster</span> <span class="o">=</span> <span class="n">time_windows_cluster</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_to_index</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">))</span>
+        <span class="p">}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_edges_for_vehicle</span><span class="p">(</span><span class="n">vehicle</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KeysView</span><span class="p">[</span><span class="n">Edge</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compute_graph</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="s2">&quot;self.graph must not be None after self.compute_graph().&quot;</span>
+                    <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_vehicle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[</span>
+                    <span class="n">e</span>
+                    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">get_edges</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">vehicle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_vehicle</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">set</span><span class="p">())</span>
+                        <span class="ow">and</span> <span class="n">vehicle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_vehicle</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">set</span><span class="p">())</span>
+                    <span class="p">)</span>
+                    <span class="ow">or</span> <span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">vehicle</span><span class="p">])</span>
+                    <span class="ow">or</span> <span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">vehicle</span><span class="p">])</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">get_edges</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_edges_for_vehicle</span> <span class="o">=</span> <span class="n">get_edges_for_vehicle</span>
+        <span class="k">if</span> <span class="n">group_identical_vehicles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span> <span class="o">=</span> <span class="n">group_identical_vehicles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vehicle_to_group</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vehicle_to_group</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">any_grouping</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vehicles_representative</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_identical_vehicles</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">slack_time_bound_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">slack_time_bound_per_node</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">node</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="n">node</span><span class="p">])</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_delta_node</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">slack_time_bound_per_node</span> <span class="o">=</span> <span class="n">slack_time_bound_per_node</span>
+
+<div class="viewcode-block" id="GpdpProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">GpdpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>  <span class="c1"># type: ignore # avoid isinstance checks for efficiency</span>
+        <span class="n">res_distance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">res_time</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">trajectories</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">res_distance</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;distance_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_distance</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">times</span><span class="p">:</span>
+                <span class="n">res_time</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;time_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res_time</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;time_</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">res_distance</span><span class="p">[</span><span class="s2">&quot;distance_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">res_distance</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">res_time</span><span class="p">[</span><span class="s2">&quot;time_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">res_time</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">res</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">res_distance</span><span class="p">)</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">res_time</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.compute_distance">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.compute_distance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">distance</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">GpdpProblem</span><span class="o">.</span><span class="n">MAX_VALUE</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">distance</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.evaluate_function_node">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.evaluate_function_node">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_function_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_1</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">node_2</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_graph</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.graph must not be None after self.compute_graph().&quot;</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges_infos_dict</span><span class="p">[(</span><span class="n">node_1</span><span class="p">,</span> <span class="n">node_2</span><span class="p">)][</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">GpdpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore  # avoid isinstance checks for efficiency</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.update_edges">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.update_edges">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edges_dict</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">node1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">node</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">edges_dict</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">node1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">node1</span><span class="p">],</span>
+                    <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">node1</span><span class="p">],</span>
+                <span class="p">}</span>
+                <span class="n">resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources_flow_edges</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">node</span><span class="p">,</span> <span class="n">node1</span><span class="p">),</span> <span class="p">{})</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">edges_dict</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">node1</span><span class="p">][</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.update_graph">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.update_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_edges</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_graph</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.compute_graph">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.compute_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">(</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">[</span><span class="n">n</span><span class="p">])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">],</span>
+            <span class="n">edges</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges_dict</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">node1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges_dict</span>
+                <span class="k">for</span> <span class="n">node2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges_dict</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span>
+            <span class="p">],</span>
+            <span class="n">undirected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">compute_predecessors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.get_solution_type">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">GpdpSolution</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span><span class="n">dict_attribute_to_type</span><span class="o">=</span><span class="p">{})</span></div>
+
+
+<div class="viewcode-block" id="GpdpProblem.get_objective_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">SINGLE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;distance_max&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">1.0</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;Routing problem : </span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_nodes</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; nodes </span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; vehicles </span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clusters_to_node</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; clusters of node</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="n">s</span></div>
+
+
+
+<div class="viewcode-block" id="build_pruned_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.build_pruned_problem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_pruned_problem</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">,</span> <span class="n">undirected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">compute_graph</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">problem</span><span class="o">.</span><span class="n">compute_graph</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;self.graph must not be None after problem.compute_graph().&quot;</span>
+            <span class="p">)</span>
+    <span class="n">kept_edges</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">graph_nx</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">neighbors_dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph_nx</span><span class="p">:</span>
+            <span class="n">graph_nx</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">neighbors</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">neighbors_dict</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">((</span><span class="n">node</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges_infos_dict</span><span class="p">[(</span><span class="n">node</span><span class="p">,</span> <span class="n">n</span><span class="p">)][</span><span class="s2">&quot;distance&quot;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">neighbors</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">node</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sorted_nodes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">kept_nodes</span> <span class="o">=</span> <span class="n">sorted_nodes</span><span class="p">[:</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_nodes</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_nodes</span><span class="p">))]</span>
+            <span class="n">kept_edges</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kept_nodes</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">undirected</span><span class="p">:</span>
+                <span class="n">kept_edges</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kept_nodes</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">:</span>
+        <span class="n">kept_edges</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">],</span> <span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]))</span>
+        <span class="n">kept_edges</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">],</span> <span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">kept_edges</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph_nx</span><span class="p">:</span>
+            <span class="n">graph_nx</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph_nx</span><span class="p">:</span>
+            <span class="n">graph_nx</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">graph_nx</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">connected_components</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">weakly_connected_components</span><span class="p">(</span><span class="n">graph_nx</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">connected_components</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">added_edges</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">connected_components</span><span class="p">)):</span>
+            <span class="n">nodes_j</span> <span class="o">=</span> <span class="n">connected_components</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">connected_components</span><span class="p">)):</span>
+                <span class="n">nodes_k</span> <span class="o">=</span> <span class="n">connected_components</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">distance</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">((</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">),</span> <span class="n">problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges_infos_dict</span><span class="p">[(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">)][</span><span class="s2">&quot;distance&quot;</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">n1</span> <span class="ow">in</span> <span class="n">nodes_j</span>
+                    <span class="k">for</span> <span class="n">n2</span> <span class="ow">in</span> <span class="n">nodes_k</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">sorted_nodes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">kept_nodes</span> <span class="o">=</span> <span class="n">sorted_nodes</span><span class="p">[:</span> <span class="nb">min</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_nodes</span><span class="p">))]</span>
+                    <span class="n">kept_edges</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kept_nodes</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">undirected</span><span class="p">:</span>
+                        <span class="n">kept_edges</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kept_nodes</span><span class="p">])</span>
+                    <span class="n">added_edges</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kept_nodes</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">undirected</span><span class="p">:</span>
+                        <span class="n">added_edges</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kept_nodes</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">added_edges</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph_nx</span><span class="p">:</span>
+                <span class="n">graph_nx</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph_nx</span><span class="p">:</span>
+                <span class="n">graph_nx</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">graph_nx</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+        <span class="n">number_vehicle</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">number_vehicle</span><span class="p">,</span>
+        <span class="n">nodes_transportation</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_transportation</span><span class="p">,</span>
+        <span class="n">nodes_origin</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_origin</span><span class="p">,</span>
+        <span class="n">nodes_target</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_target</span><span class="p">,</span>
+        <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">list_pickup_deliverable</span><span class="p">,</span>
+        <span class="n">origin_vehicle</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">,</span>
+        <span class="n">target_vehicle</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">,</span>
+        <span class="n">resources_set</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_set</span><span class="p">,</span>
+        <span class="n">capacities</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">capacities</span><span class="p">,</span>
+        <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">resources_flow_node</span><span class="p">,</span>
+        <span class="n">resources_flow_edges</span><span class="o">=</span><span class="p">{</span><span class="n">e</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources_flow_edges</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">kept_edges</span><span class="p">},</span>
+        <span class="n">distance_delta</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">x</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">y</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="n">kept_edges</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span>
+        <span class="p">},</span>
+        <span class="n">time_delta</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">x</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">y</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="n">kept_edges</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span>
+        <span class="p">},</span>
+        <span class="n">time_delta_node</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">,</span>
+        <span class="n">mandatory_node_info</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">mandatory_node_info</span><span class="p">,</span>
+        <span class="n">cumulative_constraints</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">cumulative_constraints</span><span class="p">,</span>
+        <span class="n">list_pickup_deliverable_per_cluster</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">list_pickup_deliverable_per_cluster</span><span class="p">,</span>
+        <span class="n">clusters_dict</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">clusters_dict</span><span class="p">,</span>
+        <span class="n">coordinates_2d</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">coordinates_2d</span><span class="p">,</span>
+        <span class="n">compute_graph</span><span class="o">=</span><span class="n">compute_graph</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="max_distance">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.max_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">max_distance</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="max_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.max_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">max_time</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="o">+</span> <span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_matrix_distance">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.build_matrix_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_matrix_distance</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
+    <span class="n">matrix_distance</span> <span class="o">=</span> <span class="mi">100000</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+            <span class="n">matrix_distance</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">problem</span><span class="o">.</span><span class="n">distance_delta</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">matrix_distance</span></div>
+
+
+
+<div class="viewcode-block" id="build_matrix_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.build_matrix_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_matrix_time</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">GpdpProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
+    <span class="n">matrix_time</span> <span class="o">=</span> <span class="mi">10000</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">all_nodes_dict</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+            <span class="n">matrix_time</span><span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">problem</span><span class="o">.</span><span class="n">index_nodes</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">matrix_time</span></div>
+
+
+
+<div class="viewcode-block" id="ProxyClass">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.ProxyClass">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProxyClass</span><span class="p">:</span>
+<div class="viewcode-block" id="ProxyClass.from_vrp_to_gpdp">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.ProxyClass.from_vrp_to_gpdp">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_vrp_to_gpdp</span><span class="p">(</span>
+        <span class="n">vrp_problem</span><span class="p">:</span> <span class="n">Customer2DVrpProblem</span><span class="p">,</span> <span class="n">compute_graph</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+        <span class="n">nb_vehicle</span> <span class="o">=</span> <span class="n">vrp_problem</span><span class="o">.</span><span class="n">vehicle_count</span>
+        <span class="n">nb_customers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vrp_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">)</span>
+        <span class="n">all_start_index</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">vrp_problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">)</span>
+        <span class="n">all_end_index</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">vrp_problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">)</span>
+        <span class="n">clients_node</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">vrp_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_start_index</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_end_index</span>
+        <span class="p">]</span>
+        <span class="n">virtual_debut_node</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">)</span> <span class="o">+</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)]</span>
+        <span class="n">virtual_end_node</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">)</span> <span class="o">+</span> <span class="n">nb_vehicle</span> <span class="o">+</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">virtual_to_initial</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">virtual_debut_node</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">vrp_problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">virtual_debut_node</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">virtual_to_end</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">virtual_end_node</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">vrp_problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">virtual_end_node</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">real_client_to_initial</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">j</span><span class="p">:</span> <span class="n">clients_node</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">origin_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">virtual_debut_node</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">target_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">virtual_end_node</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">clients_gpdp</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">))]</span>
+            <span class="o">+</span> <span class="n">virtual_debut_node</span>
+            <span class="o">+</span> <span class="n">virtual_end_node</span>
+        <span class="p">)</span>
+        <span class="n">dictionnary_distance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">time_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">resources_flow_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">coordinates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">clients_gpdp</span><span class="p">:</span>
+            <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">time_delta</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">clients_gpdp</span><span class="p">:</span>
+                <span class="n">prev_node1</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">prev_node2</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">real_client_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node1</span> <span class="o">=</span> <span class="n">real_client_to_initial</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">virtual_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node1</span> <span class="o">=</span> <span class="n">virtual_to_initial</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># node1 in virtual_to_end:</span>
+                    <span class="n">prev_node1</span> <span class="o">=</span> <span class="n">virtual_to_end</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">real_client_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node2</span> <span class="o">=</span> <span class="n">real_client_to_initial</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">virtual_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node2</span> <span class="o">=</span> <span class="n">virtual_to_initial</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># node2 in virtual_to_end:</span>
+                    <span class="n">prev_node2</span> <span class="o">=</span> <span class="n">virtual_to_end</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span>
+                <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">vrp_problem</span><span class="o">.</span><span class="n">evaluate_function_indexes</span><span class="p">(</span>
+                        <span class="n">index_1</span><span class="o">=</span><span class="n">prev_node1</span><span class="p">,</span> <span class="n">index_2</span><span class="o">=</span><span class="n">prev_node2</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+                <span class="n">time_delta</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">]</span> <span class="o">=</span> <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">clients_gpdp</span><span class="p">:</span>
+            <span class="n">prev_node</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">real_client_to_initial</span><span class="p">:</span>
+                <span class="n">prev_node</span> <span class="o">=</span> <span class="n">real_client_to_initial</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">virtual_to_initial</span><span class="p">:</span>
+                <span class="n">prev_node</span> <span class="o">=</span> <span class="n">virtual_to_initial</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># node in virtual_to_end:</span>
+                <span class="n">prev_node</span> <span class="o">=</span> <span class="n">virtual_to_end</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="n">coordinates</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">vrp_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">prev_node</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                <span class="n">vrp_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">prev_node</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">resources_flow_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">vrp_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">prev_node</span><span class="p">]</span><span class="o">.</span><span class="n">demand</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">):</span>
+            <span class="n">resources_flow_node</span><span class="p">[</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]][</span><span class="s2">&quot;demand&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="n">vrp_problem</span><span class="o">.</span><span class="n">vehicle_capacities</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">resources_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">}</span>
+        <span class="n">nodes_transportation</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">real_client_to_initial</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">nodes_origin</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">virtual_to_initial</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">nodes_target</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">virtual_to_end</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">list_pickup_deliverable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">capacities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">vrp_problem</span><span class="o">.</span><span class="n">vehicle_capacities</span><span class="p">[</span><span class="n">i</span><span class="p">])}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="c1"># {Vehicle:{resource: (min_capacity, max_capacity)}}</span>
+        <span class="n">resources_flow_edges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Edge</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dictionnary_distance</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+            <span class="n">number_vehicle</span><span class="o">=</span><span class="n">nb_vehicle</span><span class="p">,</span>
+            <span class="n">nodes_transportation</span><span class="o">=</span><span class="n">nodes_transportation</span><span class="p">,</span>
+            <span class="n">nodes_origin</span><span class="o">=</span><span class="n">nodes_origin</span><span class="p">,</span>
+            <span class="n">nodes_target</span><span class="o">=</span><span class="n">nodes_target</span><span class="p">,</span>
+            <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">list_pickup_deliverable</span><span class="p">,</span>
+            <span class="n">origin_vehicle</span><span class="o">=</span><span class="n">origin_vehicle</span><span class="p">,</span>
+            <span class="n">target_vehicle</span><span class="o">=</span><span class="n">target_vehicle</span><span class="p">,</span>
+            <span class="n">resources_set</span><span class="o">=</span><span class="n">resources_set</span><span class="p">,</span>
+            <span class="n">capacities</span><span class="o">=</span><span class="n">capacities</span><span class="p">,</span>
+            <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">resources_flow_node</span><span class="p">,</span>
+            <span class="n">resources_flow_edges</span><span class="o">=</span><span class="n">resources_flow_edges</span><span class="p">,</span>
+            <span class="n">distance_delta</span><span class="o">=</span><span class="n">dictionnary_distance</span><span class="p">,</span>
+            <span class="n">time_delta</span><span class="o">=</span><span class="n">time_delta</span><span class="p">,</span>
+            <span class="n">coordinates_2d</span><span class="o">=</span><span class="n">coordinates</span><span class="p">,</span>
+            <span class="n">compute_graph</span><span class="o">=</span><span class="n">compute_graph</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProxyClass.from_tsp_to_gpdp">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.ProxyClass.from_tsp_to_gpdp">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_tsp_to_gpdp</span><span class="p">(</span>
+        <span class="n">tsp_model</span><span class="p">:</span> <span class="n">Point2DTspProblem</span><span class="p">,</span> <span class="n">compute_graph</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+        <span class="n">nb_vehicle</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">nb_customers</span> <span class="o">=</span> <span class="n">tsp_model</span><span class="o">.</span><span class="n">node_count</span>
+        <span class="n">all_start_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">start_index</span><span class="p">}</span>
+        <span class="n">all_end_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">end_index</span><span class="p">}</span>
+        <span class="n">clients_node</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">tsp_model</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_start_index</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_end_index</span>
+        <span class="p">]</span>
+        <span class="n">virtual_debut_node</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">)</span> <span class="o">+</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)]</span>
+        <span class="n">virtual_end_node</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">)</span> <span class="o">+</span> <span class="n">nb_vehicle</span> <span class="o">+</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">virtual_to_initial</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">virtual_debut_node</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">tsp_model</span><span class="o">.</span><span class="n">start_index</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">virtual_debut_node</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">virtual_to_end</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">virtual_end_node</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">tsp_model</span><span class="o">.</span><span class="n">end_index</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">virtual_debut_node</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">real_client_to_initial</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">j</span><span class="p">:</span> <span class="n">clients_node</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">origin_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">virtual_debut_node</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">target_vehicle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">virtual_end_node</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">clients_gpdp</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clients_node</span><span class="p">))]</span>
+            <span class="o">+</span> <span class="n">virtual_debut_node</span>
+            <span class="o">+</span> <span class="n">virtual_end_node</span>
+        <span class="p">)</span>
+        <span class="n">dictionnary_distance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">time_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">resources_flow_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">coordinates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">clients_gpdp</span><span class="p">:</span>
+            <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">time_delta</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">clients_gpdp</span><span class="p">:</span>
+                <span class="n">prev_node1</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">prev_node2</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">real_client_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node1</span> <span class="o">=</span> <span class="n">real_client_to_initial</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">virtual_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node1</span> <span class="o">=</span> <span class="n">virtual_to_initial</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># node1 in virtual_to_end:</span>
+                    <span class="n">prev_node1</span> <span class="o">=</span> <span class="n">virtual_to_end</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">real_client_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node2</span> <span class="o">=</span> <span class="n">real_client_to_initial</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">virtual_to_initial</span><span class="p">:</span>
+                    <span class="n">prev_node2</span> <span class="o">=</span> <span class="n">virtual_to_initial</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># node2 in virtual_to_end:</span>
+                    <span class="n">prev_node2</span> <span class="o">=</span> <span class="n">virtual_to_end</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span>
+                <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">tsp_model</span><span class="o">.</span><span class="n">evaluate_function_indexes</span><span class="p">(</span>
+                        <span class="n">index_1</span><span class="o">=</span><span class="n">prev_node1</span><span class="p">,</span> <span class="n">index_2</span><span class="o">=</span><span class="n">prev_node2</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+                <span class="n">time_delta</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">]</span> <span class="o">=</span> <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">node1</span><span class="p">][</span><span class="n">node2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">clients_gpdp</span><span class="p">:</span>
+            <span class="n">prev_node</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">real_client_to_initial</span><span class="p">:</span>
+                <span class="n">prev_node</span> <span class="o">=</span> <span class="n">real_client_to_initial</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">virtual_to_initial</span><span class="p">:</span>
+                <span class="n">prev_node</span> <span class="o">=</span> <span class="n">virtual_to_initial</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># node in virtual_to_end:</span>
+                <span class="n">prev_node</span> <span class="o">=</span> <span class="n">virtual_to_end</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="n">coordinates</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">tsp_model</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="n">prev_node</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                <span class="n">tsp_model</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="n">prev_node</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">resources_flow_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">):</span>
+            <span class="n">resources_flow_node</span><span class="p">[</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">nodes_transportation</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">real_client_to_initial</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">nodes_origin</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">virtual_to_initial</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">nodes_target</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">virtual_to_end</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">list_pickup_deliverable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">resources_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">capacities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="c1"># {Vehicle:{resource: (min_capacity, max_capacity)}}</span>
+        <span class="n">resources_flow_edges</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dictionnary_distance</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">dictionnary_distance</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+            <span class="n">number_vehicle</span><span class="o">=</span><span class="n">nb_vehicle</span><span class="p">,</span>
+            <span class="n">nodes_transportation</span><span class="o">=</span><span class="n">nodes_transportation</span><span class="p">,</span>
+            <span class="n">nodes_origin</span><span class="o">=</span><span class="n">nodes_origin</span><span class="p">,</span>
+            <span class="n">nodes_target</span><span class="o">=</span><span class="n">nodes_target</span><span class="p">,</span>
+            <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">list_pickup_deliverable</span><span class="p">,</span>
+            <span class="n">origin_vehicle</span><span class="o">=</span><span class="n">origin_vehicle</span><span class="p">,</span>
+            <span class="n">target_vehicle</span><span class="o">=</span><span class="n">target_vehicle</span><span class="p">,</span>
+            <span class="n">resources_set</span><span class="o">=</span><span class="n">resources_set</span><span class="p">,</span>
+            <span class="n">capacities</span><span class="o">=</span><span class="n">capacities</span><span class="p">,</span>
+            <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">resources_flow_node</span><span class="p">,</span>
+            <span class="n">resources_flow_edges</span><span class="o">=</span><span class="n">resources_flow_edges</span><span class="p">,</span>
+            <span class="n">distance_delta</span><span class="o">=</span><span class="n">dictionnary_distance</span><span class="p">,</span>
+            <span class="n">time_delta</span><span class="o">=</span><span class="n">time_delta</span><span class="p">,</span>
+            <span class="n">coordinates_2d</span><span class="o">=</span><span class="n">coordinates</span><span class="p">,</span>
+            <span class="n">compute_graph</span><span class="o">=</span><span class="n">compute_graph</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProxyClass.from_tsptw_to_gpdp">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.ProxyClass.from_tsptw_to_gpdp">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_tsptw_to_gpdp</span><span class="p">(</span>
+        <span class="n">tsptw_problem</span><span class="p">:</span> <span class="s2">&quot;TSPTWProblem&quot;</span><span class="p">,</span> <span class="n">compute_graph</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a TSPTWProblem to a GpdpProblem instance.</span>
+
+<span class="sd">        This method maps the single-vehicle TSP-TW to the more general multi-vehicle</span>
+<span class="sd">        pickup and delivery framework by:</span>
+<span class="sd">        1. Creating distinct virtual origin and target nodes for the single vehicle,</span>
+<span class="sd">           both corresponding to the original depot.</span>
+<span class="sd">        2. Mapping customers and time windows to the new node structure.</span>
+<span class="sd">        3. Setting up the distance and time matrices based on the original problem.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># A TSP-TW is a single-vehicle problem</span>
+        <span class="n">nb_vehicle</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Node mapping: TSP-TW customers -&gt; GPDP transportation nodes</span>
+        <span class="c1"># We create new virtual nodes for the vehicle&#39;s start and end points</span>
+        <span class="c1"># to fit the GPDP model, even though they both represent the same depot.</span>
+
+        <span class="c1"># Original customer nodes from TSP-TW</span>
+        <span class="n">tsptw_customers</span> <span class="o">=</span> <span class="n">tsptw_problem</span><span class="o">.</span><span class="n">customers</span>
+        <span class="n">nb_customers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tsptw_customers</span><span class="p">)</span>
+
+        <span class="c1"># GPDP nodes for transportation (customers)</span>
+        <span class="n">gpdp_customer_nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">))</span>
+
+        <span class="c1"># Create virtual start/end nodes for the vehicle</span>
+        <span class="n">gpdp_origin_node</span> <span class="o">=</span> <span class="n">nb_customers</span>
+        <span class="n">gpdp_target_node</span> <span class="o">=</span> <span class="n">nb_customers</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># Map GPDP nodes back to original TSP-TW nodes</span>
+        <span class="n">gpdp_to_tsptw_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">gpdp_customer_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">tsptw_customers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">gpdp_origin_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsptw_problem</span><span class="o">.</span><span class="n">depot_node</span>
+        <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">gpdp_target_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsptw_problem</span><span class="o">.</span><span class="n">depot_node</span>
+
+        <span class="n">all_gpdp_nodes</span> <span class="o">=</span> <span class="n">gpdp_customer_nodes</span> <span class="o">+</span> <span class="p">[</span><span class="n">gpdp_origin_node</span><span class="p">,</span> <span class="n">gpdp_target_node</span><span class="p">]</span>
+
+        <span class="c1"># Build distance and time matrices for GPDP nodes</span>
+        <span class="n">distance_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">}</span>
+        <span class="n">time_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="n">v</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">original_u</span> <span class="o">=</span> <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+                <span class="n">original_v</span> <span class="o">=</span> <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                <span class="n">dist</span> <span class="o">=</span> <span class="n">tsptw_problem</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">original_u</span><span class="p">,</span> <span class="n">original_v</span><span class="p">]</span>
+                <span class="n">distance_delta</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span>
+                <span class="n">time_delta</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">dist</span>  <span class="c1"># In TSP-TW, the matrix value is effectively the travel time</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Map time windows to GPDP nodes</span>
+        <span class="n">time_windows_nodes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">gpdp_node</span><span class="p">:</span> <span class="n">tsptw_problem</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="n">original_node</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">gpdp_node</span><span class="p">,</span> <span class="n">original_node</span> <span class="ow">in</span> <span class="n">gpdp_to_tsptw_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># TSP-TW has no explicit resources, capacities, or pickup/delivery pairs</span>
+        <span class="n">empty_resources</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">empty_capacities</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="n">empty_flow</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">empty_pickup_delivery</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+            <span class="n">number_vehicle</span><span class="o">=</span><span class="n">nb_vehicle</span><span class="p">,</span>
+            <span class="n">nodes_transportation</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">gpdp_customer_nodes</span><span class="p">),</span>
+            <span class="n">nodes_origin</span><span class="o">=</span><span class="p">{</span><span class="n">gpdp_origin_node</span><span class="p">},</span>
+            <span class="n">nodes_target</span><span class="o">=</span><span class="p">{</span><span class="n">gpdp_target_node</span><span class="p">},</span>
+            <span class="n">origin_vehicle</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">gpdp_origin_node</span><span class="p">},</span>
+            <span class="n">target_vehicle</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">gpdp_target_node</span><span class="p">},</span>
+            <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">empty_pickup_delivery</span><span class="p">,</span>
+            <span class="n">resources_set</span><span class="o">=</span><span class="n">empty_resources</span><span class="p">,</span>
+            <span class="n">capacities</span><span class="o">=</span><span class="n">empty_capacities</span><span class="p">,</span>
+            <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">empty_flow</span><span class="p">,</span>
+            <span class="n">resources_flow_edges</span><span class="o">=</span><span class="n">empty_flow</span><span class="p">,</span>
+            <span class="n">distance_delta</span><span class="o">=</span><span class="n">distance_delta</span><span class="p">,</span>
+            <span class="n">time_delta</span><span class="o">=</span><span class="n">time_delta</span><span class="p">,</span>
+            <span class="n">time_windows_nodes</span><span class="o">=</span><span class="n">time_windows_nodes</span><span class="p">,</span>
+            <span class="n">compute_graph</span><span class="o">=</span><span class="n">compute_graph</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProxyClass.from_vrptw_to_gpdp">
+<a class="viewcode-back" href="../../../api/discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.ProxyClass.from_vrptw_to_gpdp">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_vrptw_to_gpdp</span><span class="p">(</span>
+        <span class="n">vrptw_problem</span><span class="p">:</span> <span class="n">VRPTWProblem</span><span class="p">,</span> <span class="n">compute_graph</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+        <span class="c1"># A TSP-TW is a single-vehicle problem</span>
+        <span class="n">nb_vehicle</span> <span class="o">=</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">nb_vehicles</span>
+
+        <span class="c1"># Node mapping: TSP-TW customers -&gt; GPDP transportation nodes</span>
+        <span class="c1"># We create new virtual nodes for the vehicle&#39;s start and end points</span>
+        <span class="c1"># to fit the GPDP model, even though they both represent the same depot.</span>
+
+        <span class="c1"># Original customer nodes from TSP-TW</span>
+        <span class="n">tsptw_customers</span> <span class="o">=</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">customers</span>
+        <span class="n">nb_customers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tsptw_customers</span><span class="p">)</span>
+        <span class="c1"># GPDP nodes for transportation (customers)</span>
+        <span class="n">gpdp_customer_nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">))</span>
+        <span class="c1"># Create virtual start/end nodes for the vehicle</span>
+        <span class="n">gpdp_origin_node</span> <span class="o">=</span> <span class="n">nb_customers</span>
+        <span class="n">gpdp_target_node</span> <span class="o">=</span> <span class="n">nb_customers</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c1"># Map GPDP nodes back to original TSP-TW nodes</span>
+        <span class="n">gpdp_to_tsptw_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">gpdp_customer_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">tsptw_customers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_customers</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">gpdp_origin_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">depot_node</span>
+        <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">gpdp_target_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">depot_node</span>
+        <span class="n">all_gpdp_nodes</span> <span class="o">=</span> <span class="n">gpdp_customer_nodes</span> <span class="o">+</span> <span class="p">[</span><span class="n">gpdp_origin_node</span><span class="p">,</span> <span class="n">gpdp_target_node</span><span class="p">]</span>
+        <span class="c1"># Build distance and time matrices for GPDP nodes</span>
+        <span class="n">distance_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">}</span>
+        <span class="n">time_delta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">all_gpdp_nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="n">v</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">original_u</span> <span class="o">=</span> <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+                <span class="n">original_v</span> <span class="o">=</span> <span class="n">gpdp_to_tsptw_map</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                <span class="n">dist</span> <span class="o">=</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">original_u</span><span class="p">,</span> <span class="n">original_v</span><span class="p">]</span>
+                <span class="n">distance_delta</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span>
+                <span class="n">time_delta</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">dist</span>
+                    <span class="o">+</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">service_times</span><span class="p">[</span>
+                        <span class="n">original_v</span>
+                    <span class="p">]</span>  <span class="c1"># In TSP-TW, the matrix value is effectively the travel time</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Map time windows to GPDP nodes</span>
+        <span class="n">time_windows_nodes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">gpdp_node</span><span class="p">:</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="n">original_node</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">gpdp_node</span><span class="p">,</span> <span class="n">original_node</span> <span class="ow">in</span> <span class="n">gpdp_to_tsptw_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># TSP-TW has no explicit resources, capacities, or pickup/delivery pairs</span>
+        <span class="n">empty_resources</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">}</span>
+        <span class="n">empty_capacities</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">vehicle_capacity</span><span class="p">)}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">empty_flow</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">gpdp_node</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;demand&quot;</span><span class="p">:</span> <span class="n">vrptw_problem</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="n">original_node</span><span class="p">]}</span>
+            <span class="k">for</span> <span class="n">gpdp_node</span><span class="p">,</span> <span class="n">original_node</span> <span class="ow">in</span> <span class="n">gpdp_to_tsptw_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">empty_pickup_delivery</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">return</span> <span class="n">GpdpProblem</span><span class="p">(</span>
+            <span class="n">number_vehicle</span><span class="o">=</span><span class="n">nb_vehicle</span><span class="p">,</span>
+            <span class="n">nodes_transportation</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">gpdp_customer_nodes</span><span class="p">),</span>
+            <span class="n">nodes_origin</span><span class="o">=</span><span class="p">{</span><span class="n">gpdp_origin_node</span><span class="p">},</span>
+            <span class="n">nodes_target</span><span class="o">=</span><span class="p">{</span><span class="n">gpdp_target_node</span><span class="p">},</span>
+            <span class="n">origin_vehicle</span><span class="o">=</span><span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">gpdp_origin_node</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)},</span>
+            <span class="n">target_vehicle</span><span class="o">=</span><span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">gpdp_target_node</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_vehicle</span><span class="p">)},</span>
+            <span class="n">list_pickup_deliverable</span><span class="o">=</span><span class="n">empty_pickup_delivery</span><span class="p">,</span>
+            <span class="n">resources_set</span><span class="o">=</span><span class="n">empty_resources</span><span class="p">,</span>
+            <span class="n">capacities</span><span class="o">=</span><span class="n">empty_capacities</span><span class="p">,</span>
+            <span class="n">resources_flow_node</span><span class="o">=</span><span class="n">empty_flow</span><span class="p">,</span>
+            <span class="n">resources_flow_edges</span><span class="o">=</span><span class="n">empty_flow</span><span class="p">,</span>
+            <span class="n">distance_delta</span><span class="o">=</span><span class="n">distance_delta</span><span class="p">,</span>
+            <span class="n">time_delta</span><span class="o">=</span><span class="n">time_delta</span><span class="p">,</span>
+            <span class="n">time_windows_nodes</span><span class="o">=</span><span class="n">time_windows_nodes</span><span class="p">,</span>
+            <span class="n">compute_graph</span><span class="o">=</span><span class="n">compute_graph</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

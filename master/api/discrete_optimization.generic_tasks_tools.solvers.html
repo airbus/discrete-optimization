@@ -1,0 +1,795 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.generic_tasks_tools.solvers.lns_cp package" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html" />
+    <link rel="prev" title="discrete_optimization.generic_tasks_tools package" href="discrete_optimization.generic_tasks_tools.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-generic-tasks-tools-solvers-package">
+<h1>discrete_optimization.generic_tasks_tools.solvers package<a class="headerlink" href="#discrete-optimization-generic-tasks-tools-solvers-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html">discrete_optimization.generic_tasks_tools.solvers.lns_cp package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#module-discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor">discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.BaseConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">BaseConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.BaseConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">BaseConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ChainingConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">ChainingConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ChainingConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">ChainingConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ConstraintExtractorList"><code class="docutils literal notranslate"><span class="pre">ConstraintExtractorList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ConstraintExtractorList.add_constraints"><code class="docutils literal notranslate"><span class="pre">ConstraintExtractorList.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ConstraintExtractorPortfolio"><code class="docutils literal notranslate"><span class="pre">ConstraintExtractorPortfolio</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ConstraintExtractorPortfolio.add_constraints"><code class="docutils literal notranslate"><span class="pre">ConstraintExtractorPortfolio.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.DummyConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">DummyConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.DummyConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">DummyConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.MultimodeConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">MultimodeConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.MultimodeConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">MultimodeConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.NbChangesAllocationConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">NbChangesAllocationConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.NbChangesAllocationConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">NbChangesAllocationConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.NbUsagesAllocationConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">NbUsagesAllocationConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.NbUsagesAllocationConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">NbUsagesAllocationConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ParamsConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">ParamsConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.ParamsConstraintExtractor.hyperparameters"><code class="docutils literal notranslate"><span class="pre">ParamsConstraintExtractor.hyperparameters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.SchedulingConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">SchedulingConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.SchedulingConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">SchedulingConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.SubresourcesAllocationConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">SubresourcesAllocationConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.SubresourcesAllocationConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">SubresourcesAllocationConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.SubtasksAllocationConstraintExtractor"><code class="docutils literal notranslate"><span class="pre">SubtasksAllocationConstraintExtractor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.SubtasksAllocationConstraintExtractor.add_constraints"><code class="docutils literal notranslate"><span class="pre">SubtasksAllocationConstraintExtractor.add_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor.build_default_constraint_extractor"><code class="docutils literal notranslate"><span class="pre">build_default_constraint_extractor()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#module-discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler">discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem.GLOBAL_MAKESPAN"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem.GLOBAL_MAKESPAN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem.INITIAL_OBJECTIVE"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem.INITIAL_OBJECTIVE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem.MAKESPAN_SUBTASKS"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem.MAKESPAN_SUBTASKS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem.NB_TASKS_DONE"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem.NB_TASKS_DONE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem.NB_UNARY_RESOURCES_USED"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem.NB_UNARY_RESOURCES_USED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem.SUM_END_SUBTASKS"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem.SUM_END_SUBTASKS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.ObjectiveSubproblem.SUM_START_SUBTASKS"><code class="docutils literal notranslate"><span class="pre">ObjectiveSubproblem.SUM_START_SUBTASKS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.TasksConstraintHandler"><code class="docutils literal notranslate"><span class="pre">TasksConstraintHandler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler.TasksConstraintHandler.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">TasksConstraintHandler.adding_constraint_from_results_store()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#module-discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools">discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilder"><code class="docutils literal notranslate"><span class="pre">NeighborBuilder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilder.find_subtasks"><code class="docutils literal notranslate"><span class="pre">NeighborBuilder.find_subtasks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilder.problem"><code class="docutils literal notranslate"><span class="pre">NeighborBuilder.problem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilderMix"><code class="docutils literal notranslate"><span class="pre">NeighborBuilderMix</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilderMix.find_subtasks"><code class="docutils literal notranslate"><span class="pre">NeighborBuilderMix.find_subtasks()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilderSubPart"><code class="docutils literal notranslate"><span class="pre">NeighborBuilderSubPart</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilderSubPart.find_subtasks"><code class="docutils literal notranslate"><span class="pre">NeighborBuilderSubPart.find_subtasks()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilderTimeWindow"><code class="docutils literal notranslate"><span class="pre">NeighborBuilderTimeWindow</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborBuilderTimeWindow.find_subtasks"><code class="docutils literal notranslate"><span class="pre">NeighborBuilderTimeWindow.find_subtasks()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborRandom"><code class="docutils literal notranslate"><span class="pre">NeighborRandom</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborRandom.find_subtasks"><code class="docutils literal notranslate"><span class="pre">NeighborRandom.find_subtasks()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborRandomAndNeighborGraph"><code class="docutils literal notranslate"><span class="pre">NeighborRandomAndNeighborGraph</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.NeighborRandomAndNeighborGraph.find_subtasks"><code class="docutils literal notranslate"><span class="pre">NeighborRandomAndNeighborGraph.find_subtasks()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.build_default_neighbor_builder"><code class="docutils literal notranslate"><span class="pre">build_default_neighbor_builder()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools.intersect"><code class="docutils literal notranslate"><span class="pre">intersect()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html#module-discrete_optimization.generic_tasks_tools.solvers.lns_cp">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.solvers.cpsat">
+<span id="discrete-optimization-generic-tasks-tools-solvers-cpsat-module"></span><h2>discrete_optimization.generic_tasks_tools.solvers.cpsat module<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.solvers.cpsat" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">AllocationBinaryOrIntegerModellingCpSatSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationBinaryOrIntegerModellingCpSatSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationIntegerModellingCpSatSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">UnaryResource</span></code>]</p>
+<p>Base class for allocation cp-sat solvers using a binary or integer modelling.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.add_allocation_changes_constraints">
+<span class="sig-name descname"><span class="pre">add_allocation_changes_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><span class="pre">AllocationSolution</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationBinaryOrIntegerModellingCpSatSolver.add_allocation_changes_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.add_allocation_changes_constraints" title="Link to this definition"></a></dt>
+<dd><p>Add and return constraints so that change variables reflect diff to ref.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task_unary_resource_allocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">used</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationBinaryOrIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on allocation of given unary resource for the given task</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+<li><p><strong>used</strong> – if True, we enforce the allocation of <cite>unary_resource</cite> to <cite>task</cite>, else we prevent it</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.allocation_modelling">
+<span class="sig-name descname"><span class="pre">allocation_modelling</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling"><span class="pre">AllocationModelling</span></a></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.allocation_modelling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_binary_allocation_variable">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_binary_allocation_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationBinaryOrIntegerModellingCpSatSolver.get_binary_allocation_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_binary_allocation_variable" title="Link to this definition"></a></dt>
+<dd><p>“Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>Only to be called when allocation_modelling == AllocationModelling.BINARY.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_integer_allocation_variable">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_integer_allocation_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationBinaryOrIntegerModellingCpSatSolver.get_integer_allocation_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_integer_allocation_variable" title="Link to this definition"></a></dt>
+<dd><p>Return an integer variable/expression storing the index of the allocated unary_resource.</p>
+<p>Assumes that exactly one unary resource is allocated to a task.
+Only to be called when allocation_modelling == AllocationModelling.INTEGER.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>task</strong></p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_task_allocation_variable">
+<span class="sig-name descname"><span class="pre">get_task_allocation_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationBinaryOrIntegerModellingCpSatSolver.get_task_allocation_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_task_allocation_variable" title="Link to this definition"></a></dt>
+<dd><p>Return an integer variable/expression storing the index of the allocated unary_resource.</p>
+<p>Assumes that exactly one unary resource is allocated to a task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationBinaryOrIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationBinaryOrIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">AllocationCpSatSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationCpSolver" title="discrete_optimization.generic_tasks_tools.allocation.AllocationCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationCpSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">UnaryResource</span></code>]</p>
+<p>Base class for allocation cp-sat solvers using a binary modelling.</p>
+<p>I.e. using 0-1 variables to model allocation status of each couple (task, unary_resource)
+This is a more general modelisation thant the integer one as it allows allocation of multiple resources.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_allocation_changes_constraints">
+<span class="sig-name descname"><span class="pre">add_allocation_changes_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><span class="pre">AllocationSolution</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.add_allocation_changes_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_allocation_changes_constraints" title="Link to this definition"></a></dt>
+<dd><p>Add and return constraints so that change variables reflect diff to ref.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_nb_unary_resource_usages">
+<span class="sig-name descname"><span class="pre">add_constraint_nb_unary_resource_usages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.add_constraint_nb_unary_resource_usages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_nb_unary_resource_usages" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_nb_allocation_changes">
+<span class="sig-name descname"><span class="pre">add_constraint_on_nb_allocation_changes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><span class="pre">AllocationSolution</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_changes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">SignEnum.LEQ</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.add_constraint_on_nb_allocation_changes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_nb_allocation_changes" title="Link to this definition"></a></dt>
+<dd><p>Add contraint on maximal number of allocation changes from the given reference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref</strong></p></li>
+<li><p><strong>nb_changes</strong> – maximal number of changes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_task_unary_resource_allocation">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task_unary_resource_allocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">used</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.add_constraint_on_task_unary_resource_allocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_task_unary_resource_allocation" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on allocation of given unary resource for the given task</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+<li><p><strong>used</strong> – if True, we enforce the allocation of <cite>unary_resource</cite> to <cite>task</cite>, else we prevent it</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_total_nb_usages">
+<span class="sig-name descname"><span class="pre">add_constraint_on_total_nb_usages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.add_constraint_on_total_nb_usages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_total_nb_usages" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_unary_resource_nb_usages">
+<span class="sig-name descname"><span class="pre">add_constraint_on_unary_resource_nb_usages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.add_constraint_on_unary_resource_nb_usages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.add_constraint_on_unary_resource_nb_usages" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.allocation_changes_variables">
+<span class="sig-name descname"><span class="pre">allocation_changes_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.allocation_changes_variables" title="Link to this definition"></a></dt>
+<dd><p>Variables tracking allocation changes from a given reference.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.allocation_changes_variables_created">
+<span class="sig-name descname"><span class="pre">allocation_changes_variables_created</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.allocation_changes_variables_created" title="Link to this definition"></a></dt>
+<dd><p>Flag telling whether ‘allocation changes variables’ have been created</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.at_most_one_unary_resource_per_task">
+<span class="sig-name descname"><span class="pre">at_most_one_unary_resource_per_task</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.at_most_one_unary_resource_per_task" title="Link to this definition"></a></dt>
+<dd><p>Flag telling if the problem accept at most one unary_resource per task.</p>
+<p>Default to False, ie several resources allowed per task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_allocation_changes_variables">
+<span class="sig-name descname"><span class="pre">create_allocation_changes_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.create_allocation_changes_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_allocation_changes_variables" title="Link to this definition"></a></dt>
+<dd><p>Create variables necessary for constraint on nb of changes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_done_variables">
+<span class="sig-name descname"><span class="pre">create_done_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.create_done_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_done_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_used_variables">
+<span class="sig-name descname"><span class="pre">create_used_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.create_used_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.create_used_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.done_variables">
+<span class="sig-name descname"><span class="pre">done_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.done_variables" title="Link to this definition"></a></dt>
+<dd><p>Variables tracking whether a task has at least one unary resource allocated.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.done_variables_created">
+<span class="sig-name descname"><span class="pre">done_variables_created</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.done_variables_created" title="Link to this definition"></a></dt>
+<dd><p>Flag telling whether ‘done variables’ have been created</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_default_tasks_n_unary_resources">
+<span class="sig-name descname"><span class="pre">get_default_tasks_n_unary_resources</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.get_default_tasks_n_unary_resources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_default_tasks_n_unary_resources" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_nb_tasks_done_variable">
+<span class="sig-name descname"><span class="pre">get_nb_tasks_done_variable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.get_nb_tasks_done_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_nb_tasks_done_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking number of tasks with at least a resource allocated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_nb_unary_resources_used_variable">
+<span class="sig-name descname"><span class="pre">get_nb_unary_resources_used_variable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.get_nb_unary_resources_used_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_nb_unary_resources_used_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking number of tasks with at least a resource allocated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_task_unary_resource_is_present_variable">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationCpSatSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.subset_tasks_of_interest">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_tasks_of_interest</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.subset_tasks_of_interest" title="Link to this definition"></a></dt>
+<dd><p>Subset of tasks of interest used for the objective.</p>
+<p>By default, all tasks.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.subset_unaryresources_allowed">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_unaryresources_allowed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.subset_unaryresources_allowed" title="Link to this definition"></a></dt>
+<dd><p>Unary resources allowed to solve the problem.</p>
+<p>By default, all unary resources.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.used_variables">
+<span class="sig-name descname"><span class="pre">used_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.used_variables" title="Link to this definition"></a></dt>
+<dd><p>Variables tracking whether a unary resource has been used at least once.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.used_variables_created">
+<span class="sig-name descname"><span class="pre">used_variables_created</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver.used_variables_created" title="Link to this definition"></a></dt>
+<dd><p>Flag telling whether ‘used variables’ have been created</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">AllocationIntegerModellingCpSatSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationIntegerModellingCpSatSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationCpSatSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">UnaryResource</span></code>]</p>
+<p>Base class for allocation cp-sat solvers using an integer modelling.</p>
+<p>I.e. using integer variables to model allocation of a task.
+This assumes that at most one unary_resource can be allocated to a task.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.add_allocation_changes_constraints">
+<span class="sig-name descname"><span class="pre">add_allocation_changes_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><span class="pre">AllocationSolution</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationIntegerModellingCpSatSolver.add_allocation_changes_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.add_allocation_changes_constraints" title="Link to this definition"></a></dt>
+<dd><p>Add and return constraints so that change variables reflect diff to ref.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task_unary_resource_allocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">used</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.add_constraint_on_task_unary_resource_allocation" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on allocation of given unary resource for the given task</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+<li><p><strong>used</strong> – if True, we enforce the allocation of <cite>unary_resource</cite> to <cite>task</cite>, else we prevent it</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.create_is_present_variables">
+<span class="sig-name descname"><span class="pre">create_is_present_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationIntegerModellingCpSatSolver.create_is_present_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.create_is_present_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.get_task_allocation_variable">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_task_allocation_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationIntegerModellingCpSatSolver.get_task_allocation_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.get_task_allocation_variable" title="Link to this definition"></a></dt>
+<dd><p>Return an integer variable/expression storing the index of the allocated unary_resource.</p>
+<p>Assumes that exactly one unary resource is allocated to a task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.is_present_variables">
+<span class="sig-name descname"><span class="pre">is_present_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.is_present_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.is_present_variables_created">
+<span class="sig-name descname"><span class="pre">is_present_variables_created</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationIntegerModellingCpSatSolver.is_present_variables_created" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">AllocationModelling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#AllocationModelling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling.BINARY">
+<span class="sig-name descname"><span class="pre">BINARY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'binary'</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling.BINARY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling.INTEGER">
+<span class="sig-name descname"><span class="pre">INTEGER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'integer'</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationModelling.INTEGER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">MultimodeCpSatSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#MultimodeCpSatSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.multimode.MultimodeCpSolver" title="discrete_optimization.generic_tasks_tools.multimode.MultimodeCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultimodeCpSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver.add_constraint_on_task_mode">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#MultimodeCpSatSolver.add_constraint_on_task_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver.add_constraint_on_task_mode" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on task mode</p>
+<p>The mode of <cite>task</cite> is fixed to <cite>mode</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>mode</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver.get_task_mode_is_present_variable">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_task_mode_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#MultimodeCpSatSolver.get_task_mode_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.MultimodeCpSatSolver.get_task_mode_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the 0-1 variable/expression telling if the mode is used for the task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>mode</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">SchedulingCpSatSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingCpSolver" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingCpSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>]</p>
+<p>Base class for most ortools/cpsat solvers handling scheduling problems.</p>
+<p>Allows to have common code.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.add_constraint_chaining_tasks">
+<span class="sig-name descname"><span class="pre">add_constraint_chaining_tasks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.add_constraint_chaining_tasks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.add_constraint_chaining_tasks" title="Link to this definition"></a></dt>
+<dd><p>Add constraint chaining task1 with task2</p>
+<p>task2 start == task1 end</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task1</strong></p></li>
+<li><p><strong>task2</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.add_constraint_on_task">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.add_constraint_on_task"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.add_constraint_on_task" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on given task start or end</p>
+<p>task start or end must compare to <cite>time</cite> according to <cite>sign</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+<li><p><strong>sign</strong></p></li>
+<li><p><strong>time</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.constraints_on_makespan">
+<span class="sig-name descname"><span class="pre">constraints_on_makespan</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.constraints_on_makespan" title="Link to this definition"></a></dt>
+<dd><p>Constraints on partial makespan so that it can be considered as the objective.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_global_makespan_variable">
+<span class="sig-name descname"><span class="pre">get_global_makespan_variable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.get_global_makespan_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_global_makespan_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking the global makespan.</p>
+<p>Default implementation uses <cite>get_subtasks_makespan_variable</cite> on last tasks.
+Beware: a further call to <cite>get_subtasks_makespan_variable</cite> with another subset of tasks can
+change the constraints on this variable and thus make it obsolete.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_makespan_variable">
+<span class="sig-name descname"><span class="pre">get_subtasks_makespan_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subtasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.get_subtasks_makespan_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_makespan_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking the makespan on a subset of tasks.</p>
+<p>Beware: a further call to <cite>get_subtasks_makespan_variable</cite> with another subset of tasks can
+change the constraints on this variable and thus make it obsolete.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subtasks</strong></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_sum_end_time_variable">
+<span class="sig-name descname"><span class="pre">get_subtasks_sum_end_time_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subtasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.get_subtasks_sum_end_time_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_sum_end_time_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking the sum of end times on a subset of tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subtasks</strong></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_sum_start_time_variable">
+<span class="sig-name descname"><span class="pre">get_subtasks_sum_start_time_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subtasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.get_subtasks_sum_start_time_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_subtasks_sum_start_time_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking the sum of start times on a subset of tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subtasks</strong></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_task_start_or_end_variable">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_task_start_or_end_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.get_task_start_or_end_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.get_task_start_or_end_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the variable storing the start or end time of given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.remove_constraints_on_objective">
+<span class="sig-name descname"><span class="pre">remove_constraints_on_objective</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#SchedulingCpSatSolver.remove_constraints_on_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver.remove_constraints_on_objective" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.cpsat.is_a_trivial_zero">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">is_a_trivial_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/cpsat.html#is_a_trivial_zero"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.cpsat.is_a_trivial_zero" title="Link to this definition"></a></dt>
+<dd><p>Return whether the variable is actually a plain 0 integer.</p>
+<p>For instance, tells if is_present variables are real variables or not to avoid
+including them in sum, max, …</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.solvers" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.generic_tasks_tools.html" class="btn btn-neutral float-left" title="discrete_optimization.generic_tasks_tools package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html" class="btn btn-neutral float-right" title="discrete_optimization.generic_tasks_tools.solvers.lns_cp package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

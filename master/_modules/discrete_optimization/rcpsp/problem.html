@@ -1,0 +1,1243 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.problem &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.multimode</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultimodeProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.precedence</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrecedenceProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchedulingProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TupleFitness</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.graph_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.fast_function</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">compute_mean_ressource</span><span class="p">,</span>
+    <span class="n">sgs_fast</span><span class="p">,</span>
+    <span class="n">sgs_fast_partial_schedule_incomplete_permutation_tasks</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.special_constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PairModeConstraint</span><span class="p">,</span>
+    <span class="n">SpecialConstraintsDescription</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">intersect</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ScheduleGenerationScheme">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.ScheduleGenerationScheme">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScheduleGenerationScheme</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">SERIAL_SGS</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">PARALLEL_SGS</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="RcpspProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RcpspProblem</span><span class="p">(</span>
+    <span class="n">MultimodeProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">SchedulingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">PrecedenceProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        resources:</span>
+<span class="sd">        non_renewable_resources:</span>
+<span class="sd">        mode_details:</span>
+<span class="sd">        successors:</span>
+<span class="sd">        horizon:</span>
+<span class="sd">        horizon_multiplier:</span>
+<span class="sd">        tasks_list:</span>
+<span class="sd">        source_task:</span>
+<span class="sd">        sink_task:</span>
+<span class="sd">        name_task:</span>
+<span class="sd">        n_jobs (int):</span>
+<span class="sd">        n_jobs_non_dummy (int):   excluding dummy activities Start (0) and End (n)</span>
+<span class="sd">        special_constraints:</span>
+<span class="sd">        do_special_constraints (bool):</span>
+<span class="sd">        relax_the_start_at_end (bool): relax some conditions only if do_special_constraints</span>
+<span class="sd">        fixed_permutation (Optional[list[int]]):</span>
+<span class="sd">        fixed_modes (Optional[list[int]]):</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        resources: {resource_name: number_of_resource}</span>
+<span class="sd">        non_renewable_resources: [resource_name3, resource_name4]</span>
+<span class="sd">        mode_details:  {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}   one key being &quot;duration&quot;</span>
+<span class="sd">        successors:</span>
+<span class="sd">        horizon:</span>
+<span class="sd">        horizon_multiplier:</span>
+<span class="sd">        tasks_list:  {task_id: list of successor task ids}</span>
+<span class="sd">        source_task:</span>
+<span class="sd">        sink_task:</span>
+<span class="sd">        name_task:</span>
+<span class="sd">        special_constraints:</span>
+<span class="sd">        relax_the_start_at_end:</span>
+<span class="sd">        fixed_permutation:</span>
+<span class="sd">        fixed_modes:</span>
+<span class="sd">        **kwargs:</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sgs</span><span class="p">:</span> <span class="n">ScheduleGenerationScheme</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">resources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span>
+        <span class="n">non_renewable_resources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">mode_details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+        <span class="n">successors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]],</span>
+        <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">horizon_multiplier</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">tasks_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">source_task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sink_task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">calendar_details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">special_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SpecialConstraintsDescription</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">relax_the_start_at_end</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">fixed_permutation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_modes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources</span> <span class="o">=</span> <span class="n">resources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources</span> <span class="o">=</span> <span class="n">non_renewable_resources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span> <span class="o">=</span> <span class="n">mode_details</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">successors</span> <span class="o">=</span> <span class="n">successors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">horizon</span> <span class="o">=</span> <span class="n">horizon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">horizon_multiplier</span> <span class="o">=</span> <span class="n">horizon_multiplier</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calendar_details</span> <span class="o">=</span> <span class="n">calendar_details</span>
+        <span class="k">if</span> <span class="n">name_task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_task</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_task</span> <span class="o">=</span> <span class="n">name_task</span>
+        <span class="k">if</span> <span class="n">tasks_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tasks_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">tasks_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">),</span> <span class="p">(</span>
+                <span class="s2">&quot;tasks_list must contain same ids as mode_details&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tasks_list</span> <span class="o">=</span> <span class="n">tasks_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_task</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="n">source_task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">((</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">source_task</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;source_task cannot be None if tasks id given in tasks_list are not all integers.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source_task</span> <span class="o">=</span> <span class="n">source_task</span>
+        <span class="k">if</span> <span class="n">sink_task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">((</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;sink_task cannot be None if tasks id given in tasks_list are not all integers.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span> <span class="o">=</span> <span class="n">sink_task</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span><span class="p">}</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_task_non_dummy</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_calendar</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_calendar</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">max</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span>
+                            <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">]}</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
+                            <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">])</span>  <span class="c1"># type: ignore</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_calendar</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resources</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">r</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+                    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span>
+                <span class="p">}</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func_sgs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func_sgs_2</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_mean_resource</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">create_np_data_and_jit_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;makespan&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;mean_resource_reserve&quot;</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mean_resource_reserve&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">special_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span> <span class="o">=</span> <span class="n">SpecialConstraintsDescription</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span> <span class="o">=</span> <span class="n">special_constraints</span>
+            <span class="n">predecessors_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">stask</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+                    <span class="n">predecessors_dict</span><span class="p">[</span><span class="n">stask</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_at_end</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">t2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">t1</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">t1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_at_end_plus_offset</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">t2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">t1</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">t1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_together</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">predt1</span> <span class="ow">in</span> <span class="n">predecessors_dict</span><span class="p">[</span><span class="n">t1</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">t2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">predt1</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">predt1</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">t2</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">predt2</span> <span class="ow">in</span> <span class="n">predecessors_dict</span><span class="p">[</span><span class="n">t2</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">t1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">predt2</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">predt2</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">t1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_graph</span><span class="p">(</span>
+            <span class="n">compute_predecessors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">predecessors_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relax_the_start_at_end</span> <span class="o">=</span> <span class="n">relax_the_start_at_end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_permutation</span> <span class="o">=</span> <span class="n">fixed_permutation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_modes</span> <span class="o">=</span> <span class="n">fixed_modes</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasks_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks_list</span>
+
+<div class="viewcode-block" id="RcpspProblem.get_task_modes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_task_modes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_modes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_last_tasks">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_last_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_last_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_precedence_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_precedence_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_precedence_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_makespan_upper_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_makespan_upper_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">horizon</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.update_functions">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.update_functions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func_sgs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func_sgs_2</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_mean_resource</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">create_np_data_and_jit_functions</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.is_rcpsp_multimode">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.is_rcpsp_multimode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_rcpsp_multimode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_multimode</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.is_varying_resource">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.is_varying_resource">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_varying_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_calendar</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.is_preemptive">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.is_preemptive">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_preemptive</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.is_multiskill">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.is_multiskill">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_multiskill</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.includes_special_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.includes_special_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">includes_special_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_resource_names">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_resource_names">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_resource_availability_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_resource_availability_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_availability_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_varying_resource</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">horizon</span> <span class="o">*</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">]]</span>  <span class="c1"># type: ignore</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.compute_graph">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.compute_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compute_predecessors</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="n">n</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">]</span>
+        <span class="n">edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">n</span><span class="p">]:</span>
+                <span class="n">edges</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="n">succ</span><span class="p">,</span> <span class="p">{})]</span>
+        <span class="k">return</span> <span class="n">Graph</span><span class="p">(</span>
+            <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">compute_predecessors</span><span class="o">=</span><span class="n">compute_predecessors</span><span class="p">,</span> <span class="n">undirected</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.evaluate_function">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.evaluate_function">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_sol</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">_schedule_to_recompute</span><span class="p">:</span>
+            <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">generate_schedule_from_permutation_serial_sgs</span><span class="p">()</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="p">[</span><span class="s2">&quot;mean_resource_reserve&quot;</span><span class="p">]:</span>
+            <span class="n">obj_mean_resource_reserve</span> <span class="o">=</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">compute_mean_resource_reserve</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj_mean_resource_reserve</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span><span class="p">:</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="n">evaluate_constraints</span><span class="p">(</span>
+                <span class="n">solution</span><span class="o">=</span><span class="n">rcpsp_sol</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">special_constraints</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">makespan</span><span class="p">,</span> <span class="n">obj_mean_resource_reserve</span><span class="p">,</span> <span class="n">penalty</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.evaluate_from_encoding">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.evaluate_from_encoding">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_from_encoding</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">int_vector</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">encoding_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">encoding_name</span> <span class="o">==</span> <span class="s2">&quot;rcpsp_permutation&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_modes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">rcpsp_modes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rcpsp_modes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_modes</span>
+            <span class="n">rcpsp_sol</span> <span class="o">=</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_permutation</span><span class="o">=</span><span class="n">int_vector</span><span class="p">,</span> <span class="n">rcpsp_modes</span><span class="o">=</span><span class="n">rcpsp_modes</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">encoding_name</span> <span class="o">==</span> <span class="s2">&quot;rcpsp_modes&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_permutation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">rcpsp_sol</span> <span class="o">=</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">rcpsp_permutation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_permutation</span><span class="p">,</span>
+                    <span class="n">rcpsp_modes</span><span class="o">=</span><span class="n">int_vector</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Encoding rcpsp_modes possible &quot;</span>
+                    <span class="s2">&quot;only if self.fixed_permutation is not None&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Encoding </span><span class="si">{</span><span class="n">encoding_name</span><span class="si">}</span><span class="s2"> not implemented&quot;</span><span class="p">)</span>
+        <span class="n">objectives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">rcpsp_sol</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objectives</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_sol</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
+        <span class="n">obj_makespan</span><span class="p">,</span> <span class="n">obj_mean_resource_reserve</span><span class="p">,</span> <span class="n">penalty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function</span><span class="p">(</span>
+            <span class="n">rcpsp_sol</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;makespan&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">obj_makespan</span><span class="p">),</span>
+            <span class="s2">&quot;mean_resource_reserve&quot;</span><span class="p">:</span> <span class="n">obj_mean_resource_reserve</span><span class="p">,</span>
+            <span class="s2">&quot;constraint_penalty&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">penalty</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.evaluate_mobj">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.evaluate_mobj">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_mobj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_sol</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TupleFitness</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_mobj_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">rcpsp_sol</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.evaluate_mobj_from_dict">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.evaluate_mobj_from_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_mobj_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dict_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TupleFitness</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">TupleFitness</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">dict_values</span><span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">],</span> <span class="n">dict_values</span><span class="p">[</span><span class="s2">&quot;mean_resource_reserve&quot;</span><span class="p">]]),</span>
+            <span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.build_mode_dict">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.build_mode_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_mode_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_modes_from_solution</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="n">modes_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">rcpsp_modes_from_solution</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">modes_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">source_task</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">modes_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">modes_dict</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.build_mode_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.build_mode_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_mode_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_modes_from_solution</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="n">modes_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_mode_dict</span><span class="p">(</span>
+            <span class="n">rcpsp_modes_from_solution</span><span class="o">=</span><span class="n">rcpsp_modes_from_solution</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">modes_dict</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.return_index_task">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.return_index_task">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">return_index_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_task</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_sol</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule_feasible</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Schedule flagged as infeasible when generated&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Missing task in schedule&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_solution_with_special_constraints</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">solution</span><span class="o">=</span><span class="n">rcpsp_sol</span><span class="p">,</span>
+                <span class="n">relax_the_start_at_end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">relax_the_start_at_end</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">modes_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_mode_dict</span><span class="p">(</span>
+            <span class="n">rcpsp_modes_from_solution</span><span class="o">=</span><span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_modes</span>
+        <span class="p">)</span>
+        <span class="n">start_times</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">start_times</span><span class="p">:</span>
+            <span class="n">resource_usage</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">:</span>
+                <span class="n">resource_usage</span><span class="p">[</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">act_id</span> <span class="ow">in</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="n">modes_dict</span><span class="p">[</span><span class="n">act_id</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+                        <span class="n">resource_usage</span><span class="p">[</span><span class="n">res</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                            <span class="n">res</span><span class="p">,</span> <span class="mi">0</span>
+                        <span class="p">)</span>
+            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">resource_usage</span><span class="p">[</span><span class="n">res</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_available</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="n">act</span>
+                            <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+                            <span class="k">if</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">act</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                            <span class="o">&lt;=</span> <span class="n">t</span>
+                            <span class="o">&lt;</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">act</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Time step resource violation: time: </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;res </span><span class="si">{</span><span class="n">res</span><span class="si">}</span><span class="s2"> res_usage: </span><span class="si">{</span><span class="n">resource_usage</span><span class="p">[</span><span class="n">res</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;res_avail: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Check for non-renewable resource violation</span>
+        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">:</span>
+            <span class="n">usage</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">act_id</span> <span class="ow">in</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">:</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="n">modes_dict</span><span class="p">[</span><span class="n">act_id</span><span class="p">]</span>
+                <span class="n">usage</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">res</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">usage</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Non-renewable resource violation: act_id: </span><span class="si">{</span><span class="n">act_id</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;res </span><span class="si">{</span><span class="n">res</span><span class="si">}</span><span class="s2"> res_usage: </span><span class="si">{</span><span class="n">usage</span><span class="si">}</span><span class="s2"> res_avail: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># Check precedences / successors</span>
+        <span class="k">for</span> <span class="n">act_id</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">succ_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">act_id</span><span class="p">]:</span>
+                <span class="n">start_succ</span> <span class="o">=</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">succ_id</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                <span class="n">end_pred</span> <span class="o">=</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">start_succ</span> <span class="o">&lt;</span> <span class="n">end_pred</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Precedence relationship broken: </span><span class="si">{</span><span class="n">act_id</span><span class="si">}</span><span class="s2"> end at </span><span class="si">{</span><span class="n">end_pred</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;while </span><span class="si">{</span><span class="n">succ_id</span><span class="si">}</span><span class="s2"> start at </span><span class="si">{</span><span class="n">start_succ</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;I&#39;m a RCPSP problem with &quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot; tasks..&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot; and ressources =&quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">val</span>
+
+<div class="viewcode-block" id="RcpspProblem.get_solution_type">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">RcpspSolution</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+        <span class="n">dict_register</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;rcpsp_permutation&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rcpsp_permutation&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION</span><span class="p">,</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION_RCPSP</span><span class="p">],</span>
+                <span class="s2">&quot;range&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">),</span>
+                <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">max_number_modes</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">x</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">])</span>
+        <span class="n">dict_register</span><span class="p">[</span><span class="s2">&quot;rcpsp_modes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rcpsp_modes&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER</span><span class="p">],</span>
+            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">,</span>
+            <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># integer.</span>
+            <span class="s2">&quot;up&quot;</span><span class="p">:</span> <span class="n">max_number_modes</span><span class="p">,</span>  <span class="c1"># integer.</span>
+            <span class="s2">&quot;arity&quot;</span><span class="p">:</span> <span class="n">max_number_modes</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">mode_arity</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">])</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span>
+        <span class="p">]</span>
+        <span class="n">dict_register</span><span class="p">[</span><span class="s2">&quot;rcpsp_modes_arity_fix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rcpsp_modes&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">TypeAttribute</span><span class="o">.</span><span class="n">LIST_INTEGER_SPECIFIC_ARITY</span><span class="p">],</span>
+            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">,</span>
+            <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;up&quot;</span><span class="p">:</span> <span class="n">mode_arity</span><span class="p">,</span>
+            <span class="s2">&quot;arities&quot;</span><span class="p">:</span> <span class="n">mode_arity</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span><span class="n">dict_register</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_objective_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+        <span class="n">objective_handling</span> <span class="o">=</span> <span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">SINGLE</span>
+        <span class="n">dict_objective</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;makespan&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="c1"># &quot;mean_resource_reserve&quot;: {&quot;type&quot;: TypeObjective.OBJECTIVE, &quot;default_weight&quot;: 1}}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_special_constraints</span><span class="p">:</span>
+            <span class="n">objective_handling</span> <span class="o">=</span> <span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span>
+            <span class="n">dict_objective</span><span class="p">[</span><span class="s2">&quot;constraint_penalty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">100.0</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">objective_handling</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="n">dict_objective</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.compute_resource_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.compute_resource_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_resource_consumption</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_sol</span><span class="p">:</span> <span class="n">RcpspSolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">]:</span>
+        <span class="n">modes_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_mode_dict</span><span class="p">(</span><span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">)</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+        <span class="n">consumptions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">),</span> <span class="n">makespan</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">act_id</span> <span class="ow">in</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ir</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">)):</span>
+                <span class="n">consumptions</span><span class="p">[</span>
+                    <span class="n">ir</span><span class="p">,</span>
+                    <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">rcpsp_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">act_id</span><span class="p">][</span><span class="n">modes_dict</span><span class="p">[</span><span class="n">act_id</span><span class="p">]][</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">[</span><span class="n">ir</span><span class="p">]</span>
+                <span class="p">]</span>
+        <span class="k">return</span> <span class="n">consumptions</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.plot_ressource_view">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.plot_ressource_view">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_ressource_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rcpsp_sol</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">consumption</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_resource_consumption</span><span class="p">(</span><span class="n">rcpsp_sol</span><span class="o">=</span><span class="n">rcpsp_sol</span><span class="p">)</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">)):</span>
+            <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span>
+                <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resources_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">consumption</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;RcpspProblem&quot;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">RcpspProblem</span><span class="p">(</span>
+            <span class="n">resources</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">,</span>
+            <span class="n">tasks_list</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+            <span class="n">source_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+            <span class="n">sink_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+            <span class="n">non_renewable_resources</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">,</span>
+            <span class="n">mode_details</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode_details</span><span class="p">),</span>
+            <span class="n">successors</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">),</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+            <span class="n">horizon_multiplier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">horizon_multiplier</span><span class="p">,</span>
+            <span class="n">name_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name_task</span><span class="p">,</span>
+            <span class="n">mean_resource_reserve</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">costs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mean_resource_reserve&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="n">fixed_modes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_modes</span><span class="p">,</span>
+            <span class="n">fixed_permutation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_permutation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_dummy_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_dummy_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspSolution</span><span class="p">:</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">rcpsp_permutation</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">)),</span>
+            <span class="n">rcpsp_modes</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs_non_dummy</span><span class="p">)],</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_resource_available">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_resource_available">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_calendar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="n">time</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.get_max_resource_capacity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.get_max_resource_capacity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_max_resource_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_calendar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]))</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.set_fixed_attributes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.set_fixed_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_fixed_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoding_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">att</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_attribute_register</span><span class="p">()</span><span class="o">.</span><span class="n">dict_attribute_to_type</span><span class="p">[</span><span class="n">encoding_str</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">att</span> <span class="o">==</span> <span class="s2">&quot;rcpsp_modes&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_fixed_modes</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">att</span> <span class="o">==</span> <span class="s2">&quot;rcpsp_permutation&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_fixed_permutation</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">rcpsp_permutation</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.set_fixed_modes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.set_fixed_modes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_fixed_modes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fixed_modes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_modes</span> <span class="o">=</span> <span class="n">fixed_modes</span></div>
+
+
+<div class="viewcode-block" id="RcpspProblem.set_fixed_permutation">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem.set_fixed_permutation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_fixed_permutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fixed_permutation</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_permutation</span> <span class="o">=</span> <span class="n">fixed_permutation</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="create_np_data_and_jit_functions">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.create_np_data_and_jit_functions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_np_data_and_jit_functions</span><span class="p">(</span>
+    <span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="n">Callable</span><span class="p">[</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="nb">bool</span><span class="p">],</span>
+    <span class="p">],</span>
+    <span class="n">Callable</span><span class="p">[</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="nb">bool</span><span class="p">],</span>
+    <span class="p">],</span>
+    <span class="n">Callable</span><span class="p">[</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="nb">float</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">]:</span>
+    <span class="n">consumption_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span>
+            <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">max_number_of_mode</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">duration_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">max_number_of_mode</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span>
+    <span class="p">)</span>
+    <span class="n">predecessors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+    <span class="n">successors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+    <span class="n">horizon</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">horizon</span>
+    <span class="n">ressource_available</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">),</span> <span class="n">horizon</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span>
+    <span class="p">)</span>
+    <span class="n">ressource_renewable</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">minimum_starting_time_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)):</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">index_mode</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">)):</span>
+                <span class="n">consumption_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">index_mode</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span>
+                    <span class="n">mode</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">duration_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">index_mode</span><span class="p">]</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span>
+                <span class="s2">&quot;duration&quot;</span>
+            <span class="p">]</span>
+            <span class="n">index_mode</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">task_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">is_varying_resource</span><span class="p">():</span>
+            <span class="n">ressource_available</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span>  <span class="c1"># type: ignore</span>
+                <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="p">][:</span> <span class="n">ressource_available</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ressource_available</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                <span class="n">ressource_available</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">[</span><span class="n">k</span><span class="p">]],</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">:</span>
+            <span class="n">ressource_renewable</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">)):</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">successors</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+            <span class="n">index_s</span> <span class="o">=</span> <span class="n">task_index</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+            <span class="n">predecessors</span><span class="p">[</span><span class="n">index_s</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">successors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">index_s</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="s2">&quot;special_constraints&quot;</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">minimum_starting_time_array</span><span class="p">[</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">index_task</span><span class="p">[</span><span class="n">t</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+    <span class="n">func_sgs</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">sgs_fast</span><span class="p">,</span>
+        <span class="n">consumption_array</span><span class="o">=</span><span class="n">consumption_array</span><span class="p">,</span>
+        <span class="n">duration_array</span><span class="o">=</span><span class="n">duration_array</span><span class="p">,</span>
+        <span class="n">predecessors</span><span class="o">=</span><span class="n">predecessors</span><span class="p">,</span>
+        <span class="n">successors</span><span class="o">=</span><span class="n">successors</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="n">ressource_available</span><span class="o">=</span><span class="n">ressource_available</span><span class="p">,</span>
+        <span class="n">ressource_renewable</span><span class="o">=</span><span class="n">ressource_renewable</span><span class="p">,</span>
+        <span class="n">minimum_starting_time_array</span><span class="o">=</span><span class="n">minimum_starting_time_array</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">func_sgs_2</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">sgs_fast_partial_schedule_incomplete_permutation_tasks</span><span class="p">,</span>
+        <span class="n">consumption_array</span><span class="o">=</span><span class="n">consumption_array</span><span class="p">,</span>
+        <span class="n">duration_array</span><span class="o">=</span><span class="n">duration_array</span><span class="p">,</span>
+        <span class="n">predecessors</span><span class="o">=</span><span class="n">predecessors</span><span class="p">,</span>
+        <span class="n">successors</span><span class="o">=</span><span class="n">successors</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="n">ressource_available</span><span class="o">=</span><span class="n">ressource_available</span><span class="p">,</span>
+        <span class="n">ressource_renewable</span><span class="o">=</span><span class="n">ressource_renewable</span><span class="p">,</span>
+        <span class="n">minimum_starting_time_array</span><span class="o">=</span><span class="n">minimum_starting_time_array</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">func_compute_mean_resource</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">compute_mean_ressource</span><span class="p">,</span>
+        <span class="n">consumption_array</span><span class="o">=</span><span class="n">consumption_array</span><span class="p">,</span>
+        <span class="n">ressource_available</span><span class="o">=</span><span class="n">ressource_available</span><span class="p">,</span>
+        <span class="n">ressource_renewable</span><span class="o">=</span><span class="n">ressource_renewable</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">func_sgs</span><span class="p">,</span> <span class="n">func_sgs_2</span><span class="p">,</span> <span class="n">func_compute_mean_resource</span></div>
+
+
+
+<div class="viewcode-block" id="evaluate_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.evaluate_constraints">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_constraints</span><span class="p">(</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">SpecialConstraintsDescription</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">list_constraints_not_respected</span> <span class="o">=</span> <span class="n">compute_constraints_details</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">constraints</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">list_constraints_not_respected</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="compute_constraints_details">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.compute_constraints_details">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_constraints_details</span><span class="p">(</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">SpecialConstraintsDescription</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule_feasible</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">start_together</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_together</span>
+    <span class="n">start_at_end</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_at_end</span>
+    <span class="n">start_at_end_plus_offset</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_at_end_plus_offset</span>
+    <span class="n">start_after_nunit</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_after_nunit</span>
+    <span class="n">disjunctive</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">disjunctive_tasks</span>
+    <span class="n">list_constraints_not_respected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="n">start_together</span><span class="p">:</span>
+        <span class="n">time1</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+        <span class="n">time2</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">time1</span> <span class="o">==</span> <span class="n">time2</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;start_together&quot;</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">time1</span><span class="p">,</span> <span class="n">time2</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">time2</span> <span class="o">-</span> <span class="n">time1</span><span class="p">))</span>
+            <span class="p">]</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="n">start_at_end</span><span class="p">:</span>
+        <span class="n">time1</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+        <span class="n">time2</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">time1</span> <span class="o">==</span> <span class="n">time2</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;start_at_end&quot;</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">time1</span><span class="p">,</span> <span class="n">time2</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">time2</span> <span class="o">-</span> <span class="n">time1</span><span class="p">))</span>
+            <span class="p">]</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span> <span class="ow">in</span> <span class="n">start_at_end_plus_offset</span><span class="p">:</span>
+        <span class="n">time1</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">+</span> <span class="n">off</span>
+        <span class="n">time2</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">time2</span> <span class="o">&gt;=</span> <span class="n">time1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;start_at_end_plus_offset&quot;</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">time1</span><span class="p">,</span> <span class="n">time2</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">time2</span> <span class="o">-</span> <span class="n">time1</span><span class="p">))</span>
+            <span class="p">]</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span> <span class="ow">in</span> <span class="n">start_after_nunit</span><span class="p">:</span>
+        <span class="n">time1</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">+</span> <span class="n">off</span>
+        <span class="n">time2</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">time2</span> <span class="o">&gt;=</span> <span class="n">time1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;start_after_nunit&quot;</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">time1</span><span class="p">,</span> <span class="n">time2</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">time2</span> <span class="o">-</span> <span class="n">time1</span><span class="p">))</span>
+            <span class="p">]</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="n">disjunctive</span><span class="p">:</span>
+        <span class="n">segt</span> <span class="o">=</span> <span class="n">intersect</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t1</span><span class="p">),</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)],</span>
+            <span class="p">[</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">),</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)],</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">segt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;disjunctive&quot;</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">segt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">segt</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
+                <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;start_window_0&quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+                        <span class="o">-</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
+                <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;start_window_1&quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="o">-</span><span class="n">constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+                        <span class="o">+</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
+                <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;end_window_0&quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>  <span class="c1"># type: ignore</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
+                <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;end_window_1&quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="o">-</span><span class="n">constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>  <span class="c1"># type: ignore</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+    <span class="k">if</span> <span class="n">constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">list_constraints_not_respected</span> <span class="o">+=</span> <span class="n">compute_details_mode_constraint</span><span class="p">(</span>
+            <span class="n">solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">pair_mode_constraint</span><span class="o">=</span><span class="n">constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">list_constraints_not_respected</span></div>
+
+
+
+<div class="viewcode-block" id="check_solution_with_special_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.check_solution_with_special_constraints">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_solution_with_special_constraints</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">,</span>
+    <span class="n">relax_the_start_at_end</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule_feasible</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">start_together</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_together</span>
+    <span class="n">start_at_end</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_at_end</span>
+    <span class="n">start_at_end_plus_offset</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_at_end_plus_offset</span>
+    <span class="n">start_after_nunit</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_after_nunit</span>
+    <span class="n">disjunctive</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">disjunctive_tasks</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="n">start_together</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">relax_the_start_at_end</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">==</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="n">start_at_end</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">relax_the_start_at_end</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span> <span class="o">==</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span> <span class="ow">in</span> <span class="n">start_at_end_plus_offset</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">+</span> <span class="n">off</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">((</span><span class="s2">&quot;start_at_end_plus_offset NOT respected: &quot;</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">),</span>
+                    <span class="s2">&quot; &gt;= &quot;</span><span class="p">,</span>
+                    <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">),</span>
+                    <span class="s2">&quot;+&quot;</span><span class="p">,</span>
+                    <span class="n">off</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span> <span class="ow">in</span> <span class="n">start_after_nunit</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">+</span> <span class="n">off</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">((</span><span class="s2">&quot;start_after_nunit NOT respected: &quot;</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="n">disjunctive</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">intersect</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t1</span><span class="p">),</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t1</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t2</span><span class="p">),</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t2</span><span class="p">)],</span>
+            <span class="p">)</span>
+            <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="o">&lt;</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;start time 0, &quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                        <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="o">&gt;</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;start time 1, &quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                        <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">start_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="o">&lt;</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;end time 0, &quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                        <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="o">&gt;</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;end time 1, &quot;</span><span class="p">,</span>
+                        <span class="n">t</span><span class="p">,</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                        <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">end_times_window</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">check_pair_mode_constraint</span><span class="p">(</span>
+            <span class="n">solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span>
+            <span class="n">pair_mode_constraint</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">special_constraints</span><span class="o">.</span><span class="n">pair_mode_constraint</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="check_pair_mode_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.check_pair_mode_constraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_pair_mode_constraint</span><span class="p">(</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">pair_mode_constraint</span><span class="p">:</span> <span class="n">PairModeConstraint</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span><span class="p">:</span>
+            <span class="n">mode_ac1</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac1</span><span class="p">)</span>
+            <span class="n">mode_ac2</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mode_ac1</span><span class="p">,</span> <span class="n">mode_ac2</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span><span class="p">[</span>
+                <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span>
+            <span class="p">]:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">same_score_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">same_score_mode</span><span class="p">:</span>
+            <span class="n">score_ac1</span> <span class="o">=</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">score_mode</span><span class="p">[</span><span class="n">ac1</span><span class="p">,</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac1</span><span class="p">)]</span>
+            <span class="n">score_ac2</span> <span class="o">=</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">score_mode</span><span class="p">[</span><span class="n">ac2</span><span class="p">,</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac2</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">score_ac1</span> <span class="o">!=</span> <span class="n">score_ac2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="compute_details_mode_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.compute_details_mode_constraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_details_mode_constraint</span><span class="p">(</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">pair_mode_constraint</span><span class="p">:</span> <span class="n">PairModeConstraint</span>
+<span class="p">):</span>
+    <span class="n">list_constraints_not_respected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span><span class="p">:</span>
+            <span class="n">mode_ac1</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac1</span><span class="p">)</span>
+            <span class="n">mode_ac2</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mode_ac1</span><span class="p">,</span> <span class="n">mode_ac2</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">allowed_mode_assignment</span><span class="p">[</span>
+                <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span>
+            <span class="p">]:</span>
+                <span class="n">list_constraints_not_respected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s2">&quot;pair_mode_assignment&quot;</span><span class="p">,</span> <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span><span class="p">,</span> <span class="n">mode_ac1</span><span class="p">,</span> <span class="n">mode_ac2</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">list_constraints_not_respected</span>
+    <span class="k">if</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">same_score_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span> <span class="ow">in</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">same_score_mode</span><span class="p">:</span>
+            <span class="n">score_ac1</span> <span class="o">=</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">score_mode</span><span class="p">[</span><span class="n">ac1</span><span class="p">,</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac1</span><span class="p">)]</span>
+            <span class="n">score_ac2</span> <span class="o">=</span> <span class="n">pair_mode_constraint</span><span class="o">.</span><span class="n">score_mode</span><span class="p">[</span><span class="n">ac2</span><span class="p">,</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">ac2</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">score_ac1</span> <span class="o">!=</span> <span class="n">score_ac2</span><span class="p">:</span>
+                <span class="n">list_constraints_not_respected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s2">&quot;pair_mode_score&quot;</span><span class="p">,</span> <span class="n">ac1</span><span class="p">,</span> <span class="n">ac2</span><span class="p">,</span> <span class="n">score_ac1</span><span class="p">,</span> <span class="n">score_ac2</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">list_constraints_not_respected</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
