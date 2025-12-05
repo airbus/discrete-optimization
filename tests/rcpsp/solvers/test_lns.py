@@ -1,6 +1,8 @@
 #  Copyright (c) 2024-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import sys
+
 import pytest
 
 from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
@@ -15,6 +17,9 @@ from discrete_optimization.generic_tools.lns_cp import LnsCpMzn
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solvers.cp_mzn import CpRcpspSolver
+
+if sys.platform.startswith("win"):
+    pytest.skip(reason="Much too long on windows", allow_module_level=True)
 
 
 @pytest.mark.parametrize(

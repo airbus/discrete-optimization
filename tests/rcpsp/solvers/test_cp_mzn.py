@@ -39,6 +39,9 @@ from discrete_optimization.rcpsp.solvers.cp_mzn_multiscenario import (
 )
 from discrete_optimization.rcpsp.utils import kendall_tau_similarity, plot_task_gantt
 
+if sys.platform.startswith("win"):
+    pytest.skip(reason="Much too long on windows", allow_module_level=True)
+
 
 @pytest.fixture
 def random_seed():

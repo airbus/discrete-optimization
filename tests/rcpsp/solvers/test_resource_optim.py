@@ -1,6 +1,7 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import sys
 
 import pytest
 
@@ -10,6 +11,9 @@ from discrete_optimization.rcpsp.solvers.cp_mzn import (
     CpMultimodeRcpspSolver,
     CpRcpspSolver,
 )
+
+if sys.platform.startswith("win"):
+    pytest.skip(reason="Much too long on windows", allow_module_level=True)
 
 
 @pytest.mark.parametrize(
