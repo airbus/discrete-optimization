@@ -281,6 +281,22 @@ class Problem(ABC):
         """
         return self.get_solution_type()(problem=self, **{encoding_name: int_vector})
 
+    def set_fixed_attributes(self, attribute_name: str, solution: Solution) -> None:
+        """Fix some solution attribute.
+
+        Useful when applying successively GA on different attribute of the solution, fixing the others.
+
+        Should be implemented at least for attributes described by attribute_register.
+
+        Args:
+            attribute_name: an attribute name
+            solution:
+
+        Returns:
+
+        """
+        raise NotImplementedError()
+
     @abstractmethod
     def satisfy(self, variable: Solution) -> bool:
         """Computes if a solution satisfies or not the constraints of the problem.

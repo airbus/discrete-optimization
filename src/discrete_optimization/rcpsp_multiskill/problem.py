@@ -304,7 +304,10 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
         self.modes_vector = modes_vector
         self.modes_vector_from0 = modes_vector_from0
         self.priority_worker_per_task = priority_worker_per_task
-        if priority_worker_per_task is None:
+        if (
+            priority_worker_per_task is None
+            and priority_worker_per_task_perm is not None
+        ):
             # use priority_worker_per_task_perm only if not priority_worker_per_task set
             # as this is another representation of the same information
             self.priority_worker_per_task_perm = priority_worker_per_task_perm
@@ -2901,20 +2904,21 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
         return super().evaluate_function(rcpsp_sol)
 
     def set_fixed_attributes(
-        self, encoding_str: str, sol: VariantMultiskillRcpspSolution
-    ):
-        att = self.get_attribute_register().dict_attribute_to_type[encoding_str]["name"]
-        if att == "modes_vector" or att == "modes_vector_from0":
-            self.set_fixed_modes(sol.modes_vector)
+        self, attribute_name: str, solution: VariantMultiskillRcpspSolution
+    ) -> None:
+        if attribute_name == "modes_vector" or attribute_name == "modes_vector_from0":
+            self.set_fixed_modes(solution.modes_vector)
             logger.debug(f"self.fixed_modes: {self.fixed_modes}")
-        elif att == "priority_worker_per_task":
-            self.set_fixed_priority_worker_per_task(sol.priority_worker_per_task)
+        elif attribute_name == "priority_worker_per_task_perm":
+            self.set_fixed_priority_worker_per_task(solution.priority_worker_per_task)
             logger.debug(
                 f"self.fixed_priority_worker_per_task: {self.fixed_priority_worker_per_task}"
             )
-        elif att == "priority_list_task":
-            self.set_fixed_task_permutation(sol.priority_list_task)
+        elif attribute_name == "priority_list_task":
+            self.set_fixed_task_permutation(solution.priority_list_task)
             logger.debug(f"self.fixed_permutation: {self.fixed_permutation}")
+        else:
+            raise NotImplementedError()
 
     def set_fixed_modes(self, fixed_modes):
         self.fixed_modes = fixed_modes

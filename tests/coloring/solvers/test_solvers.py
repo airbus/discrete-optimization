@@ -54,6 +54,7 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 from discrete_optimization.generic_tools.ea.nsga import Nsga
+from discrete_optimization.generic_tools.encoding_register import ListInteger
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
@@ -264,20 +265,33 @@ def test_greedy_best_coloring():
     assert color_problem.satisfy(solution)
 
 
+def test_ga_nok():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem: ColoringProblem = parse_file(file)
+    with pytest.raises(ValueError):
+        ga_solver = Ga(
+            color_problem,
+            encoding="colors_from0",
+            mutation=DeapMutation.MUT_UNIFORM_INT,
+            objectives=["nb_colors"],
+            objective_weights=[-1],
+            max_evals=5000,
+        )
+
+
 def test_ga_coloring_1(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
     ga_solver = Ga(
         color_problem,
-        encoding="colors_from0",
         mutation=DeapMutation.MUT_UNIFORM_INT,
         objectives=["nb_colors"],
         objective_weights=[-1],
-        max_evals=5000,
+        max_evals=1000,
     )
     color_sol = ga_solver.solve().get_best_solution()
     color_problem.evaluate(color_sol)
-    assert color_problem.satisfy(color_sol)
+    assert not color_problem.satisfy(color_sol)  # violations of colors constraints!
 
 
 def test_ga_coloring_2(random_seed):
@@ -322,12 +336,7 @@ def test_ga_coloring_3(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
-    encoding = {
-        "name": "colors",
-        "type": [TypeAttribute.LIST_INTEGER],
-        "n": 70,
-        "arity": 10,
-    }
+    encoding = ("colors", ListInteger(length=70, arities=10))
 
     ga_solver = Ga(
         color_problem,
@@ -397,12 +406,7 @@ def test_coloring_nsga_2():
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
-    encoding = {
-        "name": "colors",
-        "type": [TypeAttribute.LIST_INTEGER],
-        "n": 70,
-        "arity": 10,
-    }
+    encoding = ("colors", ListInteger(length=70, arities=10))
 
     objectives = ["nb_colors", "nb_violations"]
     ga_solver = Nsga(

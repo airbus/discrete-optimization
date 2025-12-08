@@ -4,12 +4,13 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Collection, Mapping
 
 
-@dataclass
-class AttributeType: ...
+class AttributeType:
+    length: int
 
 
 @dataclass
@@ -85,8 +86,6 @@ class ListInteger(AttributeType):
 
 @dataclass
 class ListBoolean(ListInteger):
-    length: int  # length of the list
-
     def __init__(self, length: int):
         super().__init__(length=length, lows=0, ups=1)
 

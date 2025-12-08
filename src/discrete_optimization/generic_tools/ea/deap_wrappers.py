@@ -8,22 +8,19 @@ from typing import Any, TypeVar
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 
-T = TypeVar("T")
-
 
 def generic_mutate_wrapper(
-    individual: MutableSequence[T],
+    individual: list[int],
     problem: Problem,
-    encoding_name: str,
-    indpb: Any,
-    solution_fn: type[Solution],
+    attribute_name: str,
     custom_mutation: Mutation,
-) -> tuple[MutableSequence[T]]:
-    kwargs: dict[str, Any] = {encoding_name: individual, "problem": problem}
-    custom_sol: Solution = solution_fn(**kwargs)  # type: ignore
+) -> tuple[list[int]]:
+    custom_sol = problem.build_solution_from_encoding(
+        int_vector=individual, encoding_name=attribute_name
+    )
     new_custom_sol = custom_mutation.mutate(custom_sol)[0]
     new_individual = individual
-    tmp_vector: Sequence = getattr(new_custom_sol, encoding_name)
+    tmp_vector: Sequence = getattr(new_custom_sol, attribute_name)
     for i in range(len(tmp_vector)):
         new_individual[i] = tmp_vector[i]
     return (new_individual,)

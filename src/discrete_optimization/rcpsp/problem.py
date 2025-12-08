@@ -539,12 +539,15 @@ class RcpspProblem(
             return max(self.resources.get(res, [0]))  # type: ignore
         return self.resources.get(res, 0)  # type: ignore
 
-    def set_fixed_attributes(self, encoding_str: str, sol: RcpspSolution) -> None:
-        att = self.get_attribute_register().dict_attribute_to_type[encoding_str]["name"]
-        if att == "rcpsp_modes":
-            self.set_fixed_modes(sol.rcpsp_modes)
-        elif att == "rcpsp_permutation":
-            self.set_fixed_permutation(sol.rcpsp_permutation)
+    def set_fixed_attributes(
+        self, attribute_name: str, solution: RcpspSolution
+    ) -> None:
+        if attribute_name == "rcpsp_modes":
+            self.set_fixed_modes(solution.rcpsp_modes)
+        elif attribute_name == "rcpsp_permutation":
+            self.set_fixed_permutation(solution.rcpsp_permutation)
+        else:
+            raise NotImplementedError()
 
     def set_fixed_modes(self, fixed_modes: list[int]) -> None:
         self.fixed_modes = fixed_modes
