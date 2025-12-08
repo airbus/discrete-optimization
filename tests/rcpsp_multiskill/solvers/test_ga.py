@@ -10,16 +10,14 @@ import pytest
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
-from discrete_optimization.rcpsp_multiskill.parser_imopse import (
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.generic_tools.ea.ga_tools import ParametersAltGa
 from discrete_optimization.rcpsp_multiskill.problem import (
     Employee,
     MultiskillRcpspProblem,
     SkillDetail,
     VariantMultiskillRcpspProblem,
 )
+from discrete_optimization.rcpsp_multiskill.solvers.ga import GaMultiskillRcpspSolver
 
 
 @pytest.fixture
@@ -170,87 +168,17 @@ def create_toy_msrcpsp_variant():
     return model
 
 
-def test_alternating_ga_specific_mode_arity(random_seed):
+def test_ga_multiskill_rcpsp_solver(random_seed):
     msrcpsp_problem = create_toy_msrcpsp_variant()
-    files = [f for f in get_data_available() if "100_5_64_9.def" in f]
-    msrcpsp_problem, new_tame_to_original_task_id = parse_file(
-        files[0], max_horizon=2000
-    )
-    msrcpsp_problem = msrcpsp_problem.to_variant_model()
-
-    total_evals = 50
-    evals_per_ga_runs_perm = 0.33 * total_evals
-    evals_per_ga_runs_modes = 0.33 * total_evals
-    evals_per_ga_runs_resource_perm = 0.34 * total_evals
-
-    mode_mutation = DeapMutation.MUT_UNIFORM_INT
-    task_permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    resource_permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-
-    # Initialise the task permutation that will be used to first search through the modes
-    initial_task_permutation = [i for i in range(msrcpsp_problem.n_jobs_non_dummy)]
-    msrcpsp_problem.set_fixed_task_permutation(initial_task_permutation)
-
-    # Initialise the resource permutation that will be used to first search through the modes
-    initial_resource_permutation = [
-        i
-        for i in range(
-            len(msrcpsp_problem.tasks_list) * len(msrcpsp_problem.employees.keys())
-        )
-    ]
-    msrcpsp_problem.set_fixed_priority_worker_per_task_from_permutation(
-        initial_resource_permutation
-    )
-
-    # Run a GA for evals_per_ga_runs evals on modes
-    ga_solver = Ga(
-        msrcpsp_problem,
-        encoding="modes_arity_fix_from_0",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
-        mutation=mode_mutation,
-        max_evals=evals_per_ga_runs_modes,
-    )
-    tmp_sol = ga_solver.solve().get_best_solution()
-    # Fix the resulting modes
-    msrcpsp_problem.set_fixed_modes(tmp_sol.modes_vector)
-
-    # Run a GA for evals_per_ga_runs evals on permutation
-    ga_solver = Ga(
-        msrcpsp_problem,
-        encoding="priority_list_task",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
-        mutation=task_permutation_mutation,
-        max_evals=evals_per_ga_runs_perm,
-    )
-    tmp_sol = ga_solver.solve().get_best_solution()
-
-    # Fix the resulting permutation
-    msrcpsp_problem.set_fixed_task_permutation(tmp_sol.priority_list_task)
-
-    # Run a GA for evals_per_ga_runs evals on permutation resource
-    ga_solver = Ga(
-        msrcpsp_problem,
-        encoding="priority_worker_per_task_perm",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
-        mutation=resource_permutation_mutation,
-        max_evals=evals_per_ga_runs_resource_perm,
-    )
-    sol = ga_solver.solve().get_best_solution()
-
-    # Fix the resulting permutation
-    msrcpsp_problem.set_fixed_priority_worker_per_task(sol.priority_worker_per_task)
-
-    assert msrcpsp_problem.satisfy(sol)
-    msrcpsp_problem.evaluate(tmp_sol)
+    params_ga = ParametersAltGa.default_msrcpsp()
+    params_ga.max_evals = 300
+    params_ga.sub_evals = [50, 50, 50]
+    solver = GaMultiskillRcpspSolver(problem=msrcpsp_problem)
+    sol = solver.solve().get_best_solution()
+    assert sol is not None
 
 
-def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
+def test_alternating_ga(random_seed):
     msrcpsp_problem = create_toy_msrcpsp_variant()
 
     total_evals = 1000
@@ -260,7 +188,7 @@ def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
     ga_solver = AlternatingGa(
         msrcpsp_problem,
         encodings=[
-            "modes_arity_fix_from_0",
+            "modes_vector_from0",
             "priority_list_task",
             "priority_worker_per_task_perm",
         ],

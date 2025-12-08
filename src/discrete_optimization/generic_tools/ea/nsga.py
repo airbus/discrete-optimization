@@ -3,40 +3,35 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-import random
-from collections.abc import Callable
 from typing import Any, Optional, Union
 
 import numpy as np
-from deap import algorithms, base, creator, tools
+from deap import algorithms, tools
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
     Problem,
     Solution,
-    build_evaluate_function_aggregated,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
-from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
-from discrete_optimization.generic_tools.ea.ga import (
+from discrete_optimization.generic_tools.ea.base import (
+    BaseGa,
     DeapCrossover,
     DeapMutation,
-    default_crossovers,
-    default_mutations,
 )
-from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
-    TupleFitness,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class Nsga(SolverDO, WarmstartMixin):
+class Nsga(BaseGa):
     """NSGA
 
     Args:
@@ -50,13 +45,15 @@ class Nsga(SolverDO, WarmstartMixin):
 
     """
 
+    allowed_objective_handling = [ObjectiveHandling.MULTI_OBJ]
+
     initial_solution: Optional[Solution] = None
     """Initial solution used for warm start."""
 
     def __init__(
         self,
         problem: Problem,
-        objectives: Union[str, list[str]],
+        objectives: Optional[Union[str, list[str]]] = None,
         mutation: Optional[Union[Mutation, DeapMutation]] = None,
         crossover: Optional[DeapCrossover] = None,
         encoding: Optional[Union[str, dict[str, Any]]] = None,
@@ -66,290 +63,36 @@ class Nsga(SolverDO, WarmstartMixin):
         mut_rate: float = 0.1,
         crossover_rate: float = 0.9,
         deap_verbose: bool = True,
+        initial_population: Optional[list[list[Any]]] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
     ):
-        self.problem = problem
-        if not hasattr(self.problem, "evaluate_from_encoding"):
-            raise ValueError("self.problem shoud define an evaluate_from_encoding()")
-            # self.problem.evaluate_from_encoding: Callable[[list[int], str], dict[str, float]]
-        self._pop_size = pop_size
-        if max_evals is not None:
-            self._max_evals = max_evals
-        else:
-            self._max_evals = 100 * self._pop_size
-            logger.warning(
-                "No value specified for max_evals. Using the default 10*pop_size - This should really be set carefully"
-            )
-        self._mut_rate = mut_rate
-        self._crossover_rate = crossover_rate
-        self._deap_verbose = deap_verbose
-
-        # set encoding
-        register_solution: EncodingRegister = problem.get_attribute_register()
-        encoding_name = None
-        if encoding is not None and isinstance(encoding, str):
-            # check name specified is in problem register
-            if encoding in register_solution.dict_attribute_to_type.keys():
-                encoding_name = encoding
-                self._encoding_variable_name = register_solution.dict_attribute_to_type[
-                    encoding_name
-                ]["name"]
-                self._encoding_type = register_solution.dict_attribute_to_type[
-                    encoding_name
-                ]["type"][0]
-                self.n = register_solution.dict_attribute_to_type[encoding_name]["n"]
-
-                if self._encoding_type == TypeAttribute.LIST_INTEGER:
-                    self.arity = register_solution.dict_attribute_to_type[
-                        encoding_name
-                    ]["arity"]
-                    self.arities = [self.arity for i in range(self.n)]
-                else:
-                    self.arity = None
-                if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
-                    self.arities = register_solution.dict_attribute_to_type[
-                        encoding_name
-                    ]["arities"]
-
-        if encoding is not None and isinstance(encoding, dict):
-            # check there is a type key and a n key
-            if (
-                "name" in encoding.keys()
-                and "type" in encoding.keys()
-                and "n" in encoding.keys()
-            ):
-                encoding_name = "custom"
-                self._encoding_variable_name = encoding["name"]
-                self._encoding_type = encoding["type"][0]
-                self.n = encoding["n"]
-                if "arity" in encoding.keys():
-                    self.arity = encoding["arity"]
-                    self.arities = [self.arity for i in range(self.n)]
-                if "arities" in encoding.keys():
-                    self.arities = register_solution.dict_attribute_to_type[
-                        encoding_name
-                    ]["arities"]
-            else:
-                logger.warning(
-                    "Erroneous encoding provided as input (encoding name not matching encoding of problem or custom "
-                    "definition not respecting encoding dict entry format, trying to use default one instead"
-                )
-
-        if encoding_name is None:
-            if len(register_solution.dict_attribute_to_type.keys()) == 0:
-                raise Exception(
-                    "An encoding of type TypeAttribute should be specified or at least 1 TypeAttribute "
-                    "should be defined in the RegisterSolution of your Problem"
-                )
-            encoding_name = list(register_solution.dict_attribute_to_type.keys())[0]
-            self._encoding_variable_name = register_solution.dict_attribute_to_type[
-                encoding_name
-            ]["name"]
-            self._encoding_type = register_solution.dict_attribute_to_type[
-                encoding_name
-            ]["type"][0]
-            self.n = register_solution.dict_attribute_to_type[encoding_name]["n"]
-
-            if self._encoding_type == TypeAttribute.LIST_INTEGER:
-                self.arity = register_solution.dict_attribute_to_type[encoding_name][
-                    "arity"
-                ]
-                self.arities = [self.arity for i in range(self.n)]
-            else:
-                self.arity = None
-            if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
-                self.arities = register_solution.dict_attribute_to_type[encoding_name][
-                    "arities"
-                ]
-
-        self._encoding_name = encoding_name
-
-        if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
-            self.arity = 2
-            self.arities = [2 for i in range(self.n)]
-
-        logger.debug(
-            f"Encoding used by the GA: {self._encoding_name}: {self._encoding_type} of length {self.n}"
-        )
-
-        if isinstance(objectives, str):
-            self._objectives = [objectives]
-        else:
-            self._objectives = objectives
-        self._objective_weights: list[float]
-        if (objective_weights is None) or (
-            objective_weights is not None
-            and (len(objective_weights) != len(self._objectives))
-        ):
-            logger.warning(
-                "Objective weight issue: no weight given or size of weights and objectives lists mismatch. "
-                "Setting all weights to default 1 value."
-            )
-            self._objective_weights = [1 for i in range(len(self._objectives))]
-        else:
-            self._objective_weights = objective_weights
-        self.params_objective_function = ParamsObjectiveFunction(
+        super().__init__(
+            problem=problem,
+            objectives=objectives,
+            mutation=mutation,
+            crossover=crossover,
+            encoding=encoding,
             objective_handling=ObjectiveHandling.MULTI_OBJ,
-            objectives=self._objectives,
-            weights=self._objective_weights,
-            sense_function=ModeOptim.MAXIMIZATION,
+            objective_weights=objective_weights,
+            pop_size=pop_size,
+            max_evals=max_evals,
+            mut_rate=mut_rate,
+            crossover_rate=crossover_rate,
+            deap_verbose=deap_verbose,
+            initial_population=initial_population,
+            params_objective_function=params_objective_function,
+            **kwargs,
         )
-        self.aggreg_from_sol: Union[
-            Callable[[Solution], float], Callable[[Solution], TupleFitness]
-        ]
-        (
-            self.aggreg_from_sol,
-            self.aggreg_from_dict,
-        ) = build_evaluate_function_aggregated(
-            problem=problem, params_objective_function=self.params_objective_function
-        )
-
-        nobj = len(self._objectives)
-        ref_points = tools.uniform_reference_points(nobj=nobj)
-
-        # DEAP toolbox setup
-        self._toolbox = base.Toolbox()
-
-        # Define representation
-        creator.create("fitness", base.Fitness, weights=tuple(self._objective_weights))
-        creator.create(
-            "individual", list, fitness=creator.fitness
-        )  # associate the fitness function to the individual type
-
-        # Create the individuals required by the encoding
-        if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
-            self._toolbox.register(
-                "bit", random.randint, 0, 1
-            )  # Each element of a solution is a bit (i.e. an int between 0 and 1 incl.)
-
-            self._toolbox.register(
-                "individual",
-                tools.initRepeat,
-                creator.individual,
-                self._toolbox.bit,
-                n=self.n,
-            )  # An individual (aka solution) contains n bits
-        elif self._encoding_type == TypeAttribute.PERMUTATION:
-            self._toolbox.register(
-                "permutation_indices", random.sample, range(self.n), self.n
-            )
-            self._toolbox.register(
-                "individual",
-                tools.initIterate,
-                creator.individual,
-                self._toolbox.permutation_indices,
-            )
-        elif self._encoding_type == TypeAttribute.LIST_INTEGER:
-            self._toolbox.register("int_val", random.randint, 0, self.arity - 1)
-            self._toolbox.register(
-                "individual",
-                tools.initRepeat,
-                creator.individual,
-                self._toolbox.int_val,
-                n=self.n,
-            )
-        elif self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
-            gen_idx = lambda: [random.randint(0, arity - 1) for arity in self.arities]
-            self._toolbox.register(
-                "individual", tools.initIterate, creator.individual, gen_idx
-            )
-
-        self._toolbox.register(
-            "population",
-            tools.initRepeat,
-            list,
-            self._toolbox.individual,
-            n=self._pop_size,
-        )  # A population is made of pop_size individuals
-
-        # Define objective function
-        self._toolbox.register(
-            "evaluate",
-            self.evaluate_problem,
-        )
-
-        # Define crossover
-        if crossover is None:
-            self._crossover = default_crossovers[self._encoding_type]
-        else:
-            self._crossover = crossover
-
-        if self._crossover == DeapCrossover.CX_UNIFORM:
-            self._toolbox.register("mate", tools.cxUniform, indpb=self._crossover_rate)
-        elif self._crossover == DeapCrossover.CX_ONE_POINT:
-            self._toolbox.register("mate", tools.cxOnePoint)
-        elif self._crossover == DeapCrossover.CX_TWO_POINT:
-            self._toolbox.register("mate", tools.cxTwoPoint)
-        elif self._crossover == DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED:
-            self._toolbox.register("mate", tools.cxUniformPartialyMatched, indpb=0.5)
-        elif self._crossover == DeapCrossover.CX_ORDERED:
-            self._toolbox.register("mate", tools.cxOrdered)
-        elif self._crossover == DeapCrossover.CX_PARTIALY_MATCHED:
-            self._toolbox.register("mate", tools.cxPartialyMatched)
-        else:
-            logger.warning("Crossover of specified type not handled!")
-
-        # Define mutation
-        self._mutation: Union[Mutation, DeapMutation]
-        if mutation is None:
-            self._mutation = default_mutations[self._encoding_type]
-        else:
-            self._mutation = mutation
-
-        if isinstance(self._mutation, Mutation):
-            self._toolbox.register(
-                "mutate",
-                generic_mutate_wrapper,
-                problem=self.problem,
-                encoding_name=self._encoding_variable_name,
-                indpb=self._mut_rate,
-                solution_fn=self.problem.get_solution_type(),
-                custom_mutation=mutation,
-            )
-        elif isinstance(self._mutation, DeapMutation):
-            if self._mutation == DeapMutation.MUT_FLIP_BIT:
-                self._toolbox.register(
-                    "mutate", tools.mutFlipBit, indpb=self._mut_rate
-                )  # Choice of mutation operator
-            elif self._mutation == DeapMutation.MUT_SHUFFLE_INDEXES:
-                self._toolbox.register(
-                    "mutate", tools.mutShuffleIndexes, indpb=self._mut_rate
-                )  # Choice of mutation operator
-            elif self._mutation == DeapMutation.MUT_UNIFORM_INT:
-                self._toolbox.register(
-                    "mutate",
-                    tools.mutUniformInt,
-                    low=0,
-                    up=self.arities,
-                    indpb=self._mut_rate,
-                )
 
         # No choice of selection: In NSGA, only 1 selection: Non Dominated Sorted Selection
+        ref_points = tools.uniform_reference_points(nobj=len(self._objectives))
         self._toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
-    def evaluate_problem(self, int_vector: list[int]) -> tuple[float, ...]:
-        objective_values = self.problem.evaluate_from_encoding(
-            int_vector, self._encoding_variable_name
-        )
-        val = tuple([objective_values[obj_name] for obj_name in self._objectives])
+    def solve(self, callbacks: list[Callback] = None, **kwargs: Any) -> ResultStorage:
+        callback = CallbackList(callbacks)
+        callback.on_solve_start(self)
 
-        return val
-
-    def set_warm_start(self, solution: Solution) -> None:
-        """Make the solver warm start from the given solution.
-
-        Will be ignored if arg `initial_variable` is set and not None in call to `solve()`.
-
-        """
-        self.initial_solution = solution
-
-    def create_individual_from_solution(self, solution: Solution) -> Any:
-        ind = getattr(solution, self._encoding_variable_name)
-        newind = self._toolbox.individual()
-        for j in range(len(ind)):
-            newind[j] = ind[j]
-        return newind
-
-    def solve(self, **kwargs: Any) -> ResultStorage:
         #  Define the statistics to collect at each generation
         stats = tools.Statistics(lambda ind: ind.fitness.values)
         stats.register("avg", np.mean, axis=0)
@@ -360,20 +103,16 @@ class Nsga(SolverDO, WarmstartMixin):
         logbook = tools.Logbook()
         logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-        # Initialise the population (here at random)
-        pop = self._toolbox.population()
+        # Initialize population
+        population = self.generate_initial_population()
 
-        # manage warm start: set 1 element of the population to the initial_solution
-        if self.initial_solution is not None:
-            pop[0] = self.create_individual_from_solution(self.initial_solution)
-
-        invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+        invalid_ind = [ind for ind in population if not ind.fitness.valid]
         fitnesses = self._toolbox.map(self._toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
         # Compile statistics about the population
-        record = stats.compile(pop)
+        record = stats.compile(population)
         logbook.record(gen=0, evals=len(invalid_ind), **record)
         logger.debug(logbook.stream)
 
@@ -382,7 +121,7 @@ class Nsga(SolverDO, WarmstartMixin):
         logger.debug(f"ngen: {ngen}")
         for gen in range(1, ngen):
             offspring = algorithms.varAnd(
-                pop, self._toolbox, self._crossover_rate, self._mut_rate
+                population, self._toolbox, self._crossover_rate, self._mut_rate
             )
 
             # Evaluate the individuals with an invalid fitness
@@ -392,18 +131,22 @@ class Nsga(SolverDO, WarmstartMixin):
                 ind.fitness.values = fit
 
             # Select the next generation population from parents and offspring
-            pop = self._toolbox.select(pop + offspring, self._pop_size)
+            population = self._toolbox.select(population + offspring, self._pop_size)
 
             # Compile statistics about the new population
-            record = stats.compile(pop)
+            record = stats.compile(population)
             logbook.record(gen=gen, evals=len(invalid_ind), **record)
             logger.debug(logbook.stream)
 
-        sols = []
-        for s in pop:
-            s_pure_int = [i for i in s]
-            kwargs = {self._encoding_variable_name: s_pure_int, "problem": self.problem}
-            problem_sol = self.problem.get_solution_type()(**kwargs)
-            fits = self.aggreg_from_sol(problem_sol)
-            sols.append((problem_sol, fits))
-        return self.create_result_storage(sols)
+        solfits = []
+        for s in population:
+            pure_int_sol = [i for i in s]
+            problem_sol = self.problem.build_solution_from_encoding(
+                int_vector=pure_int_sol, encoding_name=self._attribute_name
+            )
+            solfits.append((problem_sol, self.aggreg_from_sol(problem_sol)))
+        result_storage = self.create_result_storage(solfits)
+
+        callback.on_solve_end(result_storage, self)
+
+        return result_storage

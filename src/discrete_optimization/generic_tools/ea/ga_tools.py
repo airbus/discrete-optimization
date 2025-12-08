@@ -105,7 +105,7 @@ class ParametersAltGa:
                 DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
             ],
             selections=[DeapSelection.SEL_TOURNAMENT, DeapSelection.SEL_TOURNAMENT],
-            encodings=["rcpsp_modes_arity_fix", "rcpsp_permutation"],
+            encodings=["rcpsp_modes", "rcpsp_permutation"],
             objective_handling=ObjectiveHandling.AGGREGATE,
             objectives=["makespan"],
             objective_weights=[-1],
@@ -137,7 +137,7 @@ class ParametersAltGa:
                 DeapSelection.SEL_TOURNAMENT,
             ],
             encodings=[
-                "modes_arity_fix_from_0",
+                "modes_vector_from0",
                 "priority_list_task",
                 "priority_worker_per_task_perm",
             ],

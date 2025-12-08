@@ -1,7 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+import logging
 from typing import Any, Optional, Union
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
@@ -18,9 +18,12 @@ from discrete_optimization.generic_tools.ea.ga import (
     DeapSelection,
     Ga,
 )
+from discrete_optimization.generic_tools.encoding_register import AttributeType
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AlternatingGa(SolverDO, WarmstartMixin):
@@ -43,27 +46,26 @@ class AlternatingGa(SolverDO, WarmstartMixin):
     def __init__(
         self,
         problem: Problem,
-        objectives: Union[str, list[str]],
-        encodings: Optional[Union[list[str], list[dict[str, Any]]]] = None,
-        mutations: Optional[Union[list[Mutation], list[DeapMutation]]] = None,
-        crossovers: Optional[list[DeapCrossover]] = None,
-        selections: Optional[list[DeapSelection]] = None,
+        objectives: str | list[str] | None,
+        encodings: Optional[Union[list[str], list[tuple[str, AttributeType]]]] = None,
+        mutations: list[Mutation | DeapMutation | None] | None = None,
+        crossovers: list[DeapCrossover | None] | None = None,
+        selections: list[DeapSelection | None] | None = None,
         objective_handling: Optional[ObjectiveHandling] = None,
-        objective_weights: Optional[list[float]] = None,
-        pop_size: Optional[int] = None,
+        objective_weights: list[float] | None = None,
+        pop_size: int = 100,
         max_evals: int = 10000,
-        sub_evals: Optional[list[int]] = None,
-        mut_rate: Optional[float] = None,
-        crossover_rate: Optional[float] = None,
-        tournament_size: Optional[float] = None,
+        sub_evals: list[int] | None = None,
+        mut_rate: float | None = None,
+        crossover_rate: float | None = None,
+        tournament_size: float | None = None,  # as a percentage of the population
         deap_verbose: bool = False,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs,
+        params_objective_function: ParamsObjectiveFunction | None = None,
+        **kwargs: Any,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.encodings = encodings
         self.mutations = mutations
         self.crossovers = crossovers
         self.selections = selections
@@ -72,11 +74,24 @@ class AlternatingGa(SolverDO, WarmstartMixin):
         self.objective_weights = objective_weights
         self.pop_size = pop_size
         self.max_evals = max_evals
-        self.sub_evals = sub_evals
         self.mut_rate = mut_rate
         self.crossover_rate = crossover_rate
         self.tournament_size = tournament_size
         self.deap_verbose = deap_verbose
+        self.user_defined_params_objective_function = (
+            params_objective_function is not None
+        )
+        if encodings is None:
+            self.encodings = list(self.problem.get_attribute_register())
+        else:
+            self.encodings = encodings
+        if sub_evals is None:
+            logger.warning(
+                "No value specified for sub_evals. Using the default 100*pop_size - This should really be set carefully"
+            )
+            self.sub_evals = [100 * pop_size] * len(self.encodings)
+        else:
+            self.sub_evals = sub_evals
 
     def set_warm_start(self, solution: Solution) -> None:
         """Make the solver warm start from the given solution.
@@ -96,34 +111,33 @@ class AlternatingGa(SolverDO, WarmstartMixin):
         else:
             start_solution = self.initial_solution
 
-        if self.encodings is not None:
-            for i in range(len(self.encodings)):
-                self.problem.set_fixed_attributes(  # type: ignore
-                    self.encodings[i],
-                    start_solution,  # type: ignore
-                )
+        for attribute_name in self.encodings:
+            self.problem.set_fixed_attributes(
+                attribute_name=attribute_name,
+                solution=start_solution,
+            )
+        tmp_sol = None
         while count_evals < self.max_evals:
             kwargs_ga: dict[str, Any] = {}
+            kwargs_ga["encoding"] = self.encodings[current_encoding_index]
+            kwargs_ga["max_evals"] = self.sub_evals[current_encoding_index]
+            kwargs_ga["pop_size"] = self.pop_size
             if self.mutations is not None:
                 kwargs_ga["mutation"] = self.mutations[current_encoding_index]
-            if self.encodings is not None:
-                kwargs_ga["encoding"] = self.encodings[current_encoding_index]
             if self.crossovers is not None:
                 kwargs_ga["crossover"] = self.crossovers[current_encoding_index]
             if self.selections is not None:
                 kwargs_ga["selection"] = self.selections[current_encoding_index]
-            if self.sub_evals is not None:
-                kwargs_ga["max_evals"] = self.sub_evals[current_encoding_index]
             if self.objective_handling is not None:
                 kwargs_ga["objective_handling"] = self.objective_handling
-            if self.pop_size is not None:
-                kwargs_ga["pop_size"] = self.pop_size
             if self.mut_rate is not None:
                 kwargs_ga["mut_rate"] = self.mut_rate
             if self.crossover_rate is not None:
                 kwargs_ga["crossover_rate"] = self.crossover_rate
             if self.tournament_size is not None:
                 kwargs_ga["tournament_size"] = self.tournament_size
+            if self.user_defined_params_objective_function:
+                kwargs_ga["params_objective_function"] = self.params_objective_function
 
             ga_solver = Ga(
                 problem=self.problem,

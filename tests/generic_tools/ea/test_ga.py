@@ -4,7 +4,11 @@
 
 import discrete_optimization.knapsack.parser as knapsack_parser
 import discrete_optimization.tsp.parser as tsp_parser
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ParamsObjectiveFunction,
+    get_default_objective_setup,
+)
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
     DeapMutation,
@@ -12,6 +16,7 @@ from discrete_optimization.generic_tools.ea.ga import (
     Ga,
     ObjectiveHandling,
 )
+from discrete_optimization.generic_tools.ea.nsga import Nsga
 
 
 def test_binary_cx():
@@ -48,6 +53,49 @@ def test_binary_cx():
         objective_weights=params.weights,
     )
     kp_sol = ga_solver.solve()
+
+
+def test_default_ga_setting():
+    files = [f for f in knapsack_parser.get_data_available() if "ks_60_0" in f]
+    knapsack_problem = knapsack_parser.parse_file(files[0])
+    ga_solver = Ga(
+        knapsack_problem,
+    )
+    assert len(ga_solver._objectives) == 2
+    assert ga_solver._objective_weights[1] < 0
+    assert ga_solver._objectives[1] == "weight_violation"
+    assert ga_solver._objective_handling == ObjectiveHandling.AGGREGATE
+
+
+def test_default_nsga_setting():
+    files = [f for f in knapsack_parser.get_data_available() if "ks_60_0" in f]
+    knapsack_problem = knapsack_parser.parse_file(files[0])
+    ga_solver = Nsga(
+        knapsack_problem,
+    )
+    assert len(ga_solver._objectives) == 2
+    assert ga_solver._objective_weights[1] < 0
+    assert ga_solver._objectives[1] == "weight_violation"
+    assert ga_solver._objective_handling == ObjectiveHandling.MULTI_OBJ
+
+
+def test_ga_params_objective_function():
+    files = [f for f in knapsack_parser.get_data_available() if "ks_60_0" in f]
+    knapsack_problem = knapsack_parser.parse_file(files[0])
+    ga_solver = Ga(
+        knapsack_problem,
+        params_objective_function=ParamsObjectiveFunction(
+            objective_handling=ObjectiveHandling.SINGLE,
+            objectives=["weight_violation", "value"],
+            weights=[100, -1],
+            sense_function=ModeOptim.MINIMIZATION,
+        ),
+    )
+    assert len(ga_solver._objectives) == 1
+    assert ga_solver._objective_weights[0] == -100
+    assert ga_solver._objective_handling == ObjectiveHandling.SINGLE
+
+    ga_solver.solve()
 
 
 def test_permutation_cx():
@@ -147,21 +195,6 @@ def test_selections():
         tsp_model,
         selection=DeapSelection.SEL_STOCHASTIC_UNIVERSAL_SAMPLING,
         max_evals=1000,
-        objective_handling=params.objective_handling,
-        objectives=params.objectives,
-        objective_weights=params.weights,
-    )
-    kp_sol = ga_solver.solve()
-
-
-def test_default_ga_setting():
-    files = tsp_parser.get_data_available()
-    files = [f for f in files if "tsp_51_1" in f]
-    tsp_model = tsp_parser.parse_file(files[0])
-    params = get_default_objective_setup(tsp_model)
-
-    ga_solver = Ga(
-        tsp_model,
         objective_handling=params.objective_handling,
         objectives=params.objectives,
         objective_weights=params.weights,
