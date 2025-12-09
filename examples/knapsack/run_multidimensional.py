@@ -4,10 +4,7 @@
 
 import logging
 
-import numpy as np
-
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,

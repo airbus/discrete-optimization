@@ -29,7 +29,6 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
     TypeObjective,
 )
-from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 from discrete_optimization.rcpsp.problem import (
     PairModeConstraint,
     RcpspProblem,

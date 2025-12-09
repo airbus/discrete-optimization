@@ -3,15 +3,10 @@
 #  LICENSE file in the root directory of this source tree.
 
 import pytest
-from pytest_cases import fixture, param_fixtures
 
 from discrete_optimization.binpack.solvers.cpsat import (
     CpSatBinPackSolver,
     ModelingBinPack,
-)
-from discrete_optimization.coloring.solvers.cpsat import (
-    CpSatColoringSolver,
-    ModelingCpSat,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
     BaseConstraintExtractor,
@@ -36,10 +31,8 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools imp
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
-from discrete_optimization.tsp.solvers.cpsat import CpSatTspSolver
 
 
 @pytest.mark.parametrize(

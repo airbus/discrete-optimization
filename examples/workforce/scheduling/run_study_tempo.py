@@ -11,7 +11,6 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 )
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
-    BasicStatsCallback,
     StatsWithBoundsCallback,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp

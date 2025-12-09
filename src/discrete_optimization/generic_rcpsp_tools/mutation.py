@@ -22,7 +22,6 @@ from discrete_optimization.generic_tools.do_mutation import (
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.mutations.mutation_permutation import (
     ShuffleMove,
-    ShuffleMutation,
     SwapsLocalMove,
 )
 

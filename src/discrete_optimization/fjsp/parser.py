@@ -10,7 +10,6 @@ from discrete_optimization.fjsp.problem import (
     FJobShopProblem,
     Job,
     Subjob,
-    SubjobOptions,
 )
 
 

@@ -12,14 +12,8 @@ from discrete_optimization.facility.solvers.lp import (
     CbcFacilitySolver,
     GurobiFacilitySolver,
     MathOptFacilitySolver,
+    gurobi_available,
 )
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")

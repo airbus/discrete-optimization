@@ -11,13 +11,6 @@ from discrete_optimization.knapsack.solvers_map import (
     solvers_map,
 )
 
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
-
 
 def main_run():
     logging.basicConfig(level=logging.INFO)

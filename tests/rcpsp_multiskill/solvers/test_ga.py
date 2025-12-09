@@ -13,7 +13,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
 )
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
-from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
+from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation
 from discrete_optimization.generic_tools.ea.ga_tools import ParametersAltGa
 from discrete_optimization.rcpsp_multiskill.problem import (
     Employee,

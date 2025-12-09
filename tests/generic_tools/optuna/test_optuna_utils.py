@@ -14,7 +14,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     IntegerHyperparameter,
@@ -37,9 +36,6 @@ except ImportError:
     optuna_available = False
 else:
     optuna_available = True
-    from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
-        TimedPercentilePruner,
-    )
 
 SEED = 42
 

@@ -18,7 +18,6 @@ def run():
     print(SolverLookup.base_solvers())
     solver = CpmpyKnapsackSolver(problem=knapsack_problem, solver_name="exact")
     solver.init_model()
-    from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 
     res = solver.solve(
         time_limit=20, verbose=True, parameters_cp=ParametersCp.default_cpsat()

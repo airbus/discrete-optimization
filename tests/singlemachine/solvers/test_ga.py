@@ -2,13 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import numpy as np
 
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import Ga
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
-)
 from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
     create_mutations_portfolio_from_problem,
 )

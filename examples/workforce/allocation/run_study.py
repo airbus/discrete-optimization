@@ -8,13 +8,9 @@ from copy import copy, deepcopy
 import didppy as dp
 import pandas as pd
 
-from discrete_optimization.generic_tools.callbacks.early_stoppers import (
-    ObjectiveGapStopper,
-)
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
     BasicStatsCallback,
-    StatsWithBoundsCallback,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (

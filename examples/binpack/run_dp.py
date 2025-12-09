@@ -10,12 +10,7 @@ from discrete_optimization.binpack.parser import (
     get_data_available_bppc,
     parse_bin_packing_constraint_file,
 )
-from discrete_optimization.binpack.solvers.cpsat import (
-    CpSatBinPackSolver,
-    ModelingBinPack,
-)
 from discrete_optimization.binpack.solvers.dp import DpBinPackSolver, ModelingDpBinPack
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 
 logging.basicConfig(level=logging.INFO)
 

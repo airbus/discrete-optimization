@@ -4,7 +4,6 @@
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 from discrete_optimization.knapsack.solvers.dp import DpKnapsackSolver, dp
 from discrete_optimization.knapsack.solvers.greedy import GreedyBestKnapsackSolver

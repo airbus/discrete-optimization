@@ -11,7 +11,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.gpdp.problem import GpdpProblem, GpdpSolution, ProxyClass
-from discrete_optimization.gpdp.solvers import GpdpSolver
 from discrete_optimization.gpdp.solvers.ortools_routing import (
     OrtoolsGpdpSolver,
     ParametersCost,

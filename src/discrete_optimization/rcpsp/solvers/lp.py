@@ -40,16 +40,14 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    import gurobipy as gurobi
 
 try:
-    import docplex
+    import docplex.mp.dvar as cplex_var
+    import docplex.mp.model as cplex
 except ImportError:
     cplex_available = False
 else:
     cplex_available = True
-    import docplex.mp.dvar as cplex_var
-    import docplex.mp.model as cplex
 
 
 logger = logging.getLogger(__name__)

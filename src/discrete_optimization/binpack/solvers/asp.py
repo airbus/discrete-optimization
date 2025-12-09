@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import clingo
 
@@ -10,7 +10,6 @@ from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolutio
 from discrete_optimization.generic_tools.asp_tools import AspClingoSolver
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 

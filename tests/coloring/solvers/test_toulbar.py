@@ -11,13 +11,6 @@ from discrete_optimization.coloring.solvers.greedy import (
 )
 from discrete_optimization.coloring.solvers.toulbar import ToulbarColoringSolver
 
-try:
-    import pytoulbar2
-except ImportError:
-    toulbar_available = False
-else:
-    toulbar_available = True
-
 
 @pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_coloring_toulbar():

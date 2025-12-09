@@ -6,7 +6,7 @@ import logging
 import pytest
 
 from discrete_optimization.facility.parser import get_data_available, parse_file
-from discrete_optimization.facility.problem import FacilityProblem, FacilitySolution
+from discrete_optimization.facility.problem import FacilityProblem
 from discrete_optimization.facility.solvers.greedy import GreedyFacilitySolver
 from discrete_optimization.facility.solvers.toulbar import (
     FacilityConstraintHandlerDestroyFacilityToulbar,
@@ -14,7 +14,6 @@ from discrete_optimization.facility.solvers.toulbar import (
     ModelingToulbarFacility,
     ToulbarFacilitySolver,
     ToulbarFacilitySolverForLns,
-    toulbar_available,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.lns_tools import (

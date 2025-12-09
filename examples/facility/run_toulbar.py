@@ -4,7 +4,7 @@
 import logging
 
 from discrete_optimization.facility.parser import get_data_available, parse_file
-from discrete_optimization.facility.problem import FacilityProblem, FacilitySolution
+from discrete_optimization.facility.problem import FacilityProblem
 from discrete_optimization.facility.solvers.greedy import GreedyFacilitySolver
 from discrete_optimization.facility.solvers.toulbar import (
     FacilityConstraintHandlerDestroyFacilityToulbar,
@@ -22,7 +22,6 @@ from discrete_optimization.generic_tools.lns_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     from_solutions_to_result_storage,
 )
-from discrete_optimization.generic_tools.toulbar_tools import to_lns_toulbar
 
 logging.basicConfig(level=logging.INFO)
 

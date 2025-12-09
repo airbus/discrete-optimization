@@ -6,14 +6,10 @@ import pytest
 
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
-from discrete_optimization.knapsack.solvers.lp import GurobiKnapsackSolver
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
+from discrete_optimization.knapsack.solvers.lp import (
+    GurobiKnapsackSolver,
+    gurobi_available,
+)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")

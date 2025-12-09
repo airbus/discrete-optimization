@@ -4,13 +4,6 @@
 
 import logging
 
-import numpy as np
-
-from discrete_optimization.datasets import get_data_home
-from discrete_optimization.generic_tools.callbacks.loggers import (
-    NbIterationTracker,
-    ObjectiveLogger,
-)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem

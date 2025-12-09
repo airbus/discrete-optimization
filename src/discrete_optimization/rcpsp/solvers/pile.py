@@ -11,7 +11,7 @@ from typing import Optional
 import networkx as nx
 import numpy as np
 
-from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
+from discrete_optimization.generic_tools.cp_tools import CpSolverName
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,

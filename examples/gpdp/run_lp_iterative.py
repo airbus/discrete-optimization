@@ -9,19 +9,6 @@ from discrete_optimization.gpdp.plot import plot_gpdp_solution
 from discrete_optimization.gpdp.problem import GpdpSolution
 from discrete_optimization.gpdp.solvers.lp_iterative import GurobiLinearFlowGpdpSolver
 
-try:
-    import gurobipy as grb
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
-try:
-    import gurobipy as grb
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
-
 
 def example_ortools_example():
     gpdp = create_ortools_example()

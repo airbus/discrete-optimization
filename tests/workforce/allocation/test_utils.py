@@ -8,7 +8,6 @@ from discrete_optimization.workforce.allocation.parser import (
 )
 from discrete_optimization.workforce.allocation.utils import (
     create_subproblem_allocation,
-    plot_allocation_solution,
 )
 
 

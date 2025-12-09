@@ -12,7 +12,6 @@ import time
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Hashable, Iterable
-from enum import Enum
 from typing import Any, Optional, Union, cast
 
 import networkx as nx
@@ -23,7 +22,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     CallbackList,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
     Solution,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
@@ -36,7 +34,6 @@ from discrete_optimization.generic_tools.lp_tools import (
     MilpSolver,
     OrtoolsMathOptMilpSolver,
     ParametersMilp,
-    VariableType,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,

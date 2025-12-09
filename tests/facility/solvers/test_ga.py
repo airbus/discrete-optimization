@@ -6,7 +6,6 @@ import os
 
 from discrete_optimization.facility.parser import get_data_available, parse_file
 from discrete_optimization.facility.problem import FacilityProblem
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 
 

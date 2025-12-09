@@ -5,15 +5,13 @@ import logging
 
 from ortools.constraint_solver import routing_enums_pb2
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.gpdp.problem import GpdpProblem, GpdpSolution, ProxyClass
+from discrete_optimization.gpdp.problem import GpdpSolution, ProxyClass
 from discrete_optimization.gpdp.solvers.ortools_routing import (
     OrtoolsGpdpSolver,
     ParametersCost,
 )
 from discrete_optimization.tsptw.parser import get_data_available, parse_tsptw_file
-from discrete_optimization.tsptw.problem import TSPTWProblem, TSPTWSolution
-from discrete_optimization.tsptw.solvers.cpsat import CpSatTSPTWSolver
+from discrete_optimization.tsptw.problem import TSPTWSolution
 
 logging.basicConfig(level=logging.INFO)
 

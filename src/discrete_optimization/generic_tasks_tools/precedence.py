@@ -4,7 +4,7 @@ from abc import abstractmethod
 from collections.abc import Hashable, Iterable
 from typing import TypeVar
 
-from discrete_optimization.generic_tasks_tools.base import Task, TasksProblem
+from discrete_optimization.generic_tasks_tools.base import TasksProblem
 from discrete_optimization.generic_tools.graph_api import Graph
 
 HashableTask = TypeVar("HashableTask", bound=Hashable)

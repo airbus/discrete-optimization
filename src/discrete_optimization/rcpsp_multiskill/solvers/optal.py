@@ -6,7 +6,7 @@ import json
 import os
 from typing import Any, Optional
 
-from discrete_optimization.generic_tools.cp_tools import CpSolver, ParametersCp
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,

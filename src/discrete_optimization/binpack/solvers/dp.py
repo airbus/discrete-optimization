@@ -4,7 +4,6 @@
 import math
 import re
 from enum import Enum
-from functools import reduce
 from typing import Any
 
 import didppy as dp

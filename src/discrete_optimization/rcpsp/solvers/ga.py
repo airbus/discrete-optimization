@@ -5,7 +5,6 @@ from typing import Optional
 
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
-    ObjectiveHandling,
     ParamsObjectiveFunction,
 )
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa

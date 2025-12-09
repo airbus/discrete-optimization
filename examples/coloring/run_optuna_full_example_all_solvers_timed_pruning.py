@@ -29,7 +29,7 @@ from discrete_optimization.coloring.solvers_map import (
     AspColoringSolver,
     GurobiColoringSolver,
     solvers_map,
-    toulbar2_available,
+    toulbar_available,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     solvers_to_remove = {CpColoringSolver}
     if not gurobi_available or not gurobi_full_license_available:
         solvers_to_remove.add(GurobiColoringSolver)
-    if not toulbar2_available:
+    if not toulbar_available:
         solvers_to_remove.add(ToulbarColoringSolver)
     solvers_to_test: list[type[SolverDO]] = [
         s for s in solvers_map if s not in solvers_to_remove

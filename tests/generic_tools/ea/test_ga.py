@@ -7,7 +7,6 @@ import discrete_optimization.tsp.parser as tsp_parser
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
-    get_default_objective_setup,
 )
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,

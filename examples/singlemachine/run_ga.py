@@ -3,9 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import numpy as np
-
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import Ga
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
@@ -13,9 +10,6 @@ from discrete_optimization.generic_tools.ls.local_search import (
 )
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
     TemperatureSchedulingFactor,
-)
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
 )
 from discrete_optimization.generic_tools.mutations.mutation_permutation import (
     SwapMutation,

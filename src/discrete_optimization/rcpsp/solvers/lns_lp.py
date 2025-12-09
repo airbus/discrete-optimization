@@ -8,8 +8,6 @@ from collections.abc import Iterable
 from enum import Enum
 from typing import Any, Union
 
-import numpy as np
-
 from discrete_optimization.generic_rcpsp_tools.mutation import RcpspMutation
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
@@ -30,9 +28,6 @@ from discrete_optimization.generic_tools.ls.local_search import (
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
-)
-from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    get_available_mutations,
 )
 from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
     create_mutations_portfolio_from_problem,

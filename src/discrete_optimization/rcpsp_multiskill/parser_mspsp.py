@@ -11,7 +11,6 @@ import pymzn
 
 from discrete_optimization.datasets import (
     ERROR_MSG_MISSING_DATASETS,
-    fetch_data_from_mspsplib_repo,
     get_data_home,
 )
 from discrete_optimization.rcpsp_multiskill.problem import (

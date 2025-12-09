@@ -8,13 +8,12 @@ import numpy as np
 import pandas as pd
 
 try:
-    import plotly
+    import plotly.express as px
+    import plotly.graph_objects as go
 except ImportError:
     plotly_available = False
 else:
     plotly_available = True
-    import plotly.express as px
-    import plotly.graph_objects as go
 
 
 logger = logging.getLogger(__name__)

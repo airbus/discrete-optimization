@@ -25,7 +25,6 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
     MultimodeCpSatSolver,
     SchedulingCpSatSolver,
 )
-from discrete_optimization.generic_tools.cp_tools import SignEnum
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import StatusSolver, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (

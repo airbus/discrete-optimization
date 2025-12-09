@@ -4,20 +4,27 @@
 
 from __future__ import annotations
 
+import logging
 import random
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable
 
 from discrete_optimization.coloring.problem import ColoringProblem, ColoringSolution
 from discrete_optimization.coloring.solvers.starting_solution import (
     WithStartingSolutionColoringSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
 )
+from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+)
+from discrete_optimization.generic_tools.toulbar_tools import (
+    ToulbarSolver,
+    to_lns_toulbar,
 )
 
 try:
@@ -27,14 +34,6 @@ except ImportError:
 else:
     toulbar_available = True
 
-import logging
-
-from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
-from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
-from discrete_optimization.generic_tools.toulbar_tools import (
-    ToulbarSolver,
-    to_lns_toulbar,
-)
 
 logger = logging.getLogger(__name__)
 

@@ -7,14 +7,10 @@ import pytest
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
-from discrete_optimization.rcpsp.solvers.lp import GurobiMultimodeRcpspSolver
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
+from discrete_optimization.rcpsp.solvers.lp import (
+    GurobiMultimodeRcpspSolver,
+    gurobi_available,
+)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")

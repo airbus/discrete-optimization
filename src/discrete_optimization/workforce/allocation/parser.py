@@ -7,7 +7,9 @@ import logging
 from discrete_optimization.workforce.allocation.problem import TeamAllocationProblem
 from discrete_optimization.workforce.allocation.utils import cut_number_of_team
 from discrete_optimization.workforce.scheduling.parser import (
-    get_data_available,
+    get_data_available as get_data_available,  # kept by ruff
+)
+from discrete_optimization.workforce.scheduling.parser import (
     parse_json_to_problem,
 )
 from discrete_optimization.workforce.scheduling.utils import (

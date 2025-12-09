@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import numpy as np
 from matplotlib import pyplot as plt
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
@@ -13,16 +12,9 @@ from discrete_optimization.generic_tools.do_problem import get_default_objective
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
-from discrete_optimization.generic_tools.ls.local_search import (
-    RestartHandlerLimit,
-)
-from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
-    create_mutations_portfolio_from_problem,
-)
 from discrete_optimization.generic_tools.sequential_metasolver import (
     SequentialMetasolver,
 )
-from discrete_optimization.tsp.mutation import SwapTspMutation, TwoOptTspMutation
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.plot import plot_tsp_solution
 from discrete_optimization.tsp.solvers.cpsat import CpSatTspSolver

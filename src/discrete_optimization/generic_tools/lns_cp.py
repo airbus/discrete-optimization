@@ -3,13 +3,10 @@
 #  LICENSE file in the root directory of this source tree.
 import contextlib
 import logging
-import random
-import sys
 from abc import abstractmethod
 from collections.abc import Iterable
 from typing import Any, Optional
 
-import numpy as np
 from minizinc import Instance
 from ortools.sat.python.cp_model import Constraint
 
@@ -23,7 +20,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lns_tools import (
     BaseLns,
     ConstraintHandler,
@@ -33,7 +29,6 @@ from discrete_optimization.generic_tools.lns_tools import (
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
-    fitness_class,
 )
 
 logger = logging.getLogger(__name__)

@@ -5,9 +5,8 @@ import logging
 
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file
-from discrete_optimization.singlemachine.problem import WeightedTardinessProblem
 from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver
-from discrete_optimization.singlemachine.solvers.dp import DpWTSolver, dp
+from discrete_optimization.singlemachine.solvers.dp import DpWTSolver
 
 logging.basicConfig(level=logging.INFO)
 

@@ -19,16 +19,11 @@ from discrete_optimization.coloring.solvers.greedy import (
 from discrete_optimization.coloring.solvers.toulbar import (
     ColoringConstraintHandlerToulbar,
     ToulbarColoringSolver,
-    ToulbarColoringSolverForLns,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.lns_tools import (
     BaseLns,
     InitialSolutionFromSolver,
-    TrivialInitialSolution,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    from_solutions_to_result_storage,
 )
 from discrete_optimization.generic_tools.toulbar_tools import to_lns_toulbar
 

@@ -17,7 +17,7 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler
     ALLOCATION_OBJECTIVES,
     TasksConstraintHandler,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 
 modeling, value_sequence_chain, used_variable, symmetry_on_used = param_fixtures(

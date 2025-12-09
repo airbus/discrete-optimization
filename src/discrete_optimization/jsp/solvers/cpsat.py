@@ -6,7 +6,7 @@
 import logging
 from typing import Any
 
-from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback, LinearExprT
+from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat import (

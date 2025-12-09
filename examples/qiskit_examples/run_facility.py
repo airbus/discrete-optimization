@@ -9,7 +9,6 @@ from discrete_optimization.facility.problem import (
     Point,
 )
 from discrete_optimization.facility.solvers.quantum import (
-    QaoaFacilitySolver,
     VqeFacilitySolver,
 )
 

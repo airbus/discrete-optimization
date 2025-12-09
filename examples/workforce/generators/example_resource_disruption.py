@@ -4,13 +4,11 @@
 
 from datetime import datetime
 
-import networkx as nx
 import plotly.io as pio
 
 from discrete_optimization.workforce.allocation.parser import (
     build_allocation_problem_from_scheduling,
 )
-from discrete_optimization.workforce.allocation.problem import satisfy_same_allocation
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
     CpsatTeamAllocationSolver,
     ModelisationAllocationOrtools,
@@ -18,10 +16,7 @@ from discrete_optimization.workforce.allocation.solvers.cpsat import (
 from discrete_optimization.workforce.allocation.utils import plot_allocation_solution
 from discrete_optimization.workforce.generators.resource_scenario import (
     ParamsRandomness,
-    create_scheduling_problem_several_resource_dropping,
-    cut_number_of_team,
     generate_allocation_disruption,
-    generate_resource_disruption_scenario_from,
 )
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,

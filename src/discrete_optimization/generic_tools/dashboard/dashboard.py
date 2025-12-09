@@ -49,13 +49,12 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
 )
 
 try:
-    import dash
+    from dash import Dash, Input, Output, dash_table, dcc, html
 except ImportError:
     dash_available = False
     Dash = object
 else:
     dash_available = True
-    from dash import Dash, Input, Output, callback, ctx, dash_table, dcc, html
 
 try:
     import dash_bootstrap_components as dbc

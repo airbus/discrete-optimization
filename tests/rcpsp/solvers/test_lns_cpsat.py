@@ -17,8 +17,6 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
     NeighborBuilderMix,
-    NeighborBuilderSubPart,
-    NeighborRandom,
     NeighborRandomAndNeighborGraph,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (

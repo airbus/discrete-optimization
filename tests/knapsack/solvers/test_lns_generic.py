@@ -3,12 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import pytest
-from pytest_cases import fixture, param_fixtures
+from pytest_cases import fixture
 
-from discrete_optimization.coloring.solvers.cpsat import (
-    CpSatColoringSolver,
-    ModelingCpSat,
-)
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
     BaseConstraintExtractor,
     ConstraintExtractorList,
@@ -21,7 +17,7 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler
     ALLOCATION_OBJECTIVES,
     TasksConstraintHandler,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.knapsack.solvers.cpsat import CpSatKnapsackSolver
 

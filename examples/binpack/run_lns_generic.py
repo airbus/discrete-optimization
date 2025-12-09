@@ -14,7 +14,6 @@ from discrete_optimization.binpack.solvers.cpsat import (
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
     BaseConstraintExtractor,
-    ConstraintExtractorList,
     ConstraintExtractorPortfolio,
     DummyConstraintExtractor,
     NbChangesAllocationConstraintExtractor,
