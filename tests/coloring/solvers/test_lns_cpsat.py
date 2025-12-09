@@ -3,10 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import pytest
-
 from discrete_optimization.coloring.parser import get_data_available, parse_file
-from discrete_optimization.coloring.plot import plot_coloring_solution, plt
 from discrete_optimization.coloring.problem import (
     ColoringConstraints,
     ColoringSolution,

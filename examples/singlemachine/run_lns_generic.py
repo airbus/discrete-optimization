@@ -5,7 +5,6 @@ import logging
 
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
     BaseConstraintExtractor,
-    ConstraintExtractorList,
     ConstraintExtractorPortfolio,
     DummyConstraintExtractor,
     SchedulingConstraintExtractor,
@@ -19,15 +18,13 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools imp
     NeighborBuilderSubPart,
     NeighborRandom,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
     WarmStartCallback,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.lns_cp import BaseLnsCp, LnsOrtoolsCpSat
+from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import InitialSolutionFromSolver
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file
-from discrete_optimization.singlemachine.problem import WeightedTardinessProblem
 from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver
 from discrete_optimization.singlemachine.solvers.greedy import GreedySingleMachineWSPT
 

@@ -6,7 +6,7 @@
 from pytest_cases import fixture, param_fixture
 
 from discrete_optimization.tsp.parser import get_data_available, parse_file
-from discrete_optimization.tsp.problem import Point2DTspProblem, TspProblem
+from discrete_optimization.tsp.problem import Point2DTspProblem
 
 end_index = param_fixture("end_index", [0, 10])
 

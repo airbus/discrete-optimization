@@ -12,7 +12,6 @@ from discrete_optimization.facility.solvers.cp_mzn import (
     CpFacilityModel,
     CpFacilitySolver,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")

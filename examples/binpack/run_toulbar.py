@@ -8,7 +8,6 @@ from discrete_optimization.binpack.parser import (
 )
 from discrete_optimization.binpack.solvers.greedy import GreedyBinPackSolver
 from discrete_optimization.binpack.solvers.toulbar import ToulbarBinPackSolver
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.generic_tools.sequential_metasolver import (
     SequentialMetasolver,

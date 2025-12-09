@@ -9,7 +9,6 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     ConstraintExtractorList,
     NbChangesAllocationConstraintExtractor,
     NbUsagesAllocationConstraintExtractor,
-    SchedulingConstraintExtractor,
     SubresourcesAllocationConstraintExtractor,
     SubtasksAllocationConstraintExtractor,
 )

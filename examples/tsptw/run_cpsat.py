@@ -5,7 +5,6 @@ import logging
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.tsptw.parser import get_data_available, parse_tsptw_file
-from discrete_optimization.tsptw.problem import TSPTWProblem, TSPTWSolution
 from discrete_optimization.tsptw.solvers.cpsat import CpSatTSPTWSolver
 
 logging.basicConfig(level=logging.INFO)

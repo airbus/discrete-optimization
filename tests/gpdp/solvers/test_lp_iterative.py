@@ -27,14 +27,8 @@ from discrete_optimization.gpdp.solvers.lp_iterative import (
     GurobiLazyConstraintLinearFlowGpdpSolver,
     GurobiLinearFlowGpdpSolver,
     MathOptLinearFlowGpdpSolver,
+    gurobi_available,
 )
-
-try:
-    import gurobipy as grb
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
 
 epsilon = 0.000001
 

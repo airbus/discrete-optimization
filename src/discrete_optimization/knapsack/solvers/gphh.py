@@ -22,7 +22,6 @@ from deap.gp import (
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Problem,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ghh_tools import (

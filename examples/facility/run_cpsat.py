@@ -2,10 +2,9 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-import os.path
 
 from discrete_optimization.facility.parser import get_data_available, parse_file
-from discrete_optimization.facility.problem import FacilityProblem, FacilitySolution
+from discrete_optimization.facility.problem import FacilityProblem
 from discrete_optimization.facility.solvers.cpsat import CpSatFacilitySolver
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 

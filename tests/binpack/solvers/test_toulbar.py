@@ -6,13 +6,6 @@ import pytest
 
 from discrete_optimization.binpack.solvers.toulbar import ToulbarBinPackSolver
 
-try:
-    import pytoulbar2
-except ImportError:
-    toulbar_available = False
-else:
-    toulbar_available = True
-
 
 @pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_toulbar(problem, manual_sol, manual_sol2):

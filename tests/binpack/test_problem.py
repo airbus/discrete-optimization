@@ -6,7 +6,7 @@ from discrete_optimization.binpack.parser import (
     get_data_available_bppc,
     parse_bin_packing_constraint_file,
 )
-from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolution
+from discrete_optimization.binpack.problem import BinPackSolution
 
 
 def test_model_satisfy():

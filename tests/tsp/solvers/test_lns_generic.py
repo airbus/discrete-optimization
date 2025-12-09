@@ -5,7 +5,6 @@
 import pytest
 
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
-    SCHEDULING_OBJECTIVES,
     ObjectiveSubproblem,
     TasksConstraintHandler,
 )

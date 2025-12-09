@@ -2,21 +2,18 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
-    AllocationCpSatSolver,
     SchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.do_solver import StatusSolver, WarmstartMixin
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.vrptw.problem import (
     Task,
-    UnaryResource,
     VRPTWProblem,
     VRPTWSolution,
 )

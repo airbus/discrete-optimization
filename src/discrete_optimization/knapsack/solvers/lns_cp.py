@@ -4,13 +4,12 @@
 
 import random
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 from minizinc import Instance
 from ortools.sat.python.cp_model import Constraint
 
 from discrete_optimization.generic_tools.cp_tools import MinizincCpSolver
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
 )

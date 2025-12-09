@@ -13,13 +13,6 @@ from discrete_optimization.maximum_independent_set.solvers.toulbar import (
     ToulbarMisSolver,
 )
 
-try:
-    import pytoulbar2
-except ImportError:
-    toulbar_available = False
-else:
-    toulbar_available = True
-
 
 @pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_mis_toulbar():

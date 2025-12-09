@@ -8,13 +8,10 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     ConstraintExtractorList,
     NbChangesAllocationConstraintExtractor,
     NbUsagesAllocationConstraintExtractor,
-    SchedulingConstraintExtractor,
     SubresourcesAllocationConstraintExtractor,
     SubtasksAllocationConstraintExtractor,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
-    ALLOCATION_OBJECTIVES,
-    SCHEDULING_OBJECTIVES,
     TasksConstraintHandler,
 )
 from discrete_optimization.generic_tools.callbacks.warm_start_callback import (

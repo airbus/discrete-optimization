@@ -14,7 +14,6 @@ from discrete_optimization.generic_tools.do_mutation import (
 )
 
 # Relocate operator
-from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.vrp.problem import (
     BasicCustomer,
     VrpPaths,

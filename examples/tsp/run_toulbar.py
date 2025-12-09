@@ -7,14 +7,11 @@ import didppy
 import matplotlib.pyplot as plt
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
-    NbIterationStopper,
     TimerStopper,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_tools import (
     BaseLns,
-    ConstraintHandlerMix,
     TrivialInitialSolution,
     from_solutions_to_result_storage,
 )

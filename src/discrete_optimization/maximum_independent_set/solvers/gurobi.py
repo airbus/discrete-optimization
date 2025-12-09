@@ -13,7 +13,7 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, LinExpr, Model, Var, quicksum
+    from gurobipy import GRB, Var
 
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
 from discrete_optimization.maximum_independent_set.problem import MisSolution

@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import pytest
-from qiskit.quantum_info.analysis.make_observable import make_dict_observable
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,

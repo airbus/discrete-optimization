@@ -24,9 +24,7 @@ from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMix
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     SubBrick,
-    SubBrickClsHyperparameter,
     SubBrickHyperparameter,
-    SubBrickKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,

@@ -26,7 +26,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop

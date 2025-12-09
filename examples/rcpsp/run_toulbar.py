@@ -5,7 +5,6 @@ import logging
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.generic_tools.lns_tools import (
     BaseLns,
     TrivialInitialSolution,
@@ -17,7 +16,6 @@ from discrete_optimization.rcpsp.solvers.toulbar import (
     RcpspConstraintHandlerToulbar,
     ToulbarMultimodeRcpspSolver,
     ToulbarRcpspSolver,
-    ToulbarRcpspSolverForLns,
 )
 
 logging.basicConfig(level=logging.INFO)

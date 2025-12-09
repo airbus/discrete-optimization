@@ -2,11 +2,10 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from collections.abc import MutableSequence, Sequence
-from typing import Any, TypeVar
+from collections.abc import Sequence
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
-from discrete_optimization.generic_tools.do_problem import Problem, Solution
+from discrete_optimization.generic_tools.do_problem import Problem
 
 
 def generic_mutate_wrapper(

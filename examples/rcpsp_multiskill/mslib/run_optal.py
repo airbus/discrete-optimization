@@ -4,15 +4,12 @@
 import logging
 import os
 
-from discrete_optimization.generic_rcpsp_tools.solvers.ls import LsGenericRcpspSolver
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp_multiskill.parser_mslib import (
     get_data_available,
     parse_file,
 )
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
-    plot_resource_individual_gantt,
     plt,
 )
 from discrete_optimization.rcpsp_multiskill.problem import MultiskillRcpspSolution

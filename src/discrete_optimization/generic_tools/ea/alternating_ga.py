@@ -6,7 +6,6 @@ from typing import Any, Optional, Union
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
-    ObjectiveHandling,
     ParamsObjectiveFunction,
     Problem,
     Solution,

@@ -8,7 +8,6 @@ from matplotlib import pyplot as plt
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.vrp.parser import get_data_available, parse_file
 from discrete_optimization.vrp.plot import plot_vrp_solution
 from discrete_optimization.vrp.problem import VrpSolution

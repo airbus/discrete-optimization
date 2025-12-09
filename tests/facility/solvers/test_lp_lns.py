@@ -18,18 +18,12 @@ from discrete_optimization.facility.solvers.lp import (
     GurobiFacilitySolver,
     MathOptFacilitySolver,
     ParametersMilp,
+    gurobi_available,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LnsMilp
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
 
 
 @pytest.mark.parametrize(

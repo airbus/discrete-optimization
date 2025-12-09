@@ -19,9 +19,6 @@ from optuna.trial import Trial, TrialState
 
 from discrete_optimization.coloring.parser import get_data_available, parse_file
 from discrete_optimization.coloring.solvers.cpsat import CpSatColoringSolver
-from discrete_optimization.generic_tools.callbacks.early_stoppers import (
-    NbIterationStopper,
-)
 from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import ModeOptim

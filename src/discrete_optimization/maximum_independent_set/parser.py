@@ -1,12 +1,10 @@
 import os
-from collections.abc import Hashable
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 import networkx as nx
 
 from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
-from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.maximum_independent_set.problem import MisProblem
 
 

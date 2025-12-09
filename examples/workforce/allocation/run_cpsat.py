@@ -2,7 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import matplotlib.pyplot as plt
-import networkx as nx
 
 from discrete_optimization.generic_tools.callbacks.sequential_solvers_callback import (
     RetrieveSubRes,
@@ -12,7 +11,6 @@ from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
 )
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
 from discrete_optimization.workforce.allocation.parser import (
-    build_allocation_problem_from_scheduling,
     get_data_available,
     parse_to_allocation_problem,
 )
@@ -23,7 +21,6 @@ from discrete_optimization.workforce.allocation.solvers.cpsat import (
 )
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
-    parse_json_to_problem,
 )
 
 
