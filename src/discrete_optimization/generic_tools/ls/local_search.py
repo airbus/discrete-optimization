@@ -6,7 +6,6 @@ from enum import Enum
 
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
     fitness_class,
 )
 

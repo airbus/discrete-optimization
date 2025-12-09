@@ -31,7 +31,6 @@ from discrete_optimization.generic_tools.ls.simulated_annealing import (
 )
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     RcpspMutation,
-    get_available_mutations,
 )
 from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
     create_mutations_portfolio_from_problem,
@@ -45,9 +44,6 @@ except ImportError:
     optuna_available = False
 else:
     optuna_available = True
-    from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
-        TimedPercentilePruner,
-    )
 
 SEED = 42
 

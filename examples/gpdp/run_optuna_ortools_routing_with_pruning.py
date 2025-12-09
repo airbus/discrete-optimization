@@ -12,8 +12,6 @@ Results can be viewed on optuna-dashboard with:
 
 """
 
-import logging
-
 import optuna
 from optuna.trial import Trial, TrialState
 

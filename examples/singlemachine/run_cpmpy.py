@@ -5,7 +5,6 @@ import logging
 
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.cpmpy_tools import (
-    CpmpyCorrectUnsatMethod,
     CpmpyExplainUnsatMethod,
 )
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file

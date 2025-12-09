@@ -3,13 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import matplotlib.pyplot as plt
-
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.tsp.parser import get_data_available, parse_file
-from discrete_optimization.tsp.plot import plot_tsp_solution
 from discrete_optimization.tsp.solvers.optal import OptalTspSolver
 
 logging.basicConfig(level=logging.INFO)

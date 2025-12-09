@@ -1,7 +1,7 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable
 
 from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools import (
     NeighborBuilderMix,
@@ -10,7 +10,7 @@ from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools
     NeighborRandom,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,

@@ -6,7 +6,6 @@ from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver

@@ -8,7 +8,6 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerSt
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.lns_tools import (
     BaseLns,
-    InitialSolutionFromSolver,
     TrivialInitialSolution,
     from_solutions_to_result_storage,
 )

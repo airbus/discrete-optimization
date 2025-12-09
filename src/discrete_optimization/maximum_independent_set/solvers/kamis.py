@@ -1,6 +1,5 @@
 import os
 import subprocess
-import warnings
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,

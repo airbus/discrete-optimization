@@ -1,6 +1,6 @@
 import random
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from ortools.sat.python.cp_model import Constraint

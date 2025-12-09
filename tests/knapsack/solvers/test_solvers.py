@@ -14,15 +14,9 @@ from discrete_optimization.knapsack.solvers.greedy import GreedyBestKnapsackSolv
 from discrete_optimization.knapsack.solvers.lp import (
     GurobiKnapsackSolver,
     MathOptKnapsackSolver,
+    gurobi_available,
 )
 from discrete_optimization.knapsack.solvers_map import solve, solvers_map
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
 
 
 @pytest.fixture

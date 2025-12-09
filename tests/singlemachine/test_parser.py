@@ -4,7 +4,6 @@
 import pytest
 
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file
-from discrete_optimization.singlemachine.problem import WeightedTardinessProblem
 
 
 def test_no_dataset(fake_data_home):

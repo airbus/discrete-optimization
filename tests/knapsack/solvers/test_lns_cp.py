@@ -4,7 +4,6 @@
 from time import sleep
 
 import pytest
-from ortools.sat.python.cp_model import Constraint
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
@@ -12,10 +11,6 @@ from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTra
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import LnsCpMzn, LnsOrtoolsCpSat
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 from discrete_optimization.knapsack.problem import KnapsackSolution
 from discrete_optimization.knapsack.solvers.cp_mzn import (

@@ -271,7 +271,7 @@ def build_graph_allocation_from_calendar_and_schedule(
 
 
 def compute_graph_coloring(starts: np.ndarray, ends: np.ndarray, task_names: list):
-    from discrete_optimization.generic_tools.graph_api import Graph, from_networkx
+    from discrete_optimization.generic_tools.graph_api import from_networkx
 
     track_presence = defaultdict(lambda: set())
     edges = []

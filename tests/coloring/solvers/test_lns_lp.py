@@ -13,6 +13,7 @@ from discrete_optimization.coloring.solvers.lns_lp import (
 from discrete_optimization.coloring.solvers.lp import (
     GurobiColoringSolver,
     MathOptColoringSolver,
+    gurobi_available,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.callbacks.loggers import (
@@ -22,12 +23,6 @@ from discrete_optimization.generic_tools.callbacks.loggers import (
 from discrete_optimization.generic_tools.lns_mip import LnsMilp
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
 
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
 logging.basicConfig(level=logging.INFO)
 
 

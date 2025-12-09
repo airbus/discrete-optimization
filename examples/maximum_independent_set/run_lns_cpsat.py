@@ -22,7 +22,6 @@ from discrete_optimization.maximum_independent_set.problem import (
 from discrete_optimization.maximum_independent_set.solvers.cpsat import CpSatMisSolver
 from discrete_optimization.maximum_independent_set.solvers.lns import (
     AllVarsOrtoolsCpSatMisConstraintHandler,
-    DestroyOrtoolsCpSatMisConstraintHandler,
     LocalMovesOrtoolsCpSatMisConstraintHandler,
     OrtoolsCpSatMisConstraintHandler,
 )

@@ -18,7 +18,7 @@ from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatRcpspSolver,
 )
-from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt, plt
+from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -21,21 +21,15 @@ from discrete_optimization.coloring.solvers.lp import (
     GurobiColoringSolver,
     MathOptColoringSolver,
 )
+from discrete_optimization.coloring.solvers.toulbar import (
+    ToulbarColoringSolver,
+    toulbar_available,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-
-try:
-    import pytoulbar2
-except:
-    toulbar2_available = False
-else:
-    from discrete_optimization.coloring.solvers.toulbar import ToulbarColoringSolver
-
-    toulbar2_available = True
-
 
 solvers: dict[str, list[tuple[type[ColoringSolver], dict[str, Any]]]] = {
     "lp": [
@@ -61,7 +55,7 @@ solvers: dict[str, list[tuple[type[ColoringSolver], dict[str, Any]]]] = {
     "greedy": [(GreedyColoringSolver, {})],
     "asp": [(AspColoringSolver, {"time_limit": 5})],
 }
-if toulbar2_available:
+if toulbar_available:
     solvers["toulbar2"] = [(ToulbarColoringSolver, {"time_limit": 5})]
 
 solvers_map = {}

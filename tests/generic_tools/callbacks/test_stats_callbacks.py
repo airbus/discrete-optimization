@@ -10,7 +10,6 @@ from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
-from discrete_optimization.rcpsp.solvers.dp import DpRcpspSolver, dp
 
 
 def test_basic_stats_callback():

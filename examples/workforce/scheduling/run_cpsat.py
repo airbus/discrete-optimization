@@ -2,7 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-import os
 from typing import Optional
 
 import plotly.io as pio
@@ -16,8 +15,6 @@ from discrete_optimization.generic_tools.callbacks.sequential_solvers_callback i
 )
 from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
     BasicStatsCallback,
-    StatsCpsatCallback,
-    StatsWithBoundsCallback,
 )
 from discrete_optimization.generic_tools.callbacks.warm_start_callback import Callback
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
@@ -27,7 +24,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.workforce.generators.resource_scenario import (
     ParamsRandomness,
-    create_scheduling_problem_several_resource_dropping,
     generate_scheduling_disruption,
 )
 from discrete_optimization.workforce.scheduling.parser import (

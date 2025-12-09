@@ -5,7 +5,6 @@
 import logging
 
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
-    ConstraintExtractorList,
     ParamsConstraintExtractor,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
@@ -15,7 +14,6 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
     NeighborBuilderMix,
     NeighborBuilderSubPart,
-    NeighborBuilderTimeWindow,
     NeighborRandom,
 )
 from discrete_optimization.generic_tools.callbacks.warm_start_callback import (

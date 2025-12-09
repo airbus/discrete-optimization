@@ -21,7 +21,6 @@ from discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb impo
     LBoundAllocScheduling,
 )
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
-    CPSatAllocSchedulingSolver,
     ObjectivesEnum,
 )
 from discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed import (

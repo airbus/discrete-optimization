@@ -7,7 +7,6 @@ from typing import Optional
 
 from discrete_optimization.datasets import (
     ERROR_MSG_MISSING_DATASETS,
-    fetch_data_from_mslib,
     get_data_home,
 )
 from discrete_optimization.rcpsp_multiskill.problem import (

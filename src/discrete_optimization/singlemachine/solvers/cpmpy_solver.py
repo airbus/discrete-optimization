@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Dict, List
 
 import cpmpy
-from cpmpy.expressions.globalconstraints import Cumulative, NoOverlap
+from cpmpy.expressions.globalconstraints import NoOverlap
 
 from discrete_optimization.generic_tools.cpmpy_tools import (
     CpmpySolver,

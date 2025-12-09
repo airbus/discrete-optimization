@@ -28,10 +28,6 @@ from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.dashboard import Dashboard
-from discrete_optimization.generic_tools.dashboard.dashboard import (
-    TIME_LOGSCALE_KEY,
-    TRANSPOSE_KEY,
-)
 from discrete_optimization.generic_tools.do_solver import (
     BoundsProviderMixin,
     StatusSolver,

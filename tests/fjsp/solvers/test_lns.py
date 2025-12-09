@@ -4,8 +4,6 @@
 
 import logging
 
-import pytest
-
 from discrete_optimization.fjsp.parser import get_data_available, parse_file
 from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.fjsp.solvers.lns_cpsat import (

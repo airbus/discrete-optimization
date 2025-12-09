@@ -18,6 +18,7 @@ from discrete_optimization.maximum_independent_set.solvers.cpsat import CpSatMis
 from discrete_optimization.maximum_independent_set.solvers.gurobi import (
     GurobiMisSolver,
     GurobiQuadraticMisSolver,
+    gurobi_available,
 )
 from discrete_optimization.maximum_independent_set.solvers.kamis import KamisMisSolver
 from discrete_optimization.maximum_independent_set.solvers.mathopt import (
@@ -26,21 +27,10 @@ from discrete_optimization.maximum_independent_set.solvers.mathopt import (
 )
 from discrete_optimization.maximum_independent_set.solvers.toulbar import (
     ToulbarMisSolver,
+    toulbar_available,
 )
 from discrete_optimization.maximum_independent_set.solvers_map import solve, solvers_map
 
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
-try:
-    import pytoulbar2
-except ImportError:
-    toulbar_available = False
-else:
-    toulbar_available = True
 kamis_available = False
 
 logger = logging.getLogger(__name__)

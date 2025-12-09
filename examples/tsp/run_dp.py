@@ -43,7 +43,6 @@ def run_dp_solver_ws():
     files = [f for f in files if "tsp_574_1" in f]
     model = parse_file(files[0], start_index=0, end_index=0)
     params_objective_function = get_default_objective_setup(problem=model)
-    from discrete_optimization.tsp.solvers.cpsat import CpSatTspSolver
     from discrete_optimization.tsp.solvers.gpdp import GpdpBasedTspSolver
 
     solver_ws = GpdpBasedTspSolver(model)

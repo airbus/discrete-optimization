@@ -5,12 +5,6 @@ import logging
 
 import plotly.io as pio
 
-from discrete_optimization.generic_tools.callbacks.early_stoppers import (
-    ObjectiveGapStopper,
-)
-from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
-    BasicStatsCallback,
-)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
@@ -20,7 +14,6 @@ from discrete_optimization.workforce.scheduling.solvers.optal import (
     OptalAllocSchedulingSolver,
 )
 from discrete_optimization.workforce.scheduling.utils import (
-    compute_changes_between_solution,
     plotly_schedule_comparison,
 )
 

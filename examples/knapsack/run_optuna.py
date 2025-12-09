@@ -18,7 +18,7 @@ from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import Trial, TrialState
 
 from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
-from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
+from discrete_optimization.generic_tools.cp_tools import CpSolverName
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
@@ -33,7 +33,6 @@ from discrete_optimization.knapsack.solvers.decomposition import (
 )
 from discrete_optimization.knapsack.solvers.dp import ExactDpKnapsackSolver
 from discrete_optimization.knapsack.solvers.greedy import (
-    GreedyBestKnapsackSolver,
     GreedyDummyKnapsackSolver,
 )
 

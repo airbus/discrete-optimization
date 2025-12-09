@@ -11,7 +11,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
-from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, SolverDO
+from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )

@@ -18,13 +18,6 @@ from discrete_optimization.generic_tools.lns_tools import (
     InitialSolutionFromSolver,
 )
 
-try:
-    import pytoulbar2
-except ImportError:
-    toulbar_available = False
-else:
-    toulbar_available = True
-
 
 @pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_lns_toulbar():

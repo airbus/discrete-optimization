@@ -1,6 +1,7 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 import random
 from collections.abc import Iterable
 from enum import Enum
@@ -8,18 +9,10 @@ from typing import Any, Optional, Union
 
 import tqdm
 
-try:
-    import pytoulbar2
-
-    toulbar_available = True
-except ImportError as e:
-    toulbar_available = False
-import logging
-
 from discrete_optimization.facility.problem import FacilityProblem, FacilitySolution
 from discrete_optimization.facility.solvers.facility_solver import FacilitySolver
 from discrete_optimization.facility.solvers.lp import prune_search_space
-from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
 )
@@ -31,6 +24,14 @@ from discrete_optimization.generic_tools.toulbar_tools import (
     ToulbarSolver,
     to_lns_toulbar,
 )
+
+try:
+    import pytoulbar2
+
+    toulbar_available = True
+except ImportError as e:
+    toulbar_available = False
+
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.tempo import TempoRcpspSolver
-from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt
+from discrete_optimization.rcpsp.utils import plot_ressource_view
 
 
 def run_tempo():

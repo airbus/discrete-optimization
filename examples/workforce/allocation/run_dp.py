@@ -2,14 +2,11 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import networkx as nx
-from matplotlib import pyplot as plt
 
 from discrete_optimization.workforce.allocation.parser import (
     build_allocation_problem_from_scheduling,
 )
 from discrete_optimization.workforce.allocation.solvers.dp import DpAllocationSolver, dp
-from discrete_optimization.workforce.allocation.utils import plot_allocation_solution
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
     parse_json_to_problem,

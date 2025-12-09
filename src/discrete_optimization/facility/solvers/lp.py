@@ -47,13 +47,6 @@ else:
     gurobi_available = True
     from gurobipy import (
         GRB,
-        Constr,
-        GenConstr,
-        LinExpr,
-        MConstr,
-        Model,
-        QConstr,
-        quicksum,
     )
 
 

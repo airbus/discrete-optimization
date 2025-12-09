@@ -3,39 +3,23 @@
 #  LICENSE file in the root directory of this source tree.
 # You should compile the executable tempo_scheduler,
 # from the tempo library developed here : https://gepgitlab.laas.fr/roc/emmanuel-hebrard/tempo
-import datetime
 import json
 import logging
 import os.path
-import subprocess
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
-import pandas as pd
 
-from discrete_optimization.generic_tools.callbacks.callback import (
-    Callback,
-    CallbackList,
-)
 from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
     Solution,
 )
 from discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools import (
     FormatEnum,
     TempoSchedulingSolver,
 )
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
-    CategoricalHyperparameter,
-    IntegerHyperparameter,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 
 # Tempo wrapper for scheduling
 from discrete_optimization.workforce.scheduling.problem import (
-    AllocSchedulingProblem,
     AllocSchedulingSolution,
     export_scheduling_problem_json,
 )

@@ -7,7 +7,6 @@ import os
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.tsptw.parser import get_data_available, parse_tsptw_file
-from discrete_optimization.tsptw.problem import TSPTWProblem, TSPTWSolution
 from discrete_optimization.tsptw.solvers.optal import OptalTspTwSolver
 
 logging.basicConfig(level=logging.INFO)

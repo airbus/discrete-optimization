@@ -12,6 +12,7 @@ from discrete_optimization.coloring.parser import parse_file as coloring_parse_f
 from discrete_optimization.coloring.solvers.lp import (
     GurobiColoringSolver,
     MathOptColoringSolver,
+    gurobi_available,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     ObjectiveGapStopper,
@@ -26,13 +27,6 @@ from discrete_optimization.knapsack.parser import (
 from discrete_optimization.knapsack.parser import parse_file as knapsack_parse_file
 from discrete_optimization.knapsack.problem import KnapsackProblem, MobjKnapsackModel
 from discrete_optimization.knapsack.solvers.cpsat import CpSatKnapsackSolver
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
 
 
 def test_knapsack_ortools_cpsat_gap_callback():
