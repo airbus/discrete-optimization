@@ -254,8 +254,8 @@ jobs:
         with:
           name: coverage
           path: |
-            tmp/coverage.xml
-            tmp/coverage_html
+            coverage.xml
+            coverage_html
 
   update-notebooks-for-colab-and-binder:
     runs-on: ubuntu-latest
