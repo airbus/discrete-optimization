@@ -39,17 +39,20 @@ def run_single_mode_moo_benchmark():
     rcpsp_problem.costs["mean_resource_reserve"] = True
 
     # Objective settings
-    objectives = ["makespan", "mean_resource_reserve"]
-    objective_weights = [-1, +1]
+    params_objective_function = ParamsObjectiveFunction(
+        objectives=["makespan", "mean_resource_reserve"],
+        weights=[-1, +1],
+        sense_function=ModeOptim.MAXIMIZATION,
+        objective_handling=ObjectiveHandling.MULTI_OBJ,
+    )
 
     # Algo 1: NSGA
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     ga_solver = Nsga(
         rcpsp_problem,
         encoding="rcpsp_permutation",
-        objectives=objectives,
-        objective_weights=objective_weights,
         mutation=mutation,
+        params_objective_function=params_objective_function,
     )
     ga_solver._max_evals = 2000
     result_storage_1 = ga_solver.solve()
@@ -59,9 +62,8 @@ def run_single_mode_moo_benchmark():
     ga_solver = Nsga(
         rcpsp_problem,
         encoding="rcpsp_permutation",
-        objectives=objectives,
-        objective_weights=objective_weights,
         mutation=mutation,
+        params_objective_function=params_objective_function,
     )
     ga_solver._max_evals = 200
     result_storage_2 = ga_solver.solve()
@@ -71,13 +73,11 @@ def run_single_mode_moo_benchmark():
     for rs in list_result_storage:
         rs.remove_duplicate_solutions(var_name="standardised_permutation")
     result_storage_names = ["nsga_many_evals", "nsga_few_evals"]
-    objectives_str = objectives
     test_problems = None
     result_comparator = ResultComparator(
         list_result_storage=list_result_storage,
         result_storage_names=result_storage_names,
-        objectives_str=objectives_str,
-        objective_weights=objective_weights,
+        params_objective_function=params_objective_function,
         test_problems=test_problems,
     )
 
@@ -100,7 +100,7 @@ def run_single_mode_moo_benchmark():
     result_comparator.plot_all_best_by_objective("mean_resource_reserve")
     plt.show()
 
-    result_comparator.plot_all_2d_paretos_single_plot(objectives_str=objectives)
+    result_comparator.plot_all_2d_paretos_single_plot()
     plt.show()
 
     result_comparator.plot_all_2d_paretos_subplots()
@@ -118,8 +118,14 @@ def run_single_mode_robustness_benchmark():
     file_path = files[0]
     rcpsp_problem = parse_file(file_path)
     rcpsp_problem.costs["mean_resource_reserve"] = True
+
     objectives = ["makespan", "mean_resource_reserve"]
-    objective_weights = [-1, 1]
+    params_objective_function = ParamsObjectiveFunction(
+        objectives=objectives,
+        weights=[-1, +1],
+        sense_function=ModeOptim.MAXIMIZATION,
+        objective_handling=ObjectiveHandling.MULTI_OBJ,
+    )
 
     # 3 random solutions:
     sol_perm_1 = [i for i in range(rcpsp_problem.n_jobs_non_dummy)]
@@ -143,12 +149,6 @@ def run_single_mode_robustness_benchmark():
     print("sol_3:", sol_3)
 
     # Setting up 1 result storage per solution
-    params_objective_function = ParamsObjectiveFunction(
-        objective_handling=ObjectiveHandling.MULTI_OBJ,
-        objectives=objectives,
-        weights=objective_weights,
-        sense_function=ModeOptim.MAXIMIZATION,
-    )
     evaluate_sol, _ = build_evaluate_function_aggregated(
         problem=rcpsp_problem, params_objective_function=params_objective_function
     )
@@ -214,13 +214,11 @@ def run_single_mode_robustness_benchmark():
     # Setting up the ResultComparator
     list_result_storage = [rs_1, rs_2, rs_3]
     result_storage_names = ["sol_1", "sol_2", "sol_3"]
-    objectives_str = objectives
     test_problems = test_data
     result_comparator = ResultComparator(
         list_result_storage=list_result_storage,
         result_storage_names=result_storage_names,
-        objectives_str=objectives_str,
-        objective_weights=objective_weights,
+        params_objective_function=params_objective_function,
         test_problems=test_problems,
     )
     result_comparator.plot_distribution_for_objective(objective_str=objectives[0])

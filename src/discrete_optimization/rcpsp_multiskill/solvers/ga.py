@@ -1,7 +1,10 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ParamsObjectiveFunction,
+)
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga_tools import ParametersAltGa
@@ -14,12 +17,16 @@ class GaMultiskillRcpspSolver(SolverDO):
     def solve(self, parameters_ga: ParametersAltGa = None, **args):
         if parameters_ga is None:
             parameters_ga = ParametersAltGa.default_msrcpsp()
+        params_objective_function = ParamsObjectiveFunction(
+            objective_handling=parameters_ga.objective_handling,
+            objectives=parameters_ga.objectives,
+            weights=parameters_ga.objective_weights,
+            sense_function=ModeOptim.MAXIMIZATION,
+        )
         ga_solver = AlternatingGa(
             problem=self.problem,
             encodings=parameters_ga.encodings,
-            objective_handling=parameters_ga.objective_handling,
-            objectives=parameters_ga.objectives,
-            objective_weights=parameters_ga.objective_weights,
+            params_objective_function=params_objective_function,
             mutations=parameters_ga.mutations,
             selections=parameters_ga.selections,
             crossovers=parameters_ga.crossovers,

@@ -101,12 +101,9 @@ class BaseGa(SolverDO, WarmstartMixin):
     def __init__(
         self,
         problem: Problem,
-        objectives: str | list[str] | None = None,
         mutation: Mutation | DeapMutation | None = None,
         crossover: DeapCrossover | None = None,
         encoding: str | tuple[str, AttributeType] | None = None,
-        objective_handling: ObjectiveHandling = ObjectiveHandling.AGGREGATE,
-        objective_weights: list[float] | None = None,
         pop_size: int = 100,
         max_evals: int | None = None,
         mut_rate: float = 0.1,
@@ -120,14 +117,8 @@ class BaseGa(SolverDO, WarmstartMixin):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        # Update params_objective_function with objectives, objective_weights, and objective_handling
-        self._sync_objectives_and_params_objective_function(
-            objectives=objectives,
-            objective_weights=objective_weights,
-            objective_handling=objective_handling,
-            user_defined_params_objective_function=params_objective_function
-            is not None,
-        )
+        # Update params_objective_function objectives, objective_weights, and objective_handling with GA conventions
+        self._check_params_objective_function()
         # update aggreg_sol & co as objective_handling can change during previous call
         (
             self.aggreg_from_sol,
@@ -302,32 +293,17 @@ class BaseGa(SolverDO, WarmstartMixin):
         self._attribute_type = attribute_type
         self._attribute_name = attribute_name
 
-    def _sync_objectives_and_params_objective_function(
+    def _check_params_objective_function(
         self,
-        objectives: Union[str, list[str]] | None,
-        objective_handling: ObjectiveHandling,
-        objective_weights: list[float] | None,
-        user_defined_params_objective_function: bool,
     ) -> None:
-        if objectives is None:
-            # Use params_objective_function for objectives and weights (with maximization convention)
-            objectives = self.params_objective_function.objectives
-            objective_weights = self.params_objective_function.weights
-            objective_handling = self.params_objective_function.objective_handling
-            if objective_weights is not None:
-                logger.warning(
-                    "Ignoring `objective_weights` and `objective_handling` as no `objectives` given. "
-                    "Using `params_objective_function` instead."
-                )
-            if self.params_objective_function.sense_function == ModeOptim.MINIMIZATION:
-                # GA take the convention of maximizing => - weights
-                objective_weights = [-w for w in objective_weights]
+        # Use params_objective_function for objectives and weights (with maximization convention)
+        objectives = self.params_objective_function.objectives
+        objective_weights = self.params_objective_function.weights
+        objective_handling = self.params_objective_function.objective_handling
+        if self.params_objective_function.sense_function == ModeOptim.MINIMIZATION:
+            # GA take the convention of maximizing => - weights
+            objective_weights = [-w for w in objective_weights]
 
-        else:
-            if user_defined_params_objective_function:
-                logger.warning(
-                    "Using `objectives`, `objectives_weights`, and `objective_handling` arguments over `params_objective_function`."
-                )
         # Check allowed objective handling
         if objective_handling not in self.allowed_objective_handling:
             new_objective_handling = self.allowed_objective_handling[0]

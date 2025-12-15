@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
+    ParamsObjectiveFunction,
     Problem,
     Solution,
     TupleFitness,
@@ -36,14 +37,13 @@ class ResultComparator:
         self,
         list_result_storage: list[ResultStorage],
         result_storage_names: list[str],
-        objectives_str: list[str],
-        objective_weights: list[int],
+        params_objective_function: ParamsObjectiveFunction,
         test_problems: Optional[list[Problem]] = None,
     ):
         self.list_result_storage = list_result_storage
         self.result_storage_names = result_storage_names
-        self.objectives_str = objectives_str
-        self.objective_weights = objective_weights
+        self.objectives_str = params_objective_function.objectives
+        self.objective_weights = params_objective_function.weights
         self.test_problems = test_problems
         self.reevaluated_results: dict[int, dict[str, list[float]]] = {}
 
@@ -159,7 +159,7 @@ class ResultComparator:
                     p[1].vector_fitness[objectives_index[1]]  # type: ignore
                     for p in self.list_result_storage[i]
                 ],
-                color=colors[i],
+                color=colors(i),
             )
         ax.legend(self.result_storage_names)
         return ax
@@ -197,7 +197,7 @@ class ResultComparator:
                 p[1].vector_fitness[objectives_index[1]]  # type: ignore
                 for p in self.list_result_storage[i]
             ]
-            ax.scatter(x=x, y=y, color=colors[i])
+            ax.scatter(x=x, y=y, color=colors(i))
             ax.set_title(self.result_storage_names[i])
         fig.tight_layout(pad=3.0)
 

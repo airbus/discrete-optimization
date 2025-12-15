@@ -17,12 +17,8 @@ from discrete_optimization.knapsack.parser import get_data_available, parse_file
 def test_ga():
     files = [f for f in get_data_available() if "ks_60_0" in f]
     knapsack_problem = parse_file(files[0])
-    params = get_default_objective_setup(knapsack_problem)
     ga_solver = Ga(
         knapsack_problem,
-        objective_handling=params.objective_handling,
-        objectives=params.objectives,
-        objective_weights=params.weights,
     )
     results = ga_solver.solve()
     sol, fit = results.get_best_solution_fit()
@@ -39,12 +35,8 @@ def test_own_bitflip_kp_mutation():
         list_mutations=[mutation_1, mutation_2],
         weight_mutations=[0.001, 0.5],
     )
-    params_objective_function = get_default_objective_setup(knapsack_problem)
     ga_solver = Ga(
         knapsack_problem,
-        objective_handling=params_objective_function.objective_handling,
-        objectives=params_objective_function.objectives,
-        objective_weights=params_objective_function.weights,
         mutation=mutation,
         max_evals=3000,
     )

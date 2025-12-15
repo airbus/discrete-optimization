@@ -32,15 +32,11 @@ def run_ga():
     problems = parse_file(get_data_available()[0])
     print(len(problems), " problems in the file")
     problem = problems[3]
-    params = get_default_objective_setup(problem)
     mixed_mutation = create_mutations_portfolio_from_problem(problem=problem)
     ga_solver = Ga(
         problem,
         encoding="permutation",
         mutation=mixed_mutation,
-        objective_handling=params.objective_handling,
-        objectives=params.objectives,
-        objective_weights=[-w for w in params.weights],
         pop_size=10,
         max_evals=1000000,
         mut_rate=0.1,

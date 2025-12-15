@@ -24,6 +24,7 @@ from discrete_optimization.generic_tools.ea.base import (
     DeapCrossover,
     DeapMutation,
 )
+from discrete_optimization.generic_tools.encoding_register import AttributeType
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -53,11 +54,9 @@ class Nsga(BaseGa):
     def __init__(
         self,
         problem: Problem,
-        objectives: Optional[Union[str, list[str]]] = None,
         mutation: Optional[Union[Mutation, DeapMutation]] = None,
         crossover: Optional[DeapCrossover] = None,
-        encoding: Optional[Union[str, dict[str, Any]]] = None,
-        objective_weights: Optional[list[float]] = None,
+        encoding: str | tuple[str, AttributeType] | None = None,
         pop_size: int = 100,
         max_evals: Optional[int] = None,
         mut_rate: float = 0.1,
@@ -69,12 +68,9 @@ class Nsga(BaseGa):
     ):
         super().__init__(
             problem=problem,
-            objectives=objectives,
             mutation=mutation,
             crossover=crossover,
             encoding=encoding,
-            objective_handling=ObjectiveHandling.MULTI_OBJ,
-            objective_weights=objective_weights,
             pop_size=pop_size,
             max_evals=max_evals,
             mut_rate=mut_rate,

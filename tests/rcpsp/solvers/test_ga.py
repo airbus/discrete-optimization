@@ -8,7 +8,11 @@ import numpy as np
 import pytest
 
 from discrete_optimization.generic_rcpsp_tools.mutation import RcpspMutation
-from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ObjectiveHandling,
+    ParamsObjectiveFunction,
+)
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
 from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
@@ -36,9 +40,6 @@ def test_single_mode_ga(random_seed):
     ga_solver = Ga(
         rcpsp_problem,
         encoding="rcpsp_permutation",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
         mutation=mutation,
         max_evals=100,
     )
@@ -58,12 +59,16 @@ def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
 
     sub_evals = [50, 50]
 
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        objectives=["makespan"],
+        weights=[1],
+        sense_function=ModeOptim.MINIMIZATION,
+    )
     ga_solver = AlternatingGa(
         rcpsp_problem,
         encodings=["rcpsp_modes", "rcpsp_permutation"],
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
+        params_objective_function=params_objective_function,
         mutations=[DeapMutation.MUT_UNIFORM_INT, DeapMutation.MUT_SHUFFLE_INDEXES],
         crossovers=[DeapCrossover.CX_ONE_POINT, DeapCrossover.CX_PARTIALY_MATCHED],
         max_evals=total_evals,
@@ -102,12 +107,16 @@ def test_alternating_ga_specific_mode_arity_single_solver_warm_started_with_cpm(
 
     sub_evals = [50, 50]
 
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        objectives=["makespan"],
+        weights=[1],
+        sense_function=ModeOptim.MINIMIZATION,
+    )
     ga_solver = AlternatingGa(
         rcpsp_problem,
         encodings=["rcpsp_modes", "rcpsp_permutation"],
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
+        params_objective_function=params_objective_function,
         mutations=[DeapMutation.MUT_UNIFORM_INT, DeapMutation.MUT_SHUFFLE_INDEXES],
         crossovers=[DeapCrossover.CX_ONE_POINT, DeapCrossover.CX_PARTIALY_MATCHED],
         max_evals=total_evals,
@@ -129,14 +138,9 @@ def test_single_mode_moga_aggregated(random_seed):
     rcpsp_problem = parse_file(file_path)
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    objectives = ["makespan", "mean_resource_reserve"]
-    objective_weights = [-1, -100]
     ga_solver = Ga(
         rcpsp_problem,
         encoding="rcpsp_permutation",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=objectives,
-        objective_weights=objective_weights,
         mutation=mutation,
     )
     ga_solver._max_evals = 2000
@@ -153,15 +157,17 @@ def test_single_mode_moga_aggregated(random_seed):
     }
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    objectives = ["makespan", "mean_resource_reserve"]
-    objective_weights = [-1, +200]
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        objectives=["makespan", "mean_resource_reserve"],
+        weights=[-1, +200],
+        sense_function=ModeOptim.MAXIMIZATION,
+    )
     ga_solver = Ga(
         rcpsp_problem,
         encoding="rcpsp_permutation",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=objectives,
-        objective_weights=objective_weights,
         mutation=mutation,
+        params_objective_function=params_objective_function,
     )
     ga_solver._max_evals = 2000
     sol = ga_solver.solve().get_best_solution()
@@ -192,9 +198,6 @@ def test_own_pop_single_mode_ga(random_seed):
     ga_solver = Ga(
         rcpsp_problem,
         encoding="rcpsp_permutation",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
         mutation=mutation,
         initial_population=initial_population,
     )
@@ -237,9 +240,6 @@ def test_ga_warm_started_with_cpm(random_seed):
     )
     kwargs = dict(
         problem=rcpsp_problem,
-        objectives=["makespan"],
-        objective_weights=[-1.0],
-        objective_handling=ObjectiveHandling.AGGREGATE,
         mutation=mixed_mutation,
         max_evals=5000,
     )

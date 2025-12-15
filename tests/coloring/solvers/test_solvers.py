@@ -282,11 +282,16 @@ def test_ga_nok():
 def test_ga_coloring_1(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.SINGLE,
+        objectives=["nb_colors"],
+        weights=[1],
+        sense_function=ModeOptim.MINIMIZATION,
+    )
     ga_solver = Ga(
         color_problem,
         mutation=DeapMutation.MUT_UNIFORM_INT,
-        objectives=["nb_colors"],
-        objective_weights=[-1],
+        params_objective_function=params_objective_function,
         max_evals=1000,
     )
     color_sol = ga_solver.solve().get_best_solution()
@@ -297,16 +302,21 @@ def test_ga_coloring_1(random_seed):
 def test_ga_coloring_2(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        objectives=["nb_colors", "nb_violations"],
+        weights=[1, 2],
+        sense_function=ModeOptim.MINIMIZATION,
+    )
     kwargs = dict(
         problem=color_problem,
         encoding="colors",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["nb_colors", "nb_violations"],
-        objective_weights=[-1, -2],
+        params_objective_function=params_objective_function,
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=5000,
     )
     ga_solver = Ga(**kwargs)
+    assert ga_solver._objective_weights == [-1, -2]
     color_sol, fit = ga_solver.solve().get_best_solution_fit()
     color_problem.evaluate(color_sol)
     assert color_problem.satisfy(color_sol)
@@ -338,12 +348,16 @@ def test_ga_coloring_3(random_seed):
 
     encoding = ("colors", ListInteger(length=70, arities=10))
 
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        objectives=["nb_colors", "nb_violations"],
+        weights=[1, 2],
+        sense_function=ModeOptim.MINIMIZATION,
+    )
     ga_solver = Ga(
         color_problem,
         encoding=encoding,
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["nb_colors", "nb_violations"],
-        objective_weights=[-1, -2],
+        params_objective_function=params_objective_function,
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=5000,
     )
@@ -364,11 +378,11 @@ def test_coloring_nsga_1():
         weights=objectives_weights,
         sense_function=ModeOptim.MAXIMIZATION,
     )
+
     kwargs = dict(
         problem=color_problem,
         encoding="colors",
-        objectives=objectives,
-        objective_weights=objectives_weights,
+        params_objective_function=params_objective_function,
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=3000,
     )
@@ -409,11 +423,17 @@ def test_coloring_nsga_2():
     encoding = ("colors", ListInteger(length=70, arities=10))
 
     objectives = ["nb_colors", "nb_violations"]
+    objectives_weights = [-1, -1]
+    params_objective_function = ParamsObjectiveFunction(
+        objectives=objectives,
+        objective_handling=ObjectiveHandling.MULTI_OBJ,
+        weights=objectives_weights,
+        sense_function=ModeOptim.MAXIMIZATION,
+    )
     ga_solver = Nsga(
         color_problem,
         encoding=encoding,
-        objectives=objectives,
-        objective_weights=[-1, -1],
+        params_objective_function=params_objective_function,
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=3000,
     )

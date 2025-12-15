@@ -7,7 +7,11 @@ import random
 import numpy as np
 import pytest
 
-from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ObjectiveHandling,
+    ParamsObjectiveFunction,
+)
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
 from discrete_optimization.generic_tools.ea.ga_tools import ParametersAltGa
@@ -185,6 +189,12 @@ def test_alternating_ga(random_seed):
 
     sub_evals = [50, 50, 50]
 
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        objectives=["makespan"],
+        weights=[1],
+        sense_function=ModeOptim.MINIMIZATION,
+    )
     ga_solver = AlternatingGa(
         msrcpsp_problem,
         encodings=[
@@ -192,9 +202,7 @@ def test_alternating_ga(random_seed):
             "priority_list_task",
             "priority_worker_per_task_perm",
         ],
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
-        objective_weights=[-1],
+        params_objective_function=params_objective_function,
         mutations=[
             DeapMutation.MUT_UNIFORM_INT,
             DeapMutation.MUT_SHUFFLE_INDEXES,
