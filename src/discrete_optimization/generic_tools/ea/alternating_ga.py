@@ -46,13 +46,10 @@ class AlternatingGa(SolverDO, WarmstartMixin):
     def __init__(
         self,
         problem: Problem,
-        objectives: str | list[str] | None,
         encodings: Optional[Union[list[str], list[tuple[str, AttributeType]]]] = None,
         mutations: list[Mutation | DeapMutation | None] | None = None,
         crossovers: list[DeapCrossover | None] | None = None,
         selections: list[DeapSelection | None] | None = None,
-        objective_handling: Optional[ObjectiveHandling] = None,
-        objective_weights: list[float] | None = None,
         pop_size: int = 100,
         max_evals: int = 10000,
         sub_evals: list[int] | None = None,
@@ -69,18 +66,12 @@ class AlternatingGa(SolverDO, WarmstartMixin):
         self.mutations = mutations
         self.crossovers = crossovers
         self.selections = selections
-        self.objective_handling = objective_handling
-        self.objectives = objectives
-        self.objective_weights = objective_weights
         self.pop_size = pop_size
         self.max_evals = max_evals
         self.mut_rate = mut_rate
         self.crossover_rate = crossover_rate
         self.tournament_size = tournament_size
         self.deap_verbose = deap_verbose
-        self.user_defined_params_objective_function = (
-            params_objective_function is not None
-        )
         if encodings is None:
             self.encodings = list(self.problem.get_attribute_register())
         else:
@@ -128,21 +119,16 @@ class AlternatingGa(SolverDO, WarmstartMixin):
                 kwargs_ga["crossover"] = self.crossovers[current_encoding_index]
             if self.selections is not None:
                 kwargs_ga["selection"] = self.selections[current_encoding_index]
-            if self.objective_handling is not None:
-                kwargs_ga["objective_handling"] = self.objective_handling
             if self.mut_rate is not None:
                 kwargs_ga["mut_rate"] = self.mut_rate
             if self.crossover_rate is not None:
                 kwargs_ga["crossover_rate"] = self.crossover_rate
             if self.tournament_size is not None:
                 kwargs_ga["tournament_size"] = self.tournament_size
-            if self.user_defined_params_objective_function:
-                kwargs_ga["params_objective_function"] = self.params_objective_function
 
             ga_solver = Ga(
                 problem=self.problem,
-                objectives=self.objectives,
-                objective_weights=self.objective_weights,
+                params_objective_function=self.params_objective_function,
                 deap_verbose=self.deap_verbose,
                 **kwargs_ga,
             )

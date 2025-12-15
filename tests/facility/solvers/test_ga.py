@@ -13,13 +13,9 @@ from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 def test_ga_facility():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_50_6"][0]
     facility_problem: FacilityProblem = parse_file(file)
-    params = get_default_objective_setup(facility_problem)
     ga_solver = Ga(
         facility_problem,
         encoding="facility_for_customers",
-        objective_handling=params.objective_handling,
-        objectives=params.objectives,
-        objective_weights=params.weights,
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=1000,
     )

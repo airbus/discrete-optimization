@@ -3,6 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Optional
 
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ObjectiveHandling,
+    ParamsObjectiveFunction,
+)
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import Ga
 from discrete_optimization.generic_tools.ea.ga_tools import (
@@ -33,12 +38,16 @@ class GaRcpspSolver(RcpspSolver):
             args = self.complete_with_default_hyperparameters(args)
         for key in args:
             setattr(parameters_ga, key, args[key])
+        params_objective_function = ParamsObjectiveFunction(
+            objective_handling=parameters_ga.objective_handling,
+            objectives=parameters_ga.objectives,
+            weights=parameters_ga.objective_weights,
+            sense_function=ModeOptim.MAXIMIZATION,
+        )
         ga_solver = Ga(
             problem=self.problem,
             encoding=parameters_ga.encoding,
-            objective_handling=parameters_ga.objective_handling,
-            objectives=parameters_ga.objectives,
-            objective_weights=parameters_ga.objective_weights,
+            params_objective_function=params_objective_function,
             mutation=parameters_ga.mutation,
             max_evals=parameters_ga.max_evals,
             crossover=parameters_ga.crossover,
@@ -64,12 +73,16 @@ class GaMultimodeRcpspSolver(RcpspSolver):
             args = self.complete_with_default_hyperparameters(args)
         for key in args:
             setattr(parameters_ga, key, args[key])
+        params_objective_function = ParamsObjectiveFunction(
+            objective_handling=parameters_ga.objective_handling,
+            objectives=parameters_ga.objectives,
+            weights=parameters_ga.objective_weights,
+            sense_function=ModeOptim.MAXIMIZATION,
+        )
         ga_solver = AlternatingGa(
             problem=self.problem,
             encodings=parameters_ga.encodings,
-            objective_handling=parameters_ga.objective_handling,
-            objectives=parameters_ga.objectives,
-            objective_weights=parameters_ga.objective_weights,
+            params_objective_function=params_objective_function,
             mutations=parameters_ga.mutations,
             selections=parameters_ga.selections,
             crossovers=parameters_ga.crossovers,

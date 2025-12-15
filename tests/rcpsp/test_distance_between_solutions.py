@@ -8,6 +8,11 @@ import numpy as np
 import pytest
 from scipy.spatial import distance
 
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ObjectiveHandling,
+    ParamsObjectiveFunction,
+)
 from discrete_optimization.generic_tools.ea.ga import DeapMutation
 from discrete_optimization.generic_tools.ea.nsga import Nsga
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -37,11 +42,16 @@ def test_rank_solutions_by_permutation_distance(random_seed):
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     objectives = ["makespan", "mean_resource_reserve"]
     objective_weights = [-1, +1]
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.MULTI_OBJ,
+        objectives=objectives,
+        weights=objective_weights,
+        sense_function=ModeOptim.MAXIMIZATION,
+    )
     ga_solver = Nsga(
         rcpsp_problem,
         encoding="rcpsp_permutation",
-        objectives=objectives,
-        objective_weights=objective_weights,
+        params_objective_function=params_objective_function,
         mutation=mutation,
     )
     ga_solver._max_evals = 5000

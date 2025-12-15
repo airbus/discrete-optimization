@@ -74,18 +74,15 @@ class Ga(BaseGa):
         ),
     ]
 
-    allowed_objective_handling = [ObjectiveHandling.SINGLE, ObjectiveHandling.AGGREGATE]
+    allowed_objective_handling = [ObjectiveHandling.AGGREGATE, ObjectiveHandling.SINGLE]
 
     def __init__(
         self,
         problem: Problem,
-        objectives: str | list[str] | None = None,
         mutation: Mutation | DeapMutation | None = None,
         crossover: DeapCrossover | None = None,
         selection: DeapSelection = DeapSelection.SEL_TOURNAMENT,
         encoding: str | tuple[str, AttributeType] | None = None,
-        objective_handling: ObjectiveHandling = ObjectiveHandling.AGGREGATE,
-        objective_weights: list[float] | None = None,
         pop_size: int = 100,
         max_evals: int | None = None,
         mut_rate: float = 0.1,
@@ -98,12 +95,9 @@ class Ga(BaseGa):
     ):
         super().__init__(
             problem=problem,
-            objectives=objectives,
             mutation=mutation,
             crossover=crossover,
             encoding=encoding,
-            objective_handling=objective_handling,
-            objective_weights=objective_weights,
             pop_size=pop_size,
             max_evals=max_evals,
             mut_rate=mut_rate,

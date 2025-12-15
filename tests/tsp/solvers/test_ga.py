@@ -22,9 +22,6 @@ def testing_tsp():
     ga_solver = Ga(
         tsp_model,
         encoding="permutation_from0",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["length"],
-        objective_weights=[-1],
         mutation=mutation,
     )
     ga_solver._max_evals = 2000
@@ -36,16 +33,12 @@ def testing_tsp_with_specific_mutation():
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     tsp_model = tsp_parse_file(files[0])
-    mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     crossover = DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED
     selection = DeapSelection.SEL_TOURNAMENT
     mutation = TwoOptTspMutation(problem=tsp_model, nb_test=200)
     ga_solver = Ga(
         tsp_model,
         encoding="permutation_from0",
-        objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["length"],
-        objective_weights=[-1],
         mutation=mutation,
         crossover=crossover,
         selection=selection,

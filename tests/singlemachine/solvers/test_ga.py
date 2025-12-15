@@ -15,15 +15,11 @@ from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
 
 
 def test_ga(problem):
-    params = get_default_objective_setup(problem)
     mixed_mutation = create_mutations_portfolio_from_problem(problem=problem)
     ga_solver = Ga(
         problem,
         encoding="permutation",
         mutation=mixed_mutation,
-        objective_handling=params.objective_handling,
-        objectives=params.objectives,
-        objective_weights=[-w for w in params.weights],
         pop_size=10,
         max_evals=100,
         mut_rate=0.1,
