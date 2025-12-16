@@ -47,8 +47,8 @@ class MyKnapsackGreedySolver(SolverDO):
 ### First version
 
 The only mandatory method to implement is `solve()`.
-We implement it by taking the most dense items
-(density of an item being the ratio value by weight) until reaching the maximal capacity.
+In a greedy approach, the item with the higher ratio value/weight is selected and added to the solution.
+The process repeats until the max capacity is reached.
 
 Note that `SolverDO` already implements an `__init__()` method that
 stores the problem in the `problem` attribute and build the methods computing and aggregating the objectives.
@@ -94,7 +94,7 @@ class MyKnapsackGreedySolver(SolverDO):
             reverse=True,
         )
 
-        # take items until reaching max capacity
+        # Take items until reaching max capacity
         total_weight = 0
         list_taken = [
             False,
@@ -107,13 +107,13 @@ class MyKnapsackGreedySolver(SolverDO):
             else:
                 list_taken[i_item] = True
 
-        # contruct solution
+        # Contruct solution
         sol = MyKnapsackSolution(problem=self.problem, list_taken=list_taken)
 
-        # compute aggregated fitness
+        # Compute aggregated fitness
         fit = self.aggreg_from_sol(sol)
 
-        # construct result_storage (with only one solution but could contain more for other solvers)
+        # Construct result_storage (with only one solution but could contain more for other solvers)
         res = self.create_result_storage(list_solution_fits=[(sol, fit)])
 
         return res
@@ -131,7 +131,7 @@ solution = solver.solve().get_best_solution()
 
 
 Note that the method `solve()` takes a list of callbacks as argument to allow a user to hook
-at different points of the solve process.
+at different points of the solving process.
 See [this notebook](../notebooks.md#callbacks-usage) for more information about callbacks.
 
 To allow the callbacks mechanics we should:
@@ -213,5 +213,5 @@ solution = solver.solve(callbacks=[ObjectiveLogger()]).get_best_solution()
 ## Solver in action
 
 The resulting script can be found here: <path:tutorial_new_solver_greedy.py>, with an example of how to use it with a callback
-logging the objective at each iteration. It should be run near the previous module
+logging the objective at each iteration. It should be run in the same directory as the previous module
 <path:tutorial_new_problem.py> that declares the knapsack problem and solution classes, so that they can be imported.

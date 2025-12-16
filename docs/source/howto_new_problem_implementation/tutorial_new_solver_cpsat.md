@@ -45,11 +45,11 @@ class MyKnapsackCpSatSolver(OrtoolsCpSatSolver):
 
 ## Implementation
 
-- `__init__()`: this method is already defined by parent class, and set the attribute `problem`.
+- `__init__()`: this method is already defined by parent class, and sets the attribute `problem`.
   To help the IDE to type correctly, we can specify its expected class.
 - `init_model()`: the method from the super class initializes a `cp_model` attribute of type `ortools.sat.python.cp_model.CpModel`
   in which we must encode our knapsack problem.
-- `retrieve_solution()`: we must translate the internal solution of the cpsat solver into a `MyKnapsackSolution`.
+- `retrieve_solution()`: we must translate the internal solution of the CP-SAT solver into a `MyKnapsackSolution`.
   This will be used for each new solution found via an ortools callback.
 
 
@@ -99,6 +99,6 @@ solution = solver.solve(callbacks=[ObjectiveLogger()]).get_best_solution()
 
 ## Solver in action
 
-The code for this cpsat solver and how to use it can be found here: <path:tutorial_new_solver_cpsat.py>.
-Note that it should be run near the previous module
+The code for this CP-SAT solver and how to use it can be found here: <path:tutorial_new_solver_cpsat.py>.
+Note that it should be run in the same directory as the previous module
 <path:tutorial_new_problem.py> that declares the knapsack problem and solution classes, so that they can be imported.
