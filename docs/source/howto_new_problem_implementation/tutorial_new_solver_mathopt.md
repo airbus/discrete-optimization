@@ -46,14 +46,14 @@ class MyKnapsackMathOptSolver(OrtoolsMathOptMilpSolver):
 
 ## Implementation
 
-- `__init__()`: this method is already defined by parent class, and set the attribute `problem`.
+- `__init__()`: this method is already defined by parent class, and sets the attribute `problem`.
   To help the IDE to type correctly, we can specify its expected class.
 - `init_model()`: the method must initialize a `model` attribute of type `ortools.math_opt.python.model.Model`
   in which we must encode our knapsack problem.
-  - `retrieve_solution()`: we must translate the internal solution of the mathopt solver into a `MyKnapsackSolution`.
+  - `retrieve_solution()`: we must translate the internal solution of the MathOpt solver into a `MyKnapsackSolution`.
     As this is a method of the more generic `MilpSolver` class, it takes callables as argument
-    that are responsible for mapping variable into their value in internal solution. This callable will be automatically
-    adapted to the mathopt framework (and updated accordingly in gurobi wrapper)
+    that are responsible for mapping variables into their values in internal solution. This callable will be automatically
+    adapted to the MathOpt framework (and updated accordingly in Gurobi wrapper).
     Note that the value can be a float number between 0 and 1, so we check whether it is above or below 0.5.
 
 
@@ -147,14 +147,14 @@ solution = solver.solve(
 
 ## Solver in action
 
-The code for this mathopt solver and how to use it can be found here: <path:tutorial_new_solver_mathopt.py>.
-Note that it should be run near the previous module
+The code for this MathOpt solver and how to use it can be found here: <path:tutorial_new_solver_mathopt.py>.
+Note that it should be run in the same directory as the previous module
 <path:tutorial_new_problem.py> that declares the knapsack problem and solution classes, so that they can be imported.
 
 
 :::{Note}
-The milp wrappers in d-o (for now mathopt and gurobi) share a common API to define a model, so that it is easy to switch from one to another.
-Here, for simplicity we chose to directly use the mathopt API, but we could also have implemented `init_model()` in a common base class like:
+The MILP wrappers in d-o (for now MathOpt and Gurobi) share a common API to define a model, so that it is easy to switch from one to another.
+Here, for simplicity we chose to directly use the MathOpt API, but we could also have implemented `init_model()` in a common base class like:
 ```python
 class _BaseKnapsackMilpSolver(MilpSolver):
     def init_model(self, **kwargs: Any) -> None:
@@ -174,9 +174,9 @@ class _BaseKnapsackMilpSolver(MilpSolver):
         )
         self.set_model_objective(total_value, minimize=False)
 ```
-then inherit it with `OrtoolsMathOptMilpSolver` or `GurobiMilpSolver` to generate a mathopt or gurobi knapsack solver.
+then inherit it with `OrtoolsMathOptMilpSolver` or `GurobiMilpSolver` to generate a MathOpt or Gurobi knapsack solver.
 
-This is how it is done in the d-o implementation of knapsack milp solver.
+This is how it is done in the d-o implementation of knapsack MILP solver.
 See {py:obj}`discrete_optimization.knapsack.solvers.lp` for more details.
 
 :::
