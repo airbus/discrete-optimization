@@ -2,7 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import logging
 import random
 from datetime import datetime
 
@@ -15,9 +14,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
 )
 from discrete_optimization.gpdp.builders.instance_builders import (
     GpdpProblem,

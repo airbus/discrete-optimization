@@ -20,8 +20,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     CallbackList,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Problem,
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import (

@@ -12,7 +12,6 @@ Results can be viewed on optuna-dashboard with:
 
 """
 
-import logging
 from operator import itemgetter
 
 import optuna
@@ -33,7 +32,6 @@ from discrete_optimization.gpdp.builders.instance_builders import (
 )
 from discrete_optimization.gpdp.solvers.ortools_routing import (
     FirstSolutionStrategy,
-    LocalSearchMetaheuristic,
     OrtoolsGpdpSolver,
     ParametersCost,
 )

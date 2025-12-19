@@ -9,7 +9,6 @@ import clingo
 
 from discrete_optimization.generic_tools.asp_tools import AspClingoSolver
 from discrete_optimization.maximum_independent_set.problem import (
-    MisProblem,
     MisSolution,
 )
 from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver

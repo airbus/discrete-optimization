@@ -1,10 +1,7 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-import inspect
-import json
 import logging
-import os
 from collections import defaultdict
 from collections.abc import Hashable, Iterable
 from enum import Enum
@@ -14,16 +11,13 @@ from typing import Any, Optional, Union
 
 import cpmpy
 import cpmpy as cp
-from cpmpy import AllDifferent, AllEqual, Model, SolverLookup, boolvar
+from cpmpy import AllDifferent, AllEqual, Model, boolvar
 from cpmpy.expressions.variables import NDVarArray
 from cpmpy.model import Expression
-from cpmpy.solvers import CPM_ortools
 from cpmpy.solvers.ortools import OrtSolutionCounter
 from cpmpy.solvers.solver_interface import ExitStatus, SolverStatus
-from cpmpy.transformations.normalize import toplevel_list
 
 from discrete_optimization.generic_tools.cp_tools import (
-    CpSolver,
     ParametersCp,
     StatusSolver,
 )

@@ -3,9 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.lp_tools import (
-    OrtoolsMathOptMilpSolver,
     mathopt,
 )
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file

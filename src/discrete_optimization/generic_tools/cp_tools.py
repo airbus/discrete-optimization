@@ -13,7 +13,7 @@ import logging
 from abc import abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import minizinc
 from minizinc import Instance, Status

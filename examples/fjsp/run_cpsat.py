@@ -9,7 +9,7 @@ import discrete_optimization.jsp.parser as jsp_parser
 from discrete_optimization.fjsp.problem import Job
 from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver, FJobShopProblem
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.jsp.problem import JobShopProblem, Subjob
+from discrete_optimization.jsp.problem import JobShopProblem
 
 logging.basicConfig(level=logging.INFO)
 

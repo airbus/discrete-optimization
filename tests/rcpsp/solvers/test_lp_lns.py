@@ -16,7 +16,6 @@ from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.lns_lp import (
-    GurobiStartTimeIntervalMultimodeRcpspConstraintHandler,
     InitialRcpspMethod,
     InitialRcpspSolution,
     MathoptFixStartTimeRcpspConstraintHandler,
@@ -24,7 +23,6 @@ from discrete_optimization.rcpsp.solvers.lns_lp import (
     MathoptStartTimeIntervalRcpspConstraintHandler,
 )
 from discrete_optimization.rcpsp.solvers.lp import (
-    GurobiMultimodeRcpspSolver,
     MathOptMultimodeRcpspSolver,
     MathOptRcpspSolver,
 )

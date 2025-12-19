@@ -13,8 +13,6 @@ from discrete_optimization.fjsp.solvers.lns_cpsat import (
     NeighFjspConstraintHandler,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
-    ConstraintExtractorList,
-    MultimodeConstraintExtractor,
     ParamsConstraintExtractor,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
@@ -27,7 +25,7 @@ from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
     WarmStartCallback,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import BaseLns, ConstraintHandlerMix
 from discrete_optimization.generic_tools.result_storage.result_storage import (

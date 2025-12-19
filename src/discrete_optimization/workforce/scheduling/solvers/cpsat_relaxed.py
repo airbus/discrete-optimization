@@ -46,9 +46,6 @@ from discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb impo
     BoundResourceViaRelaxedProblem,
     LBoundAllocScheduling,
 )
-from discrete_optimization.workforce.scheduling.solvers.cpsat import (
-    AdditionalCPConstraints,
-)
 from discrete_optimization.workforce.scheduling.utils import (
     build_allocation_problem_from_scheduling,
     compute_equivalent_teams_scheduling_problem,

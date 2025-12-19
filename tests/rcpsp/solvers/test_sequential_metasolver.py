@@ -30,16 +30,11 @@ from discrete_optimization.generic_tools.sequential_metasolver import (
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
-from discrete_optimization.rcpsp.solvers.lp import GurobiMultimodeRcpspSolver
+from discrete_optimization.rcpsp.solvers.lp import (
+    GurobiMultimodeRcpspSolver,
+    gurobi_available,
+)
 from discrete_optimization.rcpsp.solvers.pile import PileRcpspSolver
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
-
 
 logging.basicConfig(level=logging.INFO)
 

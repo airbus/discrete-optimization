@@ -6,14 +6,25 @@ from __future__ import annotations
 import logging
 import os
 import random
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable
+
+import tqdm
 
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 from discrete_optimization.generic_tools.toulbar_tools import (
     ToulbarSolver,
     to_lns_toulbar,
 )
+from discrete_optimization.maximum_independent_set.problem import (
+    MisProblem,
+    MisSolution,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 
 try:
     import pytoulbar2
@@ -21,17 +32,6 @@ except ImportError:
     toulbar_available = False
 else:
     toulbar_available = True
-import tqdm
-
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
-from discrete_optimization.maximum_independent_set.problem import (
-    MisProblem,
-    MisSolution,
-)
-from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 
 this_folder = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)

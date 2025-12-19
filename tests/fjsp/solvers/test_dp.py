@@ -4,8 +4,6 @@
 
 import logging
 
-import pytest
-
 import discrete_optimization.fjsp.parser as fjsp_parser
 import discrete_optimization.jsp.parser as jsp_parser
 from discrete_optimization.fjsp.problem import FJobShopProblem, Job

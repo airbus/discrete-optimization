@@ -14,13 +14,9 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.generic_tools.lp_tools import (
-    ConstraintType,
-    GurobiMilpSolver,
     MilpSolver,
     OrtoolsMathOptMilpSolver,
-    VariableType,
 )
-from discrete_optimization.generic_tools.unsat_tools import MetaConstraint
 
 
 class _BaseLpBinPackSolver(MilpSolver):

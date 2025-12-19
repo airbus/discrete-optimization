@@ -24,12 +24,11 @@ from discrete_optimization.knapsack.problem import KnapsackProblem, KnapsackSolu
 from discrete_optimization.knapsack.solvers import KnapsackSolver
 
 try:
-    import gurobipy
+    from gurobipy import Constr, GenConstr, MConstr, QConstr, Var
 except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, Constr, GenConstr, MConstr, Model, QConstr, Var, quicksum
 
 
 logger = logging.getLogger(__name__)

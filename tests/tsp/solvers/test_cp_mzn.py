@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
+from discrete_optimization.generic_tools.cp_tools import CpSolverName
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.solvers.cp_mzn import CPTspModel, CpTspSolver
 

@@ -14,17 +14,13 @@ from ortools.sat.python.cp_model import (
     ObjLinearExprT,
 )
 
-from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
-from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
     AllocationCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.knapsack.problem import (
     KNAPSACK_RESOURCE,
     Item,

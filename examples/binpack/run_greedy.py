@@ -4,8 +4,6 @@
 
 import logging
 
-import didppy as dp
-
 from discrete_optimization.binpack.parser import (
     get_data_available_bppc,
     parse_bin_packing_constraint_file,

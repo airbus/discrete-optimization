@@ -8,7 +8,6 @@ from cpmpy import Model, boolvar
 
 from discrete_optimization.generic_tools.cpmpy_tools import (
     CpmpySolver,
-    MetaCpmpyConstraint,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,

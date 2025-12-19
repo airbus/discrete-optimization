@@ -9,7 +9,6 @@ from discrete_optimization.tsptw.parser import (
     get_data_home,
     parse_tsptw_file,
 )
-from discrete_optimization.tsptw.problem import TSPTWProblem, TSPTWSolution
 from discrete_optimization.tsptw.solvers.dp import DpTspTwSolver, dp
 
 logging.basicConfig(level=logging.INFO)

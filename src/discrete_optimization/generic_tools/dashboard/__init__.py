@@ -1,1 +1,1 @@
-from .dashboard import Dashboard
+from .dashboard import Dashboard as Dashboard  # kept by ruff

@@ -13,7 +13,6 @@ from discrete_optimization.facility.solvers.dp import (
 )
 from discrete_optimization.facility.solvers.greedy import GreedyFacilitySolver
 from discrete_optimization.generic_tools.optuna.utils import (
-    generic_optuna_experiment_monoproblem,
     generic_optuna_experiment_multiproblem,
 )
 

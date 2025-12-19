@@ -3,12 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import pytest
-
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.vrptw.parser import get_data_available, parse_vrptw_file
-from discrete_optimization.vrptw.problem import VRPTWProblem, VRPTWSolution
-from discrete_optimization.vrptw.solvers.cpsat import CpSatVRPTWSolver
 from discrete_optimization.vrptw.solvers.dp import DpVrptwSolver
 
 logging.basicConfig(level=logging.INFO)

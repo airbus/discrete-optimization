@@ -6,11 +6,6 @@
 import logging
 
 from discrete_optimization.coloring.parser import get_data_available, parse_file
-from discrete_optimization.coloring.plot import plot_coloring_solution, plt
-from discrete_optimization.coloring.problem import (
-    ColoringConstraints,
-    transform_coloring_problem,
-)
 from discrete_optimization.coloring.solvers.cpsat import (
     CpSatColoringSolver,
     ModelingCpSat,
@@ -21,13 +16,11 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     DummyConstraintExtractor,
     NbChangesAllocationConstraintExtractor,
     NbUsagesAllocationConstraintExtractor,
-    SubresourcesAllocationConstraintExtractor,
     SubtasksAllocationConstraintExtractor,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
     TasksConstraintHandler,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
     WarmStartCallback,
 )

@@ -9,7 +9,6 @@ import pytest
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.dp import DpRcpspModeling, DpRcpspSolver, dp
 

@@ -27,13 +27,6 @@ from discrete_optimization.workforce.generators.resource_scenario import (
     generate_allocation_disruption,
 )
 
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-else:
-    gurobi_available = True
-
 
 def test_cpmpy_multiobj():
     instance = [p for p in get_data_available() if "instance_64.json" in p][0]

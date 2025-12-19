@@ -12,11 +12,6 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
     TasksConstraintHandler,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
-    NeighborBuilderMix,
-    NeighborBuilderSubPart,
-    NeighborRandom,
-)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 

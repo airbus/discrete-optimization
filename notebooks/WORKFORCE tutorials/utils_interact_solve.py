@@ -3,8 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 from copy import copy, deepcopy
-from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 import cpmpy
 from cpmpy import SolverLookup

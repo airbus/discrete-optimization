@@ -26,12 +26,11 @@ from discrete_optimization.vrp.problem import (
 from discrete_optimization.vrp.solvers import VrpSolver
 
 try:
-    import gurobipy
+    from gurobipy import GRB, Model, Var, quicksum
 except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, Model, Var, quicksum
 
 
 logger = logging.getLogger(__name__)

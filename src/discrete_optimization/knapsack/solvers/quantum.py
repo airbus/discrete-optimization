@@ -29,7 +29,6 @@ if qiskit_available:
         InequalityToEquality,
         IntegerToBinary,
         MaximizeToMinimize,
-        QuadraticProgramToQubo,
     )
 else:
     msg = (

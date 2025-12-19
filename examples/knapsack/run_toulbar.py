@@ -4,9 +4,6 @@
 
 import logging
 
-from discrete_optimization.generic_tools.callbacks.early_stoppers import (
-    NbIterationStopper,
-)
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 from discrete_optimization.knapsack.solvers.toulbar import ToulbarKnapsackSolver
 

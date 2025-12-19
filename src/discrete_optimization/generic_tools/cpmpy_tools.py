@@ -15,7 +15,6 @@ from cpmpy import SolverLookup
 from cpmpy.expressions.core import BoolVal, Expression
 from cpmpy.expressions.variables import NDVarArray, _BoolVarImpl
 from cpmpy.model import Model
-from cpmpy.solvers.ortools import OrtSolutionPrinter
 from cpmpy.solvers.solver_interface import ExitStatus, SolverInterface, SolverStatus
 from cpmpy.tools import make_assump_model
 from cpmpy.tools.explain.mcs import mcs_grow, mcs_opt

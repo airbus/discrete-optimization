@@ -8,7 +8,6 @@ from discrete_optimization.binpack.parser import (
     parse_bin_packing_constraint_file,
 )
 from discrete_optimization.binpack.solvers.lp import MathOptBinPackSolver
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 
 

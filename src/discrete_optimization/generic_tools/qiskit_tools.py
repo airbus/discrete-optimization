@@ -4,16 +4,6 @@ from collections.abc import Callable
 from typing import Any, Optional, Union
 
 import numpy as np
-
-try:
-    import gurobipy
-except ImportError:
-    gurobi_available = False
-    Model = object
-else:
-    gurobi_available = True
-    from gurobipy import Model
-
 from scipy.optimize import minimize
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
@@ -37,6 +27,14 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 logger = logging.getLogger(__name__)
+
+try:
+    from gurobipy import Model
+except ImportError:
+    gurobi_available = False
+    Model = object
+else:
+    gurobi_available = True
 
 try:
     from qiskit import QuantumCircuit

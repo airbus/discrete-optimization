@@ -7,7 +7,7 @@ from __future__ import annotations  # see annotations as str
 import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Container, Iterable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Optional, Union
 
