@@ -320,7 +320,8 @@ def solve_model(
     if isinstance(model, AggregRcpspProblem):
         dummy = model.get_dummy_solution()
         mixed_mutation = create_mutations_portfolio_from_problem(
-            problem=model, selected_mutations={RcpspMutation})
+            problem=model, selected_mutations={RcpspMutation}
+        )
         res = RestartHandlerLimit(500)
         objectives = ["makespan"]
         objective_weights = [-1]
@@ -405,7 +406,8 @@ def local_search_multiscenario():
     )
     _, mutations = get_available_mutations(many_random_instance[0], dummy)
     mixed_mutation = create_mutations_portfolio_from_problem(
-        problem=rcpsp_problem, selected_mutations={RcpspMutation})
+        problem=rcpsp_problem, selected_mutations={RcpspMutation}
+    )
     res = RestartHandlerLimit(500)
     simulated_annealing = SimulatedAnnealing(
         problem=model_aggreg_mean,
