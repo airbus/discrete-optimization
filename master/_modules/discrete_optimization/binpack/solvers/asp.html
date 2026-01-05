@@ -1,0 +1,330 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.binpack.solvers.asp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.binpack.solvers.asp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.binpack.solvers.asp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2025 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clingo</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.binpack.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinPackProblem</span><span class="p">,</span> <span class="n">BinPackSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.asp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AspClingoSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">WarmstartMixin</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AspBinPackingSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.solvers.html#discrete_optimization.binpack.solvers.asp.AspBinPackingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AspBinPackingSolver</span><span class="p">(</span><span class="n">AspClingoSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solver based on Answer Set Programming formulation and clingo solver for Bin Packing.&quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">BinPackProblem</span>
+    <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">BinPackProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># there to store the program and facts after call to init_model and before warm-start,</span>
+        <span class="c1"># which needs a re-instanciation of the clingo control</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">basic_model</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">string_data_input</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+<div class="viewcode-block" id="AspBinPackingSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.solvers.html#discrete_optimization.binpack.solvers.asp.AspBinPackingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># 1. Define the ASP program</span>
+        <span class="c1"># We assume the number of available bins is at most the number of items (worst case).</span>
+        <span class="n">upper_bound</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span>
+        <span class="n">basic_model</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        % --- Constants provided via string input ---</span>
+<span class="s2">        % max_capacity: capacity of a bin</span>
+<span class="s2">        % nb_items: total number of items</span>
+<span class="s2">        % nb_bins: number of bins (upper bound)</span>
+
+<span class="s2">        % --- Domains ---</span>
+<span class="s2">        bin(0..nb_bins-1).</span>
+
+<span class="s2">        </span><span class="si">% --- G</span><span class="s2">enerator: Put every item into exactly one bin ---</span>
+<span class="s2">        1 { put(I, B) : bin(B) } 1 :- weight(I, _).</span>
+
+<span class="s2">        % --- Constraints ---</span>
+
+<span class="s2">        % 1. Capacity Constraint: The sum of weights in a bin must not exceed max_capacity</span>
+<span class="s2">        :- bin(B), #sum { W, I : put(I, B), weight(I, W) } &gt; max_capacity.</span>
+
+<span class="s2">        % 2. Incompatibility Constraint: Two incompatible items cannot be in the same bin</span>
+<span class="s2">        :- incompatible(I, J), put(I, B), put(J, B).</span>
+
+<span class="s2">        % --- Auxiliary predicates for optimization ---</span>
+
+<span class="s2">        % A bin is &#39;used&#39; if at least one item is put in it</span>
+<span class="s2">        used(B) :- put(_, B).</span>
+
+<span class="s2">        % --- Symmetry Breaking (Optional but recommended) ---</span>
+<span class="s2">        % To avoid exploring permutations of empty bins, we enforce that</span>
+<span class="s2">        % bin B can only be used if bin B-1 is used (for B &gt; 0).</span>
+<span class="s2">        :- used(B), not used(B-1), B &gt; 0.</span>
+
+<span class="s2">        % --- Optimization ---</span>
+<span class="s2">        % Minimize the number of used bins</span>
+<span class="s2">        #minimize { 1, B : used(B) }.</span>
+
+<span class="s2">        #show put/2.</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+        <span class="n">max_models</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_models&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Initialize Clingo Control</span>
+        <span class="c1"># --opt-mode=optN finds optimal models</span>
+        <span class="n">string_data_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_string_data_input</span><span class="p">()</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;solution&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">flags_clingo</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;--warn=no-atom-undefined&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;--opt-mode=optN&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;--parallel-mode=10&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">heuristic_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_heuristic_input</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="n">string_data_input</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">heuristic_str</span>
+            <span class="n">flags_clingo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--heuristic=Domain&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span> <span class="o">=</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Control</span><span class="p">(</span><span class="n">flags_clingo</span><span class="p">)</span>
+        <span class="c1"># Add the logic model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">basic_model</span><span class="p">)</span>
+        <span class="c1"># Build and add the data facts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">string_data_input</span><span class="p">)</span>
+        <span class="c1"># Store i</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">basic_model</span> <span class="o">=</span> <span class="n">basic_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">string_data_input</span> <span class="o">=</span> <span class="n">string_data_input</span></div>
+
+
+<div class="viewcode-block" id="AspBinPackingSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.solvers.html#discrete_optimization.binpack.solvers.asp.AspBinPackingSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">BinPackSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basic_model</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">flags_clingo</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;--warn=no-atom-undefined&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;--opt-mode=optN&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;--parallel-mode=10&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;--heuristic=Domain&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">string_data_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">string_data_input</span>
+        <span class="n">heuristic_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_heuristic_input</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="n">string_data_input</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">heuristic_str</span>
+        <span class="c1"># Re-instanciate with warmstart. TODO : find a better way ?!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span> <span class="o">=</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Control</span><span class="p">(</span><span class="n">flags_clingo</span><span class="p">)</span>
+        <span class="c1"># Add the logic model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="bp">self</span><span class="o">.</span><span class="n">basic_model</span><span class="p">)</span>
+        <span class="c1"># Build and add the data facts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">string_data_input</span><span class="p">)</span>
+        <span class="c1"># Store i</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">string_data_input</span> <span class="o">=</span> <span class="n">string_data_input</span></div>
+
+
+<div class="viewcode-block" id="AspBinPackingSolver.build_heuristic_input">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.solvers.html#discrete_optimization.binpack.solvers.asp.AspBinPackingSolver.build_heuristic_input">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_heuristic_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">BinPackSolution</span><span class="p">):</span>
+        <span class="n">str_</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;#heuristic put(</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">):bin(</span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">). [100000, true]&quot;</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">merged_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">str_</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">merged_str</span></div>
+
+
+<div class="viewcode-block" id="AspBinPackingSolver.build_string_data_input">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.solvers.html#discrete_optimization.binpack.solvers.asp.AspBinPackingSolver.build_string_data_input">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_string_data_input</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts the BinPackProblem instance data into ASP facts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">max_capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">capacity_bin</span>
+        <span class="n">nb_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span>
+
+        <span class="c1"># Create weight facts: weight(ItemIndex, WeightValue).</span>
+        <span class="c1"># We use the index in the list as the ID for ASP to ensure easy mapping back.</span>
+        <span class="n">weights_facts</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;weight(</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">weight</span><span class="si">}</span><span class="s2">).&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Create incompatibility facts: incompatible(ItemIndex1, ItemIndex2).</span>
+        <span class="n">incompatible_facts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">incompatible_items</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">incompatible_items</span><span class="p">:</span>
+                <span class="n">incompatible_facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;incompatible(</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Constants</span>
+        <span class="n">constants</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;#const max_capacity=</span><span class="si">{</span><span class="n">max_capacity</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;#const nb_items=</span><span class="si">{</span><span class="n">nb_items</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;#const nb_bins=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Combine all parts</span>
+        <span class="n">full_string</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">constants</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_facts</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">incompatible_facts</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ASP Input Data: </span><span class="si">{</span><span class="n">full_string</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">full_string</span></div>
+
+
+<div class="viewcode-block" id="AspBinPackingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.solvers.html#discrete_optimization.binpack.solvers.asp.AspBinPackingSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BinPackSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parses the Clingo model to construct a BinPackSolution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract &#39;put(I, B)&#39; symbols</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Proven optimality : </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">optimality_proven</span><span class="si">}</span><span class="s2">, current objective function </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">cost</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="n">atoms</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Initialize allocation list with -1 or a default value</span>
+        <span class="n">allocation</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span>
+
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">symbols</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;put&quot;</span><span class="p">:</span>
+                <span class="c1"># s.arguments[0] is Item Index, s.arguments[1] is Bin Index</span>
+                <span class="n">item_idx</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">number</span>
+                <span class="n">bin_idx</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">number</span>
+
+                <span class="c1"># Safety check to ensure we stay within bounds</span>
+                <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">item_idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">allocation</span><span class="p">):</span>
+                    <span class="n">allocation</span><span class="p">[</span><span class="n">item_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">bin_idx</span>
+
+        <span class="k">return</span> <span class="n">BinPackSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">allocation</span><span class="o">=</span><span class="n">allocation</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

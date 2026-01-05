@@ -1,0 +1,170 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to implement a new solver: to go further &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How to implement a new solver: to go further</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="how-to-implement-a-new-solver-to-go-further">
+<h1>How to implement a new solver: to go further<a class="headerlink" href="#how-to-implement-a-new-solver-to-go-further" title="Link to this heading"></a></h1>
+<section id="list-of-existing-wrappers-gurobi-or-tools-cpmpy-didppy">
+<span id="list-of-wrappers"></span><h2>List of existing wrappers (Gurobi, OR-Tools, cpmpy, DIDPPy, …)<a class="headerlink" href="#list-of-existing-wrappers-gurobi-or-tools-cpmpy-didppy" title="Link to this heading"></a></h2>
+<p>As shown above, when implementing a solver based on libraries already integrated in discrete-optimization, you can derive from
+the corresponding wrappers defined in <code class="docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools</span></code> to avoid redefining <code class="docutils literal notranslate"><span class="pre">solve()</span></code>. Generally
+you will just have to implement</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">init_model()</span></code> that translates the problem in the other library language,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">retrieve_solution()</span></code> or equivalent, in charge of translating solutions in d-o format.</p></li>
+</ul>
+<p>Here is a curated list of the integrated libraries and corresponding wrappers:</p>
+<ul class="simple">
+<li><p>DIDPPy (dynamic programming): <code class="docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.dyn_prog_tools.DpSolver</span></code></p></li>
+<li><p>clingo (answer set programming): <code class="docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.asp_tools.AspClingoSolver</span></code></p></li>
+<li><p>OR-Tools/CP-SAT (contraint programming): <code class="docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver</span></code></p></li>
+<li><p>cpmpy (wrapping several constraint programming/mixed-integer linear programming solvers, with integrated explainablity tools):
+<code class="docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.cpmpy_tools.CpmpySolver</span></code></p></li>
+<li><p>OR-Tools/MathOpt (wrapping several mixed-integer linear programming solvers): <code class="docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver</span></code></p></li>
+<li><p>Gurobi (mixed-integer linear programming): <code class="docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver</span></code></p></li>
+</ul>
+<p>Check implementations for existing problems to see them in action (e.g. solvers in <code class="docutils literal notranslate"><span class="pre">discrete_optimization.coloring.solvers</span></code>).</p>
+</section>
+<section id="implementing-the-lexico-api">
+<h2>Implementing the lexico API<a class="headerlink" href="#implementing-the-lexico-api" title="Link to this heading"></a></h2>
+<p>When multiple objectives are defined for a given solver, you can implement some methods to enable lexicographic optimization.
+For that you need to:</p>
+<ul class="simple">
+<li><p>declare the solver compatible with the lexico API by overriding <code class="docutils literal notranslate"><span class="pre">implements_lexico_api()</span></code> so that it returns <code class="docutils literal notranslate"><span class="pre">True</span></code>,</p></li>
+<li><p>implement the following methods</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">set_lexico_objective()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_lexico_constraint()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_lexico_objective_value()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">remove_constraints()</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>You can see an example of such an implementation with <code class="docutils literal notranslate"><span class="pre">discrete_optimization.rcpsp.solvers.cpsat.CpSatCumulativeResourceRcpspSolver</span></code>
+and see it in action in the corresponding <a class="reference internal" href="../notebooks.html#lexicographic-optimization"><span class="std std-ref">tutorial on lexico meta-solver</span></a>.</p>
+</section>
+<section id="solvers-for-tasksproblem-scheduling-allocation">
+<h2>Solvers for TasksProblem (scheduling/allocation)<a class="headerlink" href="#solvers-for-tasksproblem-scheduling-allocation" title="Link to this heading"></a></h2>
+<p>If the problem you want to solve is deriving from TasksProblem or its child classes (mainly <code class="docutils literal notranslate"><span class="pre">SchedulingProblem</span></code> and <code class="docutils literal notranslate"><span class="pre">AllocationProblem</span></code>),
+you should have soon access to an autogenerated CP-SAT solver (work in progress).</p>
+<p>Meanwhile, if you implement a CP-SAT solver deriving
+from <code class="docutils literal notranslate"><span class="pre">SchedulingCpsatSolver</span></code> or <code class="docutils literal notranslate"><span class="pre">AllocationCpsatSolver</span></code>, you will have access to a generic LNS (Large Neighborhood Search) solver.</p>
+<p>See the <a class="reference internal" href="../tasks_problem/tutorial_tasks_problem.html"><span class="std std-doc">dedicated tutorial</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

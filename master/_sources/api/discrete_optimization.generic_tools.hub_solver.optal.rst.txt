@@ -1,0 +1,29 @@
+discrete\_optimization.generic\_tools.hub\_solver.optal package
+===============================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.hub\_solver.optal.generic\_optal module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.hub_solver.optal.generic_optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.hub\_solver.optal.model\_collections module
+---------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.hub_solver.optal.model_collections
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.hub_solver.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:

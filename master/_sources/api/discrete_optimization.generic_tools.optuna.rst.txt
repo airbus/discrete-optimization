@@ -1,0 +1,29 @@
+discrete\_optimization.generic\_tools.optuna package
+====================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.optuna.timed\_percentile\_pruner module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.optuna.timed_percentile_pruner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.optuna.utils module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.optuna.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.optuna
+   :members:
+   :show-inheritance:
+   :undoc-members:

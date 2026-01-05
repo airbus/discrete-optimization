@@ -1,0 +1,53 @@
+discrete\_optimization.maximum\_independent\_set package
+========================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.maximum_independent_set.solvers
+
+Submodules
+----------
+
+discrete\_optimization.maximum\_independent\_set.mis\_model module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.mis_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.mis\_parser module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.mis_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.mis\_plot module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.mis_plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.mis\_solvers module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.mis_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.maximum_independent_set
+   :members:
+   :undoc-members:
+   :show-inheritance:

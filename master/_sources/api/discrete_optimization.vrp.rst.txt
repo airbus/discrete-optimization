@@ -1,0 +1,69 @@
+discrete\_optimization.vrp package
+==================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.vrp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.vrp.mutation module
+------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.mutation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.parser module
+----------------------------------------
+
+.. automodule:: discrete_optimization.vrp.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.plot module
+--------------------------------------
+
+.. automodule:: discrete_optimization.vrp.plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.problem module
+-----------------------------------------
+
+.. automodule:: discrete_optimization.vrp.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.solvers\_map module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solvers_map
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.utils module
+---------------------------------------
+
+.. automodule:: discrete_optimization.vrp.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrp
+   :members:
+   :show-inheritance:
+   :undoc-members:

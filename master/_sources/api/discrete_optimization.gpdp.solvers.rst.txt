@@ -1,0 +1,37 @@
+discrete\_optimization.gpdp.solvers package
+===========================================
+
+Submodules
+----------
+
+discrete\_optimization.gpdp.solvers.gpdp\_solver module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.solvers.gpdp_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.gpdp.solvers.lp\_iterative module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.solvers.lp_iterative
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.gpdp.solvers.ortools\_routing module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.solvers.ortools_routing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.gpdp.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

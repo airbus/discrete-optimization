@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp.specialized\_rcpsp package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.specialized\_rcpsp.rcpsp\_specialized\_constraints module
+--------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp.specialized_rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:

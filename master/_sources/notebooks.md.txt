@@ -1,0 +1,297 @@
+# Notebooks
+
+We present here a curated list of notebooks recommended to start with discrete-optimization,
+available in the `notebooks/` folder of the repository.
+
+```{contents}
+---
+depth: 3
+local: true
+---
+```
+
+## Knapsack problem
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/Knapsack%20tutorial.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/Knapsack%20tutorial.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FKnapsack+tutorial.ipynb)
+
+This is a very common combinatorial optimization problem where you are given a knapsack of a given weight capacity $C$ and a bunch of items with values and weight. The goal is to fill the knapsack with the best aggregated value, respecting the weight constraint.
+
+![knapsack problem illustration](https://upload.wikimedia.org/wikipedia/commons/f/fd/Knapsack.svg "Image from wikipedia: https://commons.wikimedia.org/wiki/File:Knapsack.svg").
+
+We handle here the *0-1 knapsack problem* where each item can only be taken once.
+
+Many different optimization approach can be tested on the combinatorial problem, we'll see a few during the notebook:
+
+- [Greedy heuristic methods](#Greedy-heuristic)
+- [Mixed Integer Linear Programming (MILP)](#Mixed-integer-linear-programming)
+- [Constraint Programming (CP)](#Constraint-Programming)
+- [Large neighborhood search (LNS)](#Large-neighborhood-search), a metaheuristic on top of CP or MILP
+
+## RCPSP tutorials
+
+### Introduction to RCPSP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-1+Introduction.ipynb)
+
+
+What is RCPSP ? (Resource Constrained Project Scheduling Problem)
+
+- $M$ activities or tasks in a project (instance)
+- Precedence constraints: 
+
+    > If activity $j\in[1,M]$ is a successor of activity $i\in[1,M]$, then activity $i$ must be completed before activity $j$ can be started
+
+- Resource constraints: 
+
+    > Each project is assigned a set of K renewable resources where each resource $k$ is available in $R_{k}$ units for the entire duration of the project. Each activity may require one or more of these resources to be completed. While scheduling the activities, the daily resource usage for resource $k$ can not exceed $R_{k}$ units. 
+    
+- Each activity $j$ takes $d_{j}$ time units to complete.
+
+- The overall goal of the problem is usually to minimize the makespan.
+
+Here we focus on *single mode RCPSP with renewable resources*, but there exists also variants of the problem
+- multi-mode: a task can be performed in several ways (modes), with specific duration and resources needs. The choice of the mode is in this case part of the solution.
+- mix of renewable and non-renewable resources.
+
+
+### Solving RCPSP with heuristics
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-2%20Heuristics%20Solving.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-2%20Heuristics%20Solving.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-2+Heuristics+Solving.ipynb)
+
+
+We admit that you followed the following [notebook](RCPSP%20%231%20Introduction.ipynb) that introduced you all the basics for RCPSP Problems, in this notebook we will test two greedy heuristics that builds feasible solution.
+
+### Solving RCPSP with local search/metaheuristics/genetic algorithm
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-3%20Local%20search.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-3%20Local%20search.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-3+Local+search.ipynb)
+
+
+One big family of combinatorial optimisation solver is local search. We include all metaheuristics and genetic algorithm into this simple terminology. 
+
+In general, a local search algorithm explore the solution space by applying local changes to the current set of solutions.
+
+In the case of RCPSP, we have seen in [the first notebook](RCPSP%20%231%20Introduction.ipynb) that we can represent a solution with a priority list of tasks (equivalent to a permutation). 
+Therefore local search algorithms are available on the search space being the ensemble of all permutation of tasks. We can imagine many kind of local changes possible to explore the permutation set.
+
+Local search (LS) algorithms are anytime algorithm, we have access to the current best solution whenever we want to stop the optimisation process. LS can't prove that a solution is optimal but it is rarely an issue in real world applications.
+
+### Solve RCPSP by linear programming: MILP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-4%20Linear%20programming.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-4%20Linear%20programming.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-4+Linear+programming.ipynb)
+
+
+We admit that you followed the [first notebook](RCPSP%20%231%20Introduction.ipynb) that introduced you all the basics for RCPSP Problems, on which we will apply here linear programming.
+
+Linear programming is a paradigm to model optimisation problem where the objective function and constraints are linear in terms of the variables : 
+
+$ y = max_{x}(c^t.x) $
+such that $A.x \leq b $
+
+$x$ can be either floating or integer values, which explains the Mixed Integer Linear Programming denomination.
+
+### Solve RCPSP by constraint programming
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-5%20Constraint%20Programming.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-5%20Constraint%20Programming.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-5+Constraint+Programming.ipynb)
+
+
+One of the main class of methods to solve discrete optimization problem is Constraint programming [(CP)](https://en.wikipedia.org/wiki/Constraint_programming). CP solvers explore the state variables and propagate constraints in a clever way. Using constraint programming, users declaratively state the constraints on the feasible solutions for a set of decision variables. Constraints specify the properties of a solution to be found.
+In discrete-optimization library, [minizinc](https://www.minizinc.org/) declarative language and its [python api](https://minizinc-python.readthedocs.io/en/latest/) is used extensively. However it is quite easy to use other modeling library such as [Cpmpy](https://github.com/CPMpy/cpmpy/tree/master/cpmpy) in the future.
+Some constraint programming models are stored in discrete_optimization/knapsack/minizinc folder.
+
+In this notebook, we'll use the [chuffed](https://github.com/chuffed/chuffed#description) solver which is a state of the art lazy clause solver. 
+
+We assume that you have already been introduced to RCPSP problems thanks to this [notebook](RCPSP%20%231%20Introduction.ipynb).
+
+### Large neighborhood search + CP to solve RCPSP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-6%20Large%20Neighbourhood%20Search%20.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/RCPSP%20tutorials/RCPSP-6%20Large%20Neighbourhood%20Search%20.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-6+Large+Neighbourhood+Search+.ipynb)
+
+LNS is an iterative heuristic method consisting in freezing randomly part of the solutions and optimize the remaining part. Full solution is then rebuilt and hopefully, repeating the process lead to a good solution to the original problem.
+
+
+
+## WORKFORCE tutorials
+
+### 1. Introduction to the Workforce Allocation Problem (WAP)
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/1-Introduction%20to%20workforce%20allocation.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/1-Introduction%20to%20workforce%20allocation.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FWORKFORCE+tutorials%2F1-Introduction+to+workforce+allocation.ipynb)
+
+
+Welcome to this series on the **Workforce Allocation Problem (WAP)**. In this first notebook, we will introduce the problem's core concepts, constraints, and objectives. We'll explore a sample problem instance and build a simple, heuristic-based solution to understand the fundamentals before diving into more advanced optimization techniques in the upcoming notebooks.
+
+### 2. Solving the Workforce Allocation Problem with Constraint Programming (CP)
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/2-Solving%20workforce%20allocation%20with%20CP.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/2-Solving%20workforce%20allocation%20with%20CP.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FWORKFORCE+tutorials%2F2-Solving+workforce+allocation+with+CP.ipynb)
+
+
+In the previous notebook, we introduced the Workforce Allocation Problem (WAP) and created a baseline solution using a simple greedy heuristic. While fast, that approach doesn't guarantee optimality. 
+
+In this notebook, we'll formulate WAP as a **Constraint Programming (CP)** model. CP is a powerful paradigm for solving combinatorial optimization problems by focusing on constraints and variables. We will use it to find a provably optimal solution that minimizes the number of teams used.
+
+### 3. Handling Disruptions in Workforce Allocation
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/3-Create%20disruption%20scenarios.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/3-Create%20disruption%20scenarios.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FWORKFORCE+tutorials%2F3-Create+disruption+scenarios.ipynb)
+
+
+In the previous notebook, we found an optimal solution to the Workforce Allocation Problem. However, real-world operations are rarely static. Disruptions—such as a team becoming unavailable can make your current plan/allocation obsolete and even infeasible.
+
+This notebook focuses on modeling such disruptions. We will use a scenario generator to create modified problem instances from our original plan. We will see how some disruptions can be accommodated, while others can make the problem **unsatisfiable (UNSAT)**, meaning no solution exists that respects all the rules.
+
+### 4. Explaining and Resolving Unsatisfiable Problems
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/4-Explaining%20workforce%20alloc.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/4-Explaining%20workforce%20alloc.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FWORKFORCE+tutorials%2F4-Explaining+workforce+alloc.ipynb)
+
+
+In the previous notebook, we saw how real-world disruptions can make a Workforce Allocation Problem unsatisfiable (UNSAT). The solver correctly reported that no solution exists, but this isn't very helpful for a planner who needs to find a workable compromise.
+
+In this final notebook, we'll address the crucial question: **Why is the problem infeasible?** We'll use a powerful technique called **Minimal Unsatisfiable Subset (MUS)** analysis to pinpoint the exact set of conflicting constraints. Then, we'll build an **interactive tool** that allows a user to diagnose the conflict, see a potential "best-effort" repaired schedule, and decide which constraints to relax to find a feasible solution.
+
+### 5. Repairing Unsatisfiable Problems
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/5-Repairing%20workforce%20alloc.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/5-Repairing%20workforce%20alloc.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FWORKFORCE+tutorials%2F5-Repairing+workforce+alloc.ipynb)
+
+
+In the previous notebook, we used Minimal Unsatisfiable Subset (MUS) analysis to identify **why** a disrupted workforce allocation problem became infeasible. Now, we'll shift our focus to **how to fix it**. The goal is not just to find a solution, but to make the smallest possible change to the original plan to restore feasibility.
+
+In this notebook, we'll introduce the concept of a **Minimal Correction Subset (MCS)**, a minimal set of constraints that, when relaxed or removed, makes the problem solvable again. You'll learn how to leverage MCS to build an **interactive tool** that guides the user to a feasible, "repaired" schedule by highlighting the minimum necessary changes, enabling them to make informed decisions about which tasks to drop.
+
+### 6. Intelligent Rescheduling for Disruption Repair
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/6-Intelligent%20rescheduling%20for%20disruption%20repair.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/WORKFORCE%20tutorials/6-Intelligent%20rescheduling%20for%20disruption%20repair.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2FWORKFORCE+tutorials%2F6-Intelligent+rescheduling+for+disruption+repair.ipynb)
+
+
+In the previous notebook, we explored how to handle unsatisfiable (UNSAT) problems by identifying the core conflict (MUS) and interactively relaxing constraints, which often meant dropping a task from the schedule. 
+
+While effective, dropping tasks is often a last resort. A more flexible approach is **rescheduling**: can we find a feasible solution by not only re-allocating tasks to different teams but also by **shifting their start times**?
+
+This notebook introduces feasibility restoration through rescheduling. We will model this as a multi-objective optimization problem where the goal is to find a new, valid schedule that is as close as possible to our original plan. We will use **Lexicographical Optimization** to explore different repair strategies by prioritizing different "similarity" objectives.
+
+## Advanced
+
+### Callbacks usage
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/callbacks.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/callbacks.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2Fz_Advanced%2Fcallbacks.ipynb)
+
+
+When using discrete-optimization to solve a problem, 
+it is possible to execute your own code at various stage of the solving process.
+
+
+To achieve that, you have to
+-  either create your own callback by inheriting from [Callback](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback) base class,
+  and implementing the hooks you need
+- or directly use one of the already implemented ones available in discrete_optimization.generic_tools.callbacks submodules
+  (like
+  [loggers](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.loggers),
+  [early_stoppers](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.early_stoppers),
+  or [optuna](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.optuna)
+  )
+- and put them in `callbacks` argument of `SolverDO.solve()`, as shown in the [API doc](https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO.solve).
+
+The main usecases for using a callback are
+- Logging: you need to display more information about what happens during the solving process;
+- Backuping: you need to store a model at an intermediate stage;
+- Early stopping: you want to stop the solving process under your own specific condition, not available in the solver api;
+- [Tuning hyperparameters with Optuna](./optuna.ipynb): you want let Optuna having access to intermediate results so that it can decide whether to drop the current trial.
+  (See dedicated notebook.)
+
+
+### Explaining unsatisfiability
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/explain_unsatisfiability.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/explain_unsatisfiability.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2Fz_Advanced%2Fexplain_unsatisfiability.ipynb)
+
+
+In this tutorial, we are using tools [cpmpy](https://cpmpy.readthedocs.io/en/latest/) to explain unsatifiable problems.
+
+More precisely we are using our wrapper for cpmpy `CpmpySolver` (and derived classes for specific problems) which makes use of `cpmpy.model.Model` but also of the explaining tools from `cpmpy.tools.explain`.
+
+### Lexicographic optimization
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/lexico.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/lexico.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2Fz_Advanced%2Flexico.ipynb)
+
+
+[Lexicographic optimization](https://en.wikipedia.org/wiki/Lexicographic_optimization) is a kind of multiobjective optimization. The basic idea being that the objectives can be ranked according to their importance, and that a small improvement of the most important objective is always seen better as any improvement of the second one.
+
+In discrete-optimization, a sequential algorithm is implemented for lexicographic optimization and available with the meta-solver `LexicoSolver`.
+It is wrapping another solver, and performs sequentially mono-objective optimizations on each objective, starting from the most important, and adding a new constraint on the last objective at the end of each step, to avoid degrading it.
+
+Pseudo-code would be:
+
+```
+For each objective:
+  - optimize on it
+  - add a constraint on it to be always better than the best value found
+```
+
+### Tuning hyperparameters with Optuna
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/optuna.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/optuna.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2Fz_Advanced%2Foptuna.ipynb)
+
+
+All our solvers have got a lot of hyperparameters.
+And of course, the optimization result can change significantly according to them.
+
+In this notebook, we will see how we can make use of [Optuna](https://optuna.readthedocs.io/en/stable/) to tune them for a given problem (or family of problems).
+
+Some work has been done in the library to ease this tuning:
+
+- main hyperparameters of each solver have been identified, with default values and possible ranges registered;
+- some utility methods have been coded to get default hyperparameters and to make use of optuna hyperparameters auto-suggestion with as little work as possible from the user.
+
+After applying this to tune hyperparameters of a solver, further examples will show you that
+
+- we can also use optuna to select the solver class itself as another meta-hyperparameter;
+- some solvers are meta-solvers having themselves subsolvers as hyperparameters with their own set of hyperparameters, that can also be tuned.
+
+### Sequential metasolver
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/sequential_metasolver.ipynb)
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/discrete-optimization/blob/master/notebooks/z_Advanced/sequential_metasolver.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/master?labpath=notebooks%2Fz_Advanced%2Fsequential_metasolver.ipynb)
+
+
+The sequential metasolver implemented in discrete-optimization is a generic metasolver than is chaining other subsolvers, warmstarting them with the best solution found by the previous one.
+
+It requires that the subsolvers (except the first one) are warmstartable which in discrete-optimization means deriving from `WarmstartMixin` and implementing the method `set_warm_start()`.
+
+Thanks to the use of a list hyperparameter, we can make [Optuna](https://optuna.readthedocs.io/en/stable/) optimize the choice of subsolvers and their order.
+
+To best understand what is a hyperparameter in discrete-optimization and how the library integrates with optuna, we recommend to first read the [tutorial dedicated to Optuna]().
+
+As we will use a RCPSP problem to illustrate the use of the sequential metasolver, it could also be useful to take a look at the [RCPSP tutorial](../RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb).
+
+

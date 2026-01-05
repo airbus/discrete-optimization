@@ -1,0 +1,93 @@
+discrete\_optimization.rcpsp\_multiskill.solvers package
+========================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_multiskill.solvers.cp\_mspsp\_instlib module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.cp\_mzn module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.cp_mzn
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.cpsat module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.ga module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.ga
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.lns\_lp module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.lns_lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.lns\_post\_process module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.lns_post_process
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.lp module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.multimode\_transposition module
+--------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.optal module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers.rcpsp\_based module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers.rcpsp_based
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

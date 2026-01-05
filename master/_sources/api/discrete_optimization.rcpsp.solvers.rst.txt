@@ -1,0 +1,149 @@
+discrete\_optimization.rcpsp.solvers package
+============================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.solvers.cp\_mzn module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.cp_mzn
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.cp\_mzn\_models module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.cp_mzn_models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.cp\_mzn\_multiscenario module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.cp_mzn_multiscenario
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.cpm module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.cpm
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.cpsat module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.dp module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.ga module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.ga
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.lns\_cp module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.lns_cp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.lns\_cp\_preemptive module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.lns_cp_preemptive
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.lns\_lp module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.lns_lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.lp module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.lp\_gantt module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.lp_gantt
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.optal module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.pile module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.pile
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.rcpsp\_solver module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.rcpsp_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.tempo module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.tempo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.toulbar module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

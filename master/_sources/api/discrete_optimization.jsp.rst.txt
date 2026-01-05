@@ -1,0 +1,45 @@
+discrete\_optimization.jsp package
+==================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.jsp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.jsp.parser module
+----------------------------------------
+
+.. automodule:: discrete_optimization.jsp.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.jsp.problem module
+-----------------------------------------
+
+.. automodule:: discrete_optimization.jsp.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.jsp.utils module
+---------------------------------------
+
+.. automodule:: discrete_optimization.jsp.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.jsp
+   :members:
+   :show-inheritance:
+   :undoc-members:

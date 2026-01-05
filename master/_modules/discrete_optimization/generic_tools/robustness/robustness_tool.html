@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.robustness.robustness_tool &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.robustness.robustness_tool</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.robustness.robustness_tool</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">cm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_rcpsp_tools.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspMutation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseMethodAggregating</span><span class="p">,</span>
+    <span class="n">MethodAggregating</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">build_aggreg_function_and_params_objective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ls.hill_climber</span><span class="w"> </span><span class="kn">import</span> <span class="n">HillClimberPareto</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ls.local_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModeMutation</span><span class="p">,</span>
+    <span class="n">RestartHandlerLimit</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ls.simulated_annealing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SimulatedAnnealing</span><span class="p">,</span>
+    <span class="n">TemperatureSchedulingFactor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.mutations.mutation_portfolio</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">create_mutations_portfolio_from_problem</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+    <span class="n">TupleFitness</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem_robust</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregRcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolution</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RobustnessTool">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.RobustnessTool">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RobustnessTool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_instance</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+        <span class="n">all_instances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">],</span>
+        <span class="n">train_instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">test_instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">proportion_train</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_instance</span> <span class="o">=</span> <span class="n">base_instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_instances</span> <span class="o">=</span> <span class="n">all_instances</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solutions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RcpspSolution</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">AggregRcpspProblem</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">train_instance</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">test_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_instances</span><span class="p">)</span>
+            <span class="n">len_train</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">proportion_train</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_instances</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_instances</span><span class="p">[:</span><span class="n">len_train</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_instances</span><span class="p">[</span><span class="n">len_train</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_instance</span> <span class="o">=</span> <span class="n">train_instance</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_instance</span> <span class="o">=</span> <span class="n">test_instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_mean</span> <span class="o">=</span> <span class="n">AggregRcpspProblem</span><span class="p">(</span>
+            <span class="n">list_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_instance</span><span class="p">,</span>
+            <span class="n">method_aggregating</span><span class="o">=</span><span class="n">MethodAggregating</span><span class="p">(</span><span class="n">BaseMethodAggregating</span><span class="o">.</span><span class="n">MEAN</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_max</span> <span class="o">=</span> <span class="n">AggregRcpspProblem</span><span class="p">(</span>
+            <span class="n">list_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_instance</span><span class="p">,</span>
+            <span class="n">method_aggregating</span><span class="o">=</span><span class="n">MethodAggregating</span><span class="p">(</span><span class="n">BaseMethodAggregating</span><span class="o">.</span><span class="n">MAX</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_min</span> <span class="o">=</span> <span class="n">AggregRcpspProblem</span><span class="p">(</span>
+            <span class="n">list_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_instance</span><span class="p">,</span>
+            <span class="n">method_aggregating</span><span class="o">=</span><span class="n">MethodAggregating</span><span class="p">(</span><span class="n">BaseMethodAggregating</span><span class="o">.</span><span class="n">MIN</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_median</span> <span class="o">=</span> <span class="n">AggregRcpspProblem</span><span class="p">(</span>
+            <span class="n">list_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_instance</span><span class="p">,</span>
+            <span class="n">method_aggregating</span><span class="o">=</span><span class="n">MethodAggregating</span><span class="p">(</span><span class="n">BaseMethodAggregating</span><span class="o">.</span><span class="n">MEDIAN</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="RobustnessTool.get_models">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.RobustnessTool.get_models">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_models</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">aggreg_apriori</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">aggreg_aposteriori</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">]:</span>
+        <span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">aggreg_apriori</span><span class="p">:</span>
+            <span class="n">models</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_mean</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_max</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_min</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_median</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="n">tags</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;post_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;post_max&quot;</span><span class="p">,</span> <span class="s2">&quot;post_min&quot;</span><span class="p">,</span> <span class="s2">&quot;post_median&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">aggreg_aposteriori</span><span class="p">:</span>
+            <span class="n">model_apriori_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_mean</span><span class="o">.</span><span class="n">get_unique_rcpsp_problem</span><span class="p">()</span>
+            <span class="n">model_apriori_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_max</span><span class="o">.</span><span class="n">get_unique_rcpsp_problem</span><span class="p">()</span>
+            <span class="n">model_apriori_min</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_min</span><span class="o">.</span><span class="n">get_unique_rcpsp_problem</span><span class="p">()</span>
+            <span class="n">model_apriori_median</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_aggreg_median</span><span class="o">.</span><span class="n">get_unique_rcpsp_problem</span><span class="p">()</span>
+            <span class="n">models</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="n">model_apriori_mean</span><span class="p">,</span>
+                <span class="n">model_apriori_max</span><span class="p">,</span>
+                <span class="n">model_apriori_min</span><span class="p">,</span>
+                <span class="n">model_apriori_median</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="n">tags</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;prio_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;prio_max&quot;</span><span class="p">,</span> <span class="s2">&quot;prio_min&quot;</span><span class="p">,</span> <span class="s2">&quot;prio_median&quot;</span><span class="p">]</span>
+        <span class="n">models</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base_instance</span><span class="p">]</span>
+        <span class="n">tags</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;original&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">tags</span>
+        <span class="k">return</span> <span class="n">models</span></div>
+
+
+<div class="viewcode-block" id="RobustnessTool.solve_and_retrieve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.RobustnessTool.solve_and_retrieve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve_and_retrieve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solve_models_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">RcpspProblem</span><span class="p">],</span> <span class="n">ResultStorage</span><span class="p">],</span>
+        <span class="n">apriori</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">aposteriori</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">nb_process</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_models</span><span class="p">(</span><span class="n">apriori</span><span class="p">,</span> <span class="n">aposteriori</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">nb_process</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">models</span><span class="p">)))</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">solve_models_function</span><span class="p">,</span> <span class="n">models</span><span class="p">)</span>
+        <span class="n">solutions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RcpspSolution</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">li</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">l</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solutions</span> <span class="o">=</span> <span class="p">[</span><span class="n">li</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">l</span><span class="p">]</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">solutions</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_instance</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">index_instance</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_instance</span><span class="p">)):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Evaluating in instance #</span><span class="si">{</span><span class="n">index_instance</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_instance</span><span class="p">[</span><span class="n">index_instance</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">index_pareto</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">solutions</span><span class="p">)):</span>
+                <span class="n">sol_</span> <span class="o">=</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+                    <span class="n">rcpsp_permutation</span><span class="o">=</span><span class="n">solutions</span><span class="p">[</span><span class="n">index_pareto</span><span class="p">]</span><span class="o">.</span><span class="n">rcpsp_permutation</span><span class="p">,</span>
+                    <span class="n">rcpsp_modes</span><span class="o">=</span><span class="n">solutions</span><span class="p">[</span><span class="n">index_pareto</span><span class="p">]</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">fit</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">sol_</span><span class="p">)</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">index_pareto</span><span class="p">,</span> <span class="n">index_instance</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="mi">1</span> <span class="k">if</span> <span class="n">sol_</span><span class="o">.</span><span class="n">rcpsp_schedule_feasible</span> <span class="k">else</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">index_pareto</span><span class="p">,</span> <span class="n">index_instance</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">fit</span><span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">index_pareto</span><span class="p">,</span> <span class="n">index_instance</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">fit</span><span class="p">[</span><span class="s2">&quot;mean_resource_reserve&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="RobustnessTool.get_statistics_df">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.RobustnessTool.get_statistics_df">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_statistics_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes aggregate statistics for each method.</span>
+<span class="sd">        Returns a Pandas DataFrame with Mean, Std, Min, Max, and Feasibility %.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tag</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">):</span>
+            <span class="n">makespans</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">feasibility</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">row</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;Method&quot;</span><span class="p">:</span> <span class="n">tag</span><span class="p">,</span>
+                <span class="s2">&quot;Feasibility (%)&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">feasibility</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+                <span class="s2">&quot;Mean Makespan&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">makespans</span><span class="p">),</span>
+                <span class="s2">&quot;Std Makespan&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">makespans</span><span class="p">),</span>
+                <span class="s2">&quot;Min Makespan&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">makespans</span><span class="p">),</span>
+                <span class="s2">&quot;Max Makespan&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">makespans</span><span class="p">),</span>
+            <span class="p">}</span>
+            <span class="n">stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;Method&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Sort by Mean Makespan for easier reading</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Mean Makespan&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RobustnessTool.plot">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.RobustnessTool.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">image_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Original plot method (Histograms)&quot;&quot;&quot;</span>
+        <span class="n">mean_makespan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">max_makespan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">results</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean makespan over test instances : </span><span class="si">{</span><span class="n">mean_makespan</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Max makespan over test instances : </span><span class="si">{</span><span class="n">max_makespan</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;methods </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">))):</span>
+            <span class="n">sns</span><span class="o">.</span><span class="n">histplot</span><span class="p">(</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">kde</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">bins</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_instances</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span><span class="p">),</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Makespan distribution over test instances&quot;</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;_comparaison_methods_robust_hist.png&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RobustnessTool.plot_boxplots">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.RobustnessTool.plot_boxplots">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_boxplots</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">image_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plots Boxplots for better comparison of distributions and outliers.&quot;&quot;&quot;</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+        <span class="c1"># Prepare data for seaborn</span>
+        <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tag</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;Method&quot;</span><span class="p">:</span> <span class="n">tag</span><span class="p">,</span> <span class="s2">&quot;Makespan&quot;</span><span class="p">:</span> <span class="n">val</span><span class="p">})</span>
+        <span class="n">df_melted</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span>
+
+        <span class="n">sns</span><span class="o">.</span><span class="n">boxplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">&quot;Method&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Makespan&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">df_melted</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s2">&quot;Set3&quot;</span><span class="p">)</span>
+        <span class="n">sns</span><span class="o">.</span><span class="n">stripplot</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="s2">&quot;Method&quot;</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Makespan&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">df_melted</span><span class="p">,</span>
+            <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;.25&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">jitter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Makespan Variability by Method (Test Instances)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;_comparaison_methods_robust_boxplot.png&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RobustnessTool.visualize_scenarios">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.RobustnessTool.visualize_scenarios">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">visualize_scenarios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nb_scenarios</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Visualizes the Gantt chart of the solution found by &#39;method_tag&#39;</span>
+<span class="sd">        simulated on &#39;nb_scenarios&#39; random test instances.</span>
+
+<span class="sd">        This uses the native RcpspSolution evaluation mechanism (no Executor).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method_tag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Method </span><span class="si">{</span><span class="n">method_tag</span><span class="si">}</span><span class="s2"> not found in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">method_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">method_tag</span><span class="p">)</span>
+        <span class="n">base_sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solutions</span><span class="p">[</span><span class="n">method_idx</span><span class="p">]</span>
+
+        <span class="c1"># Pick random test instances</span>
+        <span class="n">scenarios</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_instance</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">nb_scenarios</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_instance</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
+            <span class="n">nb_scenarios</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">nb_scenarios</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">nb_scenarios</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">axs</span> <span class="o">=</span> <span class="p">[</span><span class="n">axs</span><span class="p">]</span>
+
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s2">&quot;tab20&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_instance</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">instance</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scenarios</span><span class="p">):</span>
+            <span class="c1"># Create the solution wrapper for this specific instance</span>
+            <span class="c1"># This triggers the internal SGS (schedule generation) inside RcpspSolution</span>
+            <span class="n">test_sol</span> <span class="o">=</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+                <span class="n">rcpsp_permutation</span><span class="o">=</span><span class="n">base_sol</span><span class="o">.</span><span class="n">rcpsp_permutation</span><span class="p">,</span>
+                <span class="n">rcpsp_modes</span><span class="o">=</span><span class="n">base_sol</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># fit contains makespan, etc.</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">test_sol</span><span class="p">)</span>
+            <span class="n">makespan</span> <span class="o">=</span> <span class="n">fit</span><span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">]</span>
+
+            <span class="c1"># Access the computed schedule directly</span>
+            <span class="c1"># Format: {job_id: {&#39;start_time&#39;: X, &#39;end_time&#39;: Y}}</span>
+            <span class="n">schedule</span> <span class="o">=</span> <span class="n">test_sol</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">schedule</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">[</span><span class="n">job</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="n">duration</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+
+                <span class="c1"># Draw bar</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span>
+                    <span class="n">y</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">width</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+                    <span class="n">left</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">(</span><span class="n">job</span> <span class="o">%</span> <span class="mi">20</span><span class="p">),</span>
+                    <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Add job label</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                    <span class="n">start</span> <span class="o">+</span> <span class="n">duration</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                    <span class="n">job</span><span class="p">,</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">job</span><span class="p">),</span>
+                    <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                    <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Scenario </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> - Makespan: </span><span class="si">{</span><span class="n">makespan</span><span class="si">}</span><span class="s2"> (Feasible: </span><span class="si">{</span><span class="n">test_sol</span><span class="o">.</span><span class="n">rcpsp_schedule_feasible</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+            <span class="c1"># If too many jobs, hide Y labels</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_instance</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Robustness Check: Method &#39;</span><span class="si">{</span><span class="n">method_tag</span><span class="si">}</span><span class="s2">&#39; across Random Test Scenarios&quot;</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="solve_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.robustness.html#discrete_optimization.generic_tools.robustness.robustness_tool.solve_model">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_model</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">postpro</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">nb_iteration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+    <span class="n">dummy</span><span class="p">:</span> <span class="n">Solution</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+    <span class="n">mixed_mutation</span> <span class="o">=</span> <span class="n">create_mutations_portfolio_from_problem</span><span class="p">(</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">selected_mutations</span><span class="o">=</span><span class="p">{</span><span class="n">RcpspMutation</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="n">objectives</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">]</span>
+    <span class="n">objective_weights</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">postpro</span><span class="p">:</span>
+        <span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">ParamsObjectiveFunction</span><span class="p">(</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">objectives</span><span class="o">=</span><span class="n">objectives</span><span class="p">,</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">objective_weights</span><span class="p">,</span>
+            <span class="n">sense_function</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">aggreg_from_sol</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Solution</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span>
+        <span class="n">aggreg_from_sol</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">build_aggreg_function_and_params_objective</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+            <span class="n">model</span><span class="p">,</span> <span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">RestartHandlerLimit</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+        <span class="n">sa</span> <span class="o">=</span> <span class="n">SimulatedAnnealing</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">mutator</span><span class="o">=</span><span class="n">mixed_mutation</span><span class="p">,</span>
+            <span class="n">restart_handler</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+            <span class="n">temperature_handler</span><span class="o">=</span><span class="n">TemperatureSchedulingFactor</span><span class="p">(</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">restart_handler</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">coefficient</span><span class="o">=</span><span class="mf">0.9999</span>
+            <span class="p">),</span>
+            <span class="n">mode_mutation</span><span class="o">=</span><span class="n">ModeMutation</span><span class="o">.</span><span class="n">MUTATE</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="n">store_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">result_ls</span> <span class="o">=</span> <span class="n">sa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">initial_variable</span><span class="o">=</span><span class="n">dummy</span><span class="p">,</span> <span class="n">nb_iteration_max</span><span class="o">=</span><span class="n">nb_iteration</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">ParamsObjectiveFunction</span><span class="p">(</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">MULTI_OBJ</span><span class="p">,</span>
+            <span class="n">objectives</span><span class="o">=</span><span class="n">objectives</span><span class="p">,</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">objective_weights</span><span class="p">,</span>
+            <span class="n">sense_function</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">aggreg_from_sol2</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Solution</span><span class="p">],</span> <span class="n">TupleFitness</span><span class="p">]</span>
+        <span class="n">aggreg_from_sol2</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">build_aggreg_function_and_params_objective</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+            <span class="n">model</span><span class="p">,</span> <span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">RestartHandlerLimit</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+        <span class="n">sa_mo</span> <span class="o">=</span> <span class="n">HillClimberPareto</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">mutator</span><span class="o">=</span><span class="n">mixed_mutation</span><span class="p">,</span>
+            <span class="n">restart_handler</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="n">mode_mutation</span><span class="o">=</span><span class="n">ModeMutation</span><span class="o">.</span><span class="n">MUTATE</span><span class="p">,</span>
+            <span class="n">store_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">result_ls</span> <span class="o">=</span> <span class="n">sa_mo</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="n">initial_variable</span><span class="o">=</span><span class="n">dummy</span><span class="p">,</span>
+            <span class="n">nb_iteration_max</span><span class="o">=</span><span class="n">nb_iteration</span><span class="p">,</span>
+            <span class="n">update_iteration_pareto</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result_ls</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

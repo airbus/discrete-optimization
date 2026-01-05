@@ -1,0 +1,21 @@
+discrete\_optimization.workforce package
+========================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.workforce.allocation
+   discrete_optimization.workforce.commons
+   discrete_optimization.workforce.generators
+   discrete_optimization.workforce.scheduling
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce
+   :members:
+   :show-inheritance:
+   :undoc-members:

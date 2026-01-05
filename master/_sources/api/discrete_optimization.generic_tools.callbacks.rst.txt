@@ -1,0 +1,77 @@
+discrete\_optimization.generic\_tools.callbacks package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.callbacks.backup module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.backup
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.callbacks.callback module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.callback
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.callbacks.early\_stoppers module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.early_stoppers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.callbacks.loggers module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.loggers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.callbacks.optuna module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.optuna
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.callbacks.sequential\_solvers\_callback module
+------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.sequential_solvers_callback
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.callbacks.stats\_retrievers module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.stats_retrievers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.callbacks.warm\_start\_callback module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks.warm_start_callback
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.callbacks
+   :members:
+   :show-inheritance:
+   :undoc-members:

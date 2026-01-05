@@ -1,0 +1,37 @@
+discrete\_optimization.vrptw package
+====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.vrptw.solvers
+
+Submodules
+----------
+
+discrete\_optimization.vrptw.parser module
+------------------------------------------
+
+.. automodule:: discrete_optimization.vrptw.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrptw.problem module
+-------------------------------------------
+
+.. automodule:: discrete_optimization.vrptw.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrptw
+   :members:
+   :show-inheritance:
+   :undoc-members:

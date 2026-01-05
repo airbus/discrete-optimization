@@ -1,0 +1,439 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to write its own problem class? &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How to write its own problem class?</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="how-to-write-its-own-problem-class">
+<h1>How to write its own problem class?<a class="headerlink" href="#how-to-write-its-own-problem-class" title="Link to this heading"></a></h1>
+<p>Let us first try to implement the problem class (and associated solution class). If your need is to implement
+a solver for an already existing problem, go directly to the <a class="reference internal" href="#how-to-write-its-own-solver-class"><span class="xref myst">next section</span></a>.</p>
+<section id="creating-the-skeletons">
+<h2>Creating the skeletons<a class="headerlink" href="#creating-the-skeletons" title="Link to this heading"></a></h2>
+<p>We start by initiating a problem class and a solution class that will be used for this type of problem.
+We derive from the base classes <code class="docutils literal notranslate"><span class="pre">Problem</span></code> and <code class="docutils literal notranslate"><span class="pre">Solution</span></code> available in discrete-optimization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">Solution</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackSolution</span><span class="p">(</span><span class="n">Solution</span><span class="p">):</span> <span class="o">...</span>
+
+</pre></div>
+</div>
+<p>Then use your favorite IDE to generate the methods to implement (or look in the source file of the base classes for abtract methods).
+You should get something like:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackSolution</span><span class="p">(</span><span class="n">Solution</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<ul class="simple">
+<li><p>with PyCharm, right-click on the class, and select “Generate…” &gt; “Implement Methods…”
+(NB: you will also be suggested methods that are not mandatory but raise NotImplementedError,
+that could be useful for some advanced features, like use of evolutionary algorithms.)</p></li>
+<li><p>with VSCode, click on the class name, then on the lightbulb that comes up above, then “Implement all inherited abstract classes”</p></li>
+</ul>
+</div>
+<p>To be able to <a class="reference internal" href="#apply-a-generic-solver-local-search">apply existing local search algorithms</a> from the library to our problem,
+we need also to implement <code class="docutils literal notranslate"><span class="pre">get_attribute_register()</span></code> that will be used to find automatically the mutations available for our problem.</p>
+<p>Note that this is not mandatory, especially if you do not want to apply genetic algorithms or local search to your problem.
+(That’s why this method has not the decorator <code class="docutils literal notranslate"><span class="pre">&#64;abtractmethod</span></code> but simply raises a <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> in the base class.)</p>
+<p>We will also implement <code class="docutils literal notranslate"><span class="pre">lazy_copy</span></code> to avoid deep copying and potentially improve mutations performance.</p>
+<p>The final skeleton looks like:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.encoding_register</span><span class="w"> </span><span class="kn">import</span> <span class="n">EncodingRegister</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackSolution</span><span class="p">(</span><span class="n">Solution</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">lazy_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">lazy_copy</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading"></a></h2>
+<p>We start by implementing a first part of <code class="docutils literal notranslate"><span class="pre">MyKnapsackProblem</span></code>:</p>
+<ul class="simple">
+<li><p>constructor: set the main characteristics of the instance (items and max capacity)</p></li>
+<li><p>get_solution_type: link to <code class="docutils literal notranslate"><span class="pre">MyKnapsackSolution</span></code></p></li>
+<li><p>get_objective_register: document which objectives can be computed
+(and are keys of the dictionary returned by <code class="docutils literal notranslate"><span class="pre">evaluate()</span></code>), and how to aggregate them.
+See <a class="reference internal" href="../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.do_problem.ObjectiveRegister</span></code></a> for more information.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Item</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># value, weight</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">max_capacity</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">items</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_capacity</span> <span class="o">=</span> <span class="n">max_capacity</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Specify associated solution type.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">MyKnapsackSolution</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Specify the different objectives and if we need to aggregate them.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="c1"># total value of taken items: main objective</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">ObjectiveDoc</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
+                <span class="c1"># weight violation (how much we exceed the max capactity): penalty to be removed with a big coefficient</span>
+                <span class="n">weight_violation</span><span class="o">=</span><span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=-</span><span class="mf">1000.0</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>  <span class="c1"># aggregate both objective</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>  <span class="c1"># maximize resulting objective</span>
+        <span class="p">)</span>
+
+</pre></div>
+</div>
+<p>Before going on, we will implement <code class="docutils literal notranslate"><span class="pre">MyKnapsackSolution</span></code> as its characteristics will be needed for the remaining methods of <code class="docutils literal notranslate"><span class="pre">MyKnapsackProblem</span></code>.
+Several notes:</p>
+<ul class="simple">
+<li><p>The base class Solution already implements a <code class="docutils literal notranslate"><span class="pre">__init__()</span></code> method that stores the problem the solution is related to.
+We call it in our constructor and also specify the <code class="docutils literal notranslate"><span class="pre">problem</span></code> attribute type so that the IDE can type it properly.</p></li>
+<li><p>We implement also <code class="docutils literal notranslate"><span class="pre">lazy_copy()</span></code> which defaults to <code class="docutils literal notranslate"><span class="pre">copy()</span></code> but here avoid a deep copy of <code class="docutils literal notranslate"><span class="pre">list_taken</span></code> to improve
+the performance of evolutionary algorithms that mutate the solutions.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackSolution</span><span class="p">(</span><span class="n">Solution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution class for MyKnapsackProblem.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem: problem instance for which this is a solution</span>
+<span class="sd">        list_taken: list of booleans specifying if corresponding item has been taken.</span>
+<span class="sd">            Must be of same length as problem.items</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MyKnapsackProblem</span>  <span class="c1"># help the IDE to type correctly</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">MyKnapsackProblem</span><span class="p">,</span> <span class="n">list_taken</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">)</span>  <span class="c1"># stores the problem attribute</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_taken</span> <span class="o">=</span> <span class="n">list_taken</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deep copy the solution.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">MyKnapsackSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">list_taken</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_taken</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">lazy_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shallow copy the solution.</span>
+
+<span class="sd">        Not mandatory to implement but can increase the speed of evolutionary algorithms.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">MyKnapsackSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">list_taken</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">list_taken</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<p>Now we can finish the implementation of the problem:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyKnapsackProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+
+    <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Describe attributes of a solution.</span>
+
+<span class="sd">        To be used by evolutionary solvers and local search to choose the appropriate mutations</span>
+<span class="sd">        without implementing a dedicated one.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;list_taken&quot;</span><span class="p">:</span> <span class="n">ListBoolean</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">))}</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the objectives corresponding to the solution.</span>
+
+<span class="sd">        The objectives must match the ones defined in `get_objective_register`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">MyKnapsackSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;variable must be a `MyKnapsackSolution`&quot;</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_value</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_weight</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">weight_violation</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">weight</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_capacity</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check that the solution satisfies the problem.</span>
+
+<span class="sd">        Check the weight violation.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">MyKnapsackSolution</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_weight</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_capacity</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_total_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">MyKnapsackSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the total weight of taken items.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">taken</span> <span class="o">*</span> <span class="n">weight</span>
+            <span class="k">for</span> <span class="n">taken</span><span class="p">,</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">list_taken</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_total_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">MyKnapsackSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the total value of taken items.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">taken</span> <span class="o">*</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">taken</span><span class="p">,</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">list_taken</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The available attribute types are to be found in the module <a class="reference internal" href="../api/discrete_optimization.generic_tools.html#module-discrete_optimization.generic_tools.encoding_register" title="discrete_optimization.generic_tools.encoding_register"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.encoding_register</span></code></a>.</p>
+</div>
+<p>The complete resulting python module with creation of problem, solutions and evaluation and satisfiability checks can be found here: <a class="reference download internal" download="" href="../_downloads/71a2d8084a2363ea597fdad291864b07/tutorial_new_problem.py"><code class="xref download myst docutils literal notranslate"><span class="pre">tutorial_new_problem.py</span></code></a>.</p>
+</section>
+<section id="apply-a-generic-solver-local-search">
+<h2>Apply a generic solver: local search<a class="headerlink" href="#apply-a-generic-solver-local-search" title="Link to this heading"></a></h2>
+<p>Now that we have implemented a new problem, we can try to solve it with an existing solver.
+In discrete-optimization, most solvers are specialized to a problem class.
+But evolutionary algorithms (from <a class="reference internal" href="../api/discrete_optimization.generic_tools.ea.html#module-discrete_optimization.generic_tools.ea" title="discrete_optimization.generic_tools.ea"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.ea</span></code></a>) or local search (from <a class="reference internal" href="../api/discrete_optimization.generic_tools.ls.html#module-discrete_optimization.generic_tools.ls" title="discrete_optimization.generic_tools.ls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discrete_optimization.generic_tools.ls</span></code></a>) can be applied directly.</p>
+<p>In this section we use simulated annealing to solve a knapsack instance.</p>
+<p>We need to define an instance of knapsack problem. We also define a dummy intial solution.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># instantiate a knapsack problem</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">MyKnapsackProblem</span><span class="p">(</span>
+    <span class="n">max_capacity</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">items</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>  <span class="c1"># item 0: value=2, weight=5</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>  <span class="c1"># item 1: value=3, weight=1</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>  <span class="c1"># item 2: value=2, weight=4</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>  <span class="c1"># item 3: value=5, weight=9</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="c1"># dummy solution (not taking anything)</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">MyKnapsackSolution</span><span class="p">(</span>
+    <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+    <span class="n">list_taken</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">items</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The simulated annealing needs a mutation to apply at each step.
+We can select all mutations compatible with the declared solution attributes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mixed_mutation</span> <span class="o">=</span> <span class="n">create_mutations_portfolio_from_problem</span><span class="p">(</span>
+    <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Then we create the simulated annealing solver:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># restart and temperature handler</span>
+<span class="n">restart_handler</span> <span class="o">=</span> <span class="n">RestartHandlerLimit</span><span class="p">(</span><span class="mi">3000</span><span class="p">)</span>
+<span class="n">temperature_handler</span><span class="o">=</span><span class="n">TemperatureSchedulingFactor</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">restart_handler</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">)</span>
+
+<span class="c1"># simulated annealing solver</span>
+<span class="n">sa</span> <span class="o">=</span> <span class="n">SimulatedAnnealing</span><span class="p">(</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span>
+        <span class="n">mutator</span><span class="o">=</span><span class="n">mixed_mutation</span><span class="p">,</span>
+        <span class="n">restart_handler</span><span class="o">=</span><span class="n">restart_handler</span><span class="p">,</span>
+        <span class="n">temperature_handler</span><span class="o">=</span><span class="n">temperature_handler</span><span class="p">,</span>
+        <span class="n">mode_mutation</span><span class="o">=</span><span class="n">ModeMutation</span><span class="o">.</span><span class="n">MUTATE</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>And solve, get the best solution, display it, and check its satisfiability:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result_storage</span> <span class="o">=</span> <span class="n">sa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+    <span class="n">initial_variable</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span>
+    <span class="n">nb_iteration_max</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>  <span class="c1"># increase for a more realistic problem instance</span>
+<span class="p">)</span>
+
+<span class="n">sol</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">result_storage</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+
+<span class="n">items_taken_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">taken</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">list_taken</span><span class="p">)</span> <span class="k">if</span> <span class="n">taken</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best fitness: </span><span class="si">{</span><span class="n">fit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Taking items n°: </span><span class="si">{</span><span class="n">items_taken_indices</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">problem</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The complete python script can be found here: <a class="reference download internal" download="" href="../_downloads/0d87cc9acc1ea542a8562380e69dda19/tutorial_new_problem_ls.py"><code class="xref download myst docutils literal notranslate"><span class="pre">tutorial_new_problem_ls.py</span></code></a>,
+and should be run in the same directory as the previous module <a class="reference download internal" download="" href="../_downloads/71a2d8084a2363ea597fdad291864b07/tutorial_new_problem.py"><code class="xref download myst docutils literal notranslate"><span class="pre">tutorial_new_problem.py</span></code></a> so that you can import your new classes.</p>
+</section>
+<section id="to-go-further">
+<h2>To go further<a class="headerlink" href="#to-go-further" title="Link to this heading"></a></h2>
+<section id="tasks-problem-scheduling-allocation">
+<h3>Tasks problem (scheduling/allocation)<a class="headerlink" href="#tasks-problem-scheduling-allocation" title="Link to this heading"></a></h3>
+<p>If your problem can be seen as an allocation or a scheduling problem,
+you should consider also implementing the related API
+(i.e. derive from <code class="docutils literal notranslate"><span class="pre">AllocationProblem</span></code> or <code class="docutils literal notranslate"><span class="pre">SchedulingProblem</span></code> from <a class="reference internal" href="../api/discrete_optimization.generic_tasks_tools.html#module-discrete_optimization.generic_tasks_tools" title="discrete_optimization.generic_tasks_tools"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discrete_optimization.generic_tasks_tools</span></code></a> subpackage).</p>
+<p>If you do so:</p>
+<ul class="simple">
+<li><p>you will soon have access to an autogenerated CP-SAT solver (work in progress);</p></li>
+<li><p>you will have access to a dedicated constraint handler working with any cp solver implementing the appropriate API
+(i.e. deriving from <code class="docutils literal notranslate"><span class="pre">AllocationSolver</span></code> or <code class="docutils literal notranslate"><span class="pre">SchedulingSolver</span></code>), to go with a generic LNS (Large Neighborhood Search) solver.</p></li>
+</ul>
+<p>See the <a class="reference internal" href="../tasks_problem/tutorial_tasks_problem.html"><span class="std std-doc">dedicated tutorial</span></a>.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

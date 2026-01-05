@@ -1,0 +1,47 @@
+discrete\_optimization package
+==============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.binpack
+   discrete_optimization.coloring
+   discrete_optimization.facility
+   discrete_optimization.fjsp
+   discrete_optimization.generic_rcpsp_tools
+   discrete_optimization.generic_tasks_tools
+   discrete_optimization.generic_tools
+   discrete_optimization.gpdp
+   discrete_optimization.jsp
+   discrete_optimization.knapsack
+   discrete_optimization.maximum_independent_set
+   discrete_optimization.rcpsp
+   discrete_optimization.rcpsp_multiskill
+   discrete_optimization.singlemachine
+   discrete_optimization.tsp
+   discrete_optimization.tsptw
+   discrete_optimization.vrp
+   discrete_optimization.vrptw
+   discrete_optimization.workforce
+
+Submodules
+----------
+
+discrete\_optimization.datasets module
+--------------------------------------
+
+.. automodule:: discrete_optimization.datasets
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization
+   :members:
+   :show-inheritance:
+   :undoc-members:

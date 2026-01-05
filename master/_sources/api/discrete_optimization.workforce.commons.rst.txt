@@ -1,0 +1,37 @@
+discrete\_optimization.workforce.commons package
+================================================
+
+Submodules
+----------
+
+discrete\_optimization.workforce.commons.fairness\_modeling module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.commons.fairness_modeling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.commons.fairness\_modeling\_cpmpy module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.commons.fairness_modeling_cpmpy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.commons.fairness\_modeling\_ortools module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.commons.fairness_modeling_ortools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.commons
+   :members:
+   :show-inheritance:
+   :undoc-members:
