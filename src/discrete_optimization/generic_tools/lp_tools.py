@@ -776,6 +776,7 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
         callbacks: Optional[list[Callback]] = None,
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
+        gurobi_solver_kwargs: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         self.early_stopping_exception = None
@@ -795,6 +796,7 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
             parameters_milp=parameters_milp,
             time_limit=time_limit,
             gurobi_callback=gurobi_callback,
+            gurobi_solver_kwargs=gurobi_solver_kwargs,
             **kwargs,
         )
 
@@ -897,9 +899,11 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
         self,
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
+        gurobi_solver_kwargs: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
-        """Set Gurobi Model parameters according to parameters_milp"""
+        """Set Gurobi Model parameters according to parameters_milp
+        and gurobi_solver_kwargs containing specific Params of gurobi."""
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:  # for mypy
@@ -915,13 +919,19 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
         self.model.setParam(
             gurobipy.GRB.Param.PoolSolutions, parameters_milp.pool_solutions
         )
-        self.model.setParam("PoolSearchMode", parameters_milp.pool_search_mode)
+        self.model.setParam(
+            gurobipy.GRB.Param.PoolSearchMode, parameters_milp.pool_search_mode
+        )
+        if gurobi_solver_kwargs is not None:
+            for param, param_value in gurobi_solver_kwargs.items():
+                self.model.setParam(param, param_value)
 
     def optimize_model(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
         gurobi_callback: Optional[GurobiCallback] = None,
+        gurobi_solver_kwargs: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
         """Optimize the Gurobi Model.
@@ -937,7 +947,10 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
                     "self.model must not be None after self.init_model()."
                 )
         self.prepare_model(
-            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+            parameters_milp=parameters_milp,
+            time_limit=time_limit,
+            gurobi_solver_kwargs=gurobi_solver_kwargs,
+            **kwargs,
         )
         self.model.optimize(gurobi_callback)
         self.status_solver = map_gurobi_status_to_do_status[self.model.Status]
