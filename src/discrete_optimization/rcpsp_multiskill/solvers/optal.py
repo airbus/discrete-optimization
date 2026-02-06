@@ -1,13 +1,12 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from __future__ import annotations
-
 import logging
 import math
-from typing import Any, Hashable, Optional
+from typing import Any, Hashable
 
 import numpy as np
+import optalcp as cp
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     AllocationOptalSolver,
@@ -15,9 +14,6 @@ from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver impo
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
-    CategoricalHyperparameter,
-)
 from discrete_optimization.rcpsp_multiskill.problem import (
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,
@@ -28,14 +24,6 @@ from discrete_optimization.rcpsp_multiskill.problem import (
     discretize_calendar_,
 )
 
-try:
-    import optalcp as cp
-except ImportError:
-    cp = None
-    optalcp_available = False
-else:
-    optalcp_available = True
-
 logger = logging.getLogger(__name__)
 
 
@@ -44,20 +32,12 @@ class OptalMSRcpspSolver(
     MultimodeOptalSolver[Task],
     AllocationOptalSolver[Task, UnaryResource],
 ):
-    hyperparameters = [
-        CategoricalHyperparameter(
-            name="redundant_skill_cumulative", choices=[True, False], default=True
-        ),
-        CategoricalHyperparameter(
-            name="redundant_worker_cumulative", choices=[True, False], default=True
-        ),
-    ]
     problem: MultiskillRcpspProblem
 
     def __init__(
         self,
         problem: MultiskillRcpspProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        params_objective_function: ParamsObjectiveFunction,
         **args,
     ):
         super().__init__(problem, params_objective_function, **args)
@@ -152,7 +132,7 @@ class OptalMSRcpspSolver(
         return skills_of_task
 
     def worker_can_do_task(
-        self, task: Task, worker: UnaryResource, one_worker_per_task: bool
+        self, task: Task, worker: UnaryResource, one_worker_per_task
     ) -> bool:
         skills_of_task = self.all_skills_for_task(task)
         return (
@@ -217,7 +197,13 @@ class OptalMSRcpspSolver(
                             if not one_skill_per_task or len(skills_of_worker) == 1:
                                 # We use all skills.
                                 skills_used_var[task][worker][s] = (
-                                    self.cp_model.presence(
+                                    self.cp_model.bool_var(
+                                        name=f"skill_{task}_{worker}_{s}"
+                                    )
+                                )
+                                self.cp_model.enforce(
+                                    skills_used_var[task][worker][s]
+                                    == self.cp_model.presence(
                                         opt_interval_var[task][worker]
                                     )
                                 )
@@ -230,7 +216,9 @@ class OptalMSRcpspSolver(
                     for s in skills_used_var[task][worker]:
                         self.cp_model.enforce(
                             skills_used_var[task][worker][s]
-                            <= self.cp_model.presence(opt_interval_var[task][worker])
+                            <= self.cp_model.presence(
+                                self.cp_model.presence(opt_interval_var[task][worker])
+                            )
                         )
 
                     self.cp_model.enforce(
@@ -334,14 +322,15 @@ class OptalMSRcpspSolver(
     def add_non_renewable_resources_constraint(self, res: str):
         tasks = [
             (
-                self.variables["opt_interval_var"][task][mode],
+                self.variables["opt_interval"][task][mode],
                 self.problem.mode_details[task][mode].get(res, 0),
             )
-            for task in self.variables["opt_interval_var"]
-            for mode in self.variables["opt_interval_var"][task]
+            for task in self.variables["opt_interval"]
+            for mode in self.variables["opt_interval"][task]
             if self.problem.mode_details[task][mode].get(res, 0) > 0
         ]
         cumul = self.cp_model.sum([self.cp_model.presence(x[0]) * x[1] for x in tasks])
+        # TODO, try with step function but here it doesnt seem needed...
         self.cp_model.enforce(cumul <= int(self.problem.get_max_resource_capacity(res)))
 
     def add_renewable_resources_constraint(self, res: str):
@@ -459,9 +448,9 @@ class OptalMSRcpspSolver(
             else:
                 for mode in modes:
                     skills_needed = {
-                        s: self.problem.mode_details[task][mode].get(s, 0)
+                        s: self.problem.mode_details[task][modes[0]].get(s, 0)
                         for s in self.problem.skills_set
-                        if self.problem.mode_details[task][mode].get(s, 0) > 0
+                        if self.problem.mode_details[task][modes[0]].get(s, 0) > 0
                     }
                     if len(skills_needed) > 0:
                         lb_nb_worker_needed = max(
@@ -476,7 +465,7 @@ class OptalMSRcpspSolver(
                         )
                         intervals_consume.append(
                             (
-                                self.variables["opt_interval_var"][task][mode],
+                                self.variables["opt_intervals"][task][mode],
                                 lb_nb_worker_needed,
                             )
                         )
@@ -543,13 +532,13 @@ class OptalMSRcpspSolver(
                     )
             else:
                 workers = [
-                    w for w in self.variables["worker_variable"]["opt_intervals"][task]
+                    w for w in self.variables["worker_variable"]["is_present"][task]
                 ]
                 dur = self.cp_model.length(self.variables["interval_var"][task])
                 self.cp_model.enforce(
                     self.cp_model.sum(
                         [
-                            self.cp_model.presence(worker_vars[task][w])
+                            worker_vars[task][w]
                             * dur
                             * int(10 * self.problem.employees[w].salary)
                             for w in workers
@@ -565,18 +554,16 @@ class OptalMSRcpspSolver(
 
     def get_task_mode_is_present_variable(self, task: Task, mode: int) -> cp.BoolExpr:
         if mode in self.variables["opt_interval_var"][task]:
-            return self.cp_model.presence(
-                self.variables["opt_interval_var"][task][mode]
-            )
+            self.cp_model.presence(self.variables["opt_interval_var"][task][mode])
         return False
 
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
     ) -> cp.BoolExpr:
         if unary_resource in self.variables["worker_variable"]["opt_intervals"][task]:
-            return self.cp_model.presence(
-                self.variables["worker_variable"]["opt_intervals"][task][unary_resource]
-            )
+            return self.variables["worker_variable"]["opt_intervals"][task][
+                unary_resource
+            ]
         else:
             return 0
 
@@ -596,7 +583,7 @@ class OptalMSRcpspSolver(
             if len(modes) == 1:
                 modes_dict[task] = modes[0]
             else:
-                for mode in self.variables["opt_interval_var"][task]:
+                for mode in self.variables["mode_variable"]["is_present"][task]:
                     if result.solution.is_present(
                         self.variables["opt_interval_var"][task][mode]
                     ):
