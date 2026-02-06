@@ -4,6 +4,9 @@
 
 from copy import deepcopy
 
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for tests
+
 import pytest
 
 from discrete_optimization.generic_tools.cp_tools import CpSolverName
