@@ -24,6 +24,7 @@ def run_gurobi_coloring():
             )
         ],
         parameters_milp=p,
+        gurobi_solver_kwargs={"NoRelHeurTime": 30},
     )
     solution, fit = result_store.get_best_solution_fit()
     plot_coloring_solution(solution)
