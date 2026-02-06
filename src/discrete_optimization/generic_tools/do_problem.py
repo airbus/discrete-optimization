@@ -130,7 +130,7 @@ class ObjectiveRegister:
         self,
         objective_sense: ModeOptim,
         objective_handling: ObjectiveHandling,
-        dict_objective_to_doc: dict[str, Any],
+        dict_objective_to_doc: dict[str, ObjectiveDoc],
     ):
         self.objective_sense = objective_sense
         self.objective_handling = objective_handling

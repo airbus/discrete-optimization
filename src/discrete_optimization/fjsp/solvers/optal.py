@@ -1,66 +1,22 @@
-#  Copyright (c) 2025 AIRBUS and its affiliates.
+#  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-import datetime
-import os
+from collections import defaultdict
 from typing import Any, Optional
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
+import optalcp as cp
+
+from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution, Task
+from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
+    SchedulingOptalSolver,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
-from discrete_optimization.generic_tools.hub_solver.optal.generic_optal import (
-    OptalSolver,
-)
-from discrete_optimization.generic_tools.hub_solver.optal.model_collections import (
-    DoProblemEnum,
-    problem_to_script_path,
-)
-from discrete_optimization.jsp.problem import Subjob
-
-script = problem_to_script_path[DoProblemEnum.FJSP]
 
 
-def deparse_file(problem: FJobShopProblem, original_header_float: float = 0.0) -> str:
-    """
-    Writes an FJobShopProblem object to a string in the .fjs format.
-
-    Args:
-        problem: The FJobShopProblem object to write.
-        original_header_float: Optional float value from the original file's header.
-
-    Returns:
-        A string containing the problem data in .fjs format.
-    """
-    output_lines = []
-
-    # --- Header line ---
-    header = f"{problem.n_jobs} {problem.n_machines} {original_header_float}"
-    output_lines.append(header)
-
-    # --- Job lines ---
-    for job in problem.list_jobs:
-        line_items = []
-        # Number of sub-jobs (operations) for this job
-        line_items.append(str(len(job.sub_jobs)))
-
-        for subjob_options in job.sub_jobs:
-            # Number of machine alternatives for this sub-job
-            line_items.append(str(len(subjob_options)))
-
-            for option in subjob_options:
-                # Machine ID (convert back to 1-indexed) and processing time
-                line_items.append(str(option.machine_id + 1))
-                line_items.append(str(option.processing_time))
-
-        output_lines.append(" ".join(line_items))
-
-    return "\n".join(output_lines) + "\n"
-
-
-class OptalFJspSolver(OptalSolver):
+class OptalFJspSolver(SchedulingOptalSolver[Task]):
     problem: FJobShopProblem
 
     def __init__(
@@ -70,53 +26,71 @@ class OptalFJspSolver(OptalSolver):
         **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
-        self._script_model = script
+        self.variables = {}
 
     def init_model(self, **args: Any) -> None:
-        output = deparse_file(self.problem)
-        d = datetime.datetime.now().timestamp()
-        file_input_path = os.path.join(self.temp_directory, f"tmp-{d}.txt")
-        logs_path = os.path.join(self.temp_directory, f"tmp-stats-{d}.json")
-        result_path = os.path.join(self.temp_directory, f"solution-{d}.json")
-        self._logs_path = logs_path
-        self._result_path = result_path
-        with open(file_input_path, "w") as f:
-            f.write(output)
-        self._file_input = file_input_path
-
-    def build_command(
-        self,
-        parameters_cp: Optional[ParametersCp] = None,
-        time_limit: int = 10,
-        **args: Any,
-    ):
-        command = super().build_command(
-            parameters_cp=parameters_cp, time_limit=time_limit, **args
+        self.cp_model = cp.Model()
+        intervals = {}
+        opt_intervals = {}
+        intervals_per_machines = defaultdict(lambda: set())
+        for i in range(self.problem.n_jobs):
+            for k in range(len(self.problem.list_jobs[i].sub_jobs)):
+                subjob_option = self.problem.list_jobs[i].sub_jobs[k]
+                durations = [opt.processing_time for opt in subjob_option]
+                intervals[(i, k)] = self.cp_model.interval_var(
+                    start=(0, self.problem.horizon),
+                    end=(0, self.problem.horizon),
+                    length=(min(durations), max(durations)),
+                    optional=False,
+                    name=f"interval_{i}_{k}",
+                )
+                for opt in subjob_option:
+                    opt_intervals[(i, k, opt.machine_id)] = self.cp_model.interval_var(
+                        start=(0, self.problem.horizon),
+                        end=(0, self.problem.horizon),
+                        length=opt.processing_time,
+                        optional=True,
+                        name=f"interval_{i}_{k}_{opt.machine_id}",
+                    )
+                    intervals_per_machines[opt.machine_id].add((i, k, opt.machine_id))
+                self.cp_model.alternative(
+                    intervals[(i, k)],
+                    [opt_intervals[(i, k, opt.machine_id)] for opt in subjob_option],
+                )
+                if k >= 1:
+                    self.cp_model.end_before_start(
+                        intervals[(i, k - 1)], intervals[(i, k)]
+                    )
+        for machine in intervals_per_machines:
+            self.cp_model.no_overlap(
+                [opt_intervals[x] for x in intervals_per_machines[machine]]
+            )
+        self.variables["intervals"] = intervals
+        self.variables["opt_intervals"] = opt_intervals
+        self.cp_model.minimize(
+            self.cp_model.max(
+                [
+                    self.cp_model.end(self.variables["intervals"][x])
+                    for x in self.variables["intervals"]
+                ]
+            )
         )
-        command += ["--fjssp-json", self._result_path]
-        return command
 
-    def retrieve_current_solution(self, dict_results: dict) -> Solution:
-        start_times = dict_results["startTimes"]
-        machine_assignment = dict_results["machineAssignments"]
-        index = 0
-        full_schedule = []
+    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+        schedule = []
         for i in range(self.problem.n_jobs):
             sched_i = []
-            for j in range(len(self.problem.list_jobs[i].sub_jobs)):
-                machine = machine_assignment[index]
-                sj: Subjob = next(
-                    sub
-                    for sub in self.problem.list_jobs[i].sub_jobs[j]
-                    if sub.machine_id == machine - 1
-                )
-                duration = sj.processing_time
-                tuple_sched = (
-                    start_times[index],
-                    start_times[index] + duration,
-                    machine - 1,
-                )
-                index += 1
-                sched_i.append(tuple_sched)
-            full_schedule.append(sched_i)
-        return FJobShopSolution(problem=self.problem, schedule=full_schedule)
+            for k in range(len(self.problem.list_jobs[i].sub_jobs)):
+                for index_opt, opt in enumerate(self.problem.list_jobs[i].sub_jobs[k]):
+                    if result.solution.is_present(
+                        self.variables["opt_intervals"][(i, k, opt.machine_id)]
+                    ):
+                        st, end = result.solution.get_value(
+                            self.variables["opt_intervals"][(i, k, opt.machine_id)]
+                        )
+                        sched_i.append((st, end, opt.machine_id, index_opt))
+            schedule.append(sched_i)
+        return FJobShopSolution(problem=self.problem, schedule=schedule)
+
+    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+        return self.variables["intervals"][task]
