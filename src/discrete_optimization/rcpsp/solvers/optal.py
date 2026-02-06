@@ -1,9 +1,9 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from __future__ import annotations
-
 from typing import Any, Optional
+
+import optalcp as cp
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     MultimodeOptalSolver,
@@ -17,14 +17,6 @@ from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.rcpsp.problem import RcpspProblem, RcpspSolution, Task
 from discrete_optimization.rcpsp.solvers import RcpspSolver
 from discrete_optimization.rcpsp.utils import create_fake_tasks
-
-try:
-    import optalcp as cp
-except ImportError:
-    cp = None
-    optalcp_available = False
-else:
-    optalcp_available = True
 
 
 class OptalRcpspSolver(
