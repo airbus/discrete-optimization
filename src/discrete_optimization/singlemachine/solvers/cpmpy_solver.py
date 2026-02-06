@@ -130,7 +130,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         # === Define Meta-Constraints for Explanation ===
         # 1. No-Overlap Constraints: A machine can only process one job at a time.
         no_overlap_constraints = [
-            NoOverlap(start=starts, dur=self.problem.processing_times, end=ends)
+            NoOverlap(start=starts, duration=self.problem.processing_times, end=ends)
         ]
         self.meta_constraints["no_overlap"] = MetaCpmpyConstraint(
             name="no_overlap", constraints=no_overlap_constraints
