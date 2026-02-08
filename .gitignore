@@ -28,3 +28,7 @@ src/discrete_optimization.egg-info/requires.txt
 src/discrete_optimization.egg-info/top_level.txt
 src/discrete_optimization.egg-info/SOURCES.txt
 src/discrete_optimization.egg-info/PKG-INFO
+
+# Output files from using the library Optuna
+optuna-journal.log
+src/discrete_optimization/generic_tools/hub_solver/optal/temp/tmp-*.txt

@@ -15,7 +15,7 @@ import zipfile
 from typing import Optional
 from urllib.request import urlcleanup, urlretrieve
 
-DO_DEFAULT_DATAHOME = "~/discrete_optimization_data"
+DO_DEFAULT_DATAHOME = "../discrete_optimization_data"
 DO_DEFAULT_DATAHOME_ENVVARNAME = "DISCRETE_OPTIMIZATION_DATA"
 
 OR_LIBRARY_ROOT_URL = "https://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/"
