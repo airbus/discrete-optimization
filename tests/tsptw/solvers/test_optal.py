@@ -23,3 +23,4 @@ def test_optal(problem):
             pd.DataFrame(stats["lowerBoundHistory"]).set_index("solveTime"),
         )
     )
+    assert not stats_df.empty
