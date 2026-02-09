@@ -14,14 +14,20 @@ from discrete_optimization.workforce.scheduling.solvers.optal import (
 )
 
 
-def test_optal():
+import pytest
+
+@pytest.mark.parametrize(
+    "model_dispersion, run_lexico",
+    [(False, False), (True, False), (False, True)],
+)
+def test_optal(model_dispersion, run_lexico):
     instance = [p for p in get_data_available() if "instance_64.json" in p][0]
     problem = parse_json_to_problem(instance)
     solver = OptalAllocSchedulingSolver(problem=problem)
-    solver.init_model()
+    solver.init_model(model_dispersion=model_dispersion, run_lexico=run_lexico)
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),
-        time_limit=10,
+        time_limit=5,
         do_not_retrieve_solutions=True,  # free license = no solutions stored
         **{
             "worker0-3.searchType": "fdslb",

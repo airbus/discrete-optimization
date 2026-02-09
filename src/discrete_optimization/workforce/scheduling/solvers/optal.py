@@ -17,6 +17,7 @@ try:
     import optalcp as cp
     if TYPE_CHECKING:
         from optalcp import Model as OptalModel, Solution as OptalSolution  # type: ignore
+        from optalcp import IntExpr as OptalIntExpr 
 except ImportError:
     cp = None
     
@@ -256,9 +257,87 @@ class OptalAllocSchedulingSolver(OptalPythonSolver):
         self._teams_used_vars = teams_used_vars
         self._nb_teams_used = nb_teams_used
         
-        # Objective: minimize the number of teams used
-        model.minimize(nb_teams_used)
+        # Store model for solve() in case we need Stage 2
+        self.model = model
+
+        # TODO: Need review, since we assume that the run_lexico option only makes sense if model_dispersion is True
+        # Logic for objectives:
+        # 1. model_dispersion=False: Minimize nb_teams_used (single Stage).
+        # 2. model_dispersion=True, run_lexico=False: Weighted Sum (single Stage).
+        # 3. model_dispersion=True, run_lexico=True: Lexicographical Stage 1 (min teams only).
+        
+        if self.model_dispersion and not self.run_lexico:
+            # Weighted Sum approach (Soft Lexicographical)
+            dispersion = self._get_workload_dispersion(model)
+            model.minimize(nb_teams_used * 10000 + dispersion)
+        else:
+            # Regular minimization (either primary objective or Stage 1 of Lexico)
+            model.minimize(nb_teams_used)
+
         return model
+
+    def _get_workload_dispersion(self, model: "OptalModel") -> "OptalIntExpr":
+        """Defines workload variables and returns the dispersion expression (max - min).
+        
+        Workload for a team is defined as the sum of durations of tasks assigned to it.
+        Dispersion is the difference between the max and min workload across all teams.
+        """
+        teams = self.problem.team_names
+        tasks = self.problem.tasks_list
+        tasks_data = self.problem.tasks_data
+        horizon = self.problem.horizon
+        
+        workload_per_team = []
+        for i, team in enumerate(teams):
+            workload = model.int_var(min=0, max=horizon, name=f"workload_{team}")
+            
+            # Sum of durations for tasks where this team is present
+            team_modes_with_durations = [
+                (self._task_vars[task]["team_vars"][team], tasks_data[task].duration_task)
+                for task in tasks if team in self._task_vars[task]["team_vars"]
+            ]
+            
+            workload_expr = model.sum(
+                [model.presence(itv) * dur for itv, dur in team_modes_with_durations]
+            )
+            
+            # Constrain workload: if team is used, workload matches the sum.
+            # If team is NOT used, workload becomes 0 (sum over empty/absent modes).
+            model.enforce(workload == workload_expr)
+            workload_per_team.append(workload)
+            
+        return model.max(workload_per_team) - model.min(workload_per_team)
+
+    def solve(
+        self,
+        parameters_cp: Optional[ParametersCp] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        """Optimizes the problem using either single-stage or two-stage (Lexicographical) strategy.
+        
+        If model_dispersion and run_lexico are both True:
+        - Stage 1: Minimize number of teams used.
+        - Stage 2: Minimize workload dispersion while maintaining the minimum teams from Stage 1.
+        """
+        # If not Lexicographical Workload Balancing, solve once with the model built in build_model()
+        if not (self.run_lexico and self.model_dispersion):
+            return super().solve(parameters_cp=parameters_cp, **kwargs)
+        
+        # --- Stage 1: Minimize nb_teams_used ---
+        res1 = super().solve(parameters_cp=parameters_cp, **kwargs)
+        if not res1.list_solution_fits:
+            return res1
+        
+        # Get optimal count from Stage 1
+        min_teams = int(self._nb_teams_used.value)
+        
+        # --- Stage 2: Minimize dispersion subject to min_teams ---
+        self.model.enforce(self._nb_teams_used <= min_teams)
+        dispersion = self._get_workload_dispersion(self.model)
+        self.model.minimize(dispersion)
+        
+        # Final solve for the secondary objective
+        return super().solve(parameters_cp=parameters_cp, **kwargs)
     
     def retrieve_current_solution(self, solution: "OptalSolution") -> AllocSchedulingSolution:
         """Extracts the schedule from the OptalCP solution and constructs an AllocSchedulingSolution."""
