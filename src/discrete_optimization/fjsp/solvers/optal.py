@@ -3,15 +3,23 @@
 #  LICENSE file in the root directory of this source tree.
 import datetime
 import os
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
+try:
+    import optalcp as cp
+    if TYPE_CHECKING:
+        from optalcp import Model as OptalModel, Solution as OptalSolution  # type: ignore
+except ImportError:
+    cp = None
+    
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
 from discrete_optimization.generic_tools.hub_solver.optal.generic_optal import (
+    OptalPythonSolver,
     OptalSolver,
 )
 from discrete_optimization.generic_tools.hub_solver.optal.model_collections import (
@@ -60,7 +68,8 @@ def deparse_file(problem: FJobShopProblem, original_header_float: float = 0.0) -
     return "\n".join(output_lines) + "\n"
 
 
-class OptalFJspSolver(OptalSolver):
+class OptalFJspSolverNode(OptalSolver):
+    """Solver for FJSP using the OptalCP TypeScript API (fallback if Python API is not available)"""
     problem: FJobShopProblem
 
     def __init__(
@@ -118,5 +127,99 @@ class OptalFJspSolver(OptalSolver):
                 )
                 index += 1
                 sched_i.append(tuple_sched)
+            full_schedule.append(sched_i)
+        return FJobShopSolution(problem=self.problem, schedule=full_schedule)
+
+
+class OptalFJspSolver(OptalPythonSolver):
+    """Solver for FJSP using the OptalCP Python API (default if OptalCP is installed)"""
+    problem: FJobShopProblem
+
+    def __init__(
+        self,
+        problem: FJobShopProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(problem, params_objective_function, **kwargs)
+        self._all_modes = []
+
+    def build_model(self, **kwargs: Any) -> "OptalModel":
+        """Builds the OptalCP model for the FJSP problem."""
+        model = cp.Model()
+        nb_machines = self.problem.n_machines
+        machines = [[] for _ in range(nb_machines)]
+        self._all_modes = []
+
+        # Keep track of the last operation of each job to set the objective on them
+        last_operations = []
+        
+        # Create interval variables for each operation and link them to their possible modes (machine assignments)
+        for i, job in enumerate(self.problem.list_jobs):
+            prev = None
+            for j, subjob_options in enumerate(job.sub_jobs):
+                # Interval variable representing the execution of this operation (regardless of machine)
+                operation = model.interval_var(name=f"J{i + 1}O{j + 1}")
+                modes = []
+                for option in subjob_options:
+                    # Optional interval variable for this specific machine assignment
+                    mode = model.interval_var(
+                        length=option.processing_time,
+                        optional=True,
+                        name=f"J{i + 1}O{j + 1}_M{option.machine_id + 1}",
+                    )
+                    machines[option.machine_id].append(mode)
+                    modes.append(mode)
+                    
+                # Add alternative constraint: the operation must be executed in exactly one of the modes (machine assignments)
+                model.alternative(operation, modes)
+                self._all_modes.append(modes)
+
+                # Add precedence constraint: link with the previous operation in the same job
+                if prev is not None:
+                    model.end_before_start(prev, operation)
+                prev = operation
+            last_operations.append(prev)
+
+        # Add no-overlap constraints for each machine
+        for m in range(nb_machines):
+            model.no_overlap(machines[m])
+
+        # Objective: minimize makespan
+        ends = [op.end() for op in last_operations]
+        model.minimize(model.max(ends))
+
+        return model
+
+    def retrieve_current_solution(self, solution: "OptalSolution") -> FJobShopSolution:
+        """Extracts the schedule from the OptalCP solution and constructs an FJobShopSolution."""
+        full_schedule = []
+        mode_index = 0
+        for i, job in enumerate(self.problem.list_jobs):
+            sched_i = []
+            for j in range(len(job.sub_jobs)):
+                # Find which mode (machine assignment) was selected for this operation
+                modes = self._all_modes[mode_index]
+                assigned_mode = None
+                for mode_var in modes:
+                    if not solution.is_absent(mode_var):
+                        assigned_mode = mode_var
+                        break
+                
+                if assigned_mode is None:
+                    # Should not happen if problem is feasible
+                    raise ValueError(f"No mode assigned for operation J{i+1}O{j+1}")
+                
+                start = solution.get_start(assigned_mode)
+                duration = assigned_mode.get_length()
+                # Extract machine ID from name J{i+1}O{j+1}_M{machine_id+1}
+                import re
+                match = re.search(r"_M(\d+)$", assigned_mode.get_name())
+                machine_id = int(match.group(1)) - 1
+                
+                # Create the schedule tuple (start, end, machine_id) for this operation
+                tuple_sched = (start, start + duration, machine_id)
+                sched_i.append(tuple_sched)
+                mode_index += 1
             full_schedule.append(sched_i)
         return FJobShopSolution(problem=self.problem, schedule=full_schedule)

@@ -4,14 +4,22 @@
 import datetime
 import json
 import os
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
+try:
+    import optalcp as cp
+    if TYPE_CHECKING:
+        from optalcp import Model as OptalModel, Solution as OptalSolution  # type: ignore
+except ImportError:
+    cp = None
+    
 from discrete_optimization.generic_tools.hub_solver.optal.generic_optal import (
+    OptalPythonSolver,
     OptalSolver,
 )
 from discrete_optimization.generic_tools.hub_solver.optal.model_collections import (
@@ -48,7 +56,8 @@ def dump_to_json(problem: RcpspProblem):
     return problem_data
 
 
-class OptalRcpspSolver(OptalSolver):
+class OptalRcpspSolverNode(OptalSolver):
+    """Solver for RCPSP using the OptalCP TypeScript API (fallback if Python API is not available)"""
     problem: RcpspProblem
 
     def __init__(
@@ -108,6 +117,128 @@ class OptalRcpspSolver(OptalSolver):
             "start_time": max_time,
             "end_time": max_time,
         }
+        return RcpspSolution(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
+        )
+
+
+class OptalRcpspSolver(OptalPythonSolver):
+    """Solver for RCPSP using the OptalCP Python API (if available)"""
+    problem: RcpspProblem
+
+    def build_model(self, **kwargs: Any) -> "OptalModel":
+        """Builds the OptalCP model for the RCPSP problem."""
+        model = cp.Model()
+        resource_names = self.problem.resources_list
+        non_renewable_set = set(self.problem.non_renewable_resources)
+
+        self._jobs_vars = {}
+        self._modes_vars = {}
+        ends = []
+        cumuls = [[] for _ in resource_names]
+        total_consumptions = [[] for _ in resource_names]
+
+        # 1. Create variables
+        for taskId in self.problem.tasks_list:
+            if (
+                taskId == self.problem.source_task
+                or taskId == self.problem.sink_task
+            ):
+                continue
+            
+            itv = model.interval_var(name=f"T{taskId}")
+            self._jobs_vars[taskId] = itv
+            
+            mode_intervals = []
+            self._modes_vars[taskId] = {}
+            
+            for mode, modeData in self.problem.mode_details[taskId].items():
+                duration = modeData["duration"]
+                itv_mode = model.interval_var(
+                    name=f"T{taskId}M{mode}", length=duration, optional=True
+                )
+                self._modes_vars[taskId][mode] = itv_mode
+                mode_intervals.append(itv_mode)
+                
+                # Resources
+                for rIndex, resName in enumerate(resource_names):
+                    requirement = modeData.get(resName, 0)
+                    if requirement > 0:
+                        if resName in non_renewable_set:
+                            total_consumptions[rIndex].append(
+                                model.presence(itv_mode) * requirement
+                            )
+                        else:
+                            cumuls[rIndex].append(itv_mode.pulse(requirement))
+            
+            # Add alternative constraint to link the main interval with its modes
+            model.alternative(itv, mode_intervals)
+
+        # 2. Precedences
+        for taskId in self.problem.tasks_list:
+            if (
+                taskId == self.problem.source_task
+                or taskId == self.problem.sink_task
+            ):
+                continue
+            
+            predecessor_itv = self._jobs_vars[taskId]
+            successors = self.problem.successors.get(taskId, [])
+            is_last = True
+            for successorId in successors:
+                if (
+                    successorId != self.problem.sink_task
+                    and successorId in self._jobs_vars
+                ):
+                    successor_itv = self._jobs_vars[successorId]
+                    model.end_before_start(predecessor_itv, successor_itv)
+                    is_last = False
+            
+            if is_last:
+                ends.append(predecessor_itv.end())
+
+        # 3. Capacity constraints
+        for rIndex, resName in enumerate(resource_names):
+            capacity = self.problem.resources[resName]
+            if resName in non_renewable_set:
+                if total_consumptions[rIndex]:
+                    model.enforce(model.sum(total_consumptions[rIndex]) <= capacity)
+            else:
+                if cumuls[rIndex]:
+                    model.enforce(model.sum(cumuls[rIndex]) <= capacity)
+
+        # 4. Objective
+        model.minimize(model.max(ends))
+        return model
+
+    def retrieve_current_solution(self, solution: "OptalSolution") -> RcpspSolution:
+        """Extracts the schedule from the OptalCP solution and constructs an RcpspSolution."""
+        start_times = {}
+        end_times = {}
+        modes_dict = {}
+        for taskId, jobVar in self._jobs_vars.items():
+            start_times[taskId] = solution.get_start(jobVar)
+            end_times[taskId] = solution.get_end(jobVar)
+            for mode, modeVar in self._modes_vars[taskId].items():
+                if solution.is_present(modeVar):
+                    modes_dict[taskId] = int(mode)
+                    break
+        
+        # Add dummies
+        start_times[self.problem.source_task] = 0
+        end_times[self.problem.source_task] = 0
+        
+        max_end = max(end_times.values()) if end_times else 0
+        start_times[self.problem.sink_task] = max_end
+        end_times[self.problem.sink_task] = max_end
+        
+        rcpsp_schedule = {
+            t: {"start_time": start_times[t], "end_time": end_times[t]}
+            for t in self.problem.tasks_list
+        }
+        
         return RcpspSolution(
             problem=self.problem,
             rcpsp_schedule=rcpsp_schedule,
