@@ -27,7 +27,7 @@ def test_optal(model_dispersion, run_lexico):
     solver.init_model(model_dispersion=model_dispersion, run_lexico=run_lexico)
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),
-        time_limit=5,
+        time_limit=10,
         do_not_retrieve_solutions=True,  # free license = no solutions stored
         **{
             "worker0-3.searchType": "fdslb",

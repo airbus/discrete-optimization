@@ -32,3 +32,8 @@ src/discrete_optimization.egg-info/PKG-INFO
 # Output files from using the library Optuna
 optuna-journal.log
 src/discrete_optimization/generic_tools/hub_solver/optal/temp/tmp-*.txt
+
+# Output files from running tests
+*.h5
+*.pkl
+

@@ -263,11 +263,9 @@ class OptalMSRcpspSolver(OptalPythonSolver):
                                     )
                                 )
                                 
-                            # If using one_skill_used_per_worker, 
-                            # we need to create separate skill assignment intervals for each employee and skill, 
-                            # and ensure that at most one is used per employee.
-                            # Otherwise, we can directly use the employee assignment variable multiplied by their skill level as contribution.
                             if one_skill_used_per_worker:
+                                # If using one_skill_used_per_worker, 
+                                # create separate skill assignment intervals for each employee and skill
                                 if emp not in self._employee_skill_vars[taskId]:
                                     self._employee_skill_vars[taskId][emp] = {}
                                 # Optional interval variable for this employee using this skill on this task
@@ -275,9 +273,12 @@ class OptalMSRcpspSolver(OptalPythonSolver):
                                     name=f"Task_{taskId}_skill_{skill}_emp_{emp}",
                                     optional=True,
                                 )
+                                # Add to employee skill vars for later constraint enforcement
                                 self._employee_skill_vars[taskId][emp][skill] = skill_itv
+                                # ensure that if this skill interval is present, then the employee must be assigned to the task
                                 skill_contributions.append(model.presence(skill_itv))
                             else:
+                                # Otherwise, use the employee assignment variable multiplied by their skill level as contribution.
                                 skill_val = self.problem.employees[emp].get_skill_level(skill)
                                 skill_contributions.append(model.presence(self._employee_assignment_vars[taskId][emp]) * skill_val)
 
@@ -356,10 +357,9 @@ class OptalMSRcpspSolver(OptalPythonSolver):
                 model.enforce(model.sum(employee_cumuls[emp]) <= 1)
                 # Note: optalcp native also has no_overlap if we have the actual intervals 
                 # but sum <= 1 on pulses is equivalent for unary resources.
-                # However, MSRCPSP model uses both in TS. Let's add no_overlap too.
                 itvs = [self._employee_assignment_vars[tid][emp] for tid in self.problem.tasks_list if emp in self._employee_assignment_vars.get(tid, {})]
                 if itvs:
-                    model.no_overlap(itvs)
+                    model.no_overlap(itvs) # Ensure employee cannot be assigned to overlapping tasks (unary resource constraint)
 
         # 5. Objective: minimize makespan (end time of sink task)
         model.minimize(model.max(ends))
