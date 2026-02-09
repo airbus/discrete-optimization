@@ -32,7 +32,7 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "shapely>=1.7",
     "minizinc>=0.6.0",
@@ -58,6 +58,9 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
+optalcp = [
+    "optalcp-bin-preview @ git+https://github.com/ScheduleOpt/optalcp-py-bin-preview@latest",
+]
 quantum = [
     "qiskit>=1.0.2",
     "qiskit-algorithms>=0.3.0",
