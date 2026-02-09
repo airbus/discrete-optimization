@@ -6,7 +6,6 @@ import math
 from typing import Any, Hashable, Optional
 
 import numpy as np
-import optalcp as cp
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     AllocationOptalSolver,
@@ -17,6 +16,11 @@ from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFuncti
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 from discrete_optimization.rcpsp_multiskill.problem import (
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,

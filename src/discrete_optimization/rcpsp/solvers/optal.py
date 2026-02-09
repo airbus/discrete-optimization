@@ -3,8 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any, Optional
 
-import optalcp as cp
-
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     MultimodeOptalSolver,
     SchedulingOptalSolver,
@@ -18,10 +16,17 @@ from discrete_optimization.rcpsp.problem import RcpspProblem, RcpspSolution, Tas
 from discrete_optimization.rcpsp.solvers import RcpspSolver
 from discrete_optimization.rcpsp.utils import create_fake_tasks
 
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
+
 
 class OptalRcpspSolver(
     SchedulingOptalSolver[Task], MultimodeOptalSolver[Task], RcpspSolver, WarmstartMixin
 ):
+    """Solver for RCPSP using the OptalCP TypeScript API (fallback if Python API is not available)"""
+
     problem: RcpspProblem
 
     def __init__(

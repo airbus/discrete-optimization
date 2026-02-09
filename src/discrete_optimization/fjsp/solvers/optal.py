@@ -4,12 +4,16 @@
 from collections import defaultdict
 from typing import Any, Optional
 
-import optalcp as cp
-
 from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution, Task
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     SchedulingOptalSolver,
 )
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
@@ -76,6 +80,9 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
             )
         )
 
+    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+        return self.variables["intervals"][task]
+
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:
         schedule = []
         for i in range(self.problem.n_jobs):
@@ -91,6 +98,3 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
                         sched_i.append((st, end, opt.machine_id, index_opt))
             schedule.append(sched_i)
         return FJobShopSolution(problem=self.problem, schedule=schedule)
-
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
-        return self.variables["intervals"][task]
