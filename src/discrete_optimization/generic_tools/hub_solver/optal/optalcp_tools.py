@@ -38,7 +38,7 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
         CategoricalHyperparameter(
             name="searchType",
             choices=["Auto", "LNS", "FDS", "FDSDual", "SetTimes", "FDSLB"],
-            default="LNS",
+            default="Auto",
         )
     ]
     cp_model: Optional[cp.Model] = None
@@ -47,7 +47,7 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
     current_obj: int | float | None = None
     status_solver: StatusSolver = None
     use_warm_start: bool = False
-    warm_start_solution: Optional[Solution] = None
+    warm_start_solution: Optional[cp.Solution] = None
 
     def get_current_best_internal_objective_bound(self) -> Optional[float]:
         return self.current_bound
@@ -99,7 +99,13 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
         solver.on_objective_bound = callback_optal.on_bound
         kw = {"timeLimit": time_limit, "nbWorkers": parameters_cp.nb_process}
         kw.update(args)
-        kw_params = {key: kw[key] for key in kw if key not in {"lower_bound_method"}}
+        kw_params = {
+            key: kw[key]
+            for key in kw
+            if key not in {"lower_bound_method"}
+            and key in cp.Parameters.__annotations__.keys()
+        }
+        print(kw_params)
         if self.use_warm_start and self.warm_start_solution is not None:
             result = await solver.solve(
                 model=self.cp_model,
@@ -210,6 +216,9 @@ class OptalSolutionCallback:
 
     def on_bound(self, event: cp.ObjectiveBoundEntry) -> None:
         self.do_solver.current_bound = event.value
+        stopping = self.callback.on_step_end(
+            step=self.nb_solutions, res=self.res, solver=self.do_solver
+        )
 
 
 def run_async_synchronously(coroutine: Awaitable[T]) -> T:

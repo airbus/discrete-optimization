@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import math
-from typing import Any, Hashable
+from typing import Any, Hashable, Optional
 
 import numpy as np
 import optalcp as cp
@@ -14,6 +14,9 @@ from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver impo
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+)
 from discrete_optimization.rcpsp_multiskill.problem import (
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,
@@ -32,12 +35,20 @@ class OptalMSRcpspSolver(
     MultimodeOptalSolver[Task],
     AllocationOptalSolver[Task, UnaryResource],
 ):
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="redundant_skill_cumulative", choices=[True, False], default=True
+        ),
+        CategoricalHyperparameter(
+            name="redundant_worker_cumulative", choices=[True, False], default=True
+        ),
+    ]
     problem: MultiskillRcpspProblem
 
     def __init__(
         self,
         problem: MultiskillRcpspProblem,
-        params_objective_function: ParamsObjectiveFunction,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args,
     ):
         super().__init__(problem, params_objective_function, **args)
@@ -132,7 +143,7 @@ class OptalMSRcpspSolver(
         return skills_of_task
 
     def worker_can_do_task(
-        self, task: Task, worker: UnaryResource, one_worker_per_task
+        self, task: Task, worker: UnaryResource, one_worker_per_task: bool
     ) -> bool:
         skills_of_task = self.all_skills_for_task(task)
         return (
@@ -216,9 +227,7 @@ class OptalMSRcpspSolver(
                     for s in skills_used_var[task][worker]:
                         self.cp_model.enforce(
                             skills_used_var[task][worker][s]
-                            <= self.cp_model.presence(
-                                self.cp_model.presence(opt_interval_var[task][worker])
-                            )
+                            <= self.cp_model.presence(opt_interval_var[task][worker])
                         )
 
                     self.cp_model.enforce(

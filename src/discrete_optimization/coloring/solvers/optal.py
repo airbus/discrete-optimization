@@ -1,11 +1,12 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from __future__ import annotations
-
 from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Union
+
+import optalcp as cp
+from ortools.sat.python.cp_model import IntVar
 
 from discrete_optimization.coloring.problem import (
     Color,
@@ -16,7 +17,6 @@ from discrete_optimization.coloring.problem import (
 from discrete_optimization.coloring.utils import compute_cliques
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     AllocationOptalSolver,
     SchedulingOptalSolver,
@@ -29,14 +29,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
 )
-
-try:
-    import optalcp as cp
-except ImportError:
-    cp = None
-    optalcp_available = False
-else:
-    optalcp_available = True
 
 
 class ModelingCpSat(Enum):
@@ -61,8 +53,8 @@ class OptalColoringSolver(
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
     ) -> cp.BoolExpr:
-        return self.get_task_start_or_end_variable(
-            task, start_or_end=StartOrEnd.START
+        return self.get_task_interval_variable(
+            task
         ) == self.problem.get_index_from_unary_resource(unary_resource)
 
     def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
@@ -86,7 +78,9 @@ class OptalColoringSolver(
         **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
-        self.variables = {}
+        self.variables: dict[
+            str, Union[IntVar, list[IntVar], list[dict[int, IntVar]]]
+        ] = {}
         self._subset_nodes = list(self.problem.subset_nodes)
 
     def init_model(self, **args: Any) -> None:
@@ -99,7 +93,7 @@ class OptalColoringSolver(
         for n in self.problem.tasks_list:
             intervals[n] = self.cp_model.interval_var(
                 start=(0, nb_colors - 1),
-                end=(1, nb_colors),
+                end=(1, nb_colors - 1),
                 length=1,
                 optional=False,
                 name=f"interval_{n}",
@@ -112,6 +106,7 @@ class OptalColoringSolver(
             g = self.problem.graph.to_networkx()
             cliques, not_all = compute_cliques(g, args["max_cliques"])
             for clique in cliques:
+                print(len(clique))
                 self.cp_model.no_overlap([intervals[c] for c in clique])
         self.cp_model.minimize(
             self.cp_model.max(
@@ -130,7 +125,7 @@ class OptalColoringSolver(
 
     def create_used_variables_list(
         self,
-    ) -> list["cp.BoolVar"]:
+    ) -> list[IntVar]:
         self.create_used_variables()
         return [
             self.used_variables[color] for color in self.subset_unaryresources_allowed

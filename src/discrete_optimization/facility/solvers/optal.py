@@ -1,10 +1,10 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from __future__ import annotations
-
 from enum import Enum
 from typing import Any
+
+import optalcp as cp
 
 from discrete_optimization.facility.problem import (
     Customer,
@@ -29,14 +29,6 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
 )
-
-try:
-    import optalcp as cp
-except ImportError:
-    cp = None
-    optalcp_available = False
-else:
-    optalcp_available = True
 
 
 class ModelingOptal(Enum):
@@ -70,13 +62,14 @@ class OptalFacilitySolver(
         if kwargs["modeling"] == ModelingOptal.SCHEDULING:
             self.init_scheduling()
             self.modeling = ModelingOptal.SCHEDULING
-        elif kwargs["modeling"] == ModelingOptal.ALLOCATION:
+        if kwargs["modeling"] == ModelingOptal.ALLOCATION:
             self.init_allocation()
             self.modeling = ModelingOptal.ALLOCATION
 
     def init_allocation(self) -> None:
         self.cp_model = cp.Model()
         allocation = {}
+        nb_facilities = self.problem.facility_count
         matrix = compute_matrix_distance_facility_problem(self.problem)
         cost = {}
         for t in self.problem.tasks_list:

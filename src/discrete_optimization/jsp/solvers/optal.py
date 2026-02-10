@@ -1,9 +1,10 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from __future__ import annotations
-
+#  JSP solver using OptalCp solver python api.
 from typing import Any, Optional
+
+import optalcp as cp
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     SchedulingOptalSolver,
@@ -13,14 +14,6 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution, Task
-
-try:
-    import optalcp as cp
-except ImportError:
-    cp = None
-    optalcp_available = False
-else:
-    optalcp_available = True
 
 
 class OptalJspSolver(SchedulingOptalSolver[Task]):
@@ -33,41 +26,42 @@ class OptalJspSolver(SchedulingOptalSolver[Task]):
         **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
-        self._all_intervals = []
+        self.variables = {}
 
-    def init_model(self, **kwargs):
-        """Builds the OptalCP model for the JSP problem."""
+    def init_model(self, **args: Any) -> None:
         self.cp_model = cp.Model()
-        nb_jobs = self.problem.n_jobs
-        nb_machines = self.problem.n_machines
-        # Placeholders for machine assignments and intervals
-        machines = [[] for _ in range(nb_machines)]
-        self._all_intervals = [[] for _ in range(nb_jobs)]
-        ends = []
-        for i, job in enumerate(self.problem.list_jobs):
-            prev = None
-            for j, subjob in enumerate(job):
-                # Create an interval variable for each operation
-                operation = self.cp_model.interval_var(
-                    length=subjob.processing_time,
-                    name=f"J{i + 1}O{j + 1}M{subjob.machine_id + 1}",
+        intervals = {}
+        for job_index in range(self.problem.n_jobs):
+            for k in range(len(self.problem.list_jobs[job_index])):
+                processing = self.problem.list_jobs[job_index][k].processing_time
+                intervals[(job_index, k)] = self.cp_model.interval_var(
+                    start=(0, None),
+                    end=(processing, None),
+                    length=processing,
+                    name=f"job_{job_index}_{k}",
                 )
-                machines[subjob.machine_id].append(operation)
-                self._all_intervals[i].append(operation)
-                # Add precedence constraint with the previous operation in the same job
-                if prev is not None:
-                    self.cp_model.end_before_start(prev, operation)
-                prev = operation
-            if prev is not None:
-                ends.append(prev.end())
-        # Add no-overlap constraints for each machine
-        for m in range(nb_machines):
-            self.cp_model.no_overlap(machines[m])
-        # Objective: minimize makespan (max of end times of last operations)
-        self.cp_model.minimize(self.cp_model.max(ends))
+            for k in range(1, len(self.problem.list_jobs[job_index])):
+                self.cp_model.end_before_start(
+                    intervals[(job_index, k - 1)], intervals[(job_index, k)]
+                )
+        for m in self.problem.job_per_machines:
+            self.cp_model.no_overlap(
+                [intervals[x] for x in self.problem.job_per_machines[m]]
+            )
+        self.variables["intervals"] = intervals
+        self.cp_model.minimize(
+            self.cp_model.max(
+                [
+                    self.cp_model.end(
+                        intervals[(job, len(self.problem.list_jobs[job]) - 1)]
+                    )
+                    for job in range(self.problem.n_jobs)
+                ]
+            )
+        )
 
     def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
-        return self._all_intervals[task[0]][task[1]]
+        return self.variables["intervals"][task]
 
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:
         schedule = []
@@ -75,7 +69,7 @@ class OptalJspSolver(SchedulingOptalSolver[Task]):
             sched_i = []
             for k in range(len(self.problem.list_jobs[i])):
                 sched_i.append(
-                    result.solution.get_value(self.get_task_interval_variable((i, k)))
+                    result.solution.get_value(self.variables["intervals"][(i, k)])
                 )
             schedule.append(sched_i)
         return JobShopSolution(problem=self.problem, schedule=schedule)

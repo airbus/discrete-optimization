@@ -1,10 +1,9 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from __future__ import annotations
-
-import logging
 from typing import Any
+
+import optalcp as cp
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     AllocationOptalSolver,
@@ -22,16 +21,6 @@ from discrete_optimization.workforce.allocation.problem import (
     UnaryResource,
 )
 from discrete_optimization.workforce.allocation.utils import compute_all_overlapping
-
-try:
-    import optalcp as cp
-except ImportError:
-    cp = None
-    optalcp_available = False
-else:
-    optalcp_available = True
-
-logger = logging.getLogger(__name__)
 
 
 class OptalTeamAllocationSolver(AllocationOptalSolver[Task, UnaryResource]):
@@ -126,7 +115,7 @@ class OptalTeamAllocationSolver(AllocationOptalSolver[Task, UnaryResource]):
             self.params_objective_function.objectives,
             self.params_objective_function.weights,
         ):
-            logger.debug((obj, weight))
+            print(obj, weight)
             if obj == "nb_teams":
                 objectives_expr += [self.variables["objs"]["nb_teams"]]
                 objectives_weights += [weight]
