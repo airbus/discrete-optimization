@@ -548,7 +548,7 @@ def full_satisfy(
         if not func(
             problem=problem, solution=solution, partial_solution=partial_solution
         ):
-            logger.warning(func, " not satisfied !!")
+            logger.warning("%s not satisfied !!", func)
             is_satisfied = False
     return is_satisfied
 

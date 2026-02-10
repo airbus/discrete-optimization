@@ -499,7 +499,8 @@ def plotly_schedule_comparison(
 
     min_date = int(np.min(base_schedule))
     max_date = int(np.max(base_schedule))
-    tickvals = range(min_date, max_date, (max_date - min_date) // 10)
+    step = max(1, (max_date - min_date) // 10)
+    tickvals = range(min_date, max_date, step)
     # ticktext = [datetime.datetime.fromtimestamp(ts*60).strftime('%Y-%m-%d %H:%M:%S') for ts in tickvals]
     ticktext = [str(np.datetime64(ts * 60, "s")) for ts in tickvals]
 
