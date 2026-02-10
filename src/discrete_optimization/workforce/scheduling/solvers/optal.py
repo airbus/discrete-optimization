@@ -324,15 +324,17 @@ class OptalAllocSchedulingSolver(OptalPythonSolver):
             return super().solve(parameters_cp=parameters_cp, **kwargs)
         
         # --- Stage 1: Minimize nb_teams_used ---
-        res1 = super().solve(parameters_cp=parameters_cp, **kwargs)
+        res1 = super().solve(parameters_cp=parameters_cp, **kwargs) 
         if not res1.list_solution_fits:
-            return res1
-        
-        # Get optimal count from Stage 1
-        min_teams = int(self._nb_teams_used.value)
-        
+            return res1 # No solution found in Stage 1, return results as is.
+                
         # --- Stage 2: Minimize dispersion subject to min_teams ---
-        self.model.enforce(self._nb_teams_used <= min_teams)
+        if self._stats["objectiveHistory"]:
+            # Add constraintes to enforce the minimum number of teams found in Stage 1
+            min_team = int(self._stats["objectiveHistory"][-1]["objective"])
+            print(f"Stage 1 optimal number of teams: {min_team}")
+            self.model.enforce(self._nb_teams_used <= min_team)
+        # Add dispersion constrainst and set new objective
         dispersion = self._get_workload_dispersion(self.model)
         self.model.minimize(dispersion)
         
