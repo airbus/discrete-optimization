@@ -52,9 +52,10 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
         )
         self.multimode_problem = multimode_problem
         self.worker_type_to_worker = worker_type_to_worker
-        self.solver_multimode_rcpsp = solver_multimode_rcpsp
+        self.solver_multimode_rcpsp = solver_multimode_rcpsp # solver used to solve the multimode problem 
 
     def solve(self, **kwargs) -> ResultStorage:
+        # Construct the multimode problem if not already given
         if self.multimode_problem is None or self.worker_type_to_worker is None:
             algo = MultiSkillToRcpsp(self.problem)
             rcpsp_problem = algo.construct_rcpsp_by_worker_type(
@@ -64,9 +65,13 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
             )
             self.multimode_problem = rcpsp_problem
             self.worker_type_to_worker = algo.worker_type_to_worker
+
+        # Solve the multimode problem
         result_store = self.solver_multimode_rcpsp.solve(**kwargs)
         solution, fit = result_store.get_best_solution_fit()
-        solution: PreemptiveRcpspSolution = solution
+        # solution: PreemptiveRcpspSolution = solution
+        
+        # Rebuild the solution for the multiskill problem using the solution of the rcpsp problem
         res = rebuild_multiskill_solution_cp_based(
             multiskill_rcpsp_problem=self.problem,
             multimode_rcpsp_problem=self.multimode_problem,
@@ -81,7 +86,11 @@ def rebuild_multiskill_solution(
     multimode_rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem],
     worker_type_to_worker: dict[str, set[Union[str, int]]],
     solution_rcpsp: Union[RcpspSolution, PreemptiveRcpspSolution],
-):
+) -> Union[MultiskillRcpspSolution, PreemptiveMultiskillRcpspSolution]:
+    """
+    This function takes the schedule from the RCPSP solution and rebuilds the solution for the multiskill problem.
+    NOTE: this function is not used in the current code
+    """
     new_horizon = multimode_rcpsp_problem.horizon
     resource_avail_in_time = {}
     for res in multimode_rcpsp_problem.resources_list:
@@ -209,10 +218,15 @@ def rebuild_multiskill_solution(
 
 def rebuild_multiskill_solution_cp_based(
     multiskill_rcpsp_problem: MultiskillRcpspProblem,
-    multimode_rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem],
-    worker_type_to_worker: dict[str, set[Union[str, int]]],
+    multimode_rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem],   # unused ? 
+    worker_type_to_worker: dict[str, set[Union[str, int]]],                 # unused ?
     solution_rcpsp: Union[RcpspSolution, PreemptiveRcpspSolution],
 ):
+    """
+    This function rebuilds the solution for the multiskill problem by adding constraints to a CP model. 
+    The constraint ensures that the same workers are used for the same tasks as in the RCPSP solution. 
+    The CP model was then solved using the Chuffed solver.
+    """
     if isinstance(solution_rcpsp, RcpspSolution):
         model = CpMultiskillRcpspSolver(
             problem=multiskill_rcpsp_problem, cp_solver_name=CpSolverName.CHUFFED
@@ -224,6 +238,7 @@ def rebuild_multiskill_solution_cp_based(
             exact_skills_need=False,
             output_type=True,
         )
+        # Constraint to stick to the solution of the RCPSP problem
         strings = stick_to_solution(solution_rcpsp, model)
         for s in strings:
             model.instance.add_string(s)
@@ -241,8 +256,11 @@ def rebuild_multiskill_solution_cp_based(
             unit_usage_preemptive=True,
             max_preempted=100,
         )
+        # Constraint to stick to the solution of the RCPSP problem
         strings = stick_to_solution_preemptive(solution_rcpsp, model)
         for s in strings:
             model.instance.add_string(s)
+
+    # Solve the CP model
     result_store = model.solve(time_limit=3600)
     return result_store
