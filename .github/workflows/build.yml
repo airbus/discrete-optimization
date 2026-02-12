@@ -190,11 +190,7 @@ jobs:
       - name: Install test dependencies
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          extras="quantum, dashboard, optuna, gurobi"
-          additional_specs=""
-          if [[ "${{ matrix.python-version }}" != "3.10" ]]; then
-            additional_specs="${additional_specs} --group optalcp-preview"
-          fi
+          pip install "${wheelfile}[quantum, dashboard, optuna, gurobi, optalcp_preview]" --group test
           if [ "${{ startsWith(matrix.os, 'windows') }}" == false ]; then
             echo "install toulbar2"
             extras="${extras}, toulbar"
