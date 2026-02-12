@@ -1,6 +1,8 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from typing import Any
 
 try:
@@ -77,14 +79,14 @@ class OptalBinPackSolver(
 
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
-    ) -> cp.BoolExpr:
+    ) -> "cp.BoolExpr":
         index = self.problem.get_index_from_unary_resource(unary_resource)
         return (
             self.get_task_start_or_end_variable(task, start_or_end=StartOrEnd.START)
             == index
         )
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval_variable(self, task: Task) -> "cp.IntervalVar":
         return self.variables["intervals"][task]
 
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:
