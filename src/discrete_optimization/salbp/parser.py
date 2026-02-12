@@ -1,13 +1,43 @@
-from typing import Any
+import os
+from typing import Optional
 
+from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 from discrete_optimization.salbp.problem import SalbpProblem
 
 
+def get_data_available(
+    data_folder: Optional[str] = None, data_home: Optional[str] = None
+) -> list[str]:
+    """Get datasets available for tsp.
+
+    Params:
+        data_folder: folder where datasets for weighted tardiness problem should be found.
+            If None, we look in "wt" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/salpb"
+
+    try:
+        subfolders = [
+            f
+            for f in os.listdir(data_folder)
+            if os.path.isdir(os.path.join(data_folder, f))
+        ]
+        files = []
+        print(subfolders)
+        for subfolder in subfolders:
+            sf = os.path.join(data_folder, subfolder)
+            files.extend([os.path.join(sf, f) for f in os.listdir(sf) if "alb" in f])
+        return files
+    except FileNotFoundError as e:
+        raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
+
+
 def remove_artifacts(text: str) -> str:
-    """
-    Removes artifacts without using Regex.
-    It iterates through the string and skips content between '[' and ']'.
-    """
     cleaned = []
     i = 0
     n = len(text)
@@ -30,7 +60,7 @@ def remove_artifacts(text: str) -> str:
     return "".join(cleaned)
 
 
-def parse_alb_file(file_path: str) -> dict[str, Any]:
+def parse_alb_file(file_path: str) -> SalbpProblem:
     """
     Parses a .alb file using string splitting and tokenization.
     No Regular Expressions used.
@@ -49,19 +79,6 @@ def parse_alb_file(file_path: str) -> dict[str, Any]:
     # Normalize newlines and split into tokens (words/numbers)
     # This handles the case where "id" is on one line and "time" on the next.
     tokens = content.split()
-
-    # Helper to find data between tags
-    def get_tokens_between(start_tag_tokens, end_tag_token_start):
-        # Find start
-        start_idx = -1
-        # Naive search for the tag sequence in the token list
-        # e.g. ["<", "number", "of", "tasks", ">"]
-
-        # Easier approach: Since tags are unique strings like "<number of tasks>",
-        # let's map known tags to simpler keys in the token stream if possible,
-        # OR just iterate the tokens statefully.
-        pass
-
     # State machine parsing over tokens
     current_section = None
 
@@ -122,9 +139,3 @@ def parse_alb_file(file_path: str) -> dict[str, Any]:
         data["task_times"],
         data["precedence"],
     )
-
-
-if __name__ == "__main__":
-    file = "/Users/poveda_g/Downloads/SALBP_benchmark/very large data set_n=1000/instance_n=1000_1.alb"
-    p: SalbpProblem = parse_alb_file(file)
-    print(p.number_of_tasks, p.tasks, p.task_times, p.cycle_time)

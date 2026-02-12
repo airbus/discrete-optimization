@@ -5,6 +5,15 @@
 from copy import deepcopy
 from typing import Dict, List, Tuple
 
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+    UnaryResource,
+)
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -17,8 +26,26 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.encoding_register import ListInteger
 
+Task = int
+Resource = int
 
-class SalbpSolution(Solution):
+
+class SalbpSolution(SchedulingSolution[Task], AllocationSolution[Task, Resource]):
+    # We can see this as both a scheduling and allocation solution
+    problem: "SalbpProblem"
+
+    def get_end_time(self, task: Task) -> int:
+        return self.allocation_to_station[self.problem.tasks_to_index[task]] + 1
+
+    def get_start_time(self, task: Task) -> int:
+        return self.allocation_to_station[self.problem.tasks_to_index[task]]
+
+    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        return (
+            self.allocation_to_station[self.problem.tasks_to_index[task]]
+            == unary_resource
+        )
+
     def __init__(self, problem: "SalbpProblem", allocation_to_station: list[int]):
         super().__init__(problem)
         self.task_alloc = []
@@ -42,9 +69,18 @@ class SalbpSolution(Solution):
         return self.allocation_to_station == other.allocation_to_station
 
 
-class SalbpProblem(Problem):
-    def get_solution_type(self) -> type[Solution]:
-        return SalbpSolution
+class SalbpProblem(SchedulingProblem[Task], AllocationProblem[Task, Resource]):
+    def get_makespan_upper_bound(self) -> int:
+        # Max number of station, can be better.
+        return self.number_of_tasks
+
+    @property
+    def unary_resources_list(self) -> list[UnaryResource]:
+        return list(range(self.number_of_tasks))
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return self.tasks
 
     def __init__(
         self,
@@ -69,6 +105,7 @@ class SalbpProblem(Problem):
 
         # Standard ordering of task IDs (assuming 1 to N usually, but we use keys)
         self.tasks = sorted(list(task_times.keys()))
+        self.tasks_to_index = {self.tasks[i]: i for i in range(len(self.tasks))}
 
     def evaluate(self, variable: SalbpSolution) -> Dict[str, float]:
         """
@@ -85,7 +122,7 @@ class SalbpProblem(Problem):
             station_task_i = variable.allocation_to_station[i]
             if station_task_i not in stations_time_cumul:
                 stations_time_cumul[station_task_i] = 0
-            stations_time_cumul[station_task_i] += self.task_times[i]
+            stations_time_cumul[station_task_i] += self.task_times[self.tasks_list[i]]
 
         for s_id, total_time in stations_time_cumul.items():
             penalty_overtime += max(0, total_time - self.cycle_time)
@@ -93,8 +130,8 @@ class SalbpProblem(Problem):
 
         # 2. Check Precedence: Pred station <= Succ station
         for p, s in self.precedence:
-            station_p = variable.allocation_to_station[p]
-            station_s = variable.allocation_to_station[s]
+            station_p = variable.get_start_time(task=p)
+            station_s = variable.get_end_time(task=s)
 
             # If tasks are missing from solution, that's a structural issue,
             # usually assumed complete in a valid solution object.
@@ -113,14 +150,15 @@ class SalbpProblem(Problem):
             "penalty_precedence": penalty_precedence,
         }
 
+    def get_solution_type(self) -> type[Solution]:
+        return SalbpSolution
+
     def satisfy(self, variable: SalbpSolution) -> bool:
         """
         Strict check for validity.
         """
         eval_res = self.evaluate(variable)
-        return (
-            eval_res["penalty_cycle_time"] == 0 and eval_res["penalty_precedence"] == 0
-        )
+        return eval_res["penalty_overtime"] == 0 and eval_res["penalty_precedence"] == 0
 
     def get_attribute_register(self) -> EncodingRegister:
         """
@@ -129,7 +167,7 @@ class SalbpProblem(Problem):
         """
         # Note: Bounding the number of stations is tricky without a heuristic.
         # A safe upper bound is the number of tasks (1 task per station).
-        encoding = {}
+        encoding = dict()
         encoding[f"allocation_to_station"] = ListInteger(
             length=self.number_of_tasks, lows=0, ups=self.number_of_tasks - 1
         )
@@ -143,7 +181,7 @@ class SalbpProblem(Problem):
             objective_sense=ModeOptim.MINIMIZATION,
             objective_handling=ObjectiveHandling.AGGREGATE,
             dict_objective_to_doc={
-                "nb_station": ObjectiveDoc(
+                "nb_stations": ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE, default_weight=1
                 ),
                 "penalty_overtime": ObjectiveDoc(
