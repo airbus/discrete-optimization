@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
@@ -8,15 +10,18 @@ import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
+from discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools import (
+    OptalCpSolver,
+)
+from discrete_optimization.tsptw.problem import TSPTWProblem, TSPTWSolution
 
 try:
     import optalcp as cp
 except ImportError:
     cp = None
-from discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools import (
-    OptalCpSolver,
-)
-from discrete_optimization.tsptw.problem import TSPTWProblem, TSPTWSolution
+    optalcp_available = False
+else:
+    optalcp_available = True
 
 
 class OptalTspTwSolver(OptalCpSolver):

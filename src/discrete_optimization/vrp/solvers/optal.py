@@ -1,10 +1,10 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
 from typing import Any, Optional
-
-import optalcp as cp
 
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -16,6 +16,14 @@ from discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools import (
 )
 from discrete_optimization.vrp.problem import VrpProblem, VrpSolution
 from discrete_optimization.vrp.utils import compute_length_matrix
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
+    optalcp_available = False
+else:
+    optalcp_available = True
 
 logger = logging.getLogger(__name__)
 
@@ -188,10 +196,10 @@ class OptalVrpSolver(OptalCpSolver):
             path = []
             for n in self.variables["intervals"][v]:
                 if result.solution.is_present(self.variables["intervals"][v][n]):
-                    st, end = result.solution.get_value(
+                    start_time, end_time = result.solution.get_value(
                         self.variables["intervals"][v][n]
                     )
-                    path.append((st, end, n))
+                    path.append((start_time, end_time, n))
             path = sorted(path, key=lambda x: x[0])
             paths.append([p[2] for p in path])
         sol = VrpSolution(

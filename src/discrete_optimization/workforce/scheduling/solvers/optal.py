@@ -1,6 +1,8 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
 import time
 from collections.abc import Iterable
@@ -8,8 +10,6 @@ from functools import reduce
 from typing import Any, Optional, Union
 
 import numpy as np
-import optalcp as cp
-from ortools.sat.python.cp_model import IntVar
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     AllocationOptalSolver,
@@ -51,6 +51,15 @@ from discrete_optimization.workforce.scheduling.solvers.cpsat import (
 from discrete_optimization.workforce.scheduling.utils import (
     compute_equivalent_teams_scheduling_problem,
 )
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
+    optalcp_available = False
+else:
+    optalcp_available = True
+
 
 logger = logging.getLogger(__name__)
 
@@ -232,22 +241,17 @@ class OptalAllocSchedulingSolver(
         base_problem: AllocSchedulingProblem,
         additional_constraints: Optional[AdditionalCPConstraints] = None,
     ):
+        # TODO replace with boolExpr.
         common_tasks = list(
             set(base_problem.tasks_list).intersection(self.problem.tasks_list)
         )
         len_common_tasks = len(common_tasks)
-        reallocation_bool = [
-            self.cp_model.bool_var(name=f"realloc_{self.problem.tasks_to_index[t]}")
-            for t in common_tasks
-        ]
+        reallocation_bool = [None for t in common_tasks]
         self.variables["reallocation"] = reallocation_bool
         self.variables["tasks_order_in_reallocation"] = common_tasks
         delta_starts = []
         delta_starts_abs = []
-        is_shifted = [
-            self.cp_model.bool_var(name=f"shifted_{self.problem.tasks_to_index[t]}")
-            for t in common_tasks
-        ]
+        is_shifted = [None for t in common_tasks]
         self.variables["is_shifted"] = is_shifted
         for i in range(len_common_tasks):
             tt = common_tasks[i]
@@ -283,46 +287,34 @@ class OptalAllocSchedulingSolver(
                             "Problem, original team is not compatible with the task"
                         )
                     else:
-                        self.cp_model.enforce(
-                            reallocation_bool[i]
-                            == self.cp_model.not_(
-                                self.get_task_unary_resource_is_present_variable(
-                                    task=tt, unary_resource=team_of_base_solution
-                                )
+                        reallocation_bool[i] = ~(
+                            self.get_task_unary_resource_is_present_variable(
+                                task=tt, unary_resource=team_of_base_solution
                             )
                         )
                 else:
-                    self.cp_model.enforce(reallocation_bool[i] == 0)
+                    reallocation_bool[i] = 0
 
             delta_starts.append(
                 -int(base_solution.schedule[index_in_base_problem, 0])
                 + self.cp_model.start(self.variables["interval_var"][index_in_problem])
             )
-            self.cp_model.enforce(is_shifted[i] == (delta_starts[-1] != 0))
-            delta_starts_abs.append(
-                self.cp_model.int_var(
-                    min=0,
-                    max=self.problem.horizon,
-                    name=f"delta_abs_starts_{index_in_problem}",
-                )
-            )
-            self.cp_model.enforce(
-                delta_starts_abs[-1] == self.cp_model.abs(delta_starts[-1])
-            )
+            is_shifted[i] = delta_starts[-1] != 0
+            delta_starts_abs.append(self.cp_model.abs(delta_starts[-1]))
         self.variables["delta_starts_abs"] = delta_starts_abs
         self.variables["delta_starts"] = delta_starts
-        max_delta_start = self.cp_model.int_var(
-            min=0, max=self.problem.horizon, name=f"max_delta_starts"
-        )
-        self.variables["max_delta_start"] = max_delta_start
-        self.cp_model.enforce(max_delta_start == self.cp_model.max(delta_starts_abs))
+        self.variables["max_delta_start"] = self.cp_model.max(delta_starts_abs)
         objs = [
-            sum(reallocation_bool)
+            self.cp_model.sum(reallocation_bool)
         ]  # count the number of changes of team/task allocation
-        objs += [sum(delta_starts_abs)]  # sum all absolute shift on the schedule
-        objs += [max_delta_start]  # maximum of absolute shift over all tasks
         objs += [
-            sum(is_shifted)
+            self.cp_model.sum(delta_starts_abs)
+        ]  # sum all absolute shift on the schedule
+        objs += [
+            self.variables["max_delta_start"]
+        ]  # maximum of absolute shift over all tasks
+        objs += [
+            self.cp_model.sum(is_shifted)
         ]  # Number of task that shifted at least by 1 unit of time.
         self.variables["resched_objs"] = {
             "reallocated": objs[0],
@@ -332,7 +324,7 @@ class OptalAllocSchedulingSolver(
         }
         return objs
 
-    def create_actually_done_variables(self) -> dict[int, IntVar]:
+    def create_actually_done_variables(self) -> dict[int, "cp.IntExpr"]:
         if not self.done_variables_created:
             self.done_variables = {}
             for t in self.problem.tasks_list:
@@ -543,7 +535,6 @@ class OptalAllocSchedulingSolver(
             unavailable = self.problem.compute_unavailability_calendar(
                 self.problem.index_to_team[index_team]
             )
-            print(unavailable)
             calendar_intervals = [
                 self.cp_model.interval_var(start=x[0], end=x[1], length=x[1] - x[0])
                 for x in unavailable
@@ -706,7 +697,7 @@ class OptalAllocSchedulingSolver(
                     self.variables["objectives"][x] = self.variables["resched_objs"][x]
                 self.variables["objectives"][
                     ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION
-                ] = sum(
+                ] = self.cp_model.sum(
                     [
                         weights_dict[x] * self.variables["resched_objs"][x]
                         for x in weights_dict
@@ -726,7 +717,9 @@ class OptalAllocSchedulingSolver(
                 self.cp_model.enforce(var == self.variables["resched_objs"][key])
                 self.variables["resched_objs"][key] = var
         self.variables["objs"] = objs
-        self.cp_model.minimize(sum(int(weights[i]) * objs[i] for i in range(len(objs))))
+        self.cp_model.minimize(
+            self.cp_model.sum(int(weights[i]) * objs[i] for i in range(len(objs)))
+        )
 
 
 def _get_variables_obj_key(

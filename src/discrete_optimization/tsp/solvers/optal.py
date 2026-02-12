@@ -1,7 +1,10 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
+from enum import Enum
 from typing import Any
 
 import numpy as np
@@ -10,19 +13,20 @@ from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     SchedulingOptalSolver,
 )
-
-try:
-    import optalcp as cp
-except ImportError:
-    cp = None
-from enum import Enum
-
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
 )
 from discrete_optimization.tsp.problem import Node, TspProblem, TspSolution
 from discrete_optimization.tsp.utils import build_matrice_distance
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
+    optalcp_available = False
+else:
+    optalcp_available = True
 
 
 class ModelingTspEnum(Enum):
@@ -58,12 +62,11 @@ class OptalTspSolver(SchedulingOptalSolver[Node]):
 
     def init_model(self, **args: Any) -> None:
         args = self.complete_with_default_hyperparameters(args)
-        if args["modeling"] == ModelingTspEnum.V0:
-            self.modeling = ModelingTspEnum.V0
+        self.modeling = args["modeling"]
+        if self.modeling == ModelingTspEnum.V0:
+            self.init_model_v0(**args)
+        if self.modeling == ModelingTspEnum.V1:
             self.init_model_v1(**args)
-        if args["modeling"] == ModelingTspEnum.V1:
-            self.init_model_v1(scaling=args.get("scaling", 100), **args)
-            self.modeling = ModelingTspEnum.V1
 
     def init_model_v0(self, **args: Any) -> None:
         """Model from gpd"""
@@ -84,7 +87,6 @@ class OptalTspSolver(SchedulingOptalSolver[Node]):
         self.cp_model.enforce(
             self.cp_model.start(visits[self.problem.start_index]) == 0
         )
-        seq.no_overlap()
         self.cp_model.no_overlap(
             seq,
             [

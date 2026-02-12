@@ -1,13 +1,11 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
 
 import logging
 from typing import Optional
 
-import optalcp as cp
-
-from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     AllocationOptalSolver,
@@ -23,6 +21,15 @@ from discrete_optimization.knapsack.problem import (
     KnapsackSolution,
 )
 from discrete_optimization.knapsack.solvers import KnapsackSolver
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
+    optalcp_available = False
+else:
+    optalcp_available = True
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +69,12 @@ class OptalKnapsackSolver(AllocationOptalSolver[Item, Knapsack], KnapsackSolver)
         self.variables["intervals"] = intervals
 
     def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
+        self, task: Task, unary_resource: Knapsack
     ) -> cp.BoolExpr:
-        return self.cp_model.presence(self.variables["intervals"])
+        if unary_resource:
+            return self.cp_model.presence(self.variables["intervals"][task])
+        else:
+            return ~self.cp_model.presence(self.variables["intervals"][task])
 
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:
         taken = [
