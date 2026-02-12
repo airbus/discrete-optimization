@@ -52,6 +52,12 @@ JSPLIB_REPO_URL_SHA1 = "eea2b60dd7e2f5c907ff7302662c61812eb7efdf"
 MSLIB_DATASET_URL = "http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip"
 MSLIB_DATASET_RELATIVE_PATH = "MSLIB.zip"
 
+SALBP_OTTO_DATASET_URL = (
+    "https://assembly-line-balancing.de/wp-content/uploads/2017/01/SALBP_benchmark.zip"
+)
+SALBP_OTTO_DATASET_RELATIVE_PATH = "SALBP_benchmark.zip"
+
+
 MIS_FILES = [
     "https://oeis.org/A265032/a265032_1dc.64.txt.gz",
     "https://oeis.org/A265032/a265032_1dc.128.txt.gz",
@@ -93,7 +99,6 @@ BPPC_ZIP = "https://site.unibo.it/operations-research/en/research/library-of-cod
 FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
-
 
 ERROR_MSG_MISSING_DATASETS = (
     "\nYou probably have not downloaded the needed dataset.\n"
@@ -323,6 +328,37 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
             # extract only data
             with zipfile.ZipFile(local_file_path) as zipf:
                 zipf.extractall(path=rcpsp_multiskill_dir)
+    finally:
+        # remove temporary files
+        urlcleanup()
+
+
+def fetch_data_from_alb(data_home: Optional[str] = None):
+    """Fetch data from SALPB for simple assembly line problem examples.
+    cf https://assembly-line-balancing.de/salbp/benchmark-data-sets-2013/
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get rcpsp_multiskill data directory
+    rcpsp_multiskill_dir = f"{data_home}/salpb"
+    os.makedirs(rcpsp_multiskill_dir, exist_ok=True)
+
+    try:
+        # download dataset
+        local_file_path, headers = urlretrieve(SALBP_OTTO_DATASET_URL)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # extract only data
+            with zipfile.ZipFile(local_file_path) as zipf:
+                zipf.extractall(path=rcpsp_multiskill_dir)
+            for file in glob.glob(f"{rcpsp_multiskill_dir}/*"):
+                if "zip" in file:
+                    with zipfile.ZipFile(file) as zipf:
+                        zipf.extractall(path=rcpsp_multiskill_dir)
+                    os.remove(file)
     finally:
         # remove temporary files
         urlcleanup()
@@ -598,7 +634,8 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_weighted_tardiness_single_machine(data_home=data_home)
     fetch_data_tsptw(data_home=data_home)
     fetch_data_from_mslib(data_home=data_home)
-    fetch_data_from_mspsplib_repo(data_home)
+    fetch_data_from_mspsplib_repo(data_home=data_home)
+    fetch_data_from_alb(data_home=data_home)
 
 
 if __name__ == "__main__":
