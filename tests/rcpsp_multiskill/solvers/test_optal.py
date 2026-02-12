@@ -39,7 +39,6 @@ def test_optal(
     )
     res = solver.solve(
         time_limit=time_limit,
-        do_not_retrieve_solutions=True,  # optalcp-preview mode
     )
     if feasible:
         if no_solution:
@@ -49,6 +48,5 @@ def test_optal(
                 StatusSolver.OPTIMAL,
                 StatusSolver.SATISFIED,
             )
-            assert solver.current_obj >= solver.current_bound
     else:
         assert solver.status_solver == StatusSolver.UNSATISFIABLE

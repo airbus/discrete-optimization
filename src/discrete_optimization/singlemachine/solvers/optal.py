@@ -3,7 +3,10 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any, Optional
 
-import optalcp as cp
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     SchedulingOptalSolver,

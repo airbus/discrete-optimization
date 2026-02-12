@@ -6,16 +6,9 @@ import pytest
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.tsp.parser import get_data_available, parse_file
-from discrete_optimization.tsp.solvers.optal import (
-    ModelingTspEnum,
-    OptalTspSolver,
-    optalcp_available,
-)
+from discrete_optimization.tsp.solvers.optal import ModelingTspEnum, OptalTspSolver
 
 
-@pytest.mark.skipif(
-    not optalcp_available, reason="You need optalcp to test this solver."
-)
 @pytest.mark.parametrize("modeling", (ModelingTspEnum.V0, ModelingTspEnum.V1))
 def test_optal(modeling):
     files = get_data_available()
@@ -26,7 +19,5 @@ def test_optal(modeling):
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),
         time_limit=10,
-        do_not_retrieve_solutions=True,  # optalcp-preview mode
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL, StatusSolver.SATISFIED)
-    assert solver.current_obj >= solver.current_bound

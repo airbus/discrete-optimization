@@ -4,8 +4,10 @@
 from enum import Enum
 from typing import Any
 
-import optalcp as cp
-
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 from discrete_optimization.facility.problem import (
     Customer,
     Facility,

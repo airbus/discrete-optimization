@@ -1,9 +1,15 @@
-#  Cp-sat model for the preemptive rcpsp problem.
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#  Optal model for the preemptive rcpsp problem.
 from typing import Any, Iterable, Optional
 
 import numpy as np
-import optalcp as cp
 
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
 )

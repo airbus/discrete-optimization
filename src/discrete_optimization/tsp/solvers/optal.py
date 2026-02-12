@@ -40,6 +40,16 @@ class OptalTspSolver(SchedulingOptalSolver[Node]):
         self.variables = {}
 
     def init_model(self, **args: Any) -> None:
+        args = self.complete_with_default_hyperparameters(args)
+        if args["modeling"] == ModelingTspEnum.V0:
+            self.modeling = ModelingTspEnum.V0
+            self.init_model_v1(**args)
+        if args["modeling"] == ModelingTspEnum.V1:
+            self.init_model_v1(**args)
+            self.modeling = ModelingTspEnum.V1
+
+    def init_model_v0(self, **args: Any) -> None:
+        """Model from gpd"""
         self.cp_model = cp.Model()
         upper_bound = int(sum(self.distance_matrix.max(axis=1)))
         visits = [

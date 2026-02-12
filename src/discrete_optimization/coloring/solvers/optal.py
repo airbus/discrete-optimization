@@ -3,10 +3,12 @@
 #  LICENSE file in the root directory of this source tree.
 from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
-import optalcp as cp
-from ortools.sat.python.cp_model import IntVar
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 
 from discrete_optimization.coloring.problem import (
     Color,
@@ -78,9 +80,7 @@ class OptalColoringSolver(
         **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
-        self.variables: dict[
-            str, Union[IntVar, list[IntVar], list[dict[int, IntVar]]]
-        ] = {}
+        self.variables = {}
         self._subset_nodes = list(self.problem.subset_nodes)
 
     def init_model(self, **args: Any) -> None:
@@ -125,7 +125,7 @@ class OptalColoringSolver(
 
     def create_used_variables_list(
         self,
-    ) -> list[IntVar]:
+    ) -> list["cp.BoolVar"]:
         self.create_used_variables()
         return [
             self.used_variables[color] for color in self.subset_unaryresources_allowed

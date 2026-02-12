@@ -87,6 +87,8 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
         parameters_cp: Optional[ParametersCp] = None,
         **args: Any,
     ):
+        if parameters_cp is None:
+            parameters_cp = ParametersCp.default_cpsat()
         args = self.complete_with_default_hyperparameters(args)
         self.current_bound = None
         callback_do = CallbackList(callbacks)

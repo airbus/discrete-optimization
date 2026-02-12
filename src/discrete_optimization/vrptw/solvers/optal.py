@@ -4,7 +4,10 @@
 import logging
 from typing import Any, Dict, Optional
 
-import optalcp as cp
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     SchedulingOptalSolver,

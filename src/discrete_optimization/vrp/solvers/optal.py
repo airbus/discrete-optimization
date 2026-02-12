@@ -4,7 +4,10 @@
 import logging
 from typing import Any, Optional
 
-import optalcp as cp
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,

@@ -3,8 +3,10 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any
 
-import optalcp as cp
-
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 from discrete_optimization.binpack.problem import (
     BinPack,
     BinPackProblem,

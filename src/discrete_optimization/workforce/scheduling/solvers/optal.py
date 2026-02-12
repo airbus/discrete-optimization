@@ -8,8 +8,11 @@ from functools import reduce
 from typing import Any, Optional, Union
 
 import numpy as np
-import optalcp as cp
-from ortools.sat.python.cp_model import IntVar
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     AllocationOptalSolver,
@@ -332,7 +335,7 @@ class OptalAllocSchedulingSolver(
         }
         return objs
 
-    def create_actually_done_variables(self) -> dict[int, IntVar]:
+    def create_actually_done_variables(self) -> dict[int, "cp.IntExpr"]:
         if not self.done_variables_created:
             self.done_variables = {}
             for t in self.problem.tasks_list:

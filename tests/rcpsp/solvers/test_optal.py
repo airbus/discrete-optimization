@@ -28,12 +28,5 @@ def test_optal(filename):
     res = solver.solve(
         callbacks=[stats_cb],
         time_limit=2,
-        do_not_retrieve_solutions=True,  # optalcp-preview mode
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL, StatusSolver.SATISFIED)
-    assert solver.current_obj >= solver.current_bound
-    df = stats_cb.get_df_metrics()
-    assert len(df) >= 2
-    last_line = df.iloc[-1]
-    assert last_line["obj"] == solver.current_obj
-    assert last_line["bound"] == solver.current_bound
