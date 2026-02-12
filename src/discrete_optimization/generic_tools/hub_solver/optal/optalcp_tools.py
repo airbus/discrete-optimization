@@ -8,7 +8,10 @@ import logging
 from abc import abstractmethod
 from typing import Any, Optional
 
-import optalcp as cp
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -41,13 +44,13 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
             default="Auto",
         )
     ]
-    cp_model: Optional[cp.Model] = None
+    cp_model: Optional["cp.Model"] = None
     early_stopping_exception: Optional[Exception] = None
     current_bound: int | float | None = None
     current_obj: int | float | None = None
     status_solver: StatusSolver = None
     use_warm_start: bool = False
-    warm_start_solution: Optional[cp.Solution] = None
+    warm_start_solution: Optional["cp.Solution"] = None
 
     def get_current_best_internal_objective_bound(self) -> Optional[float]:
         return self.current_bound
@@ -167,7 +170,7 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
         return [expr]
 
     @abstractmethod
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, result: "cp.SolveResult") -> Solution:
         """Return a d-o solution from the variables computed by minizinc.
 
         Args:
@@ -180,7 +183,7 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
 
 class OptalSolutionCallback:
     def __init__(
-        self, do_solver: OptalCpSolver, optal_solver: cp.Solver, callback: Callback
+        self, do_solver: OptalCpSolver, optal_solver: "cp.Solver", callback: Callback
     ):
         super().__init__()
         self.do_solver = do_solver
@@ -190,7 +193,7 @@ class OptalSolutionCallback:
         self.nb_solutions = 0
         self.current_solve_result: Optional[cp.SolveResult] = None
 
-    def on_solution(self, solution: cp.SolutionEvent) -> None:
+    def on_solution(self, solution: "cp.SolutionEvent") -> None:
         self.do_solver.current_obj = solution.solution.get_objective()
         sol = self.do_solver.retrieve_solution(solution)
         fit = self.do_solver.aggreg_from_sol(sol)
@@ -216,7 +219,7 @@ class OptalSolutionCallback:
             print("stopping")
             self.optal_solver.stop("stopped by usr callback")
 
-    def on_bound(self, event: cp.ObjectiveBoundEntry) -> None:
+    def on_bound(self, event: "cp.ObjectiveBoundEntry") -> None:
         self.do_solver.current_bound = event.value
         stopping = self.callback.on_step_end(
             step=self.nb_solutions, res=self.res, solver=self.do_solver

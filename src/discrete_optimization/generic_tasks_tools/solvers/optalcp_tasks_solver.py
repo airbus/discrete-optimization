@@ -1,7 +1,10 @@
 from abc import abstractmethod
 from typing import Any, Iterable, Optional
 
-import optalcp as cp
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationCpSolver,
@@ -23,13 +26,13 @@ from discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools import (
 
 class SchedulingOptalSolver(OptalCpSolver, SchedulingCpSolver[Task]):
     @abstractmethod
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval_variable(self, task: Task) -> "cp.IntervalVar":
         """Retrieve the interval variable of given task."""
         ...
 
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
-    ) -> cp.IntExpr:
+    ) -> "cp.IntExpr":
         """Retrieve the variable storing the start or end time of given task.
 
         Args:
@@ -48,7 +51,7 @@ class SchedulingOptalSolver(OptalCpSolver, SchedulingCpSolver[Task]):
 
     def add_constraint_on_task(
         self, task: Task, start_or_end: StartOrEnd, sign: SignEnum, time: int
-    ) -> list[cp.BoolExpr]:
+    ) -> list["cp.BoolExpr"]:
         var = self.get_task_start_or_end_variable(task, start_or_end)
         return self.add_bound_constraint(var, sign, time)
 
@@ -90,7 +93,7 @@ class SchedulingOptalSolver(OptalCpSolver, SchedulingCpSolver[Task]):
 
 class MultimodeOptalSolver(OptalCpSolver, MultimodeCpSolver[Task]):
     @abstractmethod
-    def get_task_mode_is_present_variable(self, task: Task, mode: int) -> cp.BoolExpr:
+    def get_task_mode_is_present_variable(self, task: Task, mode: int) -> "cp.BoolExpr":
         """Retrieve the 0-1 variable/expression telling if the mode is used for the task.
 
         Args:
@@ -129,7 +132,7 @@ class AllocationOptalSolver(
 
     allocation_changes_variables_created = False
     """Flag telling whether 'allocation changes variables' have been created"""
-    allocation_changes_variables: dict[tuple[Task, UnaryResource], cp.IntExpr]
+    allocation_changes_variables: dict[tuple[Task, UnaryResource], "cp.IntExpr"]
     """Variables tracking allocation changes from a given reference."""
     used_variables_created = False
     """Flag telling whether 'used variables' have been created"""
@@ -187,7 +190,7 @@ class AllocationOptalSolver(
     @abstractmethod
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
-    ) -> cp.BoolExpr:
+    ) -> "cp.BoolExpr":
         """Return a 0-1 variable/expression telling if the unary_resource is used for the task.
 
         NB: sometimes the given resource is never to be used by a task and the variable has not been created.
