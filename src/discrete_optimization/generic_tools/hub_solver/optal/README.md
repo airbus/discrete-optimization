@@ -4,31 +4,29 @@ We briefly explain how to make use of Optal wrappers coded in d-o.
 
 ## How to install Optal?
 
-WARNING: You need to install it at the correct location, i.e. where the mts optal models are stored (under the discrete-optimization installation directory,
-which may be different from your local repository clone).
+See http://dev.vilim.eu/docs/Quick%20Start/editions/ for pip commands according to the edition you have a license for.
 
+In a nutshell:
 
-- install npm + node >= 20.
-  See https://docs.npmjs.com/downloading-and-installing-node-js-and-npm for installation process.
-- go to the directory where the optal models are stored
+- preview edition (free, no retrievable solutions, but still objective and bound values):
   ```shell
-  optal_dir=$(python -c "
-  import discrete_optimization.generic_tools.hub_solver.optal as optal
-  import os
-  print(os.path.dirname(optal.__file__))
-  ")
-  cd ${optal_dir}
+  pip install git+https://github.com/ScheduleOpt/optalcp-py-bin-preview@latest
   ```
-- [install OptalCP](https://optalcp.com/docs/installation#install-optalcp):
-  - either the free preview version
-    ```shell
-    npm install 'scheduleopt/optalcp-js-bin-preview#latest'
-    ```
-  - or the licensed one
-    ```shell
-    npm install 'scheduleopt/optalcp-js-bin#latest'
-    ```
 
-**Note**:
-    If using the preview version of optal, make sure to use the option `do_not_retrieve_solutions=True` in `optal_solver.solve()`,
-    where `optal_solver` is one of the optal wrapper included in d-o.
+- academic edition
+  ```shell
+  pip install git+https://github.com/ScheduleOpt/optalcp-py-bin-academic@latest
+  ```
+
+- full edition
+  ```shell
+  pip install git+https://github.com/ScheduleOpt/optalcp-py-bin@latest
+  ```
+
+Notes:
+- you can also use `uv pip` if already using uv.
+- when on the d-o repo, the preview version is in the dependency group "optalcp-preview",
+  so you can also type
+  ```shell
+  pip install --group optalcp-preview
+  ```

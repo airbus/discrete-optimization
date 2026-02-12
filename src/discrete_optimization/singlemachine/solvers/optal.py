@@ -1,9 +1,9 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from typing import Any, Optional
+from __future__ import annotations
 
-import optalcp as cp
+from typing import Any, Optional
 
 from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
     SchedulingOptalSolver,
@@ -16,6 +16,14 @@ from discrete_optimization.singlemachine.problem import (
     WeightedTardinessProblem,
     WTSolution,
 )
+
+try:
+    import optalcp as cp
+except ImportError:
+    cp = None
+    optalcp_available = False
+else:
+    optalcp_available = True
 
 
 class OptalSingleMachineSolver(SchedulingOptalSolver[Task]):

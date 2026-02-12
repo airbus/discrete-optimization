@@ -73,12 +73,6 @@ gurobi = [
 optuna = [
     "optuna>=4.5.0",
 ]
-optalcp_preview = [
-    "optalcp-bin-preview; python_version >= '3.11'",
-]
-optalcp_academic = [
-    "optalcp-bin-academic; python_version >= '3.11'",
-]
 
 [project.urls]
 documentation = "https://airbus.github.io/discrete-optimization"
@@ -122,10 +116,9 @@ test = [
     "pytest-cov>=7.0.0",
     "scikit-learn>=1.6.1",
 ]
+optalcp-preview = [
+    "optalcp-bin-preview @ git+https://github.com/ScheduleOpt/optalcp-py-bin-preview.git@latest ; python_version >= '3.11'",
+]
 
 [tool.uv]
-default-groups = "all"
-
-[tool.uv.sources]
-optalcp-bin-academic = { git = "https://github.com/ScheduleOpt/optalcp-py-bin-academic", rev = "latest" }
-optalcp-bin-preview = { git = "https://github.com/ScheduleOpt/optalcp-py-bin-preview", rev = "latest" }
+default-groups = ["test", "doc", "dev"]
