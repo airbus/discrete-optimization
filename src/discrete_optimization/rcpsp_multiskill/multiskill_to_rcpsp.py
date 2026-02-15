@@ -41,7 +41,7 @@ class MultiSkillToRcpsp:
         max_number_of_mode: int = None,
         check_resource_compliance: bool = True,
         one_worker_type_per_task: bool = False,
-    ):
+    ):  
         params_cp = ParametersCp.default()
         params_cp.intermediate_solution = True
         solver = PrecomputeEmployeesForTasks(
@@ -90,7 +90,7 @@ class MultiSkillToRcpsp:
             )
             results = solver.solve(
                 parameters_cp=params_cp,
-                time_limit=30,
+                time_limit=5,
                 all_solutions=False,
                 nr_solutions=100,
             )

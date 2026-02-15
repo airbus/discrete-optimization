@@ -19,6 +19,7 @@ from discrete_optimization.rcpsp.problem_preemptive import (
 )
 from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cp_mzn import CpMultimodeRcpspSolver
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import MultiSkillToRcpsp
 from discrete_optimization.rcpsp_multiskill.problem import (
     MultiskillRcpspProblem,
@@ -99,10 +100,11 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
 
         if self.solver_multimode_rcpsp is None:
             # Create an underlying solver for the multimode RCPSP problem if not provided
-            self.solver_multimode_rcpsp = CpMultimodeRcpspSolver(
-                problem=self.multimode_problem, cp_solver_name=CpSolverName.CHUFFED
+            # Using CP-SAT for better performance vs CHUFFED
+            self.solver_multimode_rcpsp = CpSatRcpspSolver(
+                problem=self.multimode_problem
             )
-            logger.info("Create an underlying solver for the multimode RCPSP problem")
+            logger.info("Create an underlying solver for the multimode RCPSP problem (CP-SAT)")
         else:
             # Set the problem on the underlying solver if not already set
             if self.solver_multimode_rcpsp.problem is None:
@@ -308,6 +310,8 @@ def rebuild_multiskill_solution_cp_based(
         for s in strings:
             model.instance.add_string(s)
     else:
+        # TODO: Need review here
+        # Note: Using CHUFFED for preemptive case as CP-SAT doesn't support preemptive ?
         model = CpPreemptiveMultiskillRcpspSolver(
             problem=multiskill_rcpsp_problem, cp_solver_name=CpSolverName.CHUFFED
         )
