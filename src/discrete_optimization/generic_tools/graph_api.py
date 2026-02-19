@@ -6,6 +6,7 @@ from collections.abc import Hashable, KeysView
 from typing import Any, Optional, Union
 
 import networkx as nx
+import numpy as np
 
 
 class Graph:
@@ -145,6 +146,13 @@ class Graph:
                 )
                 dict_path_and_distance[source][target] = (dict_path[target], length)
         return dict_path_and_distance
+
+    def compute_weighted_adjacency(
+        self, nodes_order: list[Hashable], attribute_edge: str
+    ) -> np.ndarray:
+        return nx.to_numpy_array(
+            self.graph_nx, nodelist=nodes_order, weight=attribute_edge
+        )
 
 
 def from_networkx(
