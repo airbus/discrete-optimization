@@ -7,11 +7,12 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, dp
 from discrete_optimization.salbp.problem import SalbpProblem, SalbpSolution
 
 
-class DpSalbpSolver(DpSolver):
+class DpSalbpSolver(DpSolver, WarmstartMixin):
     problem: SalbpProblem
 
     def __init__(
@@ -22,6 +23,7 @@ class DpSalbpSolver(DpSolver):
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.transition_dict = {}
+        self.transitions = {}
 
     def init_model(self, **kwargs):
         """Model adapted from :
@@ -85,6 +87,7 @@ class DpSalbpSolver(DpSolver):
             )
             self.model.add_transition(schedule)
             self.transition_dict[f"schedule {i}"] = ("schedule", i)
+            self.transitions[i] = schedule
 
         open_new = dp.Transition(
             name="open a new station",
@@ -99,6 +102,7 @@ class DpSalbpSolver(DpSolver):
         )
         self.model.add_transition(open_new, forced=True)
         self.transition_dict["open a new station"] = ("new_one", None)
+        self.transitions["new"] = open_new
 
         self.model.add_base_case([unscheduled.is_empty()])
         self.model.add_dual_bound(
@@ -117,6 +121,43 @@ class DpSalbpSolver(DpSolver):
             math.ceil(weight_3_table[unscheduled])
             - (idle_time >= c / 3).if_then_else(1, 0)
         )
+
+    def set_warm_start(self, solution: SalbpSolution) -> None:
+        self.initial_solution = []
+        graph = self.problem.get_graph_precedence()
+        predecessors = graph.predecessors_dict
+        scheduled = {}
+        import networkx as nx
+
+        topological_sort = list(nx.topological_sort(graph.to_networkx()))
+        index_of_node = {topological_sort[i]: i for i in range(len(topological_sort))}
+        task_per_station = {
+            j: sorted(
+                [t for t in self.problem.tasks if solution.get_start_time(t) == j],
+                key=lambda x: index_of_node[x],
+            )
+            for j in set(solution.allocation_to_station)
+        }
+        stations = sorted(task_per_station.keys())
+        tags = []
+        for i in range(len(stations)):
+            st = stations[i]
+            if i == 0:
+                # Initial shift
+                for k in range(st):
+                    self.initial_solution.append(self.transitions["new"])
+                    tags.append("new")
+            else:
+                for k in range(stations[i - 1], st):
+                    self.initial_solution.append(self.transitions["new"])
+                    tags.append("new")
+            for task in task_per_station[st]:
+                self.initial_solution.append(
+                    self.transitions[self.problem.tasks_to_index[task]]
+                )
+                tags.append(self.problem.tasks_to_index[task])
+        print(self.initial_solution)
+        print(tags)
 
     def retrieve_solution(self, sol: dp.Solution) -> Solution:
         allocation = [0 for _ in range(self.problem.number_of_tasks)]

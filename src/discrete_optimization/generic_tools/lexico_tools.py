@@ -99,14 +99,13 @@ class LexicoSolver(SolverDO):
         )
         if "subsolver_callbacks" not in kwargs:
             kwargs["subsolver_callbacks"] = None
+        kwargs_subsolver = dict(kwargs)
+        subsolver_callbacks = kwargs_subsolver.pop("subsolver_callbacks")
         for i_obj, obj in enumerate(objectives):
             # log
-            logger.debug(f"Optimizing on {obj}")
-
+            logger.info(f"Optimizing on {obj}")
             # optimize next objective
             self.subsolver.set_lexico_objective(obj)
-            kwargs_subsolver = dict(kwargs)
-            subsolver_callbacks = kwargs_subsolver.pop("subsolver_callbacks")
             res.extend(
                 self.subsolver.solve(callbacks=subsolver_callbacks, **kwargs_subsolver)
             )
