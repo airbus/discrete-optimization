@@ -4,16 +4,22 @@ from discrete_optimization.salbp.solvers.cpsat import (
     CpSatSalbpSolver,
     ModelingCpsatSalbp,
 )
+from discrete_optimization.salbp.solvers.greedy import GreedySalbpSolver
 
 
 def run_cpsat():
     files = get_data_available()
-    file = [f for f in files if "instance_n=1000_296" in f][0]
+    file = [f for f in files if "instance_n=1000_337" in f][0]
     problem = parse_alb_file(file)
     solver = CpSatSalbpSolver(problem)
-    solver.init_model(modeling=ModelingCpsatSalbp.SCHEDULING)
+    solver.init_model(modeling=ModelingCpsatSalbp.SCHEDULING, use_lb=True)
+    greedy = GreedySalbpSolver(problem)
+    sol = greedy.solve()[-1][0]
+    solver.set_warm_start(sol)
+    p = ParametersCp.default_cpsat()
+    p.nb_process = 10
     res = solver.solve(
-        parameters_cp=ParametersCp.default_cpsat(),
+        parameters_cp=p,
         time_limit=100,
         ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
