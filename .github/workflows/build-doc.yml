@@ -115,7 +115,7 @@ jobs:
           import os
           import sphinx.config
 
-          config = sphinx.config.Config.read(os.path.abspath("source"))
+          config = sphinx.config.Config.read(os.path.abspath("source"), overrides={}, tags=[])
           config.init_values()
           print(config.version)
           ')
