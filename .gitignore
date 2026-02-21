@@ -22,12 +22,6 @@ docs/source/api/*
 
 # coverage
 .coverage
-uv.lock
-src/discrete_optimization.egg-info/dependency_links.txt
-src/discrete_optimization.egg-info/requires.txt
-src/discrete_optimization.egg-info/top_level.txt
-src/discrete_optimization.egg-info/SOURCES.txt
-src/discrete_optimization.egg-info/PKG-INFO
 
 # Output files from using the library Optuna
 optuna-journal.log
