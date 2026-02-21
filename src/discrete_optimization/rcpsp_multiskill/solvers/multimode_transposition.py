@@ -18,7 +18,6 @@ from discrete_optimization.rcpsp.problem_preemptive import (
     PreemptiveRcpspSolution,
 )
 from discrete_optimization.rcpsp.solution import RcpspSolution
-from discrete_optimization.rcpsp.solvers.cp_mzn import CpMultimodeRcpspSolver
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import MultiSkillToRcpsp
 from discrete_optimization.rcpsp_multiskill.problem import (
@@ -54,7 +53,7 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
         **kwargs,
     ):
         """Initialize the multimode transposition solver.
-        
+
         Args:
             problem: The multi-skill RCPSP problem to solve
             multimode_problem: Pre-computed multimode RCPSP problem (optional)
@@ -87,7 +86,9 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
         """
         # Construct the multimode problem if not already given
         if self.multimode_problem is None or self.worker_type_to_worker is None:
-            logger.info("Construct RCPSP problem by abstracting employees as worker types")
+            logger.info(
+                "Construct RCPSP problem by abstracting employees as worker types"
+            )
             algo = MultiSkillToRcpsp(self.problem)
             rcpsp_problem = algo.construct_rcpsp_by_worker_type(
                 limit_number_of_mode_per_task=self.limit_number_of_mode_per_task,
@@ -100,11 +101,10 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
 
         if self.solver_multimode_rcpsp is None:
             # Create an underlying solver for the multimode RCPSP problem if not provided
-            # Using CP-SAT for better performance vs CHUFFED
             self.solver_multimode_rcpsp = CpSatRcpspSolver(
                 problem=self.multimode_problem
             )
-            logger.info("Create an underlying solver for the multimode RCPSP problem (CP-SAT)")
+            logger.info("Create an underlying solver for the multimode RCPSP problem")
         else:
             # Set the problem on the underlying solver if not already set
             if self.solver_multimode_rcpsp.problem is None:
@@ -115,17 +115,19 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
         logger.info("Solving the multi-mode RCPSP problem...")
         result_store = self.solver_multimode_rcpsp.solve(**kwargs)
         solution, fit = result_store.get_best_solution_fit()
-        
+
         # Check if a solution was found
         if solution is None:
-            logger.warning("No solution found by the multi-mode RCPSP solver. Returning empty result store.")
+            logger.warning(
+                "No solution found by the multi-mode RCPSP solver. Returning empty result store."
+            )
             return ResultStorage(
                 list_solution_fits=[],
                 mode_optim=self.problem.get_objective_register().objective_sense,
             )
-        
+
         logger.info(f"Multi-mode RCPSP solution obtained with objective/fit: {fit}")
-        
+
         # Rebuild the solution for the multiskill problem using the solution of the rcpsp problem
         logger.info("Rebuild solution for the multiskill problem")
         res = rebuild_multiskill_solution_cp_based(
@@ -146,7 +148,7 @@ def rebuild_multiskill_solution(
 ) -> Union[MultiskillRcpspSolution, PreemptiveMultiskillRcpspSolution]:
     """
     This function takes the schedule from the RCPSP solution and rebuilds the solution for the multiskill problem.
-    NOTE: this function is not used in the current code
+    NOTE: need review, this function is currently not used.
     """
     new_horizon = multimode_rcpsp_problem.horizon
     resource_avail_in_time = {}
@@ -275,22 +277,26 @@ def rebuild_multiskill_solution(
 
 def rebuild_multiskill_solution_cp_based(
     multiskill_rcpsp_problem: MultiskillRcpspProblem,
-    multimode_rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem],   # unused ?
-    worker_type_to_worker: dict[str, set[Union[str, int]]],                 # unused ?
+    multimode_rcpsp_problem: Union[
+        RcpspProblem, PreemptiveRcpspProblem
+    ],  # TODO: need review, currently unused
+    worker_type_to_worker: dict[
+        str, set[Union[str, int]]
+    ],  # TODO: need review, currently unused
     solution_rcpsp: Union[RcpspSolution, PreemptiveRcpspSolution],
     time_limit: int = 3600,
 ) -> ResultStorage:
     """
-    Reconstructs a valid multi-skill RCPSP solution from the schedule from an RCPSP solution 
+    Reconstructs a valid multi-skill RCPSP solution from the schedule from an RCPSP solution
     by assigning specific employees to tasks.
-    
+
     Args:
         multiskill_rcpsp_problem: The multi-skill RCPSP problem
         multimode_rcpsp_problem: The multimode RCPSP problem (for reference)
         worker_type_to_worker: Mapping from worker types to employee sets
         solution_rcpsp: The RCPSP solution to constrain to
         time_limit: Time limit in seconds for CP solver
-        
+
     Returns:
         ResultStorage: containing the reconstructed multi-skill RCPSP solutions
     """
@@ -310,8 +316,6 @@ def rebuild_multiskill_solution_cp_based(
         for s in strings:
             model.instance.add_string(s)
     else:
-        # TODO: Need review here
-        # Note: Using CHUFFED for preemptive case as CP-SAT doesn't support preemptive ?
         model = CpPreemptiveMultiskillRcpspSolver(
             problem=multiskill_rcpsp_problem, cp_solver_name=CpSolverName.CHUFFED
         )
