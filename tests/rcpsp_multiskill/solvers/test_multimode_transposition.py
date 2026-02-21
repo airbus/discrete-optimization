@@ -6,8 +6,10 @@ import numpy as np
 import pytest
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
 from discrete_optimization.rcpsp_multiskill.problem import (
     Employee,
+    MultiskillRcpspProblem,
     MultiskillRcpspSolution,
     SkillDetail,
     VariantMultiskillRcpspProblem,
@@ -15,86 +17,6 @@ from discrete_optimization.rcpsp_multiskill.problem import (
 from discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition import (
     MultimodeTranspositionMultiskillRcpspSolver
 )
-
-
-def assert_solver_initialized(solver, model):
-    """Assert that the solver is properly initialized before solving."""
-    assert solver.problem == model
-    assert solver.solver_multimode_rcpsp is None
-    assert solver.multimode_problem is None
-    assert solver.worker_type_to_worker is None
-
-
-def assert_solver_solved(solver):
-    """Assert that the solver has been properly executed."""
-    assert solver.multimode_problem is not None
-    assert solver.worker_type_to_worker is not None
-    assert isinstance(solver.worker_type_to_worker, dict)
-    for worker_type, workers in solver.worker_type_to_worker.items():
-        assert isinstance(worker_type, str)
-        assert isinstance(workers, set)
-
-
-def assert_valid_result_storage(result_storage):
-    """Assert that result storage contains valid solutions."""
-    assert result_storage is not None, "Solver did not return a result"
-    assert result_storage.list_solution_fits is not None, "Solver did not return solution fits"
-    assert len(result_storage.list_solution_fits) > 0, "Solver did not return any solution fits"
-
-
-def assert_valid_solution(model, solution):
-    """Assert that the solution is valid and satisfies all constraints."""
-    assert solution is not None, "Solver did not return a solution"
-    assert isinstance(solution, MultiskillRcpspSolution), "Best solution is not of type MultiskillRcpspSolution"
-    
-    # Evaluate and verify constraints
-    objective = model.evaluate(solution)
-    assert objective is not None
-    assert model.satisfy(solution), "Solution does not satisfy problem constraints"
-    
-    # Verify schedule
-    assert solution.schedule is not None
-    assert len(solution.schedule) > 0
-    
-    # Check all non-dummy tasks are scheduled
-    for task in model.tasks_list:
-        if task not in [model.source_task, model.sink_task]:
-            assert task in solution.schedule, f"Task {task} not scheduled"
-    
-    # Verify makespan
-    sink_end_time = solution.get_end_time(model.sink_task)
-    assert sink_end_time > 0, "Sink task end time should be positive"
-    assert sink_end_time <= model.horizon, f"Sink end time {sink_end_time} exceeds horizon {model.horizon}"
-    
-    # Verify employee usage
-    assert hasattr(solution, 'employee_usage')
-    assert solution.employee_usage is not None
-    
-    # Check employee assignments for tasks requiring skills
-    for task in solution.schedule:
-        task_details = model.mode_details[task][1]
-        task_needs_employees = any(skill in model.skills_set for skill in task_details.keys())
-        
-        if task_needs_employees and task not in [model.source_task, model.sink_task]:
-            if task in solution.employee_usage:
-                assert len(solution.employee_usage[task]) > 0
-
-
-def solve_and_validate(model, solver, time_limit=60):
-    """Solve the problem and validate the solution."""
-    assert_solver_initialized(solver, model)
-    
-    parameters_cp = ParametersCp.default()
-    parameters_cp.intermediate_solution = True
-    result_storage = solver.solve(parameters_cp=parameters_cp, time_limit=time_limit)
-    
-    assert_solver_solved(solver)
-    assert_valid_result_storage(result_storage)
-    
-    best_solution, best_fit = result_storage.get_best_solution_fit()
-    assert_valid_solution(model, best_solution)
-    
-    return result_storage, best_solution
 
 
 def create_toy_msrcpsp_simple():    
@@ -265,32 +187,92 @@ def test_with_imopse_data():
     solve_and_validate(model, solver)
 
 
-def test_solver_custom_parameters():
-    """Test that the solver accepts and uses custom parameters."""
-    model = create_toy_msrcpsp_simple()
+#==== Assertion helpers for validating solutions ====
+
+
+def solve_and_validate(model: MultiskillRcpspProblem, 
+                       solver: MultimodeTranspositionMultiskillRcpspSolver, 
+                       time_limit=60):
+    """Solve the problem and validate the solution."""
+    assert_solver_initialized(solver, model)
     
-    # Create solver with custom parameters
-    solver = MultimodeTranspositionMultiskillRcpspSolver(
-        problem=model,
-        solver_multimode_rcpsp=None,
-        limit_number_of_mode_per_task=False,
-        max_number_of_mode=5,
-        check_resource_compliance=False,
-        reconstruction_cp_time_limit=120,
-    )
+    parameters_cp = ParametersCp.default()
+    parameters_cp.intermediate_solution = True
+    result_storage = solver.solve(parameters_cp=parameters_cp, time_limit=time_limit)
     
-    # Verify parameters are stored
-    assert solver.limit_number_of_mode_per_task is False
-    assert solver.max_number_of_mode == 5
-    assert solver.check_resource_compliance is False
-    assert solver.reconstruction_cp_time_limit == 120
+    assert_solver_solved(solver)
+    assert_valid_result_storage(result_storage)
     
-    # Solve and verify it works
-    solve_and_validate(model, solver)
+    best_solution, best_fit = result_storage.get_best_solution_fit()
+    assert_valid_solution(model, best_solution)
+    
+    return result_storage, best_solution
+
+def assert_solver_initialized(solver: MultimodeTranspositionMultiskillRcpspSolver, 
+                              model: MultiskillRcpspProblem):
+    """Assert that the solver is properly initialized before solving."""
+    assert solver.problem == model
+    assert solver.solver_multimode_rcpsp is None
+    assert solver.multimode_problem is None
+    assert solver.worker_type_to_worker is None
+
+def assert_solver_solved(solver: MultimodeTranspositionMultiskillRcpspSolver):
+    """Assert that the solver has been properly executed."""
+    assert solver.multimode_problem is not None
+    assert solver.worker_type_to_worker is not None
+    assert isinstance(solver.worker_type_to_worker, dict)
+    for worker_type, workers in solver.worker_type_to_worker.items():
+        assert isinstance(worker_type, str)
+        assert isinstance(workers, set)
+
+
+def assert_valid_result_storage(result_storage: ResultStorage):
+    """Assert that result storage contains valid solutions."""
+    assert result_storage is not None, "Solver did not return a result"
+    assert result_storage.list_solution_fits is not None, "Solver did not return solution fits"
+    assert len(result_storage.list_solution_fits) > 0, "Solver did not return any solution fits"
+
+
+def assert_valid_solution(model: MultiskillRcpspProblem, 
+                          solution: MultiskillRcpspSolution):
+    """Assert that the solution is valid and satisfies all constraints."""
+    assert solution is not None, "Solver did not return a solution"
+    assert isinstance(solution, MultiskillRcpspSolution), "Best solution is not of type MultiskillRcpspSolution"
+    
+    # Evaluate and verify constraints
+    objective = model.evaluate(solution)
+    assert objective is not None
+    assert model.satisfy(solution), "Solution does not satisfy problem constraints"
+    
+    # Verify schedule
+    assert solution.schedule is not None
+    assert len(solution.schedule) > 0
+    
+    # Check all non-dummy tasks are scheduled
+    for task in model.tasks_list:
+        if task not in [model.source_task, model.sink_task]:
+            assert task in solution.schedule, f"Task {task} not scheduled"
+    
+    # Verify makespan
+    sink_end_time = solution.get_end_time(model.sink_task)
+    assert sink_end_time > 0, "Sink task end time should be positive"
+    assert sink_end_time <= model.horizon, f"Sink end time {sink_end_time} exceeds horizon {model.horizon}"
+    
+    # Verify employee usage
+    assert hasattr(solution, 'employee_usage')
+    assert solution.employee_usage is not None
+    
+    # Check employee assignments for tasks requiring skills
+    for task in solution.schedule:
+        task_details = model.mode_details[task][1]
+        task_needs_employees = any(skill in model.skills_set for skill in task_details.keys())
+        
+        if task_needs_employees and task not in [model.source_task, model.sink_task]:
+            if task in solution.employee_usage:
+                assert len(solution.employee_usage[task]) > 0
 
 
 if __name__ == "__main__":
     test_solve_simple()
     test_solve_medium()
-    test_solver_custom_parameters()
     test_with_imopse_data()

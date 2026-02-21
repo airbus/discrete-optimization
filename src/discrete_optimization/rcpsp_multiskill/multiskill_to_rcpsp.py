@@ -90,7 +90,7 @@ class MultiSkillToRcpsp:
             )
             results = solver.solve(
                 parameters_cp=params_cp,
-                time_limit=5,
+                time_limit=5, # reduce time limit of per-task mode enumeration from 30s -> 5s 
                 all_solutions=False,
                 nr_solutions=100,
             )
