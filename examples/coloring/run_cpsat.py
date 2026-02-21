@@ -15,7 +15,9 @@ from discrete_optimization.coloring.solvers.cpsat import (
     CpSatColoringSolver,
     ModelingCpSat,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
+from discrete_optimization.generic_tools.callbacks.loggers import (
+    ProblemEvaluateLogger,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 
 logging.basicConfig(level=logging.INFO)
@@ -36,16 +38,17 @@ def run_cpsat_coloring():
     p = ParametersCp.default_cpsat()
     logging.info("Starting solve")
     result_store = solver.solve(
-        callbacks=[NbIterationTracker(step_verbosity_level=logging.INFO)],
+        callbacks=[ProblemEvaluateLogger(step_verbosity_level=logging.INFO)],
         parameters_cp=p,
+        time_limit=10,
     )
     print("Status solver : ", solver.status_solver)
     solution, fit = result_store.get_best_solution_fit()
     plot_coloring_solution(solution)
-    plt.show()
     print(solution, fit)
     print("Evaluation : ", color_problem.evaluate(solution))
     print("Satisfy : ", color_problem.satisfy(solution))
+    plt.show()
 
 
 def run_cpsat_coloring_with_constraints():

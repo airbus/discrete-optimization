@@ -36,6 +36,9 @@ from discrete_optimization.workforce.allocation.solvers.cpsat import (
     ModelisationAllocationOrtools,
 )
 from discrete_optimization.workforce.allocation.solvers.dp import DpAllocationSolver
+from discrete_optimization.workforce.allocation.solvers.optal import (
+    OptalTeamAllocationSolver,
+)
 
 study_name = "allocation-study-0"
 overwrite = True  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
@@ -48,6 +51,9 @@ if __name__ == "__main__":
         "cpmpy-cpsat-1proc": SolverConfig(
             cls=CPMpyTeamAllocationSolver,
             kwargs={"time_limit": 5, "solver_name": "ortools", "num_search_workers": 1},
+        ),
+        "optal": SolverConfig(
+            cls=OptalTeamAllocationSolver, kwargs={"time_limit": 5, "parameters_cp": p}
         ),
         "cpmpy-cpsat-10proc": SolverConfig(
             cls=CPMpyTeamAllocationSolver,

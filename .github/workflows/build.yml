@@ -137,9 +137,10 @@ jobs:
           path: dist
       - name: Install only discrete-optimization without extras
         run: |
-          python -m pip install -U pip
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
+          python -m pip install -U pip
           pip install ${wheelfile}
+          pip list
       - name: Check all imports are working
         run: python tests/test_import_all_submodules.py
       - name: Check minizinc based solvers fails without minizinc binary
@@ -189,28 +190,30 @@ jobs:
       - name: Install test dependencies
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          pip install "${wheelfile}[quantum, dashboard, optuna, gurobi]" --group test
+          extras="quantum, dashboard, optuna, gurobi"
+          additional_specs=""
+          if [[ "${{ matrix.python-version }}" != "3.10" ]]; then
+            additional_specs="${additional_specs} --group optalcp-preview"
+          fi
           if [ "${{ startsWith(matrix.os, 'windows') }}" == false ]; then
             echo "install toulbar2"
-            pip install "${wheelfile}[toulbar]"
+            extras="${extras}, toulbar"
+          fi
+
+          pip install "${wheelfile}[${extras}]" --group test ${additional_specs}
+
+          # Check toulbar install
+          if [ "${{ startsWith(matrix.os, 'windows') }}" == false ]; then
             python -c "import pytoulbar2"
           fi
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-      - name: install optal
-        run: |
-          optal_dir=$(python -c "
-          import discrete_optimization.generic_tools.hub_solver.optal as optal
-          import os
-          print(os.path.dirname(optal.__file__))
-          ")
-          cd ${optal_dir}
-          npm --version
-          node --version
-          npm install 'scheduleopt/optalcp-js-bin-preview#latest'
-          npm ls
-          npx optalcp --version
+
+          # Check optalcp install
+          if [[ "${{ matrix.python-version }}" != "3.10" ]]; then
+            python -c "import optalcp"
+          fi
+
+          pip list
+
       - name: Restore tests data cache
         id: cache-data
         uses: actions/cache@v4

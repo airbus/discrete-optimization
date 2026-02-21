@@ -622,7 +622,7 @@ class PreemptiveRcpspProblem(Problem):
                 for act_id in variable.rcpsp_schedule:
                     mode = modes_dict[act_id]
                     usage += self.mode_details[act_id][mode][res]
-                    if usage > self.resources[res]:
+                    if usage > self.get_max_resource_capacity(res):
                         logger.debug(
                             f"Non-renewable resource violation: act_id: {act_id}"
                             f"res {res}"
@@ -642,7 +642,20 @@ class PreemptiveRcpspProblem(Problem):
                             f"while {succ_id} start at {start_succ}"
                         )
                         return False
-
+            # Check sum of working time
+            for t in self.tasks_list:
+                dur = self.mode_details[t][modes_dict[t]]["duration"]
+                sum_dur = sum(
+                    e - s
+                    for s, e in zip(
+                        variable.get_start_times_list(t), variable.get_end_times_list(t)
+                    )
+                )
+                if sum_dur < dur:
+                    logger.info(
+                        f"Task {t} is not executed long enough {sum_dur} vs {dur}"
+                    )
+                    return False
             return True
 
     def get_solution_type(self) -> type[Solution]:

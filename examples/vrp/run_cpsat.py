@@ -11,7 +11,8 @@ from discrete_optimization.vrp.plot import plot_vrp_solution
 from discrete_optimization.vrp.problem import VrpSolution
 from discrete_optimization.vrp.solvers.cpsat import CpSatVrpSolver
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+# {'nb_vehicles': 25, 'max_length': 633.2618339375006, 'length': 10237.95993753123, 'capacity_violation': 0.0}
 
 
 def run_cpsat_vrp():
@@ -117,4 +118,4 @@ def warm_starting():
 
 
 if __name__ == "__main__":
-    warm_starting()
+    run_cpsat_vrp()
