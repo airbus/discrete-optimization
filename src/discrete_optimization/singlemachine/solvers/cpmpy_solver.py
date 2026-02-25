@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 
 import cpmpy
 from cpmpy.expressions.globalconstraints import NoOverlap
+from packaging.version import Version
 
 from discrete_optimization.generic_tools.cpmpy_tools import (
     CpmpySolver,
@@ -129,9 +130,18 @@ class CpmpySingleMachineSolver(CpmpySolver):
 
         # === Define Meta-Constraints for Explanation ===
         # 1. No-Overlap Constraints: A machine can only process one job at a time.
-        no_overlap_constraints = [
-            NoOverlap(start=starts, duration=self.problem.processing_times, end=ends)
-        ]
+        if hasattr(cpmpy, "__version__") and Version(cpmpy.__version__) >= Version(
+            "0.10.0"
+        ):
+            no_overlap_constraints = [
+                NoOverlap(
+                    start=starts, duration=self.problem.processing_times, end=ends
+                )
+            ]
+        else:
+            no_overlap_constraints = [
+                NoOverlap(start=starts, dur=self.problem.processing_times, end=ends)
+            ]
         self.meta_constraints["no_overlap"] = MetaCpmpyConstraint(
             name="no_overlap", constraints=no_overlap_constraints
         )

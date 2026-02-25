@@ -10,23 +10,27 @@ from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solvers.optal import OptalRcpspSolver
 from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt, plt
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 def solve_makespan_with_optal(problem: RcpspProblem):
+    import optalcp as cp
+
     solver = OptalRcpspSolver(problem)
     solver.init_model()
     parameters_cp = ParametersCp.default()
     parameters_cp.nb_process = 8
+    fds = cp.WorkerParameters(
+        searchType="FDS", noOverlapPropagationLevel=4, cumulPropagationLevel=2
+    )
+    fds_dual = cp.WorkerParameters(
+        searchType="FDSDual", noOverlapPropagationLevel=4, cumulPropagationLevel=2
+    )
     result_storage = solver.solve(
         parameters_cp=parameters_cp,
         time_limit=2,
-        **{
-            "worker0-1.searchType": "fdslb",
-            "worker0-1.noOverlapPropagationLevel": 4,
-            "worker0-1.cumulPropagationLevel": 3,
-        },
+        workers=[fds, fds_dual],
     )
     solution, fit = result_storage.get_best_solution_fit()
     assert problem.satisfy(solution)
@@ -46,7 +50,7 @@ def optal_single_mode_makespan_optimization():
 
 def optal_multi_mode_makespan_optimization():
     files_available = get_data_available()
-    file = [f for f in files_available if "j1010_1.mm" in f][0]
+    file = [f for f in files_available if "j1010_2.mm" in f][0]
     rcpsp_problem = parse_file(file)
     solve_makespan_with_optal(rcpsp_problem)
     plt.show()
@@ -54,3 +58,4 @@ def optal_multi_mode_makespan_optimization():
 
 if __name__ == "__main__":
     optal_single_mode_makespan_optimization()
+    optal_multi_mode_makespan_optimization()

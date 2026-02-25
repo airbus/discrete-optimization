@@ -222,7 +222,7 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
         Calculates distances, time window violations, and capacity violations.
         """
         variable.total_distance = 0.0
-        variable.nb_vehicles_used = len(variable.routes)
+        variable.nb_vehicles_used = len([r for r in variable.routes if len(r) > 0])
         variable.tw_violation = 0.0
         variable.capacity_violation = 0.0
 
@@ -255,11 +255,9 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
             # Service at first customer
             ready, due = self.time_windows[first_customer]
             service = self.service_times[first_customer]
-
             start_service_time = max(arrival_time, ready)
             current_time = start_service_time + service
             current_load += self.demands[first_customer]
-
             variable.tw_violation += max(0, start_service_time - due)
             route_arrivals.append(arrival_time)
             route_starts.append(start_service_time)
@@ -270,26 +268,20 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
                 dist = self.distance_matrix[last_node, customer]
                 current_dist += dist
                 arrival_time = current_time + dist
-
                 ready, due = self.time_windows[customer]
                 service = self.service_times[customer]
-
                 start_service_time = max(arrival_time, ready)
                 current_time = start_service_time + service
                 current_load += self.demands[customer]
-
                 variable.tw_violation += max(0, start_service_time - due)
                 route_arrivals.append(arrival_time)
                 route_starts.append(start_service_time)
                 last_node = customer
-
             # Travel back to depot
             dist_to_depot = self.distance_matrix[last_node, self.depot_node]
             current_dist += dist_to_depot
             arrival_back_at_depot = current_time + dist_to_depot
-
             variable.tw_violation += max(0, arrival_back_at_depot - depot_due)
-
             # Store route-level stats
             variable.capacity_violation += max(0, current_load - self.vehicle_capacity)
             variable.total_distance += current_dist

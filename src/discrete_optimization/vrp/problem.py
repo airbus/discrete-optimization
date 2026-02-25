@@ -138,7 +138,15 @@ class VrpProblem(Problem):
         violation = 0.0
         for i in range(self.vehicle_count):
             violation += max(variable.capacities[i] - self.vehicle_capacities[i], 0)
-        return {"length": variable.length, "capacity_violation": violation}
+        total_length_per_vehicle = [
+            sum(variable.lengths[i]) for i in range(len(variable.lengths))
+        ]
+        return {
+            "nb_vehicles": sum([len(p) > 0 for p in variable.list_paths]),
+            "max_length": max(total_length_per_vehicle),
+            "length": variable.length,
+            "capacity_violation": violation,
+        }
 
     def satisfy(self, variable: VrpSolution) -> bool:  # type: ignore # avoid isinstance checks for efficiency
         d = self.evaluate(variable)
@@ -152,6 +160,12 @@ class VrpProblem(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
+            "nb_vehicles": ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=-1
+            ),
+            "max_length": ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=-1.0
+            ),
             "length": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0),
             "capacity_violation": ObjectiveDoc(
                 type=TypeObjective.PENALTY, default_weight=-100.0

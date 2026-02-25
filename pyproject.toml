@@ -74,7 +74,6 @@ optuna = [
     "optuna>=4.5.0",
 ]
 
-
 [project.urls]
 documentation = "https://airbus.github.io/discrete-optimization"
 repository = "https://github.com/airbus/discrete-optimization"
@@ -117,6 +116,9 @@ test = [
     "pytest-cov>=7.0.0",
     "scikit-learn>=1.6.1",
 ]
+optalcp-preview = [
+    "optalcp-bin-preview @ git+https://github.com/ScheduleOpt/optalcp-py-bin-preview.git@latest ; python_version >= '3.11'",
+]
 
 [tool.uv]
-default-groups = "all"
+default-groups = ["test", "doc", "dev"]
