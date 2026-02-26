@@ -5,7 +5,8 @@
 from copy import deepcopy
 
 import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for tests
+
+matplotlib.use("Agg")  # Use non-interactive backend for tests
 
 import pytest
 
