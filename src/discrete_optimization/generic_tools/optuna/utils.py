@@ -36,7 +36,8 @@ except ImportError:
 else:
     from optuna.pruners import BasePruner, MedianPruner
     from optuna.samplers import BaseSampler
-    from optuna.storages import JournalFileStorage, JournalStorage
+    from optuna.storages import JournalStorage
+    from optuna.storages.journal import JournalFileBackend
     from optuna.trial import Trial, TrialState
 
 
@@ -281,7 +282,7 @@ def generic_optuna_experiment_monoproblem(
         return fit
 
     # create study + database to store it
-    storage = JournalStorage(JournalFileStorage(storage_path))
+    storage = JournalStorage(JournalFileBackend(storage_path))
     if overwrite_study:
         try:
             optuna.delete_study(study_name=study_name, storage=storage)
@@ -530,7 +531,7 @@ def generic_optuna_experiment_multiproblem(
         return sum(fitnesses) / len(fitnesses)
 
     # create study + database to store it
-    storage = JournalStorage(JournalFileStorage(storage_path))
+    storage = JournalStorage(JournalFileBackend(storage_path))
     if overwrite_study:
         try:
             optuna.delete_study(study_name=study_name, storage=storage)
