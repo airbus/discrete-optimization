@@ -653,7 +653,17 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
         ser_convergence_time_by_xp.groupby(level=CONFIG), **kwargs
     )
 
-    # concat dist and ranks, and put index as a column
+    rank_cols = [
+        c for c in rank_counts.columns if c.startswith("#") and c != "# failed"
+    ]
+    # Sort them numerically: # 1, # 2, # 3... and not alphabetically.
+    sorted_rank_cols = sorted(rank_cols, key=lambda x: int(x.split("# ")[1]))
+    # Reorder rank_counts columns: Ranks first, then "failed"
+    final_rank_cols = sorted_rank_cols + (
+        ["# failed"] if "# failed" in rank_counts.columns else []
+    )
+    rank_counts = rank_counts[final_rank_cols]
+    # 2. Concat all metrics
     df_summary = pd.concat(
         (
             convergence_time_agg,
@@ -662,7 +672,13 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
             rank_counts,
         ),
         axis=1,
-    ).reset_index()
+    )
+
+    # 3. Sort Rows by "Best Solver" logic
+    # We sort descending by # 1, then # 2, then # 3, etc.
+    # We fill NaNs with 0 to ensure the sorting doesn't break
+    sort_priority = sorted_rank_cols
+    df_summary = df_summary.sort_values(by=sort_priority, ascending=False).reset_index()
 
     # df convergence_time vs dist_to_best xp by xp
     df_by_xp = pd.concat(
@@ -673,5 +689,4 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
         ),
         axis=1,
     )
-
     return df_summary, df_by_xp
