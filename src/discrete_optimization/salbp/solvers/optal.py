@@ -18,6 +18,9 @@ try:
     import optalcp as cp
 except ImportError:
     cp = None
+    optalcp_available = False
+else:
+    optalcp_available = True
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
