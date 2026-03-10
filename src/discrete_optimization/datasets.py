@@ -58,6 +58,12 @@ SALBP_OTTO_DATASET_URL = (
 SALBP_OTTO_DATASET_RELATIVE_PATH = "SALBP_benchmark.zip"
 
 
+TOP_DATASET_URLS = [
+    "https://www.hds.utc.fr/~moukrim/dokuwiki/_media/en/new_instances.zip",
+    "https://www.hds.utc.fr/~moukrim/dokuwiki/_media/en/chao.zip",
+]
+
+
 MIS_FILES = [
     "https://oeis.org/A265032/a265032_1dc.64.txt.gz",
     "https://oeis.org/A265032/a265032_1dc.128.txt.gz",
@@ -364,6 +370,34 @@ def fetch_data_from_alb(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_top(data_home: Optional[str] = None):
+    """Fetch data from Team Orienteering problem
+    cf https://www.hds.utc.fr/~moukrim/dokuwiki/en/top
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get rcpsp_multiskill data directory
+    top_dir = f"{data_home}/top"
+    os.makedirs(top_dir, exist_ok=True)
+    for url in TOP_DATASET_URLS:
+        try:
+            # download dataset
+            local_file_path, headers = urlretrieve(url)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # extract only data
+                with zipfile.ZipFile(local_file_path) as zipf:
+                    zipf.extractall(path=top_dir)
+                for file in glob.glob(f"{top_dir}/*"):
+                    if "zip" in file:
+                        with zipfile.ZipFile(file) as zipf:
+                            zipf.extractall(path=top_dir)
+                        os.remove(file)
+        finally:
+            # remove temporary files
+            urlcleanup()
+
+
 def decompress_gz_to_folder(input_file, output_folder, url):
     with gzip.open(input_file, "rb") as f_in:
         # Get the base name of the gzipped file without the .gz extension
@@ -636,6 +670,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_mslib(data_home=data_home)
     fetch_data_from_mspsplib_repo(data_home=data_home)
     fetch_data_from_alb(data_home=data_home)
+    fetch_data_from_top(data_home=data_home)
 
 
 if __name__ == "__main__":
