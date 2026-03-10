@@ -15,6 +15,9 @@ try:
     import optalcp as cp
 except ImportError:
     cp = None
+    optalcp_available = False
+else:
+    optalcp_available = True
 from discrete_optimization.top.problem import TeamOrienteeringProblem, VrpSolution
 from discrete_optimization.top.solvers import TopSolver
 
@@ -122,7 +125,7 @@ class OptalTopSolver(TopSolver, OptalCpSolver):
         self.cp_model.minimize(self.variables["objs"]["reward"])
         self.variables["intervals"] = intervals_per_vehicle
 
-    def retrieve_solution(self, result: cp.SolveResult) -> VrpSolution:
+    def retrieve_solution(self, result: "cp.SolveResult") -> VrpSolution:
         # Same as the vrp one.
         paths = []
         for v in range(self.problem.vehicle_count):
