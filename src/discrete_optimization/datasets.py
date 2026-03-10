@@ -63,6 +63,8 @@ TOP_DATASET_URLS = [
     "https://www.hds.utc.fr/~moukrim/dokuwiki/_media/en/chao.zip",
 ]
 
+RCALB_L_SERVER_URL = "https://entrepot.recherche.data.gouv.fr"
+RCALB_L_PERSISTENT_ID = "doi:10.57745/EBDN5W"
 
 MIS_FILES = [
     "https://oeis.org/A265032/a265032_1dc.64.txt.gz",
@@ -649,6 +651,41 @@ def fetch_data_tsptw(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_rcalb_l(data_home: Optional[str] = None):
+    """Fetch JSON data from the RCALB_L dataset file by file.
+
+    cf https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.57745/EBDN5W
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+    """
+    data_home = get_data_home(data_home=data_home)
+    dataset_dir = f"{data_home}/rcalb_l"
+    url = f"{RCALB_L_SERVER_URL}/api/access/dataset/:persistentId/?persistentId={RCALB_L_PERSISTENT_ID}"
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        os.makedirs(dataset_dir, exist_ok=True)
+        with zipfile.ZipFile(local_file_path) as zipf:
+            json_paths = [
+                filepath for filepath in zipf.namelist() if filepath.endswith(".json")
+            ]
+            zipf.extractall(path=dataset_dir, members=json_paths)
+            # flatten json paths by removing extra directory
+            extradirectories = set()
+            for json_path in json_paths:
+                extradirectories.add(f"{dataset_dir}/{os.path.dirname(json_path)}")
+                os.replace(
+                    src=f"{dataset_dir}/{json_path}",
+                    dst=f"{dataset_dir}/{os.path.basename(json_path)}",
+                )
+            for extradir in extradirectories:
+                os.removedirs(extradir)
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -671,6 +708,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_mspsplib_repo(data_home=data_home)
     fetch_data_from_alb(data_home=data_home)
     fetch_data_from_top(data_home=data_home)
+    fetch_data_from_rcalb_l(data_home=data_home)
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ class CpsatParetoSolver(SolverDO):
             delta_abs_improvement: list of absolute improvement for each objective to add in the blocking clauses
             delta_ref_improvement: list of relative improvement for each objective to add in the blocking clauses
         """
-        super().__init__(self, problem)
+        super().__init__(problem)
         self.problem = problem
         self.solver = solver
         self.objective_names = objective_names

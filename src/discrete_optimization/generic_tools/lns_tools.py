@@ -390,13 +390,6 @@ class BaseLns(SolverDO, WarmstartMixin):
             else:
                 satisfy = self.problem.satisfy(init_solution)
             logger.debug(f"Satisfy Initial solution {satisfy}")
-            try:
-                logger.debug(
-                    f"Nb task preempted = {init_solution.get_nb_task_preemption()}"  # type: ignore
-                )
-                logger.debug(f"Nb max preemption = {init_solution.get_max_preempted()}")  # type: ignore
-            except:
-                pass
             best_objective = objective
             # end of step callback: stopping?
             stopping = callbacks_list.on_step_end(step=0, res=store_lns, solver=self)
