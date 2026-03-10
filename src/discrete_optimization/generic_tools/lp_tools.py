@@ -808,10 +808,20 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
 
         # get result storage
         res = gurobi_callback.res
-
+        # This handle the case where the model is solved in the presolve phase of gurobi where the callback
+        # is not even called.
+        if (
+            self.status_solver in {StatusSolver.SATISFIED, StatusSolver.OPTIMAL}
+            and len(res) == 0
+        ):
+            sol = self.retrieve_current_solution(
+                get_var_value_for_current_solution=lambda var: var.getAttr("X"),
+                get_obj_value_for_current_solution=lambda: self.model.ObjVal,
+            )
+            res.append((sol, self.aggreg_from_sol(sol)))
+            callbacks_list.on_step_end(step=0, res=res, solver=self)
         # callback: solve end
         callbacks_list.on_solve_end(res=res, solver=self)
-
         return res
 
     def explain_unsat_fine(self) -> list[Any]:
