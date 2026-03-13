@@ -7,9 +7,11 @@ from discrete_optimization.generic_tools.do_problem import get_default_objective
 from discrete_optimization.generic_tools.lns_mip import LnsMilp
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
-from discrete_optimization.knapsack.solvers.lns_lp import (
+from discrete_optimization.knapsack.solvers.lns import (
     InitialKnapsackMethod,
     InitialKnapsackSolution,
+)
+from discrete_optimization.knapsack.solvers.lns_lp import (
     MathOptKnapsackConstraintHandler,
 )
 from discrete_optimization.knapsack.solvers.lp import (
