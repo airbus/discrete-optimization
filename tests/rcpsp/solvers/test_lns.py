@@ -13,7 +13,7 @@ from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_build
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.lns_cp import LnsCpMzn
+from discrete_optimization.generic_tools.lns_cp_mzn import LnsCpMzn
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solvers.cp_mzn import CpRcpspSolver

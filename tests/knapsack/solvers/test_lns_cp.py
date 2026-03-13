@@ -10,7 +10,8 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerSt
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
-from discrete_optimization.generic_tools.lns_cp import LnsCpMzn, LnsOrtoolsCpSat
+from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
+from discrete_optimization.generic_tools.lns_cp_mzn import LnsCpMzn
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 from discrete_optimization.knapsack.problem import KnapsackSolution
 from discrete_optimization.knapsack.solvers.cp_mzn import (
@@ -19,8 +20,10 @@ from discrete_optimization.knapsack.solvers.cp_mzn import (
 )
 from discrete_optimization.knapsack.solvers.cpsat import CpSatKnapsackSolver
 from discrete_optimization.knapsack.solvers.lns_cp import (
-    KnapsackMznConstraintHandler,
     OrtoolsCpSatKnapsackConstraintHandler,
+)
+from discrete_optimization.knapsack.solvers.lns_cp_mzn import (
+    KnapsackMznConstraintHandler,
 )
 from discrete_optimization.knapsack.solvers.lns_lp import (
     InitialKnapsackMethod,

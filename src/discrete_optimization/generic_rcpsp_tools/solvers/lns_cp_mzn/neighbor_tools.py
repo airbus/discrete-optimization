@@ -35,7 +35,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
-from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
+from discrete_optimization.generic_tools.lns_cp_mzn import MznConstraintHandler
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
     TupleFitness,
 )
@@ -57,13 +57,13 @@ from discrete_optimization.rcpsp_multiskill.problem import (
     employee_usage,
     start_together_problem_description,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib import (
-    CpMspspMznMultiskillRcpspSolver,
-)
 from discrete_optimization.rcpsp_multiskill.solvers.cp_mzn import (
     CpMultiskillRcpspSolver,
     CpPartialPreemptiveMultiskillRcpspSolver,
     CpPreemptiveMultiskillRcpspSolver,
+)
+from discrete_optimization.rcpsp_multiskill.solvers.cp_mzn_mspsp_instlib import (
+    CpMspspMznMultiskillRcpspSolver,
 )
 
 logger = logging.getLogger(__name__)

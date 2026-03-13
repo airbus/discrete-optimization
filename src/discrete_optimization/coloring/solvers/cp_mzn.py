@@ -30,13 +30,15 @@ from discrete_optimization.coloring.solvers.greedy import (
 from discrete_optimization.coloring.utils import compute_cliques
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
-    MinizincCpSolver,
-    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
+)
+from discrete_optimization.generic_tools.mzn_tools import (
+    MinizincCpSolver,
+    find_right_minizinc_solver_name,
 )
 
 path_minizinc = os.path.abspath(

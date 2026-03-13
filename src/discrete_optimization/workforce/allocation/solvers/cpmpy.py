@@ -19,7 +19,6 @@ from cpmpy.solvers.solver_interface import ExitStatus, SolverStatus
 
 from discrete_optimization.generic_tools.cp_tools import (
     ParametersCp,
-    StatusSolver,
 )
 from discrete_optimization.generic_tools.cpmpy_tools import (
     CpmpySolver,
@@ -29,6 +28,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
+from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,

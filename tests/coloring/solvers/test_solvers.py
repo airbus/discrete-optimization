@@ -43,7 +43,6 @@ from discrete_optimization.generic_tools.callbacks.loggers import (
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
     ParametersCp,
-    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -56,6 +55,9 @@ from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 from discrete_optimization.generic_tools.ea.nsga import Nsga
 from discrete_optimization.generic_tools.encoding_register import ListInteger
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+from discrete_optimization.generic_tools.mzn_tools import (
+    find_right_minizinc_solver_name,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
 )
