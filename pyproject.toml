@@ -104,6 +104,7 @@ convention = "google"
 dev = [
     "jupyter>=1.1.1",
     "jupyterlab-execute-time>=3.3.0",
+    "optuna-dashboard>=0.20.0",
 ]
 doc = [
     "myst-parser>=3.0.1",

@@ -9,6 +9,7 @@ from abc import abstractmethod
 from typing import Generic, Optional, Union
 
 import numpy as np
+import numpy.typing as npt
 
 from discrete_optimization.generic_tasks_tools.base import (
     Task,
@@ -156,17 +157,20 @@ class NeighborRandom(NeighborBuilder[Task]):
 
 
 class NeighborBuilderMix(NeighborBuilder[Task]):
+    weight_neighbor: npt.NDArray[float]
+
     def __init__(
         self,
         list_neighbor: list[NeighborBuilder[Task]],
-        weight_neighbor: Union[list[float], np.array],
+        weight_neighbor: Optional[Union[list[float], npt.NDArray[float]]] = None,
         verbose: bool = False,
     ):
         self.list_neighbor = list_neighbor
-        self.weight_neighbor = weight_neighbor
-        if isinstance(self.weight_neighbor, list):
-            self.weight_neighbor = np.array(self.weight_neighbor)
-        self.weight_neighbor = self.weight_neighbor / np.sum(self.weight_neighbor)
+        if weight_neighbor is None:
+            weight_neighbor = [1.0] * len(list_neighbor)
+        if isinstance(weight_neighbor, list):
+            weight_neighbor = np.array(weight_neighbor)
+        self.weight_neighbor = weight_neighbor / np.sum(weight_neighbor)
         self.index_np = np.array(range(len(self.list_neighbor)), dtype=np.int_)
         self.verbose = verbose
 
