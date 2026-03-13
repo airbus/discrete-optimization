@@ -19,15 +19,15 @@ from discrete_optimization.knapsack.solvers.cp_mzn import (
     KnapsackProblem,
 )
 from discrete_optimization.knapsack.solvers.cpsat import CpSatKnapsackSolver
+from discrete_optimization.knapsack.solvers.lns import (
+    InitialKnapsackMethod,
+    InitialKnapsackSolution,
+)
 from discrete_optimization.knapsack.solvers.lns_cp import (
     OrtoolsCpSatKnapsackConstraintHandler,
 )
 from discrete_optimization.knapsack.solvers.lns_cp_mzn import (
     KnapsackMznConstraintHandler,
-)
-from discrete_optimization.knapsack.solvers.lns_lp import (
-    InitialKnapsackMethod,
-    InitialKnapsackSolution,
 )
 
 
