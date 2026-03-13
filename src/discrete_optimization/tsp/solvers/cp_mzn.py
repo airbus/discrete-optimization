@@ -10,10 +10,12 @@ from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
+)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.mzn_tools import (
     MinizincCpSolver,
     find_right_minizinc_solver_name,
 )
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.tsp.problem import TspProblem, TspSolution
 from discrete_optimization.tsp.solvers import TspSolver
 from discrete_optimization.tsp.utils import build_matrice_distance

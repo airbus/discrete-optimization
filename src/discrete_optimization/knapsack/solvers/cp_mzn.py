@@ -12,15 +12,17 @@ from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
-    MinizincCpSolver,
-    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
     FloatHyperparameter,
 )
-from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
+from discrete_optimization.generic_tools.lns_cp_mzn import MznConstraintHandler
+from discrete_optimization.generic_tools.mzn_tools import (
+    MinizincCpSolver,
+    find_right_minizinc_solver_name,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )

@@ -9,7 +9,7 @@ from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
 )
-from discrete_optimization.generic_tools.lns_cp import LnsCpMzn
+from discrete_optimization.generic_tools.lns_cp_mzn import LnsCpMzn
 from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,

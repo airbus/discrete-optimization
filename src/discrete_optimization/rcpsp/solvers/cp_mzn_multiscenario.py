@@ -10,13 +10,15 @@ from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
-    MinizincCpSolver,
-    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
+)
+from discrete_optimization.generic_tools.mzn_tools import (
+    MinizincCpSolver,
+    find_right_minizinc_solver_name,
 )
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.problem_preemptive import PreemptiveRcpspProblem

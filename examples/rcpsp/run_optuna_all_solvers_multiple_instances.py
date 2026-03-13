@@ -20,7 +20,6 @@ from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
 )
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
-    MinizincCpSolver,
     ParametersCp,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -28,6 +27,7 @@ from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     gurobi_available,
 )
+from discrete_optimization.generic_tools.mzn_tools import MinizincCpSolver
 from discrete_optimization.generic_tools.optuna.utils import (
     generic_optuna_experiment_multiproblem,
 )

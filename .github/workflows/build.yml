@@ -147,7 +147,7 @@ jobs:
         run: |
           python -c "
           try:
-            from discrete_optimization.generic_tools.cp_tools import find_right_minizinc_solver_name, CpSolverName
+            from discrete_optimization.generic_tools.mzn_tools import find_right_minizinc_solver_name, CpSolverName
             find_right_minizinc_solver_name(CpSolverName.CHUFFED)
           except RuntimeError:
             pass

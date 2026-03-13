@@ -9,7 +9,7 @@ from discrete_optimization.rcpsp_multiskill.parser_mspsp import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.cp_mspsp_instlib import (
+from discrete_optimization.rcpsp_multiskill.solvers.cp_mzn_mspsp_instlib import (
     CpMspspMznMultiskillRcpspSolver,
 )
 

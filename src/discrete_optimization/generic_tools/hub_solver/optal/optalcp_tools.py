@@ -16,14 +16,16 @@ from discrete_optimization.generic_tools.cp_tools import (
     CpSolver,
     ParametersCp,
     SignEnum,
-    StatusSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import BoundsProviderMixin
+from discrete_optimization.generic_tools.do_solver import (
+    BoundsProviderMixin,
+    StatusSolver,
+)
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,

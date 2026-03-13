@@ -14,12 +14,14 @@ from discrete_optimization.facility.solvers import FacilitySolver
 from discrete_optimization.facility.solvers.lp import compute_length_matrix
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
-    MinizincCpSolver,
-    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
+)
+from discrete_optimization.generic_tools.mzn_tools import (
+    MinizincCpSolver,
+    find_right_minizinc_solver_name,
 )
 
 logger = logging.getLogger(__name__)

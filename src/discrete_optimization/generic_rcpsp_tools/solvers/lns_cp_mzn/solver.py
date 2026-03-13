@@ -33,7 +33,7 @@ from discrete_optimization.generic_rcpsp_tools.solvers.ls import (
     LsSolverType,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
-from discrete_optimization.generic_tools.cp_tools import CpSolverName, MinizincCpSolver
+from discrete_optimization.generic_tools.cp_tools import CpSolverName
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
@@ -42,12 +42,16 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     IntegerHyperparameter,
     SubBrickKwargsHyperparameter,
 )
-from discrete_optimization.generic_tools.lns_cp import LnsCpMzn, MznConstraintHandler
+from discrete_optimization.generic_tools.lns_cp_mzn import (
+    LnsCpMzn,
+    MznConstraintHandler,
+)
 from discrete_optimization.generic_tools.lns_mip import (
     InitialSolution,
     PostProcessSolution,
 )
 from discrete_optimization.generic_tools.lns_tools import InitialSolutionFromSolver
+from discrete_optimization.generic_tools.mzn_tools import MinizincCpSolver
 from discrete_optimization.rcpsp.solvers.cp_mzn import (
     CpMultimodePreemptiveRcpspSolver,
     CpMultimodeRcpspSolver,
