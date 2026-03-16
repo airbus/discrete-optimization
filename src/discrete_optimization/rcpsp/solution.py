@@ -34,21 +34,11 @@ class RcpspSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
 
     Attributes:
         problem: RCPSP problem for which this is a solution
-        rcpsp_permutation: Tasks permutation.
-        rcpsp_schedule: Tasks schedule. ( task -> "start_time" or "end_time" -> time)
-            Potentially only partial if not feasible with given permutation, or for aggregated models.
-        rcpsp_modes: Mode used for each task. Same order as `problem.tasks_list_non_dummy`.
-        rcpsp_schedule_feasible: False if schedule generation from permutation failed, True else.
-        standardised_permutation: Permutation deduced uniquely from schedule.
-            Can be different from `rcpsp_permutation` as different permutations can lead to same schedule.
-        fast: boolean indicating if we us the fast functions to generate schedule from permutation.
-
-    Args:
-        problem: RCPSP problem for which this is a solution
-        rcpsp_permutation: Tasks permutation.
+        rcpsp_permutation: Tasks permutation, i.e. list of tasks indices among non-dummy tasks (i.e. excluding source and sink tasks).
+            See below how it is related to the schedule.
             If given and schedule not given, used to reconstruct the schedule.
             if not given, deduced from schedule.
-            If not given and schedule not given, it is set to `problem.fixed_permutation`
+            If not given and schedule not given, it is set to `problem.fixed_permutation` (useful for alternating genetic algorithms)
         rcpsp_schedule: Tasks schedule. ( task -> "start_time" or "end_time" -> time)
             If given used to construct `standardised_permutation`.
             If given and `rcpsp_permutation` not given, used to construct `rcpsp_permutation`.
@@ -64,7 +54,86 @@ class RcpspSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
             Recomputed when schedule is (re)computed from permutation.
         standardised_permutation: Permutation deduced uniquely from schedule. If given, not recomputed.
             Can be different from `rcpsp_permutation` as different permutations can lead to same schedule.
-        fast: boolean indicating if we us the fast functions to generate schedule from permutation.
+        fast: boolean indicating if we use the fast functions to generate schedule from permutation.
+
+    ## More about conversion permutation <-> schedule:
+
+    ### Schedule -> permutation
+    Take the list of tasks indices among non-dummy tasks (i.e. excluding source and sink tasks),
+    sorted by their starting times.
+
+    ### Permutation -> schedule: serial-SGS (Schedule Generation Scheme)
+    - Initialization:
+        - the source task is set at time 0
+        - the resource availability is set to the initial calendar given by the problem
+    - Loop: the schedule is filled task by task, in the order given by the permutation, and taking into account
+        - the precedence constraints: a task starts after the end of the tasks before it in the precedence graph
+        - the resource constraints: during the task, the needed resource must be available
+      When a new task has been inserted, the availability of each resource is updated accordingly, i.e.
+      we remove the necessary resources for the task (according to the chosen mode set by `rcpsp_modes`) for the task duration,
+      and after if the resource is non-renewable.
+    - When hitting an impossibility (e.g. inserting a task after one of its successor, or when the resources are not enough available until the problem horizon)
+      the permutation is set infeasible (so `rcpsp_schedule_feasible` is set to `False`).
+
+    See "Compute a dummy solution for RCPSP" in the tutorial "notebooks/RCPSP tutorials/RCPSP-1 Introduction.ipynb" for more details.
+
+    Example:
+        This example demonstrates how a permutation of non-dummy tasks is
+        transformed into a schedule, adhering to precedence and resource constraints.
+
+        >>> from discrete_optimization.rcpsp.problem import RcpspProblem
+        >>> from discrete_optimization.rcpsp.solution import RcpspSolution
+        >>> # Define resources
+        >>> resources = {"R1": 5, "R2": 2}
+        >>> non_renewable_resources = []  # Empty if all resources replenish when a task ends
+        >>> # Define mode details
+        >>> # Format: { task_id: { mode_id: { "duration": int, "resource_name": amount } } }
+        >>> mode_details = {
+        ...     "source": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Source (Dummy)
+        ...     "task-1": {1: {"duration": 4, "R1": 2, "R2": 2}},
+        ...     "task-2": {1: {"duration": 3, "R1": 3, "R2": 0}},
+        ...     "task-3": {1: {"duration": 5, "R1": 2, "R2": 1}},
+        ...     "task-4": {1: {"duration": 2, "R1": 1, "R2": 1}},
+        ...     "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
+        ... }
+        >>> # Define precedence graph
+        >>> successors = {
+        ...     "source": ["task-1", "task-2"],  # First tasks: 1 and 2
+        ...     "task-1": ["task-3"],            # Task 1 must finish before 3
+        ...     "task-2": ["task-4"],            # Task 2 must finish before 4
+        ...     "task-3": ["sink"],              # Task 3 leads to Sink
+        ...     "task-4": ["sink"],              # Task 4 leads to Sink
+        ...     "sink": [],                       # Sink has no successors
+        ... }
+        >>> # Initialize the Problem
+        >>> problem = RcpspProblem(
+        ...     resources=resources,
+        ...     non_renewable_resources=non_renewable_resources,
+        ...     mode_details=mode_details,
+        ...     successors=successors,
+        ...     horizon=20, # Maximum time allowed for the project
+        ...     source_task="source",
+        ...     sink_task="sink"
+        ... )
+        >>> # Create solution
+        >>> # Convert list of task ids into a licit permutation (using indices among non-dummy tasks)
+        >>> rcpsp_permutation = problem.convert_task_ids_to_permutation(["task-2", "task-1", "task-4", "task-3"])
+        >>> print(rcpsp_permutation)
+        [1, 0, 3, 2]
+        >>> solution = RcpspSolution(
+        ...     problem=problem,
+        ...     rcpsp_permutation=rcpsp_permutation,
+        ...     rcpsp_modes=[1, 1, 1, 1]  # same mode for each task
+        ... )
+        >>> # The Serial SGS calculates the start/end times according:
+        >>> print(solution.rcpsp_schedule["task-2"])  # Task 2
+        {'start_time': 0, 'end_time': 3}
+        >>> print(solution.rcpsp_schedule["task-1"])  # Task 1 follows Task 2 in permutation
+        {'start_time': 0, 'end_time': 4}
+        >>> print(solution.rcpsp_schedule["task-4"])  # Task 4 can start after Task 2, but only when ressources are available (thus after task 1)
+        {'start_time': 4, 'end_time': 6}
+        >>> print(solution.rcpsp_schedule["task-3"])  # Task 3 can start after Task 1 (and ressources are available)
+        {'start_time': 4, 'end_time': 9}
 
     """
 
@@ -80,6 +149,17 @@ class RcpspSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
         standardised_permutation: Optional[list[int]] = None,
         fast: bool = True,
     ):
+        """
+
+        Args:
+            problem:
+            rcpsp_permutation:
+            rcpsp_schedule:
+            rcpsp_modes:
+            rcpsp_schedule_feasible:
+            standardised_permutation:
+            fast:
+        """
         super().__init__(problem=problem)
         self.rcpsp_schedule_feasible = rcpsp_schedule_feasible
         self.fast = fast
