@@ -1,0 +1,29 @@
+discrete\_optimization.generic\_tools.study package
+===================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.study.database module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.study.database
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.study.experiment module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.study.experiment
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.study
+   :members:
+   :show-inheritance:
+   :undoc-members:

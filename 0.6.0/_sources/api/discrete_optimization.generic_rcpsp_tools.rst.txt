@@ -1,0 +1,37 @@
+discrete\_optimization.generic\_rcpsp\_tools package
+====================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_rcpsp_tools.solvers
+
+Submodules
+----------
+
+discrete\_optimization.generic\_rcpsp\_tools.graph\_tools module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.graph_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.typing module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.typing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
