@@ -1,9 +1,9 @@
 import logging
 import random
 
+from discrete_optimization.rcalbp_l.parser import parse_rcalbpl_json
 from discrete_optimization.rcalbp_l.problem import (
     RCALBPLVectorSolution,
-    parse_rcalbpl_json,
 )
 
 logging.basicConfig(level=logging.INFO)

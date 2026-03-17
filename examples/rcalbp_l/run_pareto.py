@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
-from discrete_optimization.rcalbp_l.problem import parse_rcalbpl_json
+from discrete_optimization.rcalbp_l.parser import parse_rcalbpl_json
 from discrete_optimization.rcalbp_l.solvers.cpsat import CpSatRCALBPLSolver
 from discrete_optimization.rcalbp_l.solvers.pareto_postprocess import (
     DpRCALBPLPostProSolver,
@@ -188,4 +188,5 @@ def main_script():
 
 
 if __name__ == "__main__":
-    main_script()
+    main_pareto_dp()
+    # main_script()

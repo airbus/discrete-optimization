@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 # Implementation of the problem described in
 # https://drops.dagstuhl.de/storage/00lipics/lipics-vol340-cp2025/LIPIcs.CP.2025.25/LIPIcs.CP.2025.25.pdf
-import json
 from typing import Dict, List, Optional, Tuple
 
 from discrete_optimization.generic_tasks_tools.allocation import (
@@ -746,53 +745,3 @@ class RCALBPLProblem(SchedulingProblem[Task], AllocationProblem[Task, WorkStatio
         return RCALBPLSolution(
             problem=self, wks=wks, raw=raw, start=start_times, cyc=cycle_time
         )
-
-
-def parse_rcalbpl_json(file_path: str) -> RCALBPLProblem:
-    """
-    Parses the RC-ALBP/L JSON data and constructs the Problem instance.
-    """
-    with open(file_path, "r") as f:
-        data = json.load(f)
-
-    # 1. Base Variables
-    c_target = data["c_target"]
-    c_max = data["c_max"]
-    nb_stations = data["nb_stations"]
-    nb_periods = data["nb_periods"]
-    nb_tasks = data["nb_tasks"]
-
-    # 2. Precedences
-    precedences = [(p[0] - 1, p[1] - 1) for p in data.get("precedences", [])]
-
-    # 3. Durations matrix
-    durations = data.get("durations", [])
-
-    # 4. Resources
-    nb_resources = data.get("nb_resources", 0)
-    capa_resources = data.get("capa_resources", [])
-    cons_resources = data.get("cons_resources", [])
-
-    # 5. Zones
-    nb_zones = data.get("nb_zones", 0)
-    capa_zones = data.get("capa_zones", [])
-    cons_zones = data.get("cons_zones", [])
-    neutr_zones = data.get("neutr_zones", [])
-    neutr_zones = [[i - 1 for i in x] for x in neutr_zones]
-
-    return RCALBPLProblem(
-        c_target=c_target,
-        c_max=c_max,
-        nb_stations=nb_stations,
-        nb_periods=nb_periods,
-        nb_tasks=nb_tasks,
-        precedences=precedences,
-        durations=durations,
-        nb_resources=nb_resources,
-        capa_resources=capa_resources,
-        cons_resources=cons_resources,
-        nb_zones=nb_zones,
-        capa_zones=capa_zones,
-        cons_zones=cons_zones,
-        neutr_zones=neutr_zones,
-    )

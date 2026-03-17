@@ -1,9 +1,7 @@
 import optalcp as cp
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.rcalbp_l.problem import (
-    parse_rcalbpl_json,
-)
+from discrete_optimization.rcalbp_l.parser import parse_rcalbpl_json
 from discrete_optimization.rcalbp_l.solvers.optal import (
     OptalRCALBPLSolver,
 )

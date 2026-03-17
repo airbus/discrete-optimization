@@ -1,10 +1,12 @@
 import logging
 
+from matplotlib import pyplot as plt
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.rcalbp_l.parser import parse_rcalbpl_json
 from discrete_optimization.rcalbp_l.problem import (
     RCALBPLProblem,
     RCALBPLSolution,
-    parse_rcalbpl_json,
 )
 from discrete_optimization.rcalbp_l.solvers.cpsat import CpSatRCALBPLSolver
 from discrete_optimization.rcalbp_l.solvers.sequential_solver import (
@@ -65,11 +67,18 @@ def main_sequential():
             time_limit=200,
         ),
     )
-    solver = SequentialMetasolver(list_subbricks=[brick1, brick2], problem=problem)
+    solver = SequentialMetasolver(
+        list_subbricks=[
+            brick1,
+            # brick2
+        ],
+        problem=problem,
+    )
     res = solver.solve()
     sol = res[-1][0]
     fig, slider = plot_rcalbpl_dashboard(problem, sol)
     print(problem.evaluate(sol), problem.satisfy(sol))
+    plt.show()
 
 
 def _build_subproblem(

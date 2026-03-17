@@ -109,6 +109,7 @@ class CpSatRCALBPLSolver(
                 )
 
                 for w in self.problem.stations:
+                    # alloc should be fixed.
                     dur = self.problem.get_duration(task, p, w)
                     allocations[(task, p, w)] = self.cp_model.NewBoolVar(
                         name=f"allocation_{task}_{p}_{w}"
@@ -222,6 +223,7 @@ class CpSatRCALBPLSolver(
                             )
 
     def create_zone_blocking(self):
+        """Be careful on the fact that this constraint only is valid with capa==1 for now"""
         for z in self.problem.zones:
             tasks_blocking = [
                 t for t in self.problem.tasks if z in self.problem.neutr_zones[t]
