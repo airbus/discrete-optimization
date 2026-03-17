@@ -10,9 +10,13 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     SchedulingConstraintExtractor,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+    ObjectiveSubproblem,
     TasksConstraintHandler,
 )
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
+    NeighborBuilderMix,
+    NeighborBuilderSubPart,
+    NeighborBuilderTimeWindow,
     NeighborRandom,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
@@ -48,8 +52,8 @@ def run_lns_generic(problem: RcpspProblem):
             SchedulingConstraintExtractor(
                 minus_delta_primary=200,
                 plus_delta_primary=200,
-                minus_delta_secondary=10,
-                plus_delta_secondary=10,
+                minus_delta_secondary=25,
+                plus_delta_secondary=25,
             ),
             MultimodeConstraintExtractor(
                 fix_primary_tasks_modes=False,
@@ -57,15 +61,24 @@ def run_lns_generic(problem: RcpspProblem):
             ),
         ]
     )
+    list_neighbor = [
+        NeighborRandom(problem=problem, fraction_subproblem=0.1),
+        NeighborBuilderSubPart(problem=problem, nb_cut_part=5),
+        NeighborBuilderTimeWindow(problem=problem, time_window_length=10),
+    ][:1]
     constraint_handler = TasksConstraintHandler(
         problem=problem,
-        neighbor_builder=NeighborRandom(problem=problem, fraction_subproblem=0.1),
+        neighbor_builder=NeighborBuilderMix(
+            list_neighbor=list_neighbor,
+            weight_neighbor=[1 / len(list_neighbor)] * len(list_neighbor),
+        ),
         params_constraint_extractor=ParamsConstraintExtractor(
             constraint_to_current_solution_makespan=False,
             margin_rel_to_current_solution_makespan=0.05,
             fix_primary_tasks_modes=False,
             fix_secondary_tasks_modes=True,
         ),
+        objective_subproblem=ObjectiveSubproblem.INITIAL_OBJECTIVE,
         constraints_extractor=constraints_extractor,
     )
     solver = LnsOrtoolsCpSat(

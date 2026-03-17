@@ -7,9 +7,12 @@ import json
 from typing import Dict, List, Optional, Tuple
 
 from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
     AllocationSolution,
+    UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
     SchedulingSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -101,11 +104,54 @@ class RCALBPLSolution(AllocationSolution[Task, WorkStation], SchedulingSolution[
         self.nb_adjustments = None
 
 
-class RCALBPLProblem(Problem):
+class RCALBPLVectorSolution(RCALBPLSolution):
+    def __init__(
+        self,
+        problem: "RCALBPLProblem",
+        allocation_task: list[WorkStation],
+        permutation_task: list[TaskUnit],
+        resource: list[int],
+    ):
+        Solution.__init__(self, problem)
+        self.problem = problem
+        target_time = {permutation_task[i]: i for i in range(len(permutation_task))}
+        wks = {
+            self.problem.tasks[i]: allocation_task[i]
+            for i in range(len(allocation_task))
+        }
+        res = {}
+        i = 0
+        for i_r in range(self.problem.nb_resources):
+            for i_w in range(self.problem.nb_stations):
+                res[(self.problem.resources[i_r], self.problem.stations[i_w])] = (
+                    resource[i]
+                )
+                i += 1
+        sol = self.problem.build_full_solution(
+            wks=wks, raw=res, target_starts=target_time
+        )
+        self.wks = wks
+        self.start = sol.start
+        self.cyc = sol.cyc
+        self.raw = sol.raw
+
+
+class RCALBPLProblem(SchedulingProblem[Task], AllocationProblem[Task, WorkStation]):
     """
     Problem definition for Resource-Constrained Assembly Line Balancing
     with Learning Effect (RC-ALBP/L).
     """
+
+    def get_makespan_upper_bound(self) -> int:
+        return self.c_max
+
+    @property
+    def unary_resources_list(self) -> list[UnaryResource]:
+        return self.stations
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return [(t, p) for t in self.tasks for p in self.periods]
 
     def __init__(
         self,
@@ -684,6 +730,22 @@ class RCALBPLProblem(Problem):
 
         cycle_time = max(end_times.values()) if end_times else 0
         return start_times, cycle_time
+
+    def build_full_solution(
+        self,
+        wks: Dict[int, int],
+        raw: Dict[Tuple[int, int], int],
+        target_starts: Dict[int, int],
+    ):
+        start_times = {}
+        cycle_time = {}
+        for p in self.periods:
+            st, cyc = self.build_sgs_schedule_for_period(wks, raw, target_starts, p)
+            start_times.update({(t, p): st[t] for t in st})
+            cycle_time[p] = cyc
+        return RCALBPLSolution(
+            problem=self, wks=wks, raw=raw, start=start_times, cyc=cycle_time
+        )
 
 
 def parse_rcalbpl_json(file_path: str) -> RCALBPLProblem:

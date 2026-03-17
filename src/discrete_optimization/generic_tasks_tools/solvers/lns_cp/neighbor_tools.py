@@ -104,6 +104,38 @@ class NeighborBuilderSubPart(NeighborBuilder[Task]):
         return subtasks, self.set_tasks.difference(subtasks)
 
 
+class NeighborBuilderTaskThresholdTime(NeighborBuilder[Task]):
+    """
+    Cut the schedule in task that has starting time >= threshold or < threshold
+    """
+
+    def __init__(self, problem: TasksProblem[Task], threshold: int = 100):
+        self.problem = problem
+        self.threshold = threshold
+        self.set_tasks = set(self.problem.tasks_list)
+
+    def find_subtasks(
+        self,
+        current_solution: TasksSolution[Task],
+        subtasks: Optional[set[Task]] = None,
+    ) -> tuple[set[Task], set[Task]]:
+        task_of_interest = []
+        if isinstance(current_solution, SchedulingSolution):
+            task_of_interest = [
+                task
+                for task in self.problem.tasks_list
+                if current_solution.get_start_time(task) >= self.threshold
+            ]
+        print(task_of_interest)
+        if subtasks is None:
+            subtasks = task_of_interest
+        else:
+            subtasks.update(task_of_interest)
+        if len(subtasks) == 0:
+            subtasks = [task_of_interest[-1]]
+        return subtasks, self.set_tasks.difference(subtasks)
+
+
 class NeighborRandom(NeighborBuilder[Task]):
     def __init__(
         self,

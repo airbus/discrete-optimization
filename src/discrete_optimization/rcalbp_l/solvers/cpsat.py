@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Iterable
 
 from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
@@ -35,6 +35,11 @@ class CpSatRCALBPLSolver(
 ):
     problem: RCALBPLProblem
     variables: dict
+
+    @property
+    def subset_tasks_of_interest(self) -> Iterable[Task]:
+        """Subset of tasks of interest for the allocation..."""
+        return [t for t in self.problem.tasks_list if t[1] == 0]
 
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
@@ -485,9 +490,11 @@ class CpSatRCALBPLSolver(
         """
         Injects an almost complete model state as a hint to the CP-SAT solver.
         """
-        if not hasattr(self, "cp_model") or self.cp_model is None:
+        if self.cp_model is None:
             return
-
+        self.cp_model.clear_hints()
+        for key in self.allocation_changes_variables:
+            self.cp_model.add_hint(self.allocation_changes_variables[key], 0)
         # 1. Hint Allocations
         for t in self.problem.tasks:
             w_assigned = solution.wks.get(t, -1)
