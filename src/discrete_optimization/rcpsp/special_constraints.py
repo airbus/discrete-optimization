@@ -58,9 +58,13 @@ class SpecialConstraintsDescription:
         start_at_end: Optional[list[tuple[Hashable, Hashable]]] = None,
         start_at_end_plus_offset: Optional[list[tuple[Hashable, Hashable, int]]] = None,
         start_after_nunit: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        start_to_start_with_time_lag: Optional[tuple[Hashable, Hashable, int]] = None,
         disjunctive_tasks: Optional[list[tuple[Hashable, Hashable]]] = None,
         pair_mode_constraint: Optional[PairModeConstraint] = None,
     ):
+        """
+        x in : start_to_start_with_time_lag: st[x[0]]+x[2]<=st[x[1]]
+        """
         self.task_mode = task_mode
         self.start_times = start_times
         self.end_times = end_times
@@ -90,6 +94,10 @@ class SpecialConstraintsDescription:
             self.start_after_nunit = []
         else:
             self.start_after_nunit = start_after_nunit
+        if start_to_start_with_time_lag is None:
+            self.start_to_start_with_time_lag = []
+        else:
+            self.start_to_start_with_time_lag = start_to_start_with_time_lag
         if disjunctive_tasks is None:
             self.disjunctive_tasks = []
         else:
