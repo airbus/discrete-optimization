@@ -903,6 +903,10 @@ def check_solution_with_special_constraints(
     start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
     start_after_nunit = problem.special_constraints.start_after_nunit
     disjunctive = problem.special_constraints.disjunctive_tasks
+    for t1, t2, off in problem.special_constraints.start_to_start_with_time_lag:
+        b = solution.get_start_time(t1) + off <= solution.get_start_time(t2)
+        if not b:
+            return False
     for t1, t2 in start_together:
         if not relax_the_start_at_end:
             b = solution.get_start_time(t1) == solution.get_start_time(t2)
