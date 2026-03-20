@@ -251,6 +251,9 @@ jobs:
             --cov-report term \
             -v --durations=0 --durations-min=10 \
             tests
+      - name: Test examples in docstrings
+        run: |
+          pytest --doctest-modules src -v
       - name: Upload coverage report as artifact
         if: ${{ matrix.coverage }}
         uses: actions/upload-artifact@v4

@@ -54,43 +54,98 @@ class ScheduleGenerationScheme(Enum):
 class RcpspProblem(
     MultimodeProblem[Task], SchedulingProblem[Task], PrecedenceProblem[Task]
 ):
-    """
+    """Main class for RCPSP problem.
 
     Attributes:
-        resources:
-        non_renewable_resources:
-        mode_details:
-        successors:
-        horizon:
-        horizon_multiplier:
-        tasks_list:
-        source_task:
-        sink_task:
-        name_task:
-        n_jobs (int):
-        n_jobs_non_dummy (int):   excluding dummy activities Start (0) and End (n)
-        special_constraints:
-        do_special_constraints (bool):
-        relax_the_start_at_end (bool): relax some conditions only if do_special_constraints
-        fixed_permutation (Optional[list[int]]):
-        fixed_modes (Optional[list[int]]):
+        resources (dict[str, Union[int, list[int]): mapping: name -> number of resources available,
+            either at each time (-if an integer),
+            or time step by time step (if a list of integers).
+        non_renewable_resources (list[str]): list of resources (specified by name) that are non-renewable
+        mode_details (dict[Hashable, dict[int, dict[str, int]]]): task -> (mode number -> resource needs and duration)
+            Ex:
+            >>> mode_details = { "task1" :
+            ...    {  # task1 details
+            ...        1: { "duration": 2, "R1": 1, "R2": 0, "R3": 4 },  # task1, mode 1: duration = 2, resource needs: R1=1, R3=4
+            ...        2: { "duration": 10, "R1": 0, "R2": 2, "R3": 0 },  # task1, mode 1: duration = 10, resource needs: R2=2
+            ...    },
+            ...    # [other tasks]
+            ... }
 
-    Args:
-        resources: {resource_name: number_of_resource}
-        non_renewable_resources: [resource_name3, resource_name4]
-        mode_details:  {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}   one key being "duration"
-        successors:
-        horizon:
-        horizon_multiplier:
-        tasks_list:  {task_id: list of successor task ids}
-        source_task:
-        sink_task:
-        name_task:
-        special_constraints:
-        relax_the_start_at_end:
-        fixed_permutation:
-        fixed_modes:
-        **kwargs:
+        successors (dict[Hashable, list[Hashable]]): successors in the precedence graph of each task
+        horizon (int): max number of time steps allowed
+        horizon_multiplier: not used
+        tasks_list(list[Hashable]): list of tasks. Must correspond to `mode_details`. If not given will be equal to `list(mode_details)`.
+        source_task (Hashable): the id for the source task (i.e. the root in the precedence graph, all other tasks must follow it).
+            If not given and tasks_list is made of integers, the lowest one
+        sink_task (Hashable): the id for the source task (i.e. the last task in the precedence graph, follows all other tasks).
+            If not given and tasks_list is made of integers, the highest one.
+        tasks_list_non_dummy (list[Hashable]): tasks list excluding source and sink. Same order as tasks_list
+        name_task (dict[Hashable, str]): mapping task ids to task names. Default to id -> str(id)
+        n_jobs (int): numer of tasks (i.e. `len(tasks_list)`)
+        n_jobs_non_dummy (int): number of tasks  excluding dummy activities Start (0) and End (n). (i.e. `n_jobs - 2`)
+        index_task (dict[Hashable, int]): mapping task id to index among all tasks (from 0 to n_jobs)
+        index_task_non_dummy (dict[Hashable, int]): mapping task id to index among all non-dummy tasks (from 0 to n_jobs_non_dummy)
+        special_constraints (SpecialConstraintsDescription): special additional constraints
+        do_special_constraints (bool): True if they are special constraints to take into account
+        relax_the_start_at_end (bool): relax some conditions, only if do_special_constraints.
+        fixed_permutation (Optional[list[int]]): To be used by solutions specifying only `rcpsp_modes`,
+            e.g. in alternating genetic algorithms, that are updating only one solution attribute at a time.
+            See `RcpspSolution` for more details.
+        fixed_modes (Optional[list[int]]): To be used by solutions specifying only the `rpsp_permutation`,
+            e.g. in alternating genetic algorithms, that are updating only one solution attribute at a time.
+            See `RcpspSolution` for more details.
+
+    Example:
+        Initializing a simple RCPSP problem with 4 tasks, 2 resources, and
+        precedence constraints, then generating a baseline schedule.
+
+        >>> from discrete_optimization.rcpsp.problem import RcpspProblem
+        >>> from discrete_optimization.rcpsp.solution import RcpspSolution
+        >>> # Define resources
+        >>> resources = {"R1": 5, "R2": 2}
+        >>> non_renewable_resources = []  # Empty if all resources replenish when a task ends
+        >>> # Define mode details
+        >>> # Format: { task_id: { mode_id: { "duration": int, "resource_name": amount } } }
+        >>> mode_details = {
+        ...     "source": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Source (Dummy)
+        ...     "task-1": {1: {"duration": 4, "R1": 2, "R2": 2}},
+        ...     "task-2": {1: {"duration": 3, "R1": 3, "R2": 0}},
+        ...     "task-3": {1: {"duration": 5, "R1": 2, "R2": 1}},
+        ...     "task-4": {1: {"duration": 2, "R1": 1, "R2": 1}},
+        ...     "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
+        ... }
+        >>> # Define precedence graph
+        >>> successors = {
+        ...     "source": ["task-1", "task-2"],  # First tasks: 1 and 2
+        ...     "task-1": ["task-3"],            # Task 1 must finish before 3
+        ...     "task-2": ["task-4"],            # Task 2 must finish before 4
+        ...     "task-3": ["sink"],              # Task 3 leads to Sink
+        ...     "task-4": ["sink"],              # Task 4 leads to Sink
+        ...     "sink": [],                       # Sink has no successors
+        ... }
+        >>> # Initialize the Problem
+        >>> problem = RcpspProblem(
+        ...     resources=resources,
+        ...     non_renewable_resources=non_renewable_resources,
+        ...     mode_details=mode_details,
+        ...     successors=successors,
+        ...     horizon=20, # Maximum time allowed for the project
+        ...     source_task="source",
+        ...     sink_task="sink"
+        ... )
+        >>> # Get a dummy solution: use serial sgs on trivial permutation
+        >>> # See RcpspSolution docstring for more information.
+        >>> sol = problem.get_dummy_solution()
+        >>> print(sol.rcpsp_schedule)
+        {'source': {'start_time': 0, 'end_time': 0}, 'task-1': {'start_time': 0, 'end_time': 4}, 'task-2': {'start_time': 0, 'end_time': 3}, 'task-3': {'start_time': 4, 'end_time': 9}, 'task-4': {'start_time': 4, 'end_time': 6}, 'sink': {'start_time': 9, 'end_time': 9}}
+        >>> # index_task vs index_task_non_dummy
+        >>> problem.index_task  # index among all tasks: task-1 -> 1
+        {'source': 0, 'task-1': 1, 'task-2': 2, 'task-3': 3, 'task-4': 4, 'sink': 5}
+        >>> problem.index_task_non_dummy  # index among only non-dummy tasks: task-1 -> 0
+        {'task-1': 0, 'task-2': 1, 'task-3': 2, 'task-4': 3}
+        >>> # Convert permutation of tasks into a list opf non-dummy indices
+        >>> problem.convert_task_ids_to_permutation(["task-3", "task-2", "task-4", "task-1"])
+        [2, 1, 3, 0]
 
     """
 
@@ -115,6 +170,26 @@ class RcpspProblem(
         fixed_modes: Optional[list[int]] = None,
         **kwargs: Any,
     ):
+        """
+
+        Args:
+            resources:
+            non_renewable_resources:
+            mode_details:
+            successors:
+            horizon:
+            horizon_multiplier:
+            tasks_list:
+            source_task:
+            sink_task:
+            name_task:
+            calendar_details:
+            special_constraints:
+            relax_the_start_at_end:
+            fixed_permutation:
+            fixed_modes:
+            **kwargs:
+        """
         self.resources = resources
         self.resources_list = list(self.resources.keys())
         self.non_renewable_resources = non_renewable_resources
@@ -522,12 +597,37 @@ class RcpspProblem(
         return model
 
     def get_dummy_solution(self) -> RcpspSolution:
+        """Apply serial sgs on the trivial task permutation.
+
+        See RcpspSolution about details on conversion permutation -> schedule.
+
+        Returns:
+
+        """
         sol = RcpspSolution(
             problem=self,
             rcpsp_permutation=list(range(self.n_jobs_non_dummy)),
             rcpsp_modes=[1 for i in range(self.n_jobs_non_dummy)],
         )
         return sol
+
+    def convert_task_ids_to_permutation(self, tasks: list[Task]) -> list[int]:
+        """Convert list of task ids into a permutation in proper format for `RcpspSolution`.
+
+        - remove source and sink if present
+        - use the indices among non-dummy tasks
+
+        Args:
+            tasks:
+
+        Returns:
+
+        """
+        return [
+            self.index_task_non_dummy[task]
+            for task in tasks
+            if task in self.index_task_non_dummy
+        ]
 
     def get_resource_available(self, res: str, time: int) -> int:
         if self.is_calendar:
