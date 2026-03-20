@@ -16,11 +16,16 @@ from discrete_optimization.generic_rcpsp_tools.solvers.ls import (
     LsSolverType,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_CLASSICAL_RCPSP
+from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+    TasksConstraintHandler,
+)
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
+from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -87,6 +92,19 @@ solvers: dict[
     "critical-path": [(CpmRcpspSolver, {})],
     "lns-scheduling": [
         (
+            LnsOrtoolsCpSat,
+            {
+                "nb_iteration_lns": 100,
+                "nb_iteration_no_improvement": 100,
+                "parameters_cp": ParametersCp.default_cpsat(),
+                "subsolver_subbrick": SubBrick(cls=CpSatRcpspSolver, kwargs={}),
+                "constraint_handler_subbrick": SubBrick(
+                    cls=TasksConstraintHandler, kwargs={}
+                ),
+                "skip_initial_solution_provider": True,
+            },
+        ),
+        (
             LnsCpMznGenericRcpspSolver,
             {
                 "nb_iteration_lns": 100,
@@ -94,7 +112,7 @@ solvers: dict[
                 "parameters_cp": ParametersCp.default_fast_lns(),
                 "cp_solver_name": CpSolverName.CHUFFED,
             },
-        )
+        ),
     ],
     "ls": [
         (LsGenericRcpspSolver, {"ls_solver": LsSolverType.SA, "nb_iteration_max": 2000})
@@ -122,6 +140,7 @@ solvers_compatibility: dict[
     PileCalendarRcpspSolver: [
         RcpspProblem,
     ],
+    CpSatRcpspSolver: [RcpspProblem],
     CpRcpspSolver: [RcpspProblem],
     CpMultimodeRcpspSolver: [
         RcpspProblem,
@@ -148,6 +167,7 @@ solvers_compatibility: dict[
         SpecialConstraintsPreemptiveRcpspProblem,
         RcpspProblem,
     ],
+    LnsOrtoolsCpSat: [RcpspProblem],
     CpmRcpspSolver: [
         PreemptiveRcpspProblem,
         SpecialConstraintsPreemptiveRcpspProblem,
