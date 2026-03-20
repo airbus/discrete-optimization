@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Union
+from typing import Any, Generic, Optional, Union
 
 import numpy as np
 
@@ -157,10 +157,16 @@ class ParamsConstraintExtractor(Hyperparametrizable):
     def __init__(
         self,
         # scheduling
-        minus_delta_primary: int = 5,
-        plus_delta_primary: int = 5,
-        minus_delta_secondary: int = 0,
-        plus_delta_secondary: int = 0,
+        # absolute deltas for primary and secondary tasks from current solution
+        minus_delta_primary: Optional[int] = None,
+        plus_delta_primary: Optional[int] = None,
+        minus_delta_secondary: Optional[int] = None,
+        plus_delta_secondary: Optional[int] = None,
+        # relative deltas to current makespan for primary and secondary tasks from current solution
+        minus_delta_rel_primary: float = 1.0,
+        plus_delta_rel_primary: float = 1.0,
+        minus_delta_rel_secondary: float = 0.1,
+        plus_delta_rel_secondary: float = 0.1,
         constraint_to_current_solution_makespan: bool = True,
         margin_rel_to_current_solution_makespan: float = 0.05,
         # scheduling preemptive
@@ -187,6 +193,10 @@ class ParamsConstraintExtractor(Hyperparametrizable):
         plus_delta_nb_usages_per_unary_resource: int = 3,
         minus_delta_nb_usages_per_unary_resource: int = 3,
     ):
+        self.minus_delta_rel_primary = minus_delta_rel_primary
+        self.plus_delta_rel_primary = plus_delta_rel_primary
+        self.minus_delta_rel_secondary = minus_delta_rel_secondary
+        self.plus_delta_rel_secondary = plus_delta_rel_secondary
         self.minus_delta_primary = minus_delta_primary
         self.plus_delta_primary = plus_delta_primary
         self.minus_delta_secondary = minus_delta_secondary
@@ -339,11 +349,39 @@ class ConstraintExtractorPortfolio(BaseConstraintExtractor[Task]):
 class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
     def __init__(
         self,
-        minus_delta_primary: int = 5,
-        plus_delta_primary: int = 5,
-        minus_delta_secondary: int = 0,
-        plus_delta_secondary: int = 0,
+        minus_delta_primary: Optional[int] = None,
+        plus_delta_primary: Optional[int] = None,
+        minus_delta_secondary: Optional[int] = None,
+        plus_delta_secondary: Optional[int] = None,
+        minus_delta_rel_primary: float = 1.0,
+        plus_delta_rel_primary: float = 1.0,
+        minus_delta_rel_secondary: float = 0.1,
+        plus_delta_rel_secondary: float = 0.1,
     ):
+        """
+
+        Args:
+            minus_delta_primary: absolute delta from current solution for a lower bound on start of primary tasks.
+                If None, use relative delta instead.
+            plus_delta_primary: absolute delta from current solution for an upper bound on start of primary tasks.
+                If None, use relative delta instead.
+            minus_delta_secondary: absolute delta from current solution for a lower bound on start of secondary tasks.
+                If None, use relative delta instead.
+            plus_delta_secondary: absolute delta from current solution for an upper bound on start of secondary tasks.
+                If None, use relative delta instead.
+            minus_delta_rel_primary: relative delta from current solution for a lower bound on start of primary tasks.
+                Absolute delta is deduced by multiplying the relative delta by current solution makespan.
+            plus_delta_rel_primary: relative delta from current solution for an upper bound on start of primary tasks.
+                Absolute delta is deduced by multiplying the relative delta by current solution makespan.
+            minus_delta_rel_secondary: relative delta from current solution for a lower bound on start of secondary tasks.
+                Absolute delta is deduced by multiplying the relative delta by current solution makespan.
+            plus_delta_rel_secondary: relative delta from current solution for an upper bound on start of secondary tasks.
+                Absolute delta is deduced by multiplying the relative delta by current solution makespan.
+        """
+        self.minus_delta_rel_primary = minus_delta_rel_primary
+        self.plus_delta_rel_primary = plus_delta_rel_primary
+        self.minus_delta_rel_secondary = minus_delta_rel_secondary
+        self.plus_delta_rel_secondary = plus_delta_rel_secondary
         self.plus_delta_primary = plus_delta_primary
         self.minus_delta_secondary = minus_delta_secondary
         self.plus_delta_secondary = plus_delta_secondary
@@ -366,6 +404,27 @@ class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
                 f"if solution and solver are related to a scheduling problem."
             )
         makespan_ub = solver.get_makespan_upper_bound()
+        # compute absolute deltas from relative deltas if necessary
+        current_makespan = current_solution.get_max_end_time()
+        if self.minus_delta_primary is None:
+            minus_delta_primary = int(self.minus_delta_rel_primary * current_makespan)
+        else:
+            minus_delta_primary = self.minus_delta_primary
+        if self.plus_delta_primary is None:
+            plus_delta_primary = int(self.plus_delta_rel_primary * current_makespan)
+        else:
+            plus_delta_primary = self.plus_delta_primary
+        if self.minus_delta_secondary is None:
+            minus_delta_secondary = int(
+                self.minus_delta_rel_secondary * current_makespan
+            )
+        else:
+            minus_delta_secondary = self.minus_delta_secondary
+        if self.plus_delta_secondary is None:
+            plus_delta_secondary = int(self.plus_delta_rel_secondary * current_makespan)
+        else:
+            plus_delta_secondary = self.plus_delta_secondary
+        # new constraints
         constraints = []
         for task in tasks_primary:
             start_time_j = current_solution.get_start_time(task)
@@ -373,19 +432,19 @@ class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
                 task=task,
                 start_or_end=StartOrEnd.START,
                 sign=SignEnum.UEQ,
-                time=max(0, start_time_j - self.minus_delta_primary),
+                time=max(0, start_time_j - minus_delta_primary),
             )
             constraints += solver.add_constraint_on_task(
                 task=task,
                 start_or_end=StartOrEnd.START,
                 sign=SignEnum.LEQ,
-                time=min(makespan_ub, start_time_j + self.plus_delta_primary),
+                time=min(makespan_ub, start_time_j + plus_delta_primary),
             )
         for task in tasks_secondary:
             if task in tasks_primary:
                 continue
             start_time_j = current_solution.get_start_time(task)
-            if self.minus_delta_secondary == 0 and self.plus_delta_secondary == 0:
+            if minus_delta_secondary == 0 and plus_delta_secondary == 0:
                 constraints += solver.add_constraint_on_task(
                     task=task,
                     start_or_end=StartOrEnd.START,
@@ -399,7 +458,7 @@ class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
                     sign=SignEnum.UEQ,
                     time=max(
                         0,
-                        start_time_j - self.minus_delta_secondary,
+                        start_time_j - minus_delta_secondary,
                     ),
                 )
                 constraints += solver.add_constraint_on_task(
@@ -408,7 +467,7 @@ class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
                     sign=SignEnum.LEQ,
                     time=min(
                         makespan_ub,
-                        start_time_j + self.plus_delta_secondary,
+                        start_time_j + plus_delta_secondary,
                     ),
                 )
         return constraints
@@ -655,6 +714,10 @@ def build_default_constraint_extractor(
                 minus_delta_primary=params_constraint_extractor.minus_delta_primary,
                 plus_delta_secondary=params_constraint_extractor.plus_delta_secondary,
                 minus_delta_secondary=params_constraint_extractor.minus_delta_secondary,
+                plus_delta_rel_primary=params_constraint_extractor.plus_delta_rel_primary,
+                minus_delta_rel_primary=params_constraint_extractor.minus_delta_rel_primary,
+                plus_delta_rel_secondary=params_constraint_extractor.plus_delta_rel_secondary,
+                minus_delta_rel_secondary=params_constraint_extractor.minus_delta_rel_secondary,
             )
         )
         if params_constraint_extractor.chaining:
