@@ -263,6 +263,62 @@ class CpSatRcpspSolver(
                 # way 1
                 model.Add(score_task[task1] == score_task[task2])
 
+    def add_special_temporal_constraints(
+        self,
+        model: CpModel,
+        starts_var: dict[Hashable, IntVar],
+        ends_var: dict[Hashable, IntVar],
+    ):
+        """Add special temporal constraints to the CP model.
+
+        Args:
+            model: The CP-SAT model
+            starts_var: Dictionary mapping tasks to their start time variables
+            ends_var: Dictionary mapping tasks to their end time variables
+        """
+        # start_to_start_with_time_lag: start(t1) + offset <= start(t2)
+        for t1, t2, offset in self.problem.special_constraints.start_to_start_with_time_lag:
+            model.Add(starts_var[t1] + offset <= starts_var[t2])
+
+        # start_together: start(t1) == start(t2)
+        for t1, t2 in self.problem.special_constraints.start_together:
+            model.Add(starts_var[t1] == starts_var[t2])
+
+        # start_at_end: end(t1) == start(t2)
+        for t1, t2 in self.problem.special_constraints.start_at_end:
+            model.Add(ends_var[t1] == starts_var[t2])
+
+        # start_at_end_plus_offset: end(t1) + offset <= start(t2)
+        for t1, t2, offset in self.problem.special_constraints.start_at_end_plus_offset:
+            model.Add(ends_var[t1] + offset <= starts_var[t2])
+
+        # start_after_nunit: start(t1) + offset <= start(t2)
+        for t1, t2, offset in self.problem.special_constraints.start_after_nunit:
+            model.Add(starts_var[t1] + offset <= starts_var[t2])
+
+        # disjunctive_tasks: tasks cannot overlap (pairwise)
+        # Either end(t1) <= start(t2) OR end(t2) <= start(t1)
+        for t1, t2 in self.problem.special_constraints.disjunctive_tasks:
+            b = model.NewBoolVar(f"disjunctive_{t1}_{t2}")
+            model.Add(ends_var[t1] <= starts_var[t2]).OnlyEnforceIf(b)
+            model.Add(ends_var[t2] <= starts_var[t1]).OnlyEnforceIf(b.Not())
+
+        # start_times_window: lower_bound <= start(task) <= upper_bound
+        for task in self.problem.special_constraints.start_times_window:
+            lower, upper = self.problem.special_constraints.start_times_window[task]
+            if lower is not None:
+                model.Add(starts_var[task] >= lower)
+            if upper is not None:
+                model.Add(starts_var[task] <= upper)
+
+        # end_times_window: lower_bound <= end(task) <= upper_bound
+        for task in self.problem.special_constraints.end_times_window:
+            lower, upper = self.problem.special_constraints.end_times_window[task]
+            if lower is not None:
+                model.Add(ends_var[task] >= lower)
+            if upper is not None:
+                model.Add(ends_var[task] <= upper)
+
     def init_model(self, **kwargs):
         """Init CP model."""
         include_special_constraints = kwargs.get(
@@ -308,6 +364,11 @@ class CpSatRcpspSolver(
                     is_present_var=is_present_var,
                     pair_mode_constraint=self.problem.special_constraints.pair_mode_constraint,
                 )
+            self.add_special_temporal_constraints(
+                model=model,
+                starts_var=starts_var,
+                ends_var=ends_var,
+            )
         objective = self.get_global_makespan_variable()
         self.minimize_variable(objective)
 
@@ -478,6 +539,11 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
                     is_present_var=is_present_var,
                     pair_mode_constraint=self.problem.special_constraints.pair_mode_constraint,
                 )
+            self.add_special_temporal_constraints(
+                model=model,
+                starts_var=starts_var,
+                ends_var=ends_var,
+            )
         model.Minimize(
             weight_on_used_resource
             * sum([is_used_resource[x] for x in is_used_resource])
@@ -700,6 +766,11 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                     is_present_var=is_present_var,
                     pair_mode_constraint=self.problem.special_constraints.pair_mode_constraint,
                 )
+            self.add_special_temporal_constraints(
+                model=model,
+                starts_var=starts_var,
+                ends_var=ends_var,
+            )
 
         model.Minimize(
             weight_on_used_resource
