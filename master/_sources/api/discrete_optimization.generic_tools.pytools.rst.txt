@@ -1,0 +1,21 @@
+discrete\_optimization.generic\_tools.pytools package
+=====================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.pytools.timeout\_decorator module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.pytools.timeout_decorator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.pytools
+   :members:
+   :show-inheritance:
+   :undoc-members:
