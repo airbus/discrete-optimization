@@ -689,6 +689,19 @@ def compute_constraints_details(
         tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
     ] = []
     for t1, t2, off in constraints.start_to_start_with_time_lag:
+        # Check for potential inconsistency with successor relationships
+        if off < 0 and t2 in solution.problem.successors.get(t1, []):
+            logger.warning(
+                f"Potential inconsistency detected: "
+                f"Task {t1} has a start_to_start_with_time_lag constraint with task {t2} "
+                f"with negative offset {off}, but {t2} is also a successor of {t1}. "
+                f"This means: "
+                f"- start_to_start requires: start({t1}) + {off} <= start({t2}), "
+                f"  allowing {t2} to start before {t1} completes. "
+                f"- Successor constraint requires: end({t1}) <= start({t2}), "
+                f"  requiring {t2} to start after {t1} ends. "
+                f"These constraints may be contradictory depending on task durations."
+            )
         time1 = solution.get_start_time(t1)
         time2 = solution.get_start_time(t2)
         b = time1 + off <= time2
