@@ -9,7 +9,7 @@ from __future__ import (
 import logging
 from collections.abc import Hashable, Sequence
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -562,38 +562,6 @@ def create_fake_tasks(rcpsp_problem: RcpspProblem) -> list[dict[str, int]]:
                     }
                     fake_tasks += [consume]
         return fake_tasks
-
-
-def get_max_time_solution(
-    solution: Union[PreemptiveRcpspSolution, RcpspSolution],
-) -> int:
-    if isinstance(solution, PreemptiveRcpspSolution):
-        max_time = max(
-            [solution.rcpsp_schedule[x]["ends"][-1] for x in solution.rcpsp_schedule]
-        )
-        return max_time
-    else:
-        max_time = max(
-            [solution.rcpsp_schedule[x]["end_time"] for x in solution.rcpsp_schedule]
-        )
-        return max_time
-
-
-def get_tasks_ending_between_two_times(
-    solution: Union[PreemptiveRcpspSolution, RcpspSolution], time_1: int, time_2: int
-) -> list[Hashable]:
-    if isinstance(solution, PreemptiveRcpspSolution):
-        return [
-            x
-            for x in solution.rcpsp_schedule
-            if time_1 <= solution.rcpsp_schedule[x]["ends"][-1] <= time_2
-        ]
-    else:
-        return [
-            x
-            for x in solution.rcpsp_schedule
-            if time_1 <= solution.rcpsp_schedule[x]["end_time"] <= time_2
-        ]
 
 
 def get_start_bounds_from_additional_constraint(
