@@ -32,7 +32,8 @@ class PostProcessLeftShift(PostProcessSolution):
                 start_together = partial_solution.start_together
                 start_at_end = partial_solution.start_at_end
                 start_at_end_plus_offset = partial_solution.start_at_end_plus_offset
-                start_after_nunit = partial_solution.start_after_nunit
+                start_to_start_min_time_lag = partial_solution.start_to_start_min_time_lag
+                start_to_start_max_time_lag = partial_solution.start_to_start_max_time_lag
                 for t1, t2 in start_together:
                     b = (
                         solution.rcpsp_schedule[t1]["start_time"]
@@ -54,10 +55,17 @@ class PostProcessLeftShift(PostProcessSolution):
                     )
                     if not b:
                         return False
-                for t1, t2, off in start_after_nunit:
+                for t1, t2, off in start_to_start_min_time_lag:
                     b = (
                         solution.rcpsp_schedule[t2]["start_time"]
                         >= solution.rcpsp_schedule[t1]["start_time"] + off
+                    )
+                    if not b:
+                        return False
+                for t1, t2, offset in start_to_start_max_time_lag:
+                    b = (
+                        solution.rcpsp_schedule[t2]["start_time"]
+                        <= solution.rcpsp_schedule[t1]["start_time"] + offset
                     )
                     if not b:
                         return False

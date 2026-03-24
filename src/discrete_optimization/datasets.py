@@ -63,6 +63,7 @@ TOP_DATASET_URLS = [
     "https://www.hds.utc.fr/~moukrim/dokuwiki/_media/en/chao.zip",
 ]
 
+RCALB_L_URL = "https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.57745/EBDN5W#"
 
 MIS_FILES = [
     "https://oeis.org/A265032/a265032_1dc.64.txt.gz",
@@ -649,6 +650,53 @@ def fetch_data_tsptw(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_rcalb_l(data_home: Optional[str] = None):
+    """Fetch JSON data from the RCALB_L dataset file by file.
+
+    cf https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.57745/EBDN5W
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+    """
+    import json
+    from urllib.request import Request, urlopen
+
+    data_home = get_data_home(data_home=data_home)
+    rcalb_l_dir = os.path.join(data_home, "rcalb_l")
+    os.makedirs(rcalb_l_dir, exist_ok=True)
+
+    # Metadata API endpoint
+    metadata_url = RCALB_L_URL
+
+    # Use a custom User-Agent, as default urllib agent might be blocked
+    req = Request(metadata_url, headers={"User-Agent": "Mozilla/5.0"})
+
+    try:
+        with urlopen(req) as response:
+            metadata = json.loads(response.read().decode("utf-8"))
+
+        # Parse the JSON response to get the list of files
+        files = metadata.get("data", {}).get("latestVersion", {}).get("files", [])
+
+        for file_info in files:
+            data_file = file_info.get("dataFile", {})
+            file_id = data_file.get("id")
+            filename = data_file.get("filename")
+
+            # Download only the JSON files
+            if file_id and filename and filename.endswith(".json"):
+                file_url = f"https://entrepot.recherche.data.gouv.fr/api/access/datafile/{file_id}"
+                file_req = Request(file_url, headers={"User-Agent": "Mozilla/5.0"})
+                file_path = os.path.join(rcalb_l_dir, filename)
+
+                with urlopen(file_req) as f_in, open(file_path, "wb") as f_out:
+                    f_out.write(f_in.read())
+
+    except Exception as e:
+        print(f"Failed to fetch individual files for RCALB_L dataset: {e}")
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -671,6 +719,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_mspsplib_repo(data_home=data_home)
     fetch_data_from_alb(data_home=data_home)
     fetch_data_from_top(data_home=data_home)
+    fetch_data_from_rcalb_l(data_home=data_home)
 
 
 if __name__ == "__main__":

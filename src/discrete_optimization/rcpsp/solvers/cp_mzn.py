@@ -2108,14 +2108,14 @@ def hard_start_together(
     return constraint_strings
 
 
-def hard_start_after_nunit(
-    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
+def hard_start_to_start_min_time_lag(
+    list_start_to_start_min_time_lag: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[
         CpPreemptiveRcpspSolver, CpMultimodePreemptiveRcpspSolver, CpRcpspSolver
     ],
 ):
     constraint_strings = []
-    for t1, t2, delta in list_start_after_nunit:
+    for t1, t2, delta in list_start_to_start_min_time_lag:
         string = (
             "constraint s["
             + str(cp_solver.index_in_minizinc[t2])
@@ -2129,49 +2129,49 @@ def hard_start_after_nunit(
     return constraint_strings
 
 
-def soft_start_after_nunit(
-    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
+def soft_start_to_start_min_time_lag(
+    list_start_to_start_min_time_lag: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[
         CpPreemptiveRcpspSolver, CpMultimodePreemptiveRcpspSolver, CpRcpspSolver
     ],
 ):
     s = (
         """
-        var 0..max_time*nb_start_after_nunit: penalty_start_after_nunit;\n
-        int: nb_start_after_nunit="""
-        + str(len(list_start_after_nunit))
+        var 0..max_time*nb_start_to_start_min_time_lag: penalty_start_to_start_min_time_lag;\n
+        int: nb_start_to_start_min_time_lag="""
+        + str(len(list_start_to_start_min_time_lag))
         + """;\n"""
         + """
-        array[1..nb_start_after_nunit] of Tasks: st1_4="""
+        array[1..nb_start_to_start_min_time_lag] of Tasks: st1_4="""
         + str(
             [
                 cp_solver.index_in_minizinc[t1]
-                for t1, t2, delta in list_start_after_nunit
+                for t1, t2, delta in list_start_to_start_min_time_lag
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_after_nunit] of Tasks: st2_4="""
+        array[1..nb_start_to_start_min_time_lag] of Tasks: st2_4="""
         + str(
             [
                 cp_solver.index_in_minizinc[t2]
-                for t1, t2, delta in list_start_after_nunit
+                for t1, t2, delta in list_start_to_start_min_time_lag
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_after_nunit] of int: nunits_4="""
-        + str([delta for t1, t2, delta in list_start_after_nunit])
+        array[1..nb_start_to_start_min_time_lag] of int: nunits_4="""
+        + str([delta for t1, t2, delta in list_start_to_start_min_time_lag])
         + """;\n"""
         + """
-        constraint sum(i in 1..nb_start_after_nunit)(max([0, s[st1_4[i]]+nunits_4[i]-s[st2_4[i]]]))==penalty_start_after_nunit;\n
+        constraint sum(i in 1..nb_start_to_start_min_time_lag)(max([0, s[st1_4[i]]+nunits_4[i]-s[st2_4[i]]]))==penalty_start_to_start_min_time_lag;\n
         """
     )
-    return [s], ["penalty_start_after_nunit"]
+    return [s], ["penalty_start_to_start_min_time_lag"]
 
 
-def hard_start_after_nunit_mrcpsp(
-    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
+def hard_start_to_start_min_time_lag_mrcpsp(
+    list_start_to_start_min_time_lag: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[
         CpMultimodeRcpspSolver,
         CPMultimodeWithFakeTaskRcpspSolver,
@@ -2179,7 +2179,7 @@ def hard_start_after_nunit_mrcpsp(
     ],
 ):
     constraint_strings = []
-    for t1, t2, delta in list_start_after_nunit:
+    for t1, t2, delta in list_start_to_start_min_time_lag:
         string = (
             "constraint start["
             + str(cp_solver.index_in_minizinc[t2])
@@ -2193,8 +2193,8 @@ def hard_start_after_nunit_mrcpsp(
     return constraint_strings
 
 
-def soft_start_after_nunit_mrcpsp(
-    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
+def soft_start_to_start_min_time_lag_mrcpsp(
+    list_start_to_start_min_time_lag: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[
         CpMultimodeRcpspSolver,
         CPMultimodeWithFakeTaskRcpspSolver,
@@ -2203,37 +2203,165 @@ def soft_start_after_nunit_mrcpsp(
 ):
     s = (
         """
-        var 0..max_time*nb_start_after_nunit: penalty_start_after_nunit;\n
-        int: nb_start_after_nunit="""
-        + str(len(list_start_after_nunit))
+        var 0..max_time*nb_start_to_start_min_time_lag: penalty_start_to_start_min_time_lag;\n
+        int: nb_start_to_start_min_time_lag="""
+        + str(len(list_start_to_start_min_time_lag))
         + """;\n"""
         + """
-        array[1..nb_start_after_nunit] of Act: st1_5="""
+        array[1..nb_start_to_start_min_time_lag] of Act: st1_5="""
         + str(
             [
                 cp_solver.index_in_minizinc[t1]
-                for t1, t2, delta in list_start_after_nunit
+                for t1, t2, delta in list_start_to_start_min_time_lag
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_after_nunit] of Act: st2_5="""
+        array[1..nb_start_to_start_min_time_lag] of Act: st2_5="""
         + str(
             [
                 cp_solver.index_in_minizinc[t2]
-                for t1, t2, delta in list_start_after_nunit
+                for t1, t2, delta in list_start_to_start_min_time_lag
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_after_nunit] of int: nunit_5="""
-        + str([delta for t1, t2, delta in list_start_after_nunit])
+        array[1..nb_start_to_start_min_time_lag] of int: nunits_5="""
+        + str([delta for t1, t2, delta in list_start_to_start_min_time_lag])
         + """;\n"""
         + """
-        constraint sum(i in 1..nb_start_after_nunit)(max([0, start[st1_5[i]]+nunits_5[i]-start[st2_5[i]]]))==penalty_start_after_nunit;\n
+        constraint sum(i in 1..nb_start_to_start_min_time_lag)(max([0, start[st1_5[i]]+nunits_5[i]-start[st2_5[i]]]))==penalty_start_to_start_min_time_lag;\n
         """
     )
-    return [s], ["penalty_start_after_nunit"]
+    return [s], ["penalty_start_to_start_min_time_lag"]
+
+
+def hard_start_to_start_max_time_lag(
+    list_start_to_start_max_time_lag: list[tuple[Hashable, Hashable, int]],
+    cp_solver: Union[
+        CpPreemptiveRcpspSolver, CpMultimodePreemptiveRcpspSolver, CpRcpspSolver
+    ],
+):
+    constraint_strings = []
+    for t1, t2, offset in list_start_to_start_max_time_lag:
+        string = (
+            "constraint s["
+            + str(cp_solver.index_in_minizinc[t2])
+            + "] <= s["
+            + str(cp_solver.index_in_minizinc[t1])
+            + "]+"
+            + str(offset)
+            + ";\n"
+        )
+        constraint_strings += [string]
+    return constraint_strings
+
+
+def soft_start_to_start_max_time_lag(
+    list_start_to_start_max_time_lag: list[tuple[Hashable, Hashable, int]],
+    cp_solver: Union[
+        CpPreemptiveRcpspSolver, CpMultimodePreemptiveRcpspSolver, CpRcpspSolver
+    ],
+):
+    s = (
+        """
+        var 0..max_time*nb_start_to_start_max_time_lag: penalty_start_to_start_max_time_lag;\n
+        int: nb_start_to_start_max_time_lag="""
+        + str(len(list_start_to_start_max_time_lag))
+        + """;\n"""
+        + """
+        array[1..nb_start_to_start_max_time_lag] of Tasks: st1_6="""
+        + str(
+            [
+                cp_solver.index_in_minizinc[t1]
+                for t1, t2, offset in list_start_to_start_max_time_lag
+            ]
+        )
+        + """;\n"""
+        + """
+        array[1..nb_start_to_start_max_time_lag] of Tasks: st2_6="""
+        + str(
+            [
+                cp_solver.index_in_minizinc[t2]
+                for t1, t2, offset in list_start_to_start_max_time_lag
+            ]
+        )
+        + """;\n"""
+        + """
+        array[1..nb_start_to_start_max_time_lag] of int: offset_6="""
+        + str([offset for t1, t2, offset in list_start_to_start_max_time_lag])
+        + """;\n"""
+        + """
+        constraint sum(i in 1..nb_start_to_start_max_time_lag)(max([0, s[st2_6[i]]-s[st1_6[i]]-offset_6[i]]))==penalty_start_to_start_max_time_lag;\n
+        """
+    )
+    return [s], ["penalty_start_to_start_max_time_lag"]
+
+
+def hard_start_to_start_max_time_lag_mrcpsp(
+    list_start_to_start_max_time_lag: list[tuple[Hashable, Hashable, int]],
+    cp_solver: Union[
+        CpMultimodeRcpspSolver,
+        CPMultimodeWithFakeTaskRcpspSolver,
+        CpNoBoolMultimodeRcpspSolver,
+    ],
+):
+    constraint_strings = []
+    for t1, t2, offset in list_start_to_start_max_time_lag:
+        string = (
+            "constraint start["
+            + str(cp_solver.index_in_minizinc[t2])
+            + "] <= start["
+            + str(cp_solver.index_in_minizinc[t1])
+            + "]+"
+            + str(offset)
+            + ";\n"
+        )
+        constraint_strings += [string]
+    return constraint_strings
+
+
+def soft_start_to_start_max_time_lag_mrcpsp(
+    list_start_to_start_max_time_lag: list[tuple[Hashable, Hashable, int]],
+    cp_solver: Union[
+        CpMultimodeRcpspSolver,
+        CPMultimodeWithFakeTaskRcpspSolver,
+        CpNoBoolMultimodeRcpspSolver,
+    ],
+):
+    s = (
+        """
+        var 0..max_time*nb_start_to_start_max_time_lag: penalty_start_to_start_max_time_lag;\n
+        int: nb_start_to_start_max_time_lag="""
+        + str(len(list_start_to_start_max_time_lag))
+        + """;\n"""
+        + """
+        array[1..nb_start_to_start_max_time_lag] of Act: st1_7="""
+        + str(
+            [
+                cp_solver.index_in_minizinc[t1]
+                for t1, t2, offset in list_start_to_start_max_time_lag
+            ]
+        )
+        + """;\n"""
+        + """
+        array[1..nb_start_to_start_max_time_lag] of Act: st2_7="""
+        + str(
+            [
+                cp_solver.index_in_minizinc[t2]
+                for t1, t2, offset in list_start_to_start_max_time_lag
+            ]
+        )
+        + """;\n"""
+        + """
+        array[1..nb_start_to_start_max_time_lag] of int: offset_7="""
+        + str([offset for t1, t2, offset in list_start_to_start_max_time_lag])
+        + """;\n"""
+        + """
+        constraint sum(i in 1..nb_start_to_start_max_time_lag)(max([0, start[st2_7[i]]-start[st1_7[i]]-offset_7[i]]))==penalty_start_to_start_max_time_lag;\n
+        """
+    )
+    return [s], ["penalty_start_to_start_max_time_lag"]
 
 
 def hard_start_at_end_plus_offset_mrcpsp(
@@ -2833,9 +2961,14 @@ def add_hard_special_constraints_mrcpsp(
             constraint_strings += hard_start_together_mrcpsp(
                 list_start_together=partial_solution.start_together, cp_solver=cp_solver
             )
-        if partial_solution.start_after_nunit is not None:
-            constraint_strings += hard_start_after_nunit_mrcpsp(
-                list_start_after_nunit=partial_solution.start_after_nunit,
+        if partial_solution.start_to_start_min_time_lag is not None:
+            constraint_strings += hard_start_to_start_min_time_lag_mrcpsp(
+                list_start_to_start_min_time_lag=partial_solution.start_to_start_min_time_lag,
+                cp_solver=cp_solver,
+            )
+        if partial_solution.start_to_start_max_time_lag is not None:
+            constraint_strings += hard_start_to_start_max_time_lag_mrcpsp(
+                list_start_to_start_max_time_lag=partial_solution.start_to_start_max_time_lag,
                 cp_solver=cp_solver,
             )
         if partial_solution.start_at_end_plus_offset is not None:
@@ -2916,9 +3049,16 @@ def add_soft_special_constraints_mrcpsp(
             )
             constraint_strings += c
             name_penalty += n
-        if partial_solution.start_after_nunit is not None:
-            c, n = soft_start_after_nunit_mrcpsp(
-                list_start_after_nunit=partial_solution.start_after_nunit,
+        if partial_solution.start_to_start_min_time_lag is not None:
+            c, n = soft_start_to_start_min_time_lag_mrcpsp(
+                list_start_to_start_min_time_lag=partial_solution.start_to_start_min_time_lag,
+                cp_solver=cp_solver,
+            )
+            constraint_strings += c
+            name_penalty += n
+        if partial_solution.start_to_start_max_time_lag is not None:
+            c, n = soft_start_to_start_max_time_lag_mrcpsp(
+                list_start_to_start_max_time_lag=partial_solution.start_to_start_max_time_lag,
                 cp_solver=cp_solver,
             )
             constraint_strings += c
@@ -2992,9 +3132,14 @@ def add_hard_special_constraints(
         constraint_strings += hard_start_together(
             list_start_together=partial_solution.start_together, cp_solver=cp_solver
         )
-    if partial_solution.start_after_nunit is not None:
-        constraint_strings += hard_start_after_nunit(
-            list_start_after_nunit=partial_solution.start_after_nunit,
+    if partial_solution.start_to_start_min_time_lag is not None:
+        constraint_strings += hard_start_to_start_min_time_lag(
+            list_start_to_start_min_time_lag=partial_solution.start_to_start_min_time_lag,
+            cp_solver=cp_solver,
+        )
+    if partial_solution.start_to_start_max_time_lag is not None:
+        constraint_strings += hard_start_to_start_max_time_lag(
+            list_start_to_start_max_time_lag=partial_solution.start_to_start_max_time_lag,
             cp_solver=cp_solver,
         )
     if partial_solution.start_at_end_plus_offset is not None:
@@ -3062,13 +3207,22 @@ def add_soft_special_constraints(
         constraint_strings += c
         name_penalty += n
 
-    if partial_solution.start_after_nunit is not None:
-        c, n = soft_start_after_nunit(
-            list_start_after_nunit=partial_solution.start_after_nunit,
+    if partial_solution.start_to_start_min_time_lag is not None:
+        c, n = soft_start_to_start_min_time_lag(
+            list_start_to_start_min_time_lag=partial_solution.start_to_start_min_time_lag,
             cp_solver=cp_solver,
         )
         constraint_strings += c
         name_penalty += n
+
+    if partial_solution.start_to_start_max_time_lag is not None:
+        c, n = soft_start_to_start_max_time_lag(
+            list_start_to_start_max_time_lag=partial_solution.start_to_start_max_time_lag,
+            cp_solver=cp_solver,
+        )
+        constraint_strings += c
+        name_penalty += n
+
     if partial_solution.start_at_end_plus_offset is not None:
         c, n = soft_start_at_end_plus_offset(
             list_start_at_end_plus_offset=partial_solution.start_at_end_plus_offset,
