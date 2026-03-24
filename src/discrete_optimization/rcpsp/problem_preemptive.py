@@ -389,6 +389,7 @@ class PartialPreemptiveRcpspSolution:
         start_at_end: list[tuple[int, int]] = None,
         start_at_end_plus_offset: list[tuple[int, int, int]] = None,
         start_to_start_min_time_lag: list[tuple[int, int, int]] = None,
+        start_to_start_max_time_lag: list[tuple[int, int, int]] = None,
         disjunctive_tasks: list[tuple[int, int]] = None,
         start_times_window: dict[Hashable, tuple[int, int]] = None,
         end_times_window: dict[Hashable, tuple[int, int]] = None,
@@ -402,6 +403,7 @@ class PartialPreemptiveRcpspSolution:
         self.start_at_end = start_at_end
         self.start_at_end_plus_offset = start_at_end_plus_offset
         self.start_to_start_min_time_lag = start_to_start_min_time_lag
+        self.start_to_start_max_time_lag = start_to_start_max_time_lag
         self.disjunctive_tasks = disjunctive_tasks
         self.start_times_window = start_times_window
         self.end_times_window = end_times_window
