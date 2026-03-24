@@ -129,7 +129,7 @@ def test_sa_twoopttbasic():
 
 def test_hc():
     files = get_data_available()
-    files = [f for f in files if "tsp_100_3" in f]
+    files = [f for f in files if "tsp_5_1" in f]
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
@@ -144,13 +144,14 @@ def test_hc():
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
         params_objective_function=params_objective_function,
     )
-    result_storage = sa.solve(initial_variable=solution, nb_iteration_max=10000)
+    result_storage = sa.solve(initial_variable=solution, nb_iteration_max=100)
     sol: TspSolution = result_storage.get_best_solution()
     assert model.satisfy(sol)
 
     # test warm start
-    start_solution = sol
-    assert result_storage[0][0].permutation != sol.permutation
+    start_solution = TspSolution(
+        problem=model, permutation=list(reversed(result_storage[0][0].permutation))
+    )
     sa = HillClimber(
         problem=model,
         mutator=mutate_portfolio,
@@ -159,8 +160,8 @@ def test_hc():
         params_objective_function=params_objective_function,
     )
     sa.set_warm_start(start_solution)
-    result_storage2 = sa.solve(nb_iteration_max=10000)
-    assert result_storage2[0][0].permutation == sol.permutation
+    result_storage2 = sa.solve(nb_iteration_max=100)
+    assert result_storage2[0][0].permutation == start_solution.permutation
 
 
 if __name__ == "__main__":

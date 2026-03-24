@@ -234,7 +234,7 @@ jobs:
           pytest -s tests/show_do_path.py
           # run test suite
           MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
-            -v --durations=0 --durations-min=10 \
+            -v --durations=0 --durations-min=2 \
             tests
       - name: Test with pytest (with coverage)
         if: ${{ matrix.coverage }}
@@ -249,7 +249,7 @@ jobs:
             --cov-report xml:coverage.xml \
             --cov-report html:coverage_html \
             --cov-report term \
-            -v --durations=0 --durations-min=10 \
+            -v --durations=0 --durations-min=2 \
             tests
       - name: Test examples in docstrings
         run: |

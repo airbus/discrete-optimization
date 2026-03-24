@@ -147,7 +147,7 @@ def test_solve_simple():
         problem=model,
         solver_multimode_rcpsp=None,
     )
-    solve_and_validate(model, solver)
+    solve_and_validate(model, solver, time_limit=1)
 
 
 def test_solve_medium():
@@ -157,7 +157,7 @@ def test_solve_medium():
         problem=model,
         solver_multimode_rcpsp=None,
     )
-    solve_and_validate(model, solver)
+    solve_and_validate(model, solver, time_limit=1)
 
 
 @pytest.mark.slow
@@ -187,7 +187,7 @@ def test_with_imopse_data():
         problem=model,
         solver_multimode_rcpsp=None,
     )
-    solve_and_validate(model, solver)
+    solve_and_validate(model, solver, time_limit=1)
 
 
 # ==== Assertion helpers for validating solutions ====

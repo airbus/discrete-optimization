@@ -23,7 +23,7 @@ class TimerStopper(Callback):
 
     """
 
-    def __init__(self, total_seconds: int, check_nb_steps: int = 1):
+    def __init__(self, total_seconds: float, check_nb_steps: int = 1):
         """
 
         Args:

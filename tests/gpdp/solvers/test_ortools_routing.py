@@ -3,12 +3,13 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from datetime import datetime
 
 import numpy as np
 import pytest
 
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -37,9 +38,9 @@ def random_seed():
     return SEED
 
 
-nb_nodes = 1000
+nb_nodes = 100
 nb_vehicles = 1
-nb_clusters = 100
+nb_clusters = 10
 
 
 def test_ortools_with_cb(random_seed):
@@ -89,19 +90,17 @@ def test_ortools_with_cb(random_seed):
 
     # callbacks
     nb_iteration_tracker = NbIterationTracker()
-    timer = TimerStopper(total_seconds=2, check_nb_steps=1)
+    stopper = NbIterationStopper(1)
 
-    start_time = datetime.utcnow()
     #  solve
     sol, fit = solver.solve(
-        callbacks=[nb_iteration_tracker, timer]
+        callbacks=[nb_iteration_tracker, stopper]
     ).get_best_solution_fit()
-    end_time = datetime.utcnow()
 
     assert isinstance(fit, float)
     assert isinstance(sol, GpdpSolution)
     assert nb_iteration_tracker.nb_iteration > 0
-    assert (end_time - start_time).total_seconds() < 10
+    assert nb_iteration_tracker.nb_iteration <= stopper.nb_iteration_max
 
 
 def test_ortools_with_warm_start(random_seed):
@@ -145,7 +144,7 @@ def test_ortools_with_warm_start(random_seed):
     )
 
     # solve
-    result_storage = solver.solve()
+    result_storage = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=2)])
     print(len(result_storage))
     print([(fit, sol.trajectories) for sol, fit in result_storage])
 
@@ -175,7 +174,7 @@ def test_ortools_with_warm_start(random_seed):
         use_cp_sat=use_cp_sat,
     )
     solver.set_warm_start(start_solution)
-    result_storage2 = solver.solve()
+    result_storage2 = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     print(len(result_storage2))
     print([(fit, sol.trajectories) for sol, fit in result_storage2])
     assert result_storage2[0][0].trajectories == start_solution.trajectories

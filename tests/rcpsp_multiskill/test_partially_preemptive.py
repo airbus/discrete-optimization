@@ -8,7 +8,9 @@ from discrete_optimization.generic_rcpsp_tools.solvers.ls import (
     LsGenericRcpspSolver,
     LsSolverType,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
 )
@@ -119,7 +121,10 @@ def test_partial_preemptive(model):
         add_partial_solution_hard_constraint=True,
         unit_usage_preemptive=True,
     )
-    result_storage = cp_solver.solve(parameters_cp=ParametersCp.default())
+    result_storage = cp_solver.solve(
+        time_limit=2,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
     rcpsp_sol = result_storage.get_last_best_solution()[0]
     assert model.satisfy(rcpsp_sol)
     plot_resource_individual_gantt_preemptive(rcpsp_problem=model, rcpsp_sol=rcpsp_sol)

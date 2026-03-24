@@ -24,17 +24,24 @@ def test_mis_dp(modeling):
     small_example = [f for f in get_data_available() if "1dc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = DpMisSolver(problem=mis_model)
-    res = solver.solve(solver=dp.LNBS, modeling=modeling, time_limit=10)
+    res = solver.solve(
+        solver=dp.LNBS,
+        modeling=modeling,
+        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
     sol, fit = res.get_best_solution_fit()
     assert mis_model.satisfy(sol)
 
 
 @pytest.mark.parametrize("modeling", [DpModeling.ORDER, DpModeling.ANY_ORDER])
 def test_dip_solver_ws(modeling):
-    small_example = [f for f in get_data_available() if "1tc.1024" in f][0]
+    small_example = [f for f in get_data_available() if "1tc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver_ws = CpSatMisSolver(problem=mis_model)
-    sol_ws = solver_ws.solve(time_limit=5)[-1][0]
+    sol_ws = solver_ws.solve(
+        time_limit=5,
+    )[-1][0]
     solver = DpMisSolver(problem=mis_model)
     solver.init_model(modeling=modeling)
     solver.set_warm_start(sol_ws)

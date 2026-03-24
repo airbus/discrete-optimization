@@ -3,6 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.vrptw.parser import get_data_available, parse_vrptw_file
 from discrete_optimization.vrptw.solvers.dp import DpVrptwSolver
 
@@ -19,6 +22,11 @@ def test_dp():
         resource_var_load=False,
         resource_var_time=False,
     )
-    res = solver.solve(callbacks=[], solver="CABS", time_limit=20, threads=2)
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        solver="CABS",
+        time_limit=20,
+        threads=2,
+    )
     sol = res[-1][0]
     # assert problem.satisfy(sol)

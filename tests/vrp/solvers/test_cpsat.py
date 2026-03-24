@@ -5,9 +5,15 @@ from itertools import product
 
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
-from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
+from discrete_optimization.generic_tools.lns_tools import (
+    ConstraintHandlerMix,
+    TrivialInitialSolution,
+)
 from discrete_optimization.tsp.problem import TspSolution
 from discrete_optimization.vrp.parser import get_data_available, parse_file
 from discrete_optimization.vrp.problem import (
@@ -34,13 +40,17 @@ def compute_nb_nodes_in_path(solution: VrpSolution):
     "optional_node,cut_transition", list(product([True, False], repeat=2))
 )
 def test_cpsat_vrp(optional_node, cut_transition):
-    file = [f for f in get_data_available() if "vrp_26_8_1" in f][0]
+    file = [f for f in get_data_available() if "vrp_5_4_1" in f][0]
     problem = parse_file(file_path=file)
     solver = CpSatVrpSolver(problem=problem)
     solver.init_model(optional_node=optional_node, cut_transition=cut_transition)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
-    res = solver.solve(parameters_cp=p, time_limit=10)
+    res = solver.solve(
+        parameters_cp=p,
+        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=2)],
+    )
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))
@@ -64,12 +74,13 @@ def test_cpsat_vrp(optional_node, cut_transition):
         parameters_cp=p,
         time_limit=10,
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
     assert res[0][0].list_paths == start_solution.list_paths
 
 
 def test_cpsat_lns_vrp():
-    file = [f for f in get_data_available() if "vrp_26_8_1" in f][0]
+    file = [f for f in get_data_available() if "vrp_5_4_1" in f][0]
     problem = parse_file(file_path=file)
     problem.vehicle_capacities = [
         problem.vehicle_capacities[i] for i in range(problem.vehicle_count)
@@ -77,10 +88,11 @@ def test_cpsat_lns_vrp():
     print(problem)
     solver = CpSatVrpSolver(problem=problem)
     solver.init_model(optional_node=False, cut_transition=False)
+    start_solution = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     solver_lns = LnsOrtoolsCpSat(
         problem=problem,
         subsolver=solver,
-        initial_solution_provider=None,
+        initial_solution_provider=TrivialInitialSolution(solution=start_solution),
         constraint_handler=ConstraintHandlerMix(
             problem=problem,
             list_constraints_handler=[
@@ -92,8 +104,7 @@ def test_cpsat_lns_vrp():
     )
     p = ParametersCp.default_cpsat()
     res = solver_lns.solve(
-        skip_initial_solution_provider=True,
-        nb_iteration_lns=30,
+        nb_iteration_lns=2,
         parameters_cp=p,
         time_limit_subsolver=10,
     )

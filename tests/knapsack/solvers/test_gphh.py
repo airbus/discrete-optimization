@@ -8,7 +8,6 @@ from discrete_optimization.knapsack.solvers.gphh import (
     GphhKnapsackSolver,
     ParametersGphh,
 )
-from discrete_optimization.knapsack.solvers_map import GreedyBestKnapsackSolver
 
 
 def test_run_one_example():
@@ -18,10 +17,10 @@ def test_run_one_example():
     multidimensional_knapsack = from_kp_to_multi(knapsack_problem)
     trainings = [from_kp_to_multi(parse_file(files_available[i])) for i in range(10)]
     params_gphh = ParametersGphh.default()
-    params_gphh.pop_size = 40
+    params_gphh.pop_size = 20
     params_gphh.crossover_rate = 0.7
     params_gphh.mutation_rate = 0.1
-    params_gphh.n_gen = 50
+    params_gphh.n_gen = 2
     params_gphh.min_tree_depth = 1
     params_gphh.max_tree_depth = 5
     gphh_solver = GphhKnapsackSolver(
@@ -36,7 +35,6 @@ def test_run_one_example():
         kp = parse_file(files_available[k])
         mdkp = from_kp_to_multi(kp)
         rs = gphh_solver.build_result_storage_for_domain(mdkp)
-        GreedyBestKnapsackSolver(kp).solve().get_best_solution_fit()
         rs.get_best_solution_fit()
     gphh_solver.plot_solution(show=False)
 

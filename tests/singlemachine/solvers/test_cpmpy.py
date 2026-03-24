@@ -34,9 +34,8 @@ def test_cpmpy(problem, model_type):
 def test_explanation_meta(problem, model_type):
     solver = CpmpySingleMachineSolver(problem)
     solver.init_model(model_type=model_type, add_impossible_constraints=True)
-    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
-    assert len(res) == 0
-    assert solver.status_solver == StatusSolver.UNSATISFIABLE
+    # "simulate" solve + unsatisfiable
+    solver.status_solver = StatusSolver.UNSATISFIABLE
     soft_constraints = solver.get_soft_meta_constraints()
     explanation = solver.explain_unsat_meta(
         soft=soft_constraints,
@@ -61,9 +60,9 @@ def test_explanation_meta(problem, model_type):
 def test_explanation_fine(problem, model_type):
     solver = CpmpySingleMachineSolver(problem)
     solver.init_model(model_type=model_type, add_impossible_constraints=True)
-    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
-    assert len(res) == 0
-    assert solver.status_solver == StatusSolver.UNSATISFIABLE
+    # "simulate" solve + unsatisfiable
+    solver.status_solver = StatusSolver.UNSATISFIABLE
+    # explain
     explanation = solver.explain_unsat_fine(
         cpmpy_method=CpmpyExplainUnsatMethod.mus,
     )

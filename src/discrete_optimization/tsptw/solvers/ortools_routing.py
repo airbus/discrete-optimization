@@ -38,12 +38,18 @@ class OrtoolsTspTwSolver(SolverDO):
         self.solver = solver
 
     def solve(
-        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
+        self,
+        callbacks: Optional[list[Callback]] = None,
+        gpdp_solver_kwargs: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> ResultStorage:
         callback = CallbackList(callbacks)
         callback.on_solve_start(self)
         result_storage = self.create_result_storage([])
-        res = self.solver.solve()
+        if gpdp_solver_kwargs is None:
+            gpdp_solver_kwargs = {}
+        res = self.solver.solve(**gpdp_solver_kwargs)
+        print(len(res))
         sol: GpdpSolution = res[-1][0]
         tsp_tw_sol = TSPTWSolution(
             problem=self.problem, permutation=[i + 1 for i in sol.trajectories[0][1:-1]]

@@ -865,11 +865,14 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
             routing_parameters_pb2.RoutingSearchParameters
         ] = None,
         callbacks: Optional[list[Callback]] = None,
+        time_limit: Optional[int] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
         if search_parameters is None:
             search_parameters = self.search_parameters
+        if time_limit is not None:
+            search_parameters.time_limit.seconds = time_limit
         monitor = RoutingMonitor(self, callback=callbacks_list)
         self.routing.AddSearchMonitor(monitor)
         # warm start?

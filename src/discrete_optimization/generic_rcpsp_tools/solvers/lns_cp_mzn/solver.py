@@ -268,13 +268,17 @@ def build_default_initial_solution(rcpsp_problem: ANY_RCPSP, **kwargs):
     if rcpsp_problem.is_multiskill():
         initial_solution_provider = InitialSolutionFromSolver(
             LsGenericRcpspSolver(problem=rcpsp_problem, ls_solver=LsSolverType.SA),
-            nb_iteration_max=500,
+            nb_iteration_max=kwargs.get(
+                "initial_solution_builder_nb_iteration_max", 500
+            ),
         )
         return initial_solution_provider
     if not rcpsp_problem.is_multiskill():
         initial_solution_provider = InitialSolutionFromSolver(
             LsGenericRcpspSolver(problem=rcpsp_problem, ls_solver=LsSolverType.SA),
-            nb_iteration_max=200,
+            nb_iteration_max=kwargs.get(
+                "initial_solution_builder_nb_iteration_max", 200
+            ),
         )
         return initial_solution_provider
 

@@ -68,8 +68,8 @@ def test_lns_binary_subobjectives(objective_subproblem, problem):
         initial_solution_provider=initial_solution_provider,
     )
     res = lns_solver.solve(
-        nb_iteration_lns=3,
-        time_limit_subsolver=5,
+        nb_iteration_lns=2,
+        time_limit_subsolver=2,
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
@@ -127,7 +127,7 @@ def test_lns_binary_params_allocation(
         initial_solution_provider=initial_solution_provider,
     )
     res = lns_solver.solve(
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
         time_limit_subsolver=5,
     )
     sol = res.get_best_solution()
@@ -167,7 +167,7 @@ def test_lns_scheduling_subobjectives(problem, objective_subproblem):
         initial_solution_provider=initial_solution_provider,
     )
     res = lns_solver.solve(
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
         time_limit_subsolver=5,
     )
     sol = res.get_best_solution()

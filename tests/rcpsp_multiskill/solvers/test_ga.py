@@ -175,17 +175,18 @@ def create_toy_msrcpsp_variant():
 def test_ga_multiskill_rcpsp_solver(random_seed):
     msrcpsp_problem = create_toy_msrcpsp_variant()
     params_ga = ParametersAltGa.default_msrcpsp()
-    params_ga.max_evals = 300
-    params_ga.sub_evals = [50, 50, 50]
+    params_ga.max_evals = 80
+    params_ga.sub_evals = [20, 20, 20]
+    params_ga.pop_size = 10
     solver = GaMultiskillRcpspSolver(problem=msrcpsp_problem)
-    sol = solver.solve().get_best_solution()
+    sol = solver.solve(parameters_ga=params_ga).get_best_solution()
     assert sol is not None
 
 
 def test_alternating_ga(random_seed):
     msrcpsp_problem = create_toy_msrcpsp_variant()
 
-    total_evals = 1000
+    total_evals = 200
 
     sub_evals = [50, 50, 50]
 

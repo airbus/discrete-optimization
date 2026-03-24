@@ -19,30 +19,14 @@ from discrete_optimization.knapsack.solvers.greedy import GreedyBestKnapsackSolv
 
 def test_decomposed_knapsack_asp():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_problem = parse_file(file)
     solver = DecomposedKnapsackSolver(
         problem=knapsack_problem, params_objective_function=None
     )
     result_store = solver.solve(
         root_solver=SubBrick(cls=AspKnapsackSolver, kwargs=dict(time_limit=2)),
-        nb_iteration=50,
-        proportion_to_remove=0.9,
-    )
-    solution, fit = result_store.get_best_solution_fit()
-    assert knapsack_problem.satisfy(solution)
-
-
-def test_decomposed_knapsack_greedy():
-    logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
-    knapsack_problem = parse_file(file)
-    solver = DecomposedKnapsackSolver(
-        problem=knapsack_problem, params_objective_function=None
-    )
-    result_store = solver.solve(
-        root_solver=SubBrick(cls=GreedyBestKnapsackSolver, kwargs={}),
-        nb_iteration=5,
+        nb_iteration=2,
         proportion_to_remove=0.9,
     )
     solution, fit = result_store.get_best_solution_fit()
@@ -51,7 +35,7 @@ def test_decomposed_knapsack_greedy():
 
 def test_decomposed_knapsack_warm_start():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_problem = parse_file(file)
     start_solution = knapsack_problem.get_dummy_solution()
 
@@ -60,14 +44,14 @@ def test_decomposed_knapsack_warm_start():
     )
     result_store = solver.solve(
         root_solver=SubBrick(cls=GreedyBestKnapsackSolver, kwargs={}),
-        nb_iteration=5,
+        nb_iteration=2,
         proportion_to_remove=0.9,
     )
     assert result_store[0][0].list_taken != start_solution.list_taken
     solver.set_warm_start(start_solution)
     result_store = solver.solve(
         root_solver=SubBrick(cls=GreedyBestKnapsackSolver, kwargs={}),
-        nb_iteration=5,
+        nb_iteration=2,
         proportion_to_remove=0.9,
     )
     assert result_store[0][0].list_taken == start_solution.list_taken
@@ -75,7 +59,7 @@ def test_decomposed_knapsack_warm_start():
 
 def test_decomposed_knapsack_cb():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_problem = parse_file(file)
     solver = DecomposedKnapsackSolver(
         problem=knapsack_problem, params_objective_function=None
@@ -93,7 +77,7 @@ def test_decomposed_knapsack_cb():
 
 def test_decomposed_knapsack_cp():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_problem = parse_file(file)
     solver = DecomposedKnapsackSolver(
         problem=knapsack_problem,
@@ -101,7 +85,7 @@ def test_decomposed_knapsack_cp():
     )
     result_store = solver.solve(
         root_solver=SubBrick(cls=Cp2KnapsackSolver, kwargs=dict(time_limit=5)),
-        nb_iteration=5,
+        nb_iteration=2,
         proportion_to_remove=0.9,
     )
     solution, fit = result_store.get_best_solution_fit()

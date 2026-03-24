@@ -6,6 +6,9 @@ import logging
 import pytest
 from ortools.math_opt.python import mathopt
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.maximum_independent_set.parser import (
     dimacs_parser_nx,
     get_data_available,
@@ -50,7 +53,10 @@ def test_solvers(solver_class):
     small_example = [f for f in get_data_available() if "1dc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     results = solve(
-        method_solver=solver_class, problem=mis_model, **solvers_map[solver_class][1]
+        method_solver=solver_class,
+        problem=mis_model,
+        **solvers_map[solver_class][1],
+        callbacks=[NbIterationStopper(1)],
     )
     sol, fit = results.get_best_solution_fit()
     assert mis_model.satisfy(sol)
@@ -149,7 +155,9 @@ def test_solver_quad_mathopt():
 
     solver = MathOptQuadraticMisSolver(mis_model)
     kwargs = dict(
-        mathopt_solver_type=mathopt.SolverType.GSCIP, mathopt_enable_output=True
+        mathopt_solver_type=mathopt.SolverType.GSCIP,
+        mathopt_enable_output=True,
+        callbacks=[NbIterationStopper(1)],
     )
     result_storage = solver.solve(**kwargs)
 
@@ -159,3 +167,4 @@ def test_solver_quad_mathopt():
     # test warm start with no assert (sometimes mathopt start from a feasible solution
     # but provides only the next optimized solution in results)
     solver.set_warm_start(sol)
+    result_storage = solver.solve(**kwargs)

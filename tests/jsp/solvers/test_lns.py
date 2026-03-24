@@ -43,7 +43,7 @@ def test_lns(objective_subproblem):
         initial_solution_provider=initial_solution_provider,
     )
     res = solver.solve(
-        nb_iteration_lns=20,
+        nb_iteration_lns=2,
         time_limit_subsolver=5,
         parameters_cp=parameters_cp,
     )

@@ -249,7 +249,7 @@ def test_local_search_mm_multiobj(random_seed):
     )
     pareto_store = sa.solve(
         initial_variable=dummy,
-        nb_iteration_max=500,
+        nb_iteration_max=100,
         update_iteration_pareto=100,
     )
     assert isinstance(pareto_store, ParetoFront)
@@ -310,7 +310,7 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
         params_objective_function=params_objective_function,
         store_solution=True,
     )
-    result_sa = sa.solve(initial_variable=dummy, nb_iteration_max=100)
+    result_sa = sa.solve(initial_variable=dummy, nb_iteration_max=10)
     result_sa.list_solution_fits = [
         l for l in result_sa.list_solution_fits if l[0].rcpsp_schedule_feasible
     ]

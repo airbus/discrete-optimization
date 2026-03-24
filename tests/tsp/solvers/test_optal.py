@@ -25,7 +25,7 @@ def test_optal(modeling):
     solver.init_model(scaling=1, modeling=modeling)
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),
-        time_limit=10,
+        time_limit=1,
         do_not_retrieve_solutions=True,  # optalcp-preview mode
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL, StatusSolver.SATISFIED)

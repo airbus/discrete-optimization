@@ -11,7 +11,6 @@ from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
 from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder import (
     mix,
 )
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp_mzn import LnsCpMzn
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
@@ -24,23 +23,23 @@ if sys.platform.startswith("win"):
 
 @pytest.mark.parametrize(
     "file_name",
-    ["j1201_1.sm"],
+    ["j301_1.sm"],
 )
 def test_lns_solver(file_name):
     files_available = get_data_available()
     file = [f for f in files_available if file_name in f][0]
     rcpsp_problem: RcpspProblem = parse_file(file)
-    solver = LnsCpMznGenericRcpspSolver(problem=rcpsp_problem)
+    solver = LnsCpMznGenericRcpspSolver(
+        problem=rcpsp_problem, initial_solution_builder_nb_iteration_max=2
+    )
     parameters_cp = ParametersCp.default()
     results = solver.solve(
-        nb_iteration_lns=100,
+        nb_iteration_lns=2,
         skip_initial_solution_provider=False,
         stop_first_iteration_if_optimal=False,
         parameters_cp=parameters_cp,
-        time_limit_subsolver_iter0=5,
         time_limit_subsolver=2,
         nb_iteration_no_improvement=50,
-        callbacks=[TimerStopper(total_seconds=20)],
     )
     sol, fit = results.get_best_solution_fit()
     assert rcpsp_problem.satisfy(sol)
@@ -48,7 +47,7 @@ def test_lns_solver(file_name):
 
 @pytest.mark.parametrize(
     "file_name",
-    ["j1201_1.sm"],
+    ["j301_1.sm"],
 )
 def test_mix_constraints_handlers(file_name):
     files_available = get_data_available()
@@ -63,7 +62,7 @@ def test_mix_constraints_handlers(file_name):
     )
     solver.init_model()
     res = solver.solve(
-        nb_iteration_lns=5, skip_initial_solution_provider=True, time_limit_subsolver=5
+        nb_iteration_lns=2, skip_initial_solution_provider=True, time_limit_subsolver=2
     )
     sol, fit = res.get_best_solution_fit()
     assert rcpsp_problem.satisfy(sol)

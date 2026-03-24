@@ -179,9 +179,7 @@ def test_mzn_solver_ortools_parallel_cb(caplog):
         "time_limit": 10,
         "greedy_start": False,
     }
-    callbacks = [
-        ObjectiveLogger(),
-    ]
+    callbacks = [ObjectiveLogger(), NbIterationStopper(nb_iteration_max=1)]
     solver = CpColoringSolver(problem=coloring_problem, **kwargs)
     solver.init_model(**kwargs)
     with caplog.at_level(logging.DEBUG):
@@ -635,7 +633,7 @@ def test_color_lp_gurobi_cb_exception():
     "solver_type", [mathopt.SolverType.CP_SAT, mathopt.SolverType.HIGHS]
 )
 def test_color_lp_ortools_mathopt(use_cliques, greedy_start, solver_type):
-    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    file = [f for f in get_data_available() if "gc_4_1" in f][0]
     color_problem = parse_file(file)
     solver = MathOptColoringSolver(
         color_problem,
@@ -646,20 +644,23 @@ def test_color_lp_ortools_mathopt(use_cliques, greedy_start, solver_type):
         greedy_start=greedy_start,
         parameters_milp=ParametersMilp.default(),
         mathopt_solver_type=solver_type,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        time_limit=5,
     )
     result_store = solver.solve(**kwargs)
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
 
     # Test warm-start only once (and not for HiGHS as only 1 solution found)
-    if greedy_start and not use_cliques and solver_type != mathopt.SolverType.HIGHS:
+    if not greedy_start and not use_cliques and solver_type != mathopt.SolverType.HIGHS:
+        start_solution = color_problem.get_dummy_solution()
         # first solution is not start_solution
-        assert result_store[0][0].colors != solver.start_solution.colors
+        assert result_store[0][0].colors != start_solution.colors
 
         # warm start => first solution is start_solution
         solver.set_warm_start(solver.start_solution)
         result_store = solver.solve(**kwargs)
-        assert result_store[0][0].colors == solver.start_solution.colors
+        assert result_store[0][0].colors == start_solution.colors
 
 
 def test_color_lp_ortools_mathopt_cb_log():

@@ -1,7 +1,9 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -48,7 +50,9 @@ def test_pickup_and_delivery():
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=10,
     )
-    result_storage: ResultStorage = solver.solve()
+    result_storage: ResultStorage = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    )
     assert isinstance(result_storage, ResultStorage)
     best_sol, _ = result_storage.get_best_solution_fit()
     assert isinstance(best_sol, GpdpSolution)
@@ -95,7 +99,7 @@ def test_pickup_and_delivery_equilibrate_new_api():
         first_solution_strategy=FirstSolutionStrategy.AUTOMATIC,
         time_limit=10,
     )
-    res = solver.solve()
+    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     assert isinstance(res, ResultStorage)
     sol = res.get_best_solution()
     assert isinstance(sol, GpdpSolution)
@@ -119,9 +123,9 @@ def test_pickup_and_delivery_equilibrate_new_api():
 
 
 def test_selective_tsp_new_api():
-    nb_nodes = 1000
+    nb_nodes = 100
     nb_vehicles = 1
-    nb_clusters = 100
+    nb_clusters = 10
     gpdp = create_selective_tsp(
         nb_nodes=nb_nodes, nb_vehicles=nb_vehicles, nb_clusters=nb_clusters
     )
@@ -140,7 +144,7 @@ def test_selective_tsp_new_api():
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=10,
     )
-    res = solver.solve()
+    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     assert isinstance(res, ResultStorage)
     sol = res.get_best_solution()
     assert isinstance(sol, GpdpSolution)

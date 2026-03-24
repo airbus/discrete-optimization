@@ -17,7 +17,7 @@ def test_ortools():
         model, params_objective_function=params_objective_function
     )
     solver.init_model()
-    sol, fitness = solver.solve().get_best_solution_fit()
+    sol, fitness = solver.solve(time_limit=1).get_best_solution_fit()
     assert model.satisfy(sol)
 
 

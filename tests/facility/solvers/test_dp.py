@@ -24,7 +24,12 @@ def test_facility_example(modeling):
     problem: FacilityProblem = parse_file(file)
     print("customer : ", problem.customer_count, "facility : ", problem.facility_count)
     solver = DpFacilitySolver(problem=problem)
-    res = solver.solve(solver=dp.LNBS, modeling=modeling, time_limit=5)
+    res = solver.solve(
+        solver=dp.LNBS,
+        modeling=modeling,
+        time_limit=5,
+        callbacks=[NbIterationStopper(1)],
+    )
     sol, fit = res.get_best_solution_fit()
     assert problem.satisfy(sol)
 

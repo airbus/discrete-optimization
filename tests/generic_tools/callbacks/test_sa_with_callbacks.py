@@ -57,7 +57,7 @@ def random_seed():
 
 def test_sa_with_callbacks(caplog, random_seed):
     files = get_data_available()
-    files = [f for f in files if "j1010_1.mm" in f]  # Multi mode RCPSP
+    files = [f for f in files if "j301_1.sm" in f]
     file_path = files[0]
     rcpsp_problem: RcpspProblem = parse_file(file_path)
     rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
@@ -77,7 +77,7 @@ def test_sa_with_callbacks(caplog, random_seed):
 
     initial_temperature = 0.5
     coefficient_temperature = 0.9999
-    nb_iteration_max = 1000
+    nb_iteration_max = 10
     nb_iteration_no_improvement_max = 50
 
     restart_handler = RestartHandlerLimit(
@@ -92,15 +92,15 @@ def test_sa_with_callbacks(caplog, random_seed):
     class SleepCallback(Callback):
         def on_step_end(self, step: int, res, solver):
             print("zzz")
-            sleep(1)
+            sleep(0.1)
 
     nb_iteration_tracker = NbIterationTracker()
     backuper = PickleBestSolutionBackup(save_nb_steps=2)
     callbacks = [
-        SleepCallback(),
-        TimerStopper(total_seconds=3, check_nb_steps=5),
         nb_iteration_tracker,
         backuper,
+        SleepCallback(),
+        TimerStopper(total_seconds=0.3, check_nb_steps=5),
     ]
     sa = SimulatedAnnealing(
         problem=rcpsp_problem,

@@ -18,7 +18,6 @@ def test_cpsat():
         callbacks=[NbIterationStopper(1)],
         parameters_cp=ParametersCp.default_cpsat(),
         time_limit=100,
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
     sol = res[-1][0]
     # assert problem.satisfy(sol)

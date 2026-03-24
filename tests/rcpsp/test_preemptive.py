@@ -6,6 +6,10 @@ from copy import deepcopy
 
 import matplotlib
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
+
 matplotlib.use("Agg")  # Use non-interactive backend for tests
 
 import pytest
@@ -209,7 +213,7 @@ def test_preemptive_multimode_cp_alamano():
 
 
 def test_preemptive_cp_psplib():
-    rcpsp_problem = load_psplib_preemptive_model_2("j601_5.sm")
+    rcpsp_problem = load_psplib_preemptive_model_2("j301_1.sm")
     solver = CpPreemptiveRcpspSolver(
         problem=rcpsp_problem, cp_solver_name=CpSolverName.CHUFFED
     )
@@ -220,7 +224,9 @@ def test_preemptive_cp_psplib():
         nb_preemptive=4,
         max_preempted=20,
     )
-    result_store = solver.solve(time_limit=100)
+    result_store = solver.solve(
+        time_limit=100, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    )
     best_solution = result_store.get_best_solution()
     assert rcpsp_problem.satisfy(best_solution)
     rcpsp_problem.evaluate(best_solution)
