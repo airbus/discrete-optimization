@@ -473,6 +473,375 @@ def permutation_do_to_permutation_sgs_fast(
     return np.array(perm_extended, dtype=np.int_)
 
 
+def compute_est_with_time_lags(
+    rcpsp_problem: RcpspProblem,
+    scheduled_tasks: dict[Hashable, int],
+    unscheduled_tasks: set[Hashable],
+    modes_dict: dict[Hashable, int],
+) -> dict[Hashable, int]:
+    """
+    Compute Earliest Start Times for unscheduled tasks given partial schedule.
+
+    Uses constraint propagation to handle:
+    - Successor constraints
+    - Minimum time lags (start_to_start_min_time_lag)
+    - Maximum time lags (start_to_start_max_time_lag)
+    - Time windows (start_times_window)
+
+    Args:
+        rcpsp_problem: RCPSP problem instance
+        scheduled_tasks: Dict mapping scheduled tasks to their start times
+        unscheduled_tasks: Set of tasks not yet scheduled
+        modes_dict: Dict mapping tasks to their execution modes
+
+    Returns:
+        Dict mapping unscheduled tasks to their earliest start times
+    """
+    est = {}
+
+    # Initialize EST for unscheduled tasks
+    for task in unscheduled_tasks:
+        est[task] = 0
+        # Apply time windows
+        if rcpsp_problem.do_special_constraints and task in rcpsp_problem.special_constraints.start_times_window:
+            window = rcpsp_problem.special_constraints.start_times_window[task]
+            if window[0] is not None:
+                est[task] = window[0]
+
+    # Propagate constraints from scheduled tasks
+    for task in scheduled_tasks:
+        start_time = scheduled_tasks[task]
+        end_time = start_time + rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
+
+        # Standard successors: j must start after i ends
+        for succ in rcpsp_problem.successors.get(task, []):
+            if succ in unscheduled_tasks:
+                est[succ] = max(est[succ], end_time)
+
+        # Minimum time lags: start(i) + d_min <= start(j)
+        if rcpsp_problem.do_special_constraints:
+            for succ, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(task, {}).items():
+                if succ in unscheduled_tasks:
+                    est[succ] = max(est[succ], start_time + d_min)
+
+    # Propagate constraints between unscheduled tasks (fixed-point iteration)
+    changed = True
+    max_iterations = 100  # Prevent infinite loops in case of cycles
+    iteration = 0
+
+    while changed and iteration < max_iterations:
+        changed = False
+        iteration += 1
+
+        for task_i in unscheduled_tasks:
+            old_est = est[task_i]
+
+            # Successors within unscheduled tasks
+            for pred in rcpsp_problem.predecessors.get(task_i, {}):
+                if pred in unscheduled_tasks:
+                    pred_duration = rcpsp_problem.mode_details[pred][modes_dict[pred]]["duration"]
+                    est[task_i] = max(est[task_i], est[pred] + pred_duration)
+
+            # Minimum time lags within unscheduled tasks
+            if rcpsp_problem.do_special_constraints:
+                for pred, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(task_i, {}).items():
+                    if pred in unscheduled_tasks:
+                        est[task_i] = max(est[task_i], est[pred] + d_min)
+
+            if est[task_i] != old_est:
+                changed = True
+
+    return est
+
+
+def compute_lst_with_time_lags(
+    rcpsp_problem: RcpspProblem,
+    scheduled_tasks: dict[Hashable, int],
+    unscheduled_tasks: set[Hashable],
+    modes_dict: dict[Hashable, int],
+    horizon: int,
+) -> dict[Hashable, int]:
+    """
+    Compute Latest Start Times for unscheduled tasks.
+
+    Uses backward constraint propagation for maximum time lags.
+
+    Args:
+        rcpsp_problem: RCPSP problem instance
+        scheduled_tasks: Dict mapping scheduled tasks to their start times
+        unscheduled_tasks: Set of tasks not yet scheduled
+        modes_dict: Dict mapping tasks to their execution modes
+        horizon: Planning horizon (upper bound on start times)
+
+    Returns:
+        Dict mapping unscheduled tasks to their latest start times
+    """
+    lst = {}
+
+    # Initialize LST for unscheduled tasks
+    for task in unscheduled_tasks:
+        lst[task] = horizon
+        # Apply time windows
+        if rcpsp_problem.do_special_constraints and task in rcpsp_problem.special_constraints.start_times_window:
+            window = rcpsp_problem.special_constraints.start_times_window[task]
+            if window[1] is not None:
+                lst[task] = min(lst[task], window[1])
+
+    # Propagate constraints from scheduled tasks
+    for task in scheduled_tasks:
+        start_time = scheduled_tasks[task]
+
+        # Maximum time lags: start(j) <= start(i) + offset where offset >= 0
+        if rcpsp_problem.do_special_constraints:
+            for succ, offset in rcpsp_problem.special_constraints.dict_start_to_start_max_time_lag.get(task, {}).items():
+                if succ in unscheduled_tasks:
+                    lst[succ] = min(lst[succ], start_time + offset)
+
+            # Reverse minimum time lags: if start(i) + d_min <= start(j) is scheduled,
+            # then start(i) <= start(j) - d_min, so LST[i] = min(LST[i], start(j) - d_min)
+            for pred, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(task, {}).items():
+                if pred in unscheduled_tasks:
+                    lst[pred] = min(lst[pred], start_time - d_min)
+
+    # Propagate constraints between unscheduled tasks (fixed-point iteration)
+    changed = True
+    max_iterations = 100  # Prevent infinite loops
+    iteration = 0
+
+    while changed and iteration < max_iterations:
+        changed = False
+        iteration += 1
+
+        for task_j in unscheduled_tasks:
+            old_lst = lst[task_j]
+
+            # Maximum time lags within unscheduled tasks
+            if rcpsp_problem.do_special_constraints:
+                for pred, offset in rcpsp_problem.special_constraints.dict_start_to_start_max_time_lag_reverse.get(task_j, {}).items():
+                    if pred in unscheduled_tasks:
+                        lst[pred] = min(lst[pred], lst[task_j] - offset)
+
+                # Reverse of minimum time lags
+                for succ, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(task_j, {}).items():
+                    if succ in unscheduled_tasks:
+                        lst[task_j] = min(lst[task_j], lst[succ] - d_min)
+
+            if lst[task_j] != old_lst:
+                changed = True
+
+    return lst
+
+
+def is_task_schedulable(
+    task: Hashable,
+    start_time: int,
+    rcpsp_problem: RcpspProblem,
+    scheduled_tasks: dict[Hashable, int],
+    unscheduled_tasks: set[Hashable],
+    modes_dict: dict[Hashable, int],
+    est: dict[Hashable, int],
+    lst: dict[Hashable, int],
+    resource_avail: dict[str, list[int]],
+) -> bool:
+    """
+    Check if scheduling task at start_time is feasible (unblocking filter).
+
+    Returns True if:
+    1. Time window is valid: EST[task] <= start_time <= LST[task]
+    2. Resources are available
+    3. Scheduling won't make other tasks infeasible
+
+    Args:
+        task: Task to check
+        start_time: Proposed start time for the task
+        rcpsp_problem: RCPSP problem instance
+        scheduled_tasks: Currently scheduled tasks
+        unscheduled_tasks: Remaining unscheduled tasks
+        modes_dict: Task execution modes
+        est: Earliest start times for unscheduled tasks
+        lst: Latest start times for unscheduled tasks
+        resource_avail: Current resource availability by time
+
+    Returns:
+        True if task can be scheduled at start_time, False otherwise
+    """
+    duration = rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
+
+    # Check 1: Time window
+    if not (est[task] <= start_time <= lst[task]):
+        return False
+
+    # Check 2: Resource availability
+    for t in range(start_time, start_time + duration):
+        if t >= len(resource_avail[list(resource_avail.keys())[0]]):
+            return False
+        for res in rcpsp_problem.resources_list:
+            demand = rcpsp_problem.mode_details[task][modes_dict[task]].get(res, 0)
+            if demand > 0 and resource_avail[res][t] < demand:
+                return False
+
+    # Check 3: Unblocking filter - won't make other tasks infeasible
+    # Temporarily schedule the task and recompute EST/LST
+    temp_scheduled = scheduled_tasks.copy()
+    temp_scheduled[task] = start_time
+    temp_unscheduled = unscheduled_tasks - {task}
+
+    if len(temp_unscheduled) == 0:
+        return True  # No remaining tasks to check
+
+    new_est = compute_est_with_time_lags(
+        rcpsp_problem, temp_scheduled, temp_unscheduled, modes_dict
+    )
+    new_lst = compute_lst_with_time_lags(
+        rcpsp_problem, temp_scheduled, temp_unscheduled, modes_dict, rcpsp_problem.horizon
+    )
+
+    # Check if all remaining tasks have feasible time windows
+    for other_task in temp_unscheduled:
+        other_duration = rcpsp_problem.mode_details[other_task][modes_dict[other_task]]["duration"]
+        if new_est[other_task] + other_duration > new_lst[other_task]:
+            return False  # This task would become infeasible
+
+    return True
+
+
+def generate_schedule_from_permutation_iterative_sgs_unblocking(
+    solution: RcpspSolution, rcpsp_problem: RcpspProblem
+) -> tuple[dict[Hashable, dict[str, int]], bool]:
+    """
+    Iterative Serial Generation Scheme with Unblocking Filters for RCPSP/max.
+
+    Handles generalized precedence constraints (min/max time lags).
+    Uses EST/LST propagation and unblocking filters to determine schedulability.
+
+    Reference:
+        - Bartusch et al. (1988), Scheduling project networks with resource constraints
+        - Neumann et al. (2003), Project scheduling with time windows
+
+    Args:
+        solution: RCPSP solution with permutation and modes
+        rcpsp_problem: RCPSP problem instance
+
+    Returns:
+        Tuple of (schedule dict, feasibility bool)
+    """
+    # Initialize
+    scheduled_tasks: dict[Hashable, int] = {}
+    modes_dict = rcpsp_problem.build_mode_dict(solution.rcpsp_modes)
+
+    # Resource availability tracking
+    resource_avail_in_time = {}
+    for res in rcpsp_problem.resources_list:
+        if rcpsp_problem.is_varying_resource():
+            resource_avail_in_time[res] = list(
+                rcpsp_problem.resources[res][: rcpsp_problem.horizon + 1]  # type: ignore
+            )
+        else:
+            resource_avail_in_time[res] = [
+                rcpsp_problem.resources[res] for _ in range(rcpsp_problem.horizon)
+            ]
+
+    # Build permutation with dummy tasks
+    perm_extended = [
+        rcpsp_problem.tasks_list_non_dummy[x] for x in solution.rcpsp_permutation
+    ]
+    perm_extended.insert(0, rcpsp_problem.source_task)
+    perm_extended.append(rcpsp_problem.sink_task)
+
+    unscheduled_tasks = set(perm_extended)
+    unfeasible = False
+
+    # Iterative scheduling loop
+    iteration = 0
+    max_iterations = len(perm_extended) * 10  # Prevent infinite loops
+
+    while unscheduled_tasks and not unfeasible and iteration < max_iterations:
+        iteration += 1
+
+        # Compute EST/LST for all unscheduled tasks
+        est = compute_est_with_time_lags(
+            rcpsp_problem, scheduled_tasks, unscheduled_tasks, modes_dict
+        )
+        lst = compute_lst_with_time_lags(
+            rcpsp_problem, scheduled_tasks, unscheduled_tasks, modes_dict, rcpsp_problem.horizon
+        )
+
+        # Check for infeasibility
+        for task in unscheduled_tasks:
+            duration = rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
+            if est[task] + duration > lst[task]:
+                unfeasible = True
+                break
+
+        if unfeasible:
+            break
+
+        # Try to schedule tasks following permutation order
+        scheduled_this_iteration = False
+
+        for task in perm_extended:
+            if task not in unscheduled_tasks:
+                continue
+
+            # Find earliest feasible start time for this task
+            duration = rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
+
+            for start_time_candidate in range(est[task], min(lst[task] + 1, rcpsp_problem.horizon)):
+                if is_task_schedulable(
+                    task,
+                    start_time_candidate,
+                    rcpsp_problem,
+                    scheduled_tasks,
+                    unscheduled_tasks,
+                    modes_dict,
+                    est,
+                    lst,
+                    resource_avail_in_time,
+                ):
+                    # Schedule the task
+                    scheduled_tasks[task] = start_time_candidate
+                    unscheduled_tasks.remove(task)
+
+                    # Update resource availability
+                    for t in range(start_time_candidate, start_time_candidate + duration):
+                        if t < len(resource_avail_in_time[list(resource_avail_in_time.keys())[0]]):
+                            for res in rcpsp_problem.resources_list:
+                                demand = rcpsp_problem.mode_details[task][modes_dict[task]].get(res, 0)
+                                resource_avail_in_time[res][t] -= demand
+
+                    scheduled_this_iteration = True
+                    break  # Move to next task in permutation
+
+            if scheduled_this_iteration:
+                break  # Restart from beginning of permutation
+
+        if not scheduled_this_iteration and unscheduled_tasks:
+            # No task could be scheduled in this iteration
+            unfeasible = True
+
+    # Build schedule output
+    rcpsp_schedule: dict[Hashable, dict[str, int]] = {}
+    for task, start_time in scheduled_tasks.items():
+        duration = rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
+        rcpsp_schedule[task] = {
+            "start_time": start_time,
+            "end_time": start_time + duration,
+        }
+
+    if unfeasible or unscheduled_tasks:
+        rcpsp_schedule_feasible = False
+        # Add dummy end task if missing
+        if rcpsp_problem.sink_task not in rcpsp_schedule:
+            rcpsp_schedule[rcpsp_problem.sink_task] = {
+                "start_time": 99999999,
+                "end_time": 99999999,
+            }
+    else:
+        rcpsp_schedule_feasible = True
+
+    return rcpsp_schedule, rcpsp_schedule_feasible
+
+
 def generate_schedule_from_permutation_serial_sgs(
     solution: RcpspSolution, rcpsp_problem: RcpspProblem
 ) -> tuple[dict[Hashable, dict[str, int]], bool]:
@@ -668,10 +1037,13 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
                     if pred in perm_extended:
                         respected = False
                         break
-                for pred in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+                # Check start_to_start_min_time_lag constraints
+                # Only block if offset >= 0 (precedence-like behavior)
+                for pred in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                     task_id, {}
                 ):
-                    if pred in perm_extended:
+                    offset = rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse[task_id][pred]
+                    if offset >= 0 and pred in perm_extended:
                         respected = False
                         break
             task_to_start_too = set()
@@ -779,13 +1151,15 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[act_id]
                     )
-                for s in rcpsp_problem.special_constraints.dict_start_after_nunit.get(
+                for (
+                    s
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     act_id, {}
                 ):
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s],
                         current_min_time
-                        + rcpsp_problem.special_constraints.dict_start_after_nunit[
+                        + rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag[
                             act_id
                         ][s],
                     )
@@ -1071,12 +1445,14 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
                 if pred in perm_extended:
                     respected = False
                     break
+            # Check start_to_start_min_time_lag constraints
             for (
                 pred
-            ) in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+            ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                 task_id, {}
             ):
-                if pred in perm_extended:
+                offset = rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse[task_id][pred]
+                if offset >= 0 and pred in perm_extended:
                     respected = False
                     break
             task_to_start_too: list[Hashable] = []
@@ -1178,14 +1554,18 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
                     act_id, {}
                 ):
                     minimum_starting_time[s] = activity_end_times[act_id]
-                for s in rcpsp_problem.special_constraints.dict_start_after_nunit.get(
+                for (
+                    s
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     act_id, {}
                 ):
                     minimum_starting_time[s] = (
                         current_min_time
-                        + rcpsp_problem.special_constraints.dict_start_after_nunit[
+                        + rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag[
                             act_id
-                        ][s]
+                        ][
+                            s
+                        ]
                     )
                 for s in rcpsp_problem.special_constraints.dict_start_at_end_offset.get(
                     act_id, {}
@@ -1275,7 +1655,7 @@ class PartialSolution:
         start_together: Optional[list[tuple[int, int]]] = None,
         start_at_end: Optional[list[tuple[int, int]]] = None,
         start_at_end_plus_offset: Optional[list[tuple[int, int, int]]] = None,
-        start_after_nunit: Optional[list[tuple[int, int, int]]] = None,
+        start_to_start_min_time_lag: Optional[list[tuple[int, int, int]]] = None,
         disjunctive_tasks: Optional[list[tuple[int, int]]] = None,
         start_times_window: Optional[dict[Hashable, tuple[int, int]]] = None,
         end_times_window: Optional[dict[Hashable, tuple[int, int]]] = None,
@@ -1287,8 +1667,8 @@ class PartialSolution:
         self.list_partial_order = list_partial_order
         self.start_together = start_together
         self.start_at_end = start_at_end
-        self.start_after_nunit = start_after_nunit
         self.start_at_end_plus_offset = start_at_end_plus_offset
+        self.start_to_start_min_time_lag = start_to_start_min_time_lag
         self.disjunctive_tasks = disjunctive_tasks
         self.start_times_window = start_times_window
         self.end_times_window = end_times_window

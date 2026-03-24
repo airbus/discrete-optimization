@@ -341,6 +341,20 @@ class RcpspProblem(
     def includes_special_constraint(self) -> bool:
         return self.do_special_constraints
 
+    def has_time_lag_constraints(self) -> bool:
+        """Check if problem has minimum or maximum time lag constraints.
+
+        Returns True if the problem includes generalized precedence constraints
+        (RCPSP/max), which require specialized scheduling algorithms like
+        iterative SGS with unblocking filters.
+        """
+        if not self.do_special_constraints:
+            return False
+        return (
+            len(self.special_constraints.start_to_start_min_time_lag) > 0
+            or len(self.special_constraints.start_to_start_max_time_lag) > 0
+        )
+
     def get_resource_names(self) -> list[str]:
         return self.resources_list
 
@@ -783,17 +797,16 @@ def compute_constraints_details(
     start_together = constraints.start_together
     start_at_end = constraints.start_at_end
     start_at_end_plus_offset = constraints.start_at_end_plus_offset
-    start_after_nunit = constraints.start_after_nunit
     disjunctive = constraints.disjunctive_tasks
     list_constraints_not_respected: list[
         tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
     ] = []
-    for t1, t2, off in constraints.start_to_start_with_time_lag:
+    for t1, t2, off in constraints.start_to_start_min_time_lag:
         # Check for potential inconsistency with successor relationships
         if off < 0 and t2 in solution.problem.successors.get(t1, []):
             logger.warning(
                 f"Potential inconsistency detected: "
-                f"Task {t1} has a start_to_start_with_time_lag constraint with task {t2} "
+                f"Task {t1} has a start_to_start_min_time_lag constraint with task {t2} "
                 f"with negative offset {off}, but {t2} is also a successor of {t1}. "
                 f"This means: "
                 f"- start_to_start requires: start({t1}) + {off} <= start({t2}), "
@@ -832,14 +845,6 @@ def compute_constraints_details(
         if not b:
             list_constraints_not_respected += [
                 ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
-            ]
-    for t1, t2, off in start_after_nunit:
-        time1 = solution.get_start_time(t1) + off
-        time2 = solution.get_start_time(t2)
-        b = time2 >= time1
-        if not b:
-            list_constraints_not_respected += [
-                ("start_after_nunit", t1, t2, time1, time2, abs(time2 - time1))
             ]
     for t1, t2 in disjunctive:
         segt = intersect(
@@ -922,16 +927,62 @@ def check_solution_with_special_constraints(
     start_together = problem.special_constraints.start_together
     start_at_end = problem.special_constraints.start_at_end
     start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
-    start_after_nunit = problem.special_constraints.start_after_nunit
     disjunctive = problem.special_constraints.disjunctive_tasks
-    for t1, t2, off in problem.special_constraints.start_to_start_with_time_lag:
+    for t1, t2, off in problem.special_constraints.start_to_start_min_time_lag:
         b = solution.get_start_time(t1) + off <= solution.get_start_time(t2)
         if not b:
+            logger.debug(("start_to_start_min_time_lag NOT respected: ", t1, t2, off))
+            logger.debug(
+                (
+                    "start(",
+                    t1,
+                    ") + ",
+                    off,
+                    " = ",
+                    solution.get_start_time(t1) + off,
+                    " should be <= start(",
+                    t2,
+                    ") = ",
+                    solution.get_start_time(t2),
+                )
+            )
+            return False
+    for t1, t2, offset in problem.special_constraints.start_to_start_max_time_lag:
+        b = solution.get_start_time(t2) <= solution.get_start_time(t1) + offset
+        if not b:
+            logger.debug(("start_to_start_max_time_lag NOT respected: ", t1, t2, offset))
+            logger.debug(
+                (
+                    "start(",
+                    t2,
+                    ") = ",
+                    solution.get_start_time(t2),
+                    " should be <= start(",
+                    t1,
+                    ") + ",
+                    offset,
+                    " = ",
+                    solution.get_start_time(t1) + offset,
+                )
+            )
             return False
     for t1, t2 in start_together:
         if not relax_the_start_at_end:
             b = solution.get_start_time(t1) == solution.get_start_time(t2)
             if not b:
+                logger.debug(("start_together NOT respected: ", t1, t2))
+                logger.debug(
+                    (
+                        "start(",
+                        t1,
+                        ") = ",
+                        solution.get_start_time(t1),
+                        " should be == start(",
+                        t2,
+                        ") = ",
+                        solution.get_start_time(t2),
+                    )
+                )
                 return False
     for t1, t2 in start_at_end:
         if relax_the_start_at_end:
@@ -939,6 +990,33 @@ def check_solution_with_special_constraints(
         else:
             b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
+            logger.debug(("start_at_end NOT respected: ", t1, t2))
+            if relax_the_start_at_end:
+                logger.debug(
+                    (
+                        "start(",
+                        t2,
+                        ") = ",
+                        solution.get_start_time(t2),
+                        " should be >= end(",
+                        t1,
+                        ") = ",
+                        solution.get_end_time(t1),
+                    )
+                )
+            else:
+                logger.debug(
+                    (
+                        "start(",
+                        t2,
+                        ") = ",
+                        solution.get_start_time(t2),
+                        " should be == end(",
+                        t1,
+                        ") = ",
+                        solution.get_end_time(t1),
+                    )
+                )
             return False
     for t1, t2, off in start_at_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
@@ -954,11 +1032,6 @@ def check_solution_with_special_constraints(
                 )
             )
             return False
-    for t1, t2, off in start_after_nunit:
-        b = solution.get_start_time(t2) >= solution.get_start_time(t1) + off
-        if not b:
-            logger.debug(("start_after_nunit NOT respected: ", t1, t2, off))
-            return False
     for t1, t2 in disjunctive:
         if (
             intersect(
@@ -967,6 +1040,24 @@ def check_solution_with_special_constraints(
             )
             is not None
         ):
+            logger.debug(("disjunctive_tasks NOT respected: ", t1, t2))
+            logger.debug(
+                (
+                    "task ",
+                    t1,
+                    " [",
+                    solution.get_start_time(t1),
+                    ", ",
+                    solution.get_end_time(t1),
+                    "] overlaps with task ",
+                    t2,
+                    " [",
+                    solution.get_start_time(t2),
+                    ", ",
+                    solution.get_end_time(t2),
+                    "]",
+                )
+            )
             return False
     for t in problem.special_constraints.start_times_window:
         if problem.special_constraints.start_times_window[t][0] is not None:
@@ -1032,6 +1123,7 @@ def check_solution_with_special_constraints(
             pair_mode_constraint=problem.special_constraints.pair_mode_constraint,
         )
         if not b:
+            logger.debug("pair_mode_constraint NOT respected")
             return False
     return True
 

@@ -150,7 +150,7 @@ def sgs_variant(
             return (
                 all(
                     x in new_proposed_schedule
-                    for x in problem.special_constraints.dict_start_after_nunit_reverse.get(
+                    for x in problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                         tt, {}
                     )
                 )
@@ -192,15 +192,15 @@ def sgs_variant(
             ]
             times_predecessors += [
                 new_proposed_schedule[t]["starts"][0]
-                + problem.special_constraints.dict_start_after_nunit_reverse.get(task)[
+                + problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(task)[
                     t
                 ]
                 if t in new_proposed_schedule
                 else solution.rcpsp_schedule[t]["starts"][0]
-                + problem.special_constraints.dict_start_after_nunit_reverse.get(task)[
+                + problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(task)[
                     t
                 ]
-                for t in problem.special_constraints.dict_start_after_nunit_reverse.get(
+                for t in problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                     task, {}
                 )
             ]
