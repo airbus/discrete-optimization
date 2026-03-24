@@ -228,8 +228,8 @@ class _BaseLpRcpspSolver(MilpSolver, RcpspSolver):
                             == self.starts[self.index_in_var[i]]
                         )
                     ]
-            if p_s.start_after_nunit is not None:
-                for t1, t2, delta in p_s.start_after_nunit:
+            if p_s.start_to_start_min_time_lag is not None:
+                for t1, t2, delta in p_s.start_to_start_min_time_lag:
                     constraints += [
                         self.add_linear_constraint(
                             self.starts[self.index_in_var[t2]]
@@ -555,8 +555,8 @@ class _BaseLpMultimodeRcpspSolver(MilpSolver, RcpspSolver):
                     constraints += [
                         self.add_linear_constraint(self.starts[j] == self.starts[i])
                     ]
-            if p_s.start_after_nunit is not None:
-                for t1, t2, delta in p_s.start_after_nunit:
+            if p_s.start_to_start_min_time_lag is not None:
+                for t1, t2, delta in p_s.start_to_start_min_time_lag:
                     constraints += [
                         self.add_linear_constraint(
                             self.starts[t2] >= self.starts[t1] + delta

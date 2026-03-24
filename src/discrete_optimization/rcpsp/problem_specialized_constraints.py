@@ -310,7 +310,7 @@ def compute_constraints_details(
     start_together = constraints.start_together
     start_at_end = constraints.start_at_end
     start_at_end_plus_offset = constraints.start_at_end_plus_offset
-    start_after_nunit = constraints.start_after_nunit
+    start_to_start_min_time_lag = constraints.start_to_start_min_time_lag
     disjunctive = constraints.disjunctive_tasks
     list_constraints_not_respected = []
     for t1, t2 in start_together:
@@ -337,13 +337,13 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for t1, t2, off in start_after_nunit:
+    for t1, t2, off in start_to_start_min_time_lag:
         time1 = solution.get_start_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
         if not b:
             list_constraints_not_respected += [
-                ("start_after_nunit", t1, t2, time1, time2, abs(time2 - time1))
+                ("start_to_start_min_time_lag", t1, t2, time1, time2, abs(time2 - time1))
             ]
     for t1, t2 in disjunctive:
         b = intersect(
@@ -426,7 +426,6 @@ def check_solution(
     start_together = problem.special_constraints.start_together
     start_at_end = problem.special_constraints.start_at_end
     start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
-    start_after_nunit = problem.special_constraints.start_after_nunit
     disjunctive = problem.special_constraints.disjunctive_tasks
     for t1, t2 in start_together:
         if not relax_the_start_at_end:
@@ -453,11 +452,6 @@ def check_solution(
                     off,
                 )
             )
-            return False
-    for t1, t2, off in start_after_nunit:
-        b = solution.get_start_time(t2) >= solution.get_start_time(t1) + off
-        if not b:
-            logger.debug(("start_after_nunit NOT respected: ", t1, t2, off))
             return False
     for t1, t2 in disjunctive:
         b = intersect(
@@ -524,6 +518,18 @@ def check_solution(
                     )
                 )
                 return False
+    start_to_start_min_time_lag = problem.special_constraints.start_to_start_min_time_lag
+    for t1, t2, off in start_to_start_min_time_lag:
+        b = solution.get_start_time(t2) >= solution.get_start_time(t1) + off
+        if not b:
+            logger.debug(("start_to_start_min_time_lag NOT respected: ", t1, t2, off))
+            return False
+    start_to_start_max_time_lag = problem.special_constraints.start_to_start_max_time_lag
+    for t1, t2, offset in start_to_start_max_time_lag:
+        b = solution.get_start_time(t2) <= solution.get_start_time(t1) + offset
+        if not b:
+            logger.debug(("start_to_start_max_time_lag NOT respected: ", t1, t2, offset))
+            return False
     return True
 
 
@@ -602,7 +608,7 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                     if pred in perm_extended:
                         respected = False
                         break
-                for pred in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+                for pred in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                     task_id, {}
                 ):
                     if pred in perm_extended:
@@ -642,7 +648,7 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                         if not all(
                             s not in perm_extended
                             for t in task_to_start_too
-                            for s in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+                            for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                                 t, {}
                             )
                         ):
@@ -833,12 +839,12 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[ac]
                     )
-                for s in rcpsp_problem.special_constraints.dict_start_after_nunit.get(
+                for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     ac, {}
                 ):
                     minimum_starting_time[s] = max(
                         starts[ac][0]
-                        + rcpsp_problem.special_constraints.dict_start_after_nunit[ac][
+                        + rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag[ac][
                             s
                         ],
                         minimum_starting_time[s],
@@ -999,7 +1005,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                     break
             for (
                 pred
-            ) in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+            ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                 task_id, {}
             ):
                 if pred in perm_extended:
@@ -1038,7 +1044,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                     if not all(
                         s not in perm_extended
                         for t in task_to_start_too
-                        for s in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+                        for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                             t, {}
                         )
                     ):
@@ -1206,12 +1212,12 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[ac]
                     )
-                for s in rcpsp_problem.special_constraints.dict_start_after_nunit.get(
+                for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     ac, {}
                 ):
                     minimum_starting_time[s] = max(
                         starts[ac][0]
-                        + rcpsp_problem.special_constraints.dict_start_after_nunit[ac][
+                        + rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag[ac][
                             s
                         ],
                         minimum_starting_time[s],
@@ -1320,28 +1326,29 @@ def create_np_data_and_jit_functions(
         (len(rcpsp_problem.special_constraints.start_at_end_plus_offset), 3),
         dtype=np.int_,
     )
-    start_after_nunit = np.zeros(
-        (len(rcpsp_problem.special_constraints.start_after_nunit), 3), dtype=np.int_
-    )
     j = 0
     for t1, t2, off in rcpsp_problem.special_constraints.start_at_end_plus_offset:
         start_at_end_plus_offset[j, 0] = rcpsp_problem.index_task[t1]
         start_at_end_plus_offset[j, 1] = rcpsp_problem.index_task[t2]
         start_at_end_plus_offset[j, 2] = off
         j += 1
+    start_to_start_min_time_lag = np.zeros(
+        (len(rcpsp_problem.special_constraints.start_to_start_min_time_lag), 3),
+        dtype=np.int_,
+    )
     j = 0
-    for t1, t2, off in rcpsp_problem.special_constraints.start_after_nunit:
-        start_after_nunit[j, 0] = rcpsp_problem.index_task[t1]
-        start_after_nunit[j, 1] = rcpsp_problem.index_task[t2]
-        start_after_nunit[j, 2] = off
+    for t1, t2, off in rcpsp_problem.special_constraints.start_to_start_min_time_lag:
+        start_to_start_min_time_lag[j, 0] = rcpsp_problem.index_task[t1]
+        start_to_start_min_time_lag[j, 1] = rcpsp_problem.index_task[t2]
+        start_to_start_min_time_lag[j, 2] = off
         j += 1
     if not rcpsp_problem.is_duration_minimum_preemption():
         func_sgs = partial(
             sgs_fast_preemptive_some_special_constraints,
             consumption_array=consumption_array,
             preemptive_tag=preemptive_tag,
-            start_after_nunit=start_after_nunit,
             start_at_end_plus_offset=start_at_end_plus_offset,
+            start_to_start_min_time_lag=start_to_start_min_time_lag,
             minimum_starting_time_array=minimum_starting_time_array,
             duration_array=duration_array,
             predecessors=predecessors,

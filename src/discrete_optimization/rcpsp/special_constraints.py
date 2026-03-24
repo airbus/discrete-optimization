@@ -57,13 +57,21 @@ class SpecialConstraintsDescription:
         start_together: Optional[list[tuple[Hashable, Hashable]]] = None,
         start_at_end: Optional[list[tuple[Hashable, Hashable]]] = None,
         start_at_end_plus_offset: Optional[list[tuple[Hashable, Hashable, int]]] = None,
-        start_after_nunit: Optional[list[tuple[Hashable, Hashable, int]]] = None,
-        start_to_start_with_time_lag: Optional[tuple[Hashable, Hashable, int]] = None,
+        start_to_start_min_time_lag: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        # Constraint: start(t1) + offset <= start(t2) where offset >= 0 (minimum time lag)
+        start_to_start_max_time_lag: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        # Constraint: start(t2) <= start(t1) + offset where offset >= 0 (maximum time lag)
         disjunctive_tasks: Optional[list[tuple[Hashable, Hashable]]] = None,
         pair_mode_constraint: Optional[PairModeConstraint] = None,
     ):
         """
-        x in : start_to_start_with_time_lag: st[x[0]]+x[2]<=st[x[1]]
+        Special constraints for RCPSP scheduling.
+
+        start_to_start_min_time_lag: List of (t1, t2, offset) tuples enforcing start(t1) + offset <= start(t2)
+            where offset >= 0 (non-negative). For minimum time lag constraints in RCPSP/max problems.
+
+        start_to_start_max_time_lag: List of (t1, t2, offset) tuples enforcing start(t2) <= start(t1) + offset
+            where offset >= 0 (non-negative). For maximum time lag constraints in RCPSP/max problems.
         """
         self.task_mode = task_mode
         self.start_times = start_times
@@ -90,14 +98,14 @@ class SpecialConstraintsDescription:
             self.start_at_end_plus_offset = []
         else:
             self.start_at_end_plus_offset = start_at_end_plus_offset
-        if start_after_nunit is None:
-            self.start_after_nunit = []
+        if start_to_start_min_time_lag is None:
+            self.start_to_start_min_time_lag = []
         else:
-            self.start_after_nunit = start_after_nunit
-        if start_to_start_with_time_lag is None:
-            self.start_to_start_with_time_lag = []
+            self.start_to_start_min_time_lag = start_to_start_min_time_lag
+        if start_to_start_max_time_lag is None:
+            self.start_to_start_max_time_lag = []
         else:
-            self.start_to_start_with_time_lag = start_to_start_with_time_lag
+            self.start_to_start_max_time_lag = start_to_start_max_time_lag
         if disjunctive_tasks is None:
             self.disjunctive_tasks = []
         else:
@@ -136,15 +144,25 @@ class SpecialConstraintsDescription:
             self.dict_start_at_end_offset_reverse[j][i] = off
             self.dict_start_at_end_offset[i][j] = off
 
-        self.dict_start_after_nunit: dict[Hashable, dict[Hashable, int]] = {}
-        self.dict_start_after_nunit_reverse: dict[Hashable, dict[Hashable, int]] = {}
-        for i, j, off in self.start_after_nunit:
-            if i not in self.dict_start_after_nunit:
-                self.dict_start_after_nunit[i] = {}
-            if j not in self.dict_start_after_nunit_reverse:
-                self.dict_start_after_nunit_reverse[j] = {}
-            self.dict_start_after_nunit[i][j] = off
-            self.dict_start_after_nunit_reverse[j][i] = off
+        self.dict_start_to_start_min_time_lag: dict[Hashable, dict[Hashable, int]] = {}
+        self.dict_start_to_start_min_time_lag_reverse: dict[Hashable, dict[Hashable, int]] = {}
+        for i, j, off in self.start_to_start_min_time_lag:
+            if i not in self.dict_start_to_start_min_time_lag:
+                self.dict_start_to_start_min_time_lag[i] = {}
+            if j not in self.dict_start_to_start_min_time_lag_reverse:
+                self.dict_start_to_start_min_time_lag_reverse[j] = {}
+            self.dict_start_to_start_min_time_lag[i][j] = off
+            self.dict_start_to_start_min_time_lag_reverse[j][i] = off
+
+        self.dict_start_to_start_max_time_lag: dict[Hashable, dict[Hashable, int]] = {}
+        self.dict_start_to_start_max_time_lag_reverse: dict[Hashable, dict[Hashable, int]] = {}
+        for i, j, offset in self.start_to_start_max_time_lag:
+            if i not in self.dict_start_to_start_max_time_lag:
+                self.dict_start_to_start_max_time_lag[i] = {}
+            if j not in self.dict_start_to_start_max_time_lag_reverse:
+                self.dict_start_to_start_max_time_lag_reverse[j] = {}
+            self.dict_start_to_start_max_time_lag[i][j] = offset
+            self.dict_start_to_start_max_time_lag_reverse[j][i] = offset
 
         self.dict_disjunctive: dict[Hashable, set[Hashable]] = {}
         for i, j in self.disjunctive_tasks:
