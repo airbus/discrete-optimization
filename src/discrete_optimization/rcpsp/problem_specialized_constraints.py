@@ -631,13 +631,17 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                     if pred in perm_extended:
                         respected = False
                         break
-                for pred in rcpsp_problem.special_constraints.dict_start_at_end_offset_reverse.get(
+                for (
+                    pred
+                ) in rcpsp_problem.special_constraints.dict_start_at_end_offset_reverse.get(
                     task_id, {}
                 ):
                     if pred in perm_extended:
                         respected = False
                         break
-                for pred in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
+                for (
+                    pred
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                     task_id, {}
                 ):
                     if pred in perm_extended:
@@ -775,10 +779,10 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                         cur_duration[ac] += ends[ac][-1] - starts[ac][-1]
                         for res in rcpsp_problem.resources_list:
                             for t in range(starts[ac][-1], ends[ac][-1]):
-                                resource_avail_in_time[res][t] -= (
-                                    rcpsp_problem.mode_details[ac][modes_dict[ac]].get(
-                                        res, 0
-                                    )
+                                resource_avail_in_time[res][
+                                    t
+                                ] -= rcpsp_problem.mode_details[ac][modes_dict[ac]].get(
+                                    res, 0
                                 )
                                 if resource_avail_in_time[res][t] < 0:
                                     logger.warning(
@@ -794,10 +798,10 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                         cur_duration[ac] += ends[ac][-1] - starts[ac][-1]
                         for res in rcpsp_problem.resources_list:
                             for t in range(starts[ac][-1], ends[ac][-1]):
-                                resource_avail_in_time[res][t] -= (
-                                    rcpsp_problem.mode_details[ac][modes_dict[ac]].get(
-                                        res, 0
-                                    )
+                                resource_avail_in_time[res][
+                                    t
+                                ] -= rcpsp_problem.mode_details[ac][modes_dict[ac]].get(
+                                    res, 0
                                 )
                                 if resource_avail_in_time[res][t] < 0:
                                     logger.warning(
@@ -808,10 +812,12 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                                     and t == ends[ac][-1] - 1
                                 ):
                                     for tt in range(t + 1, new_horizon):
-                                        resource_avail_in_time[res][tt] -= (
-                                            rcpsp_problem.mode_details[ac][
-                                                modes_dict[ac]
-                                            ].get(res, 0)
+                                        resource_avail_in_time[res][
+                                            tt
+                                        ] -= rcpsp_problem.mode_details[ac][
+                                            modes_dict[ac]
+                                        ].get(
+                                            res, 0
                                         )
                                         if resource_avail_in_time[res][tt] < 0:
                                             unfeasible_non_renewable_resources = True
@@ -870,7 +876,9 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[ac]
                     )
-                for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
+                for (
+                    s
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     ac, {}
                 ):
                     minimum_starting_time[s] = max(
@@ -983,10 +991,10 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                     ].get(res, 0)
                     if res in rcpsp_problem.non_renewable_resources and t == end_t - 1:
                         for tt in range(end_t, new_horizon):
-                            resource_avail_in_time[res][tt] -= (
-                                rcpsp_problem.mode_details[task][modes_dict[task]].get(
-                                    res, 0
-                                )
+                            resource_avail_in_time[res][
+                                tt
+                            ] -= rcpsp_problem.mode_details[task][modes_dict[task]].get(
+                                res, 0
                             )
                             if resource_avail_in_time[res][tt] < 0:
                                 unfeasible_non_renewable_resources = True
@@ -1247,7 +1255,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[ac]
                     )
-                for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
+                for (
+                    s
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     ac, {}
                 ):
                     minimum_starting_time[s] = max(
