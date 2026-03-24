@@ -12,8 +12,12 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
     TasksConstraintHandler,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
+from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
 
 
 def test_lnscpsat_fjsp():
@@ -32,16 +36,21 @@ def test_lnscpsat_fjsp():
         isinstance(extractor, MultimodeConstraintExtractor)
         for extractor in constraint_handler.constraints_extractor.extractors
     )
+    start_solution = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
+    initial_solution_provider = TrivialInitialSolution(solution=start_solution)
 
     lns_solver = LnsOrtoolsCpSat(
-        problem=problem, subsolver=solver, constraint_handler=constraint_handler
+        problem=problem,
+        subsolver=solver,
+        constraint_handler=constraint_handler,
+        initial_solution_provider=initial_solution_provider,
     )
     res = lns_solver.solve(
-        skip_initial_solution_provider=True,
         nb_iteration_lns=20,
         parameters_cp=p,
-        time_limit_subsolver_iter0=1,
-        time_limit_subsolver=2,
+        time_limit_subsolver=1,
     )
     sol, fit = res.get_best_solution_fit()
     assert problem.satisfy(sol)

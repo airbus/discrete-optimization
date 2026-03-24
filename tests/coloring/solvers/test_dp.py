@@ -31,7 +31,12 @@ def test_coloring_dp(modeling):
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     problem: ColoringProblem = parse_file(small_example)
     solver = DpColoringSolver(problem=problem)
-    res = solver.solve(solver=dp.LNBS, modeling=modeling, time_limit=5)
+    res = solver.solve(
+        solver=dp.LNBS,
+        modeling=modeling,
+        time_limit=5,
+        callbacks=[NbIterationStopper(1)],
+    )
     sol, fit = res.get_best_solution_fit()
     assert problem.satisfy(sol)
     print(problem.evaluate(sol))

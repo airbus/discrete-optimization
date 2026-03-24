@@ -20,7 +20,7 @@ from discrete_optimization.rcpsp.utils import (
 
 def test_pile_sm():
     files = get_data_available()
-    files = [f for f in files if "j1201_1.sm" in f]
+    files = [f for f in files if "j301_1.sm" in f]
     file_path = files[0]
     rcpsp_problem = parse_file(file_path)
     solver = PileRcpspSolver(problem=rcpsp_problem)
@@ -62,7 +62,7 @@ def test_pile_multimode():
 
 def test_pile_robust():
     files = get_data_available()
-    files = [f for f in files if "j1201_1.sm" in f]
+    files = [f for f in files if "j301_1.sm" in f]
     file_path = files[0]
     rcpsp_problem: RcpspProblem = parse_file(file_path)
     poisson_laws = create_poisson_laws_duration(rcpsp_problem)
@@ -78,14 +78,6 @@ def test_pile_robust():
     sol, fit = solver.solve(
         greedy_choice=GreedyChoice.MOST_SUCCESSORS
     ).get_best_solution_fit()
-    many_random_instance = [
-        uncertain.create_rcpsp_problem(
-            method_robustification=MethodRobustification(
-                MethodBaseRobustification.SAMPLE
-            )
-        )
-        for i in range(1000)
-    ]
     many_random_instance = []
     many_random_instance += [
         uncertain.create_rcpsp_problem(

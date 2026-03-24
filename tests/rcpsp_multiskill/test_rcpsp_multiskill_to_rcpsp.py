@@ -8,8 +8,10 @@ import sys
 import numpy as np
 import pytest
 
-from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
-from discrete_optimization.rcpsp.solvers.cp_mzn import CpMultimodeRcpspSolver
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import MultiSkillToRcpsp
 from discrete_optimization.rcpsp_multiskill.parser_imopse import (
     get_data_available,
@@ -46,12 +48,7 @@ def test_solve_rcpsp_imopse2(random_seed):
         max_number_of_mode=5,
         one_worker_type_per_task=True,
     )
-    solver = CpMultimodeRcpspSolver(
-        problem=rcpsp_problem, cp_solver_name=CpSolverName.CHUFFED
-    )
-    solver.init_model(output_type=True)
-    params_cp = ParametersCp.default()
-    params_cp.free_search = True
-    result_storage = solver.solve(parameters_cp=params_cp, time_limit=100)
+    solver = CpSatRcpspSolver(problem=rcpsp_problem)
+    result_storage = solver.solve(callbacks=[NbIterationStopper(1)])
     best_solution = result_storage.get_best_solution()
     assert rcpsp_problem.satisfy(best_solution)

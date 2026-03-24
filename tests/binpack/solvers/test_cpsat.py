@@ -150,12 +150,13 @@ def test_task_constraint(problem, solver_scheduling):
     )
 
 
-def test_chaining_constraint(solver_scheduling):
+def test_chaining_constraint(solver_scheduling, manual_sol):
     task1 = 7
     task2 = 8
     solver = solver_scheduling
 
-    # before adding the constraint, not already satisfied
+    # before adding the constraint, not already satisfied  (add warm start to ensure it)
+    solver.set_warm_start(manual_sol)
     sol = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()

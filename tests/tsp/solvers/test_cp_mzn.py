@@ -6,6 +6,9 @@ import sys
 
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import CpSolverName
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.solvers.cp_mzn import CPTspModel, CpTspSolver
@@ -21,7 +24,9 @@ def test_int_cp():
         model, model_type=model_type, cp_solver_name=CpSolverName.CHUFFED
     )
     cp_solver.init_model()
-    var, fit = cp_solver.solve(time_limit=20).get_best_solution_fit()
+    var, fit = cp_solver.solve(
+        time_limit=2, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution_fit()
     assert model.satisfy(var)
 
 
@@ -34,7 +39,9 @@ def test_float_cp():
         model, model_type=model_type, cp_solver_name=CpSolverName.GECODE
     )  # CHUFFED WONT WORK FOR FLOAT
     cp_solver.init_model()
-    var, fit = cp_solver.solve(time_limit=20).get_best_solution_fit()
+    var, fit = cp_solver.solve(
+        time_limit=2, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution_fit()
     assert model.satisfy(var)
 
 

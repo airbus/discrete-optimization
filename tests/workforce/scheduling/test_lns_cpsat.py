@@ -35,7 +35,7 @@ def problem():
     return parse_json_to_problem(instance)
 
 
-TIME_LIMIT_SUBSOLVER = 5
+TIME_LIMIT_SUBSOLVER = 1
 
 
 @pytest.mark.parametrize(
@@ -91,7 +91,7 @@ def test_lns_cpsat(
         constraint_handler=constraint_handler,
     )
     res = solver.solve(
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
         skip_initial_solution_provider=True,

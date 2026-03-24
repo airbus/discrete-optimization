@@ -22,7 +22,7 @@ def test_ortools_vrp_solver():
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
     )
-    res = solver.solve(time_limit_seconds=20)
+    res = solver.solve(time_limit=1)
     sol, fit = res.get_best_solution_fit()
     assert vrp_problem.satisfy(sol)
 

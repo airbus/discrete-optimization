@@ -14,7 +14,11 @@ def test_dp_vrp():
     file = [f for f in get_data_available() if "vrp_26_8_1" in f][0]
     problem = parse_file(file_path=file)
     solver = DpVrpSolver(problem=problem)
-    res = solver.solve(solver=dp.LNBS, time_limit=10)
+    res = solver.solve(
+        solver=dp.LNBS,
+        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     assert problem.satisfy(sol)
@@ -29,7 +33,7 @@ def test_dp_vrp_ws():
         problem.vehicle_capacities[i] for i in range(problem.vehicle_count)
     ]
     solver = OrtoolsVrpSolver(problem)
-    sol_ws = solver.solve(time_limit=10)[0][0]
+    sol_ws = solver.solve(time_limit=1)[0][0]
     solver = DpVrpSolver(problem=problem)
     solver.init_model()
     solver.set_warm_start(sol_ws)

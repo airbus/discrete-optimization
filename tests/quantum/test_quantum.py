@@ -41,11 +41,13 @@ def test_solvers_coloring(solver_class):
     edges = [(1, 2, {}), (1, 3, {}), (2, 4, {})]
     nb_colors = 2
     coloring_problem: ColoringProblem = ColoringProblem(Graph(nodes=nodes, edges=edges))
+    kwargs = dict(**solvers_map_coloring[solver_class][1])
+    kwargs["maxiter"] = 2  # reduce max number of iterations for unit test
     results = solve_coloring(
         method=solver_class,
         problem=coloring_problem,
         nb_color=nb_colors,
-        **solvers_map_coloring[solver_class][1],
+        **kwargs,
     )
     sol, fit = results.get_best_solution_fit()
 
@@ -66,9 +68,9 @@ def test_solvers_mis(solver_class):
     graph.add_edge(4, 5)
     graph.add_edge(4, 6)
     mis_model: MisProblem = MisProblem(graph)
-    results = solve(
-        method=solver_class, problem=mis_model, **solvers_map_mis[solver_class][1]
-    )
+    kwargs = dict(**solvers_map_mis[solver_class][1])
+    kwargs["maxiter"] = 2  # reduce max number of iterations for unit test
+    results = solve(method=solver_class, problem=mis_model, **kwargs)
     sol, fit = results.get_best_solution_fit()
 
 
@@ -84,11 +86,9 @@ def test_solvers_facility(solver_class):
     c2 = Customer(1, 5, Point(0, -1))
 
     facilityProblem = Facility2DProblem(2, 2, [f1, f2], [c1, c2])
-    results = solve(
-        method=solver_class,
-        problem=facilityProblem,
-        **solvers_map_facility[solver_class][1],
-    )
+    kwargs = dict(**solvers_map_facility[solver_class][1])
+    kwargs["maxiter"] = 2  # reduce max number of iterations for unit test
+    results = solve(method=solver_class, problem=facilityProblem, **kwargs)
     sol, fit = results.get_best_solution_fit()
 
 
@@ -105,9 +105,9 @@ def test_solver_tsp(solver_class):
     tspProblem: Point2DTspProblem = Point2DTspProblem(
         [p1, p2, p3, p4, p5], 5, start_index=0, end_index=4
     )
-    results = solve(
-        method=solver_class, problem=tspProblem, **solvers_map_tsp[solver_class][1]
-    )
+    kwargs = dict(**solvers_map_tsp[solver_class][1])
+    kwargs["maxiter"] = 2  # reduce max number of iterations for unit test
+    results = solve(method=solver_class, problem=tspProblem, **kwargs)
     sol, fit = results.get_best_solution_fit()
 
 
@@ -125,10 +125,12 @@ def test_solver_Knapsack(solver_class):
     i5 = Item(4, 5, 3)
     i6 = Item(5, 2, 1)
     knapsackProblem = KnapsackProblem([i1, i2, i3, i4, i5, i6], max_capacity)
+    kwargs = dict(**solvers_map_knapsack[solver_class][1])
+    kwargs["maxiter"] = 2  # reduce max number of iterations for unit test
     results = solve(
         method=solver_class,
         problem=knapsackProblem,
-        **solvers_map_knapsack[solver_class][1],
+        **kwargs,
     )
     sol, fit = results.get_best_solution_fit()
 

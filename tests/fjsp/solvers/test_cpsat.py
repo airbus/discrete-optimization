@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
+import os.path
 import time
 from typing import Optional
 
@@ -82,8 +83,9 @@ class StatsCpsatCallback(Callback):
 
 
 def test_fjsp_solver_on_jsp():
-    file_path = jsp_parser.get_data_available()[1]
-    # file_path = [f for f in get_data_available() if "abz6" in f][0]
+    file_path = [
+        f for f in jsp_parser.get_data_available() if os.path.basename(f) == "orb10"
+    ][0]
     problem: JobShopProblem = jsp_parser.parse_file(file_path)
     fproblem = FJobShopProblem(
         list_jobs=[
@@ -110,7 +112,7 @@ def test_fjsp_solver_on_jsp():
 def test_cpsat_fjsp():
     files = fjsp_parser.get_data_available()
     print(files)
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "Behnke1.fjs" in f][0]
     print(file)
     problem = fjsp_parser.parse_file(file)
     print(problem)
@@ -133,7 +135,7 @@ def test_cpsat_fjsp():
 
 def test_objectives():
     files = fjsp_parser.get_data_available()
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
     solver = CpSatFjspSolver(problem=problem)
     solver.init_model()
@@ -149,7 +151,7 @@ def test_objectives():
 
 def test_mode_constraint():
     files = fjsp_parser.get_data_available()
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
     assert problem.is_multimode
 
@@ -219,7 +221,7 @@ def test_mode_constraint_monomode():
 )
 def test_task_constraints(task, start_or_end, sign, time):
     files = fjsp_parser.get_data_available()
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
     solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default()
@@ -266,7 +268,7 @@ def test_chaining_tasks_constraint():
     task1 = (0, 0)
     task2 = (1, 4)
     files = fjsp_parser.get_data_available()
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
     solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default()
@@ -304,7 +306,7 @@ def test_chaining_tasks_constraint():
 def test_cpsat_retrieve_stats():
     files = fjsp_parser.get_data_available()
     print(files)
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "Behnke1.fjs" in f][0]
     print(file)
     problem = fjsp_parser.parse_file(file)
     print(problem)
@@ -327,7 +329,7 @@ def test_cpsat_retrieve_stats():
 
 def test_cpsat_retrieve_stats_via_clb():
     files = fjsp_parser.get_data_available()
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
     solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default()

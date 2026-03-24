@@ -1,7 +1,9 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.rcpsp_multiskill.parser_imopse import (
     get_data_available,
@@ -192,7 +194,11 @@ def test_cp_toy_model():
     )
     parameters_cp = ParametersCp.default()
     parameters_cp.intermediate_solution = True
-    result_storage = cp_model.solve(parameters_cp=parameters_cp, time_limit=200)
+    result_storage = cp_model.solve(
+        parameters_cp=parameters_cp,
+        time_limit=5,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
     solution: MultiskillRcpspSolution = result_storage.get_best_solution()
     assert model_msrcpsp.satisfy(solution)
 
@@ -223,7 +229,11 @@ def test_cp_imopse():
     # but can be a good thing to be used in findmus algo
     # with free_search=False, you get first results after 10 seconds or so, but good quality.
     parameters_cp.intermediate_solution = True
-    result_storage = cp_model.solve(parameters_cp=parameters_cp, time_limit=30)
+    result_storage = cp_model.solve(
+        parameters_cp=parameters_cp,
+        time_limit=5,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
     solution: MultiskillRcpspSolution = result_storage.get_best_solution()
     assert model_msrcpsp.satisfy(solution)
     model_msrcpsp.evaluate(solution)

@@ -12,6 +12,9 @@ from discrete_optimization.facility.solvers.cp_mzn import (
     CpFacilityModel,
     CpFacilitySolver,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
@@ -20,7 +23,9 @@ def test_facility_cp():
     facility_problem = parse_file(file)
     solver = CpFacilitySolver(facility_problem)
     solver.init_model(cp_model=CpFacilityModel.DEFAULT_INT, object_output=True)
-    solution, fit = solver.solve(time_limit=20).get_best_solution_fit()
+    solution, fit = solver.solve(
+        time_limit=2, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution_fit()
     assert facility_problem.satisfy(solution)
 
 

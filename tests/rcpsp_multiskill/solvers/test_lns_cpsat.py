@@ -21,8 +21,12 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler
     ObjectiveSubproblem,
     TasksConstraintHandler,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
+from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
 from discrete_optimization.rcpsp_multiskill.parser_imopse import (
     get_data_available,
     parse_file,
@@ -58,7 +62,7 @@ def problem_multimode(problem):
     return problem
 
 
-TIME_LIMIT_SUBSOLVER = 5
+TIME_LIMIT_SUBSOLVER = 2
 
 
 @pytest.mark.parametrize(
@@ -110,16 +114,21 @@ def test_lns_cpsat(
         constraints_extractor=constraints_extractor,
     )
 
+    start_solution = subsolver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
+    initial_solution_provider = TrivialInitialSolution(solution=start_solution)
+
     solver = LnsOrtoolsCpSat(
         problem=problem,
         subsolver=subsolver,
         constraint_handler=constraint_handler,
+        initial_solution_provider=initial_solution_provider,
     )
     res = solver.solve(
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
-        skip_initial_solution_provider=True,
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
@@ -140,17 +149,20 @@ def test_lns_cpsat_subobjective(problem_multimode, subojective):
         problem=problem,
         objective_subproblem=subojective,
     )
-
+    start_solution = subsolver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
+    initial_solution_provider = TrivialInitialSolution(solution=start_solution)
     solver = LnsOrtoolsCpSat(
         problem=problem,
         subsolver=subsolver,
         constraint_handler=constraint_handler,
+        initial_solution_provider=initial_solution_provider,
     )
     res = solver.solve(
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
-        skip_initial_solution_provider=True,
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)

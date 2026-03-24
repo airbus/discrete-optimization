@@ -21,7 +21,7 @@ def test_dp_solver(end_index):
     params_objective_function = get_default_objective_setup(problem=model)
     solver = DpTspSolver(model, params_objective_function=params_objective_function)
     solver.init_model()
-    res = solver.solve(solver=dp.LNBS, time_limit=5)
+    res = solver.solve(solver=dp.LNBS, time_limit=5, callbacks=[NbIterationStopper(1)])
     sol, fitness = res.get_best_solution_fit()
     sol: TspSolution
     assert model.satisfy(sol)
@@ -36,7 +36,7 @@ def test_dp_solver_ws():
     from discrete_optimization.tsp.solvers.ortools_routing import ORtoolsTspSolver
 
     solver_ws = ORtoolsTspSolver(model)
-    sol = solver_ws.solve(time_limit=5)[-1][0]
+    sol = solver_ws.solve(time_limit=2)[-1][0]
     solver = DpTspSolver(model, params_objective_function=params_objective_function)
     solver.init_model()
     solver.set_warm_start(sol)

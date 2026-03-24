@@ -6,7 +6,10 @@ from time import sleep
 import pytest
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+    TimerStopper,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
@@ -59,14 +62,11 @@ def test_knapsack_lns():
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
-    result_store_pure_cp = solver.solve(parameters_cp=params_cp)
-    solution_pure_cp = result_store_pure_cp.get_best_solution_fit()
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
-        time_limit_subsolver=10,
-        time_limit_subsolver_iter0=1,
-        nb_iteration_lns=200,
-        callbacks=[TimerStopper(total_seconds=30)],
+        time_limit_subsolver=2,
+        time_limit_subsolver_iter0=2,
+        nb_iteration_lns=2,
     )
     solution = result_store.get_best_solution_fit()[0]
     assert model.satisfy(solution)
@@ -104,10 +104,9 @@ def test_knapsack_lns_ortools():
     )
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
-        time_limit_subsolver=10,
+        time_limit_subsolver=2,
         time_limit_subsolver_iter0=1,
-        nb_iteration_lns=200,
-        callbacks=[TimerStopper(total_seconds=30)],
+        nb_iteration_lns=3,
     )
     solution = result_store.get_best_solution_fit()[0]
     assert model.satisfy(solution)
@@ -141,7 +140,7 @@ def test_knapsack_ortools_constraint_handler():
     sol: KnapsackSolution
     res = solver.solve(
         parameters_cp=params_cp,
-        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
     sol, fit = res.get_best_solution_fit()
     assert all(taken == 0.0 for taken in sol.list_taken)
@@ -151,7 +150,7 @@ def test_knapsack_ortools_constraint_handler():
     solver.remove_constraints(constraints)
     res = solver.solve(
         parameters_cp=params_cp,
-        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
     sol, fit = res.get_best_solution_fit()
     assert not all(taken == 0.0 for taken in sol.list_taken)
@@ -196,12 +195,12 @@ def test_knapsack_lns_timer():
     class SleepCallback(Callback):
         def on_step_end(self, step: int, res, solver):
             print("zzz")
-            sleep(1)
+            sleep(0.2)
 
     nb_iteration_tracker = NbIterationTracker()
     callbacks = [
         SleepCallback(),
-        TimerStopper(total_seconds=3, check_nb_steps=5),
+        TimerStopper(total_seconds=0.2, check_nb_steps=2),
         nb_iteration_tracker,
     ]
     result_store = lns_solver.solve(
@@ -212,7 +211,7 @@ def test_knapsack_lns_timer():
         skip_initial_solution_provider=False,
         callbacks=callbacks,
     )
-    assert nb_iteration_tracker.nb_iteration <= 6
+    assert nb_iteration_tracker.nb_iteration <= 3
 
 
 class NbIterationTrackerWithAssert(Callback):

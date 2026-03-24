@@ -66,7 +66,7 @@ def test_lns_sm(constraint_handler_cls):
         params_objective_function=params_objective_function,
     )
     result_store = lns_solver.solve(
-        time_limit_subsolver=10, parameters_milp=parameters_milp, nb_iteration_lns=10
+        time_limit_subsolver=1, parameters_milp=parameters_milp, nb_iteration_lns=2
     )
     solution, fit = result_store.get_best_solution_fit()
     solution_rebuilt = RcpspSolution(
@@ -129,8 +129,8 @@ def test_lns_mm(solver_cls, constraint_handler_cls):
     )
     result_store = lns_solver.solve(
         parameters_milp=parameters_milp,
-        time_limit_subsolver=10,
-        nb_iteration_lns=10,
+        time_limit_subsolver=1,
+        nb_iteration_lns=2,
         skip_initial_solution_provider=False,
     )
     solution, fit = result_store.get_best_solution_fit()

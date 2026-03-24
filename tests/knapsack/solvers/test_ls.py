@@ -33,11 +33,13 @@ def test_sa_knapsack():
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),
         mode_mutation=ModeMutation.MUTATE,
     )
-    sa.solve(
+    res = sa.solve(
         initial_variable=solution,
-        nb_iteration_max=1000000,
-        callbacks=[TimerStopper(total_seconds=20, check_nb_steps=1000)],
+        nb_iteration_max=10,
+        callbacks=[TimerStopper(total_seconds=20, check_nb_steps=5)],
     )
+    sol, fit = res.get_best_solution_fit()
+    assert model.satisfy(sol)
 
 
 def test_hc_knapsack_multiobj():
@@ -60,12 +62,12 @@ def test_hc_knapsack_multiobj():
     )
     result_sa = sa.solve(
         initial_variable=solution,
-        nb_iteration_max=50000,
-        update_iteration_pareto=1000,
-        callbacks=[TimerStopper(total_seconds=20, check_nb_steps=1000)],
+        nb_iteration_max=50,
+        update_iteration_pareto=10,
+        callbacks=[TimerStopper(total_seconds=5, check_nb_steps=10)],
     )
     pareto = result_sa
-    pareto.len_pareto_front()
+    assert pareto.len_pareto_front() > 1
 
     # test warm start
     start_solution = result_sa[-1][0]
@@ -79,8 +81,7 @@ def test_hc_knapsack_multiobj():
     )
     sa.set_warm_start(start_solution)
     result_sa2 = sa.solve(
-        nb_iteration_max=5,
-        update_iteration_pareto=1000,
+        nb_iteration_max=2,
     )
     assert result_sa[0][0].list_taken != start_solution.list_taken
     assert result_sa2[0][0].list_taken == start_solution.list_taken

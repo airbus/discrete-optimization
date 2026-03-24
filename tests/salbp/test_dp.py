@@ -1,3 +1,6 @@
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.salbp.parser import get_data_available, parse_alb_file
 from discrete_optimization.salbp.solvers.dp import DpSalbpSolver, dp
 
@@ -12,7 +15,11 @@ def test_dp():
     # sol = greedy.solve()[-1][0]
     # solver.set_warm_start(sol)
     res = solver.solve(
-        retrieve_intermediate_solutions=True, solver=dp.CABS, time_limit=10, threads=8
+        retrieve_intermediate_solutions=True,
+        solver=dp.CABS,
+        time_limit=10,
+        threads=8,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
     sol = res[-1][0]
     assert problem.satisfy(sol)

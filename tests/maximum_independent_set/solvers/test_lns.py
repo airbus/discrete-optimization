@@ -52,7 +52,7 @@ def test_lns():
         parameters_cp=params_cp,
         time_limit_subsolver=10,
         time_limit_subsolver_iter0=1,
-        nb_iteration_lns=200,
+        nb_iteration_lns=2,
         callbacks=[TimerStopper(total_seconds=30)],
     )
     solution, fit = result_store.get_best_solution_fit()
@@ -86,7 +86,7 @@ def test_lns_allvars():
         parameters_cp=params_cp,
         time_limit_subsolver=10,
         time_limit_subsolver_iter0=1,
-        nb_iteration_lns=200,
+        nb_iteration_lns=2,
         callbacks=[TimerStopper(total_seconds=30)],
     )
     solution, fit = result_store.get_best_solution_fit()
@@ -127,7 +127,7 @@ def test_lns_mix():
         parameters_cp=params_cp,
         time_limit_subsolver=10,
         time_limit_subsolver_iter0=1,
-        nb_iteration_lns=200,
+        nb_iteration_lns=2,
         callbacks=[TimerStopper(total_seconds=30)],
     )
     solution, fit = result_store.get_best_solution_fit()

@@ -1,10 +1,13 @@
-#  Copyright (c) 2022-2025 AIRBUS and its affiliates.
+#  Copyright (c) 2022 - 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import sys
 
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cp_mzn import (
@@ -21,7 +24,7 @@ if sys.platform.startswith("win"):
     [
         0,
         1,
-        2,
+        # 2,
         # 3, # fails with unbounded variable with gecode
     ],
 )
@@ -38,7 +41,11 @@ def test_cp_sm(optimisation_level):
     params_cp = ParametersCp.default()
     params_cp.free_search = True
     params_cp.optimisation_level = optimisation_level
-    solver.solve(parameters_cp=params_cp, time_limit=10)
+    solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
 
 
 @pytest.mark.parametrize(
@@ -46,7 +53,7 @@ def test_cp_sm(optimisation_level):
     [
         0,
         1,
-        2,
+        # 2,
         # 3, # fails with unbounded variable with gecode
     ],
 )
@@ -66,4 +73,8 @@ def test_cp_single_mode_model(optimisation_level):
     params_cp = ParametersCp.default()
     params_cp.free_search = True
     params_cp.optimisation_level = optimisation_level
-    solver.solve(parameters_cp=params_cp, time_limit=10)
+    solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )

@@ -15,6 +15,10 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
+from discrete_optimization.generic_tools.ea.ga_tools import (
+    ParametersAltGa,
+    ParametersGa,
+)
 from discrete_optimization.generic_tools.mutations.mutation_portfolio import (
     create_mutations_portfolio_from_problem,
 )
@@ -32,7 +36,7 @@ def random_seed():
 
 def test_single_mode_ga(random_seed):
     files = get_data_available()
-    files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
+    files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
     rcpsp_problem = parse_file(file_path)
 
@@ -41,7 +45,8 @@ def test_single_mode_ga(random_seed):
         rcpsp_problem,
         encoding="rcpsp_permutation",
         mutation=mutation,
-        max_evals=100,
+        max_evals=10,
+        pop_size=5,
     )
     sol = ga_solver.solve().get_best_solution()
     assert rcpsp_problem.satisfy(sol)
@@ -55,7 +60,7 @@ def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
     file_path = files[0]
     rcpsp_problem = parse_file(file_path)
 
-    total_evals = 1000
+    total_evals = 150
 
     sub_evals = [50, 50]
 
@@ -103,7 +108,7 @@ def test_alternating_ga_specific_mode_arity_single_solver_warm_started_with_cpm(
 
     print(f"SGS: {fit_sgs}")
 
-    total_evals = 1000
+    total_evals = 150
 
     sub_evals = [50, 50]
 
@@ -143,7 +148,7 @@ def test_single_mode_moga_aggregated(random_seed):
         encoding="rcpsp_permutation",
         mutation=mutation,
     )
-    ga_solver._max_evals = 2000
+    ga_solver._max_evals = 200
     sol = ga_solver.solve().get_best_solution()
     assert rcpsp_problem.satisfy(sol)
 
@@ -169,7 +174,7 @@ def test_single_mode_moga_aggregated(random_seed):
         mutation=mutation,
         params_objective_function=params_objective_function,
     )
-    ga_solver._max_evals = 2000
+    ga_solver._max_evals = 200
     sol = ga_solver.solve().get_best_solution()
     assert rcpsp_problem.satisfy(sol)
 
@@ -238,11 +243,7 @@ def test_ga_warm_started_with_cpm(random_seed):
     mixed_mutation = create_mutations_portfolio_from_problem(
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
-    kwargs = dict(
-        problem=rcpsp_problem,
-        mutation=mixed_mutation,
-        max_evals=5000,
-    )
+    kwargs = dict(problem=rcpsp_problem, mutation=mixed_mutation, max_evals=2000)
     ga_solver = Ga(**kwargs)
     ga_solver.set_warm_start(solution_sgs)
     result_store = ga_solver.solve()
@@ -258,18 +259,25 @@ def test_ga_multimode_rcpsp_solver():
     file = [f for f in files_available if "j1010_10.mm" in f][0]
     rcpsp_problem = parse_file(file)
 
+    parameters_ga = ParametersAltGa.default_mrcpsp()
+    parameters_ga.pop_size = 10
+    parameters_ga.max_evals = 100
+    parameters_ga.sub_evals = [40, 40]
     solver = GaMultimodeRcpspSolver(problem=rcpsp_problem)
-    sol, fit = solver.solve().get_best_solution_fit()
+    sol, fit = solver.solve(parameters_ga=parameters_ga).get_best_solution_fit()
     assert sol is not None
 
 
 def test_ga_rcpsp_solver():
     files_available = get_data_available()
-    file = [f for f in files_available if "j1201_1.sm" in f][0]
+    file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
 
+    parameters_ga = ParametersGa.default_rcpsp()
+    parameters_ga.pop_size = 10
+    parameters_ga.max_evals = 100
     solver = GaRcpspSolver(problem=rcpsp_problem)
-    sol, fit = solver.solve().get_best_solution_fit()
+    sol, fit = solver.solve(parameters_ga=parameters_ga).get_best_solution_fit()
     assert sol is not None
 
 

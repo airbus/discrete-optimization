@@ -108,7 +108,7 @@ def test_lns_cpsat(
         constraint_handler=constraint_handler,
     )
     res = lns_solver.solve(
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
         skip_initial_solution_provider=True,

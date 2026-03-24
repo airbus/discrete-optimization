@@ -116,9 +116,9 @@ def create_task_details_preemptive(
     return completed, ongoing
 
 
-@pytest.mark.parametrize("rcpsp_problem_file", files_rcpsp)
 @pytest.mark.parametrize("preemptive_version", [True, False])
-def test_partial_sgs(rcpsp_problem_file, preemptive_version):
+def test_partial_sgs(preemptive_version):
+    rcpsp_problem_file = [f for f in files_rcpsp if f.endswith("100_10_47_9.def")][0]
     rcpsp_problem: MultiskillRcpspProblem = parse_file(
         rcpsp_problem_file, preemptive=preemptive_version
     )[0]

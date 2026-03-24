@@ -7,7 +7,9 @@ import random
 import numpy as np
 import pytest
 
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import (
     NbIterationTracker,
     ObjectiveLogger,
@@ -69,12 +71,16 @@ def test_sequential_metasolver_rcpsp(random_seed):
                 restart_handler=restart_handler,
                 temperature_handler=temperature_handler,
                 mode_mutation=ModeMutation.MUTATE,
-                nb_iteration_max=5000,
+                nb_iteration_max=10,
             ),
         ),
         SubBrick(
             cls=CpSatRcpspSolver,
-            kwargs=dict(parameters_cp=parameters_cp, time_limit=20),
+            kwargs=dict(
+                parameters_cp=parameters_cp,
+                time_limit=5,
+                callbacks=[NbIterationStopper(nb_iteration_max=1)],
+            ),
         ),
     ]
 
@@ -85,7 +91,6 @@ def test_sequential_metasolver_rcpsp(random_seed):
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
             ),
-            TimerStopper(total_seconds=30),
         ],
     )
     solution, fit = result_storage.get_best_solution_fit()
@@ -115,12 +120,12 @@ def test_sequential_metasolver_rcpsp_with_dynamic_kwargs(random_seed):
                 restart_handler=restart_handler,
                 temperature_handler=temperature_handler,
                 mode_mutation=ModeMutation.MUTATE,
-                nb_iteration_max=5000,
+                nb_iteration_max=10,
             ),
         ),
         SubBrick(
             cls=GurobiMultimodeRcpspSolver,
-            kwargs=dict(),
+            kwargs=dict(callbacks=[NbIterationStopper(nb_iteration_max=1)]),
             kwargs_from_solution=dict(start_solution=lambda sol: sol),
         ),
     ]
@@ -132,7 +137,6 @@ def test_sequential_metasolver_rcpsp_with_dynamic_kwargs(random_seed):
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
             ),
-            TimerStopper(total_seconds=30),
         ],
     )
     solution, fit = result_storage.get_best_solution_fit()

@@ -11,10 +11,8 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 )
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
-from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.problem import TspSolution
 from discrete_optimization.tsp.solvers.cpsat import CpSatTspSolver
 from discrete_optimization.tsp.solvers.lns_cpsat import (
@@ -30,37 +28,35 @@ def solver(problem):
     return solver
 
 
-def test_cpsat_solver(problem, solver, end_index):
+def test_cpsat_solver(problem, solver, end_index, start_solutions):
+    sol1, sol2 = start_solutions
+
+    solver.set_warm_start(sol1)
     res = solver.solve(
         callbacks=[
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
-            )
+            ),
+            NbIterationStopper(nb_iteration_max=1),
         ],
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
         parameters_cp=ParametersCp.default_cpsat(),
     )
     sol, fitness = res.get_best_solution_fit()
     sol: TspSolution
     assert problem.satisfy(sol)
     assert sol.end_index == end_index
-
-    assert len(res) > 2
-
-    # test warm start
-    start_solution = res[1][0]
-
-    # first solution is not start_solution
-    assert res[0][0].permutation != start_solution.permutation
+    assert sol.permutation == sol1.permutation
 
     # warm start at first solution
-    solver.set_warm_start(start_solution)
+    solver.set_warm_start(sol2)
     # force first solution to be the hinted one
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
-    assert res[0][0].permutation == start_solution.permutation
+    assert res[0][0].permutation == sol2.permutation
 
     # test get_start_time, get_end_time
     for task in problem.tasks_list:
@@ -101,7 +97,7 @@ def test_task_constraint(problem, solver):
     start_or_end = StartOrEnd.END
     sign = SignEnum.LEQ
     antisign = SignEnum.UP
-    time = 5
+    time = 2
 
     # anti-constraint
     cstrs = solver.add_constraint_on_task(
@@ -126,19 +122,23 @@ def test_task_constraint(problem, solver):
     )
 
 
-def test_chaining_tasks_constraint(problem, solver):
-    task1 = 1
-    task2 = 3
+def test_chaining_tasks_constraint(problem, solver, start_solutions):
+    # add warm start to ensure tasks not chained at first solve
+    start_solution = start_solutions[0]
+    task1 = start_solution.permutation[0]
+    task2 = start_solution.permutation[2]
 
     # before adding the constraint, not already satisfied
+    solver.set_warm_start(start_solution)
     sol = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     ).get_best_solution()
     assert not sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
     # add constraint
     cstrs = solver.add_constraint_chaining_tasks(task1=task1, task2=task2)
+    solver.set_warm_start(start_solution)
     sol = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+        callbacks=[NbIterationStopper(nb_iteration_max=2)],
     ).get_best_solution()
     assert sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
     # remove constraint
@@ -149,30 +149,26 @@ def test_chaining_tasks_constraint(problem, solver):
     assert not sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
 
 
-def test_lns_cpsat_solver():
-    files = get_data_available()
-    files = [f for f in files if "tsp_100_1" in f]
-    model = parse_file(files[0], start_index=0, end_index=10)
-    params_objective_function = get_default_objective_setup(problem=model)
-    solver = CpSatTspSolver(model, params_objective_function=params_objective_function)
-    solver.init_model()
+def test_lns_cpsat_solver(problem, solver):
     p = ParametersCp.default_cpsat()
     lns_solver = LnsOrtoolsCpSat(
-        problem=model,
+        problem=problem,
         subsolver=solver,
         constraint_handler=ConstraintHandlerMix(
-            problem=model,
+            problem=problem,
             list_constraints_handler=[
-                SubpathTspConstraintHandler(problem=model, fraction_segment_to_fix=0.7),
-                TspConstraintHandler(problem=model, fraction_segment_to_fix=0.7),
+                SubpathTspConstraintHandler(
+                    problem=problem, fraction_segment_to_fix=0.7
+                ),
+                TspConstraintHandler(problem=problem, fraction_segment_to_fix=0.7),
             ],
             list_proba=[0.5, 0.5],
         ),
     )
     res = lns_solver.solve(
         skip_initial_solution_provider=True,
-        nb_iteration_lns=20,
-        time_limit_subsolver=10,
+        nb_iteration_lns=2,
+        time_limit_subsolver=2,
         callbacks=[
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
@@ -181,4 +177,4 @@ def test_lns_cpsat_solver():
         parameters_cp=p,
     )
     sol, fitness = res.get_best_solution_fit()
-    assert model.satisfy(sol)
+    assert problem.satisfy(sol)

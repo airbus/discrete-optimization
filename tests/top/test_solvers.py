@@ -3,6 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.top.parser import get_data_available, parse_file
 from discrete_optimization.top.solvers.cpsat import CpsatTopSolver
 from discrete_optimization.top.solvers.dp import DpTopSolver
@@ -22,7 +25,11 @@ def test_several_solvers(solver_class):
     problem = parse_file(file)
     solver = solver_class(problem)
     solver.init_model(scaling=100)
-    res = solver.solve(time_limit=10)
+    kwargs = dict(time_limit=10)
+    if not isinstance(solver, OptalTopSolver):
+        kwargs["callbacks"] = [NbIterationStopper(nb_iteration_max=1)]
+
+    res = solver.solve(**kwargs)
     sol = res[-1][0]
-    if solvers != OptalTopSolver:
+    if not isinstance(solver, OptalTopSolver):
         assert problem.satisfy(sol)

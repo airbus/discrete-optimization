@@ -24,7 +24,11 @@ def test_rcpsp_dp(model, solver_cls):
     solver = DpRcpspSolver(problem=rcpsp_problem)
     if rcpsp_problem.is_rcpsp_multimode():
         solver.init_model(modeling=DpRcpspModeling.TASK_MULTIMODE)
-    result_storage = solver.solve(solver=solver_cls, time_limit=10)
+    result_storage = solver.solve(
+        solver=solver_cls,
+        time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
 
@@ -48,7 +52,11 @@ def test_rcpsp_dp_calendar(model, solver_cls):
     rcpsp_problem.update_functions()
     solver = DpRcpspSolver(problem=rcpsp_problem)
     solver.init_model(modeling=DpRcpspModeling.TASK_MULTIMODE)
-    result_storage = solver.solve(solver=solver_cls, time_limit=5)
+    result_storage = solver.solve(
+        solver=solver_cls,
+        time_limit=5,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
 
