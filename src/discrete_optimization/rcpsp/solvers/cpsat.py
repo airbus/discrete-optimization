@@ -276,9 +276,13 @@ class CpSatRcpspSolver(
             starts_var: Dictionary mapping tasks to their start time variables
             ends_var: Dictionary mapping tasks to their end time variables
         """
-        # start_to_start_with_time_lag: start(t1) + offset <= start(t2)
-        for t1, t2, offset in self.problem.special_constraints.start_to_start_with_time_lag:
+        # start_to_start_min_time_lag: start(t1) + offset <= start(t2) where offset >= 0 (minimum time lag)
+        for t1, t2, offset in self.problem.special_constraints.start_to_start_min_time_lag:
             model.Add(starts_var[t1] + offset <= starts_var[t2])
+
+        # start_to_start_max_time_lag: start(t2) <= start(t1) + offset where offset >= 0 (maximum time lag)
+        for t1, t2, offset in self.problem.special_constraints.start_to_start_max_time_lag:
+            model.Add(starts_var[t2] <= starts_var[t1] + offset)
 
         # start_together: start(t1) == start(t2)
         for t1, t2 in self.problem.special_constraints.start_together:
@@ -291,10 +295,6 @@ class CpSatRcpspSolver(
         # start_at_end_plus_offset: end(t1) + offset <= start(t2)
         for t1, t2, offset in self.problem.special_constraints.start_at_end_plus_offset:
             model.Add(ends_var[t1] + offset <= starts_var[t2])
-
-        # start_after_nunit: start(t1) + offset <= start(t2)
-        for t1, t2, offset in self.problem.special_constraints.start_after_nunit:
-            model.Add(starts_var[t1] + offset <= starts_var[t2])
 
         # disjunctive_tasks: tasks cannot overlap (pairwise)
         # Either end(t1) <= start(t2) OR end(t2) <= start(t1)
