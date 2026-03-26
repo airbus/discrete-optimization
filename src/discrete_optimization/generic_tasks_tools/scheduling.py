@@ -54,6 +54,9 @@ class SchedulingSolution(TasksSolution[Task]):
     @abstractmethod
     def get_start_time(self, task: Task) -> int: ...
 
+    def get_duration(self, task: Task) -> int:
+        return self.get_end_time(task) - self.get_start_time(task)
+
     def get_max_end_time(self) -> int:
         return max(self.get_end_time(task) for task in self.problem.get_last_tasks())
 
@@ -78,6 +81,15 @@ class SchedulingSolution(TasksSolution[Task]):
 
     def constraint_chaining_tasks_satisfied(self, task1: Task, task2: Task) -> bool:
         return self.get_end_time(task1) == self.get_start_time(task2)
+
+    def get_running_tasks(self, time: int) -> list[Task]:
+        """Extract tasks running at given time."""
+        return [
+            task
+            for task in self.problem.tasks_list
+            if self.get_start_time(task=task) <= time
+            and self.get_end_time(task=task) > time
+        ]
 
 
 class SchedulingCpSolver(TasksCpSolver[Task]):

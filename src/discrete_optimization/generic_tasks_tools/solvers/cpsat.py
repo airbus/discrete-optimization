@@ -3,17 +3,37 @@
 #  LICENSE file in the root directory of this source tree.
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Iterable, Optional
+from typing import Any, Generic, Iterable, Optional
 
-from ortools.sat.python.cp_model import IntVar, LinearExprT
+from ortools.sat.python.cp_model import IntervalVar, IntVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationCpSolver,
     AllocationSolution,
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.allocation_scheduling import (
+    AllocationSchedulingProblem,
+    CumulativeResource,
+)
+from discrete_optimization.generic_tasks_tools.allocation_scheduling import (
+    Resource as UnaryOrCumulativeResource,
+)
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    CumulativeResourceProblem,
+)
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.multimode import MultimodeCpSolver
+from discrete_optimization.generic_tasks_tools.multimode import (
+    MultimodeCpSolver,
+    SinglemodeProblem,
+)
+from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+    MultimodeSchedulingProblem,
+)
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    RenewableResourceProblem,
+    Resource,
+)
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingCpSolver,
     Task,
@@ -176,6 +196,15 @@ class MultimodeCpSatSolver(OrtoolsCpSatSolver, MultimodeCpSolver[Task]):
             else:
                 constraints.append(self.cp_model.add(var == False))
         return constraints
+
+
+class SinglemodeCpSatSolver(MultimodeCpSatSolver[Task]):
+    """Cpsat solver mixin for single mode problems."""
+
+    problem: SinglemodeProblem[Task]
+
+    def get_task_mode_is_present_variable(self, task: Task, mode: int) -> LinearExprT:
+        return 1
 
 
 class AllocationCpSatSolver(
@@ -447,6 +476,12 @@ class AllocationIntegerModellingCpSatSolver(
     is_present_variables_created = False
     is_present_variables: dict[tuple[Task, UnaryResource], IntVar]
 
+    def init_model(self, **kwargs: Any) -> None:
+        """Init cp model and reset stored variables if any."""
+        super().init_model(**kwargs)
+        self.is_present_variables_created = False
+        self.is_present_variables = {}
+
     @abstractmethod
     def get_task_allocation_variable(
         self,
@@ -637,3 +672,165 @@ def is_a_trivial_zero(var: LinearExprT) -> bool:
 
     """
     return isinstance(var, int) and var == 0
+
+
+class RenewableResourceCpSatSolver(
+    SchedulingCpSatSolver[Task], Generic[Task, Resource]
+):
+    problem: RenewableResourceProblem[Task, Resource]
+
+    def create_renewable_resources_constraint(self, resource: Resource):
+        """Add the constraint for renewable resources to the cpsat model.
+
+        Constraint ensuring that the total demand on the given resource stay below its capacity.
+
+        """
+        actual_tasks_intervals_n_consumptions = self.get_resource_consumption_intervals(
+            resource
+        )
+        fake_tasks_intervals_n_consumptions = [
+            (
+                self.cp_model.NewFixedSizeIntervalVar(
+                    start=start, size=end - start, name=f"fake_task_{resource}_{i_task}"
+                ),
+                value,
+            )
+            for i_task, (start, end, value) in enumerate(
+                self.problem.get_fake_tasks(resource=resource)
+            )
+        ]
+        all_tasks_intervals_n_consumptions = (
+            actual_tasks_intervals_n_consumptions + fake_tasks_intervals_n_consumptions
+        )
+        intervals = [
+            interval
+            for interval, value in all_tasks_intervals_n_consumptions
+            if value > 0
+        ]
+        demands = [
+            value for interval, value in all_tasks_intervals_n_consumptions if value > 0
+        ]
+        capacity = self.problem.get_resource_max_capacity(resource)
+        if len(intervals) > 0:
+            if capacity == 1 and all(value == 1 for value in demands):
+                self.cp_model.add_no_overlap(intervals)
+            else:
+                self.cp_model.add_cumulative(
+                    intervals=intervals,
+                    demands=demands,
+                    capacity=capacity,
+                )
+
+    @abstractmethod
+    def get_resource_consumption_intervals(
+        self, resource: Resource
+    ) -> list[tuple[IntervalVar, int]]:
+        """Get all intervals where a given resource is consumed by a task, and related consumption value.
+
+        Args:
+            resource:
+
+        Returns: list of tuples (interval_var, consumption_value)
+
+        """
+        ...
+
+
+class MultimodeSchedulingCpSatSolver(
+    SchedulingCpSatSolver[Task], MultimodeCpSatSolver[Task], Generic[Task]
+):
+    """Base class for cpsat solvers dealing with scheduling problems whose tasks durations depend only on mode.
+
+    Automatically managed creation of some variables
+    - start
+    - end
+    - task-mode choice + only one to chosen constraint
+    - duration
+    - task intervals (constraint duration = end - start)
+    - task-mode opt intervals
+
+    """
+
+    problem: MultimodeSchedulingProblem[Task]
+
+    @abstractmethod
+    def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
+        """Get the interval variable corresponding to given task and mode."""
+        ...
+
+
+class CumulativeResourceSchedulingCpSatSolver(
+    RenewableResourceCpSatSolver[Task, Resource],
+    MultimodeSchedulingCpSatSolver[Task],
+    Generic[Task, Resource],
+):
+    """Base class for cpast solvers dealing with scheduling problems handling cumulative resources.
+
+    This class manages the creation of interval variables for each (task, mode) tuple, with
+    If actually single mode  (only 1 mode per task), it
+
+    """
+
+    problem: CumulativeResourceProblem[Task, Resource]
+
+    def get_resource_consumption_intervals(
+        self, resource: Resource
+    ) -> list[tuple[IntervalVar, int]]:
+        if self.problem.is_cumulative_resource(resource):
+            return [
+                (
+                    self.get_task_mode_interval(task=task, mode=mode),
+                    self.problem.get_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    ),
+                )
+                for task in self.problem.tasks_list
+                for mode in self.problem.get_task_modes(task=task)
+            ]
+        else:
+            raise NotImplementedError(
+                f"{resource} is not a cumulative resource whose consumption depends only on task mode."
+            )
+
+
+Resource = UnaryOrCumulativeResource
+
+
+class AllocationSchedulingCpSatSolver(
+    CumulativeResourceSchedulingCpSatSolver[Task, Resource],
+    AllocationCpSatSolver[Task, UnaryResource],
+    Generic[Task, UnaryResource, CumulativeResource],
+):
+    problem: AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource]
+
+    def get_resource_consumption_intervals(
+        self, resource: Resource
+    ) -> list[tuple[IntervalVar, int]]:
+        if self.problem.is_unary_resource(resource=resource):
+            tasks = self.problem.tasks_list
+            return [
+                (
+                    self.get_task_unary_resource_interval(
+                        task=task, unary_resource=resource
+                    ),
+                    1,
+                )
+                for task in tasks
+                if self.problem.is_compatible_task_unary_resource(
+                    task=task, unary_resource=resource
+                )
+            ]
+        else:
+            return super().get_resource_consumption_intervals(resource=resource)
+
+    @abstractmethod
+    def get_task_unary_resource_interval(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> IntervalVar:
+        """Get the interval variable corresponding to given task conditioned to allocation of the given unary resource.
+
+        The method may return an error (no variable existing) if
+        `self.problem.is_compatible_task_unary_resource(task=task, unary_resource=unary_resource)` is false.
+
+        """
+        ...

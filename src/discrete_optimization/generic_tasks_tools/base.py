@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Hashable
 from typing import Generic, TypeVar
 
 from discrete_optimization.generic_tools.cp_tools import CpSolver
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 
-Task = TypeVar("Task")
+Task = TypeVar("Task", bound=Hashable)
 
 
 class TasksProblem(Problem, Generic[Task]):

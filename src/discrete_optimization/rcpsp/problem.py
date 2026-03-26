@@ -19,6 +19,9 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
 )
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeProblem
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    RenewableResourceProblem,
+)
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -51,8 +54,14 @@ class ScheduleGenerationScheme(Enum):
     PARALLEL_SGS = 1
 
 
+Resource = str
+
+
 class RcpspProblem(
-    MultimodeProblem[Task], SchedulingProblem[Task], PrecedenceProblem[Task]
+    MultimodeProblem[Task],
+    PrecedenceProblem[Task],
+    RenewableResourceProblem[Task, Resource],
+    SchedulingProblem[Task],
 ):
     """Main class for RCPSP problem.
 
@@ -306,6 +315,37 @@ class RcpspProblem(
     @property
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
+
+    @property
+    def renewable_resources_list(self) -> list[Resource]:
+        return [
+            res
+            for res in self.resources_list
+            if res not in self.non_renewable_resources
+        ]
+
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        calendar = self.resources[resource]
+        if isinstance(calendar, int):  # constant resource
+            return [(0, self.horizon, calendar)]
+        else:  # varying resource
+            intervals = []
+            t = 0
+            start = t
+            value = calendar[t]
+            while t < len(calendar) - 1:
+                t += 1
+                if calendar[t] != value:
+                    # ends current interval, starts the next one
+                    interval = (start, t - 1, value)
+                    value = calendar
+                    start = t
+                start = t
+                value = calendar[t]
+
+        pass
 
     def get_task_modes(self, task: Task) -> set[int]:
         return set(self.mode_details[task])
