@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Iterable
+from collections.abc import Hashable, Iterable
 from typing import Any, Generic, Optional, TypeVar
 
 from discrete_optimization.generic_tasks_tools.base import (
@@ -12,7 +12,7 @@ from discrete_optimization.generic_tasks_tools.base import (
 )
 from discrete_optimization.generic_tools.cp_tools import SignEnum
 
-UnaryResource = TypeVar("UnaryResource")
+UnaryResource = TypeVar("UnaryResource", bound=Hashable)
 
 
 class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
