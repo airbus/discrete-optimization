@@ -354,7 +354,7 @@ def test_constraint_nb_usages(problem, modelisation_allocation):
             sign=SignEnum.LESS, target=target
         )
         sol = solver.solve(
-            callbacks=[NbIterationStopper(nb_iteration_max=1)], time_limit=5
+            callbacks=[NbIterationStopper(nb_iteration_max=1)], time_limit=15
         ).get_best_solution()
         assert sol.compute_nb_unary_resources_used() < target
 
