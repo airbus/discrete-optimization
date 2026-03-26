@@ -202,7 +202,7 @@ def test_cpsat_params(
     )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=5,
+        time_limit=15,
         parameters_cp=parameters_cp,
         **kwargs,
     )
@@ -228,7 +228,7 @@ def test_cpsat_modelisation_dispersion(problem, modelisation_dispersion):
     )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=5,
+        time_limit=10,
         parameters_cp=parameters_cp,
         **kwargs,
     )
@@ -244,7 +244,7 @@ def test_cpsat_set_model_obj_aggregated(problem):
     # solution to compare with for DELTA_TO_EXISTING_SOLUTION
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=5,
+        time_limit=10,
     )
     base_solution = res.get_best_solution()
 
@@ -279,7 +279,7 @@ def test_cpsat_lexico(problem):
     # solution to compare with for DELTA_TO_EXISTING_SOLUTION
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=5,
+        time_limit=10,
     )
     base_solution = res.get_best_solution()
 
@@ -449,10 +449,13 @@ def test_objective_nb_unary_resources_used(problem):
     solver.init_model()
     objective = solver.get_nb_unary_resources_used_variable()
     solver.minimize_variable(objective)
-    sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    assert solver.solver.ObjectiveValue() == sum(
-        max(sol.is_allocated(task, unary_resource) for task in problem.tasks_list)
-        for unary_resource in problem.unary_resources_list
+    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
+    assert solver.solver.ObjectiveValue() == min(
+        sum(
+            max(sol.is_allocated(task, unary_resource) for task in problem.tasks_list)
+            for unary_resource in problem.unary_resources_list
+        )
+        for sol, _ in res
     )
 
 

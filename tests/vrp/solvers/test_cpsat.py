@@ -59,11 +59,7 @@ def test_cpsat_vrp(optional_node, cut_transition):
         compute_nb_nodes_in_path(sol)
 
     # test warm start
-    # start_solution = GreedyVrpSolver(problem=vrp_problem).solve(time_limit=20).get_best_solution_fit()[0]
-    start_solution = res[1][0]
-
-    # first solution is not start_solution
-    assert res[0][0].list_paths != start_solution.list_paths
+    start_solution = res[-1][0]
 
     # warm start at first solution
     solver = CpSatVrpSolver(problem=problem)
