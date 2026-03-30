@@ -6,7 +6,7 @@ import logging
 from collections.abc import Callable, Hashable, Iterable
 from copy import deepcopy
 from enum import Enum
-from functools import partial
+from functools import cache, partial
 from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
@@ -17,12 +17,16 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
     PermutationRcpsp,
 )
-from discrete_optimization.generic_tasks_tools.multimode import MultimodeProblem
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    CumulativeResourceProblem,
+)
+from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+    MultimodeSchedulingProblem,
+)
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    RenewableResourceProblem,
+    convert_calendar_to_availability_intervals,
 )
-from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -39,7 +43,7 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
-from discrete_optimization.rcpsp.solution import RcpspSolution, Task
+from discrete_optimization.rcpsp.solution import RcpspSolution, Resource, Task
 from discrete_optimization.rcpsp.special_constraints import (
     PairModeConstraint,
     SpecialConstraintsDescription,
@@ -54,14 +58,10 @@ class ScheduleGenerationScheme(Enum):
     PARALLEL_SGS = 1
 
 
-Resource = str
-
-
 class RcpspProblem(
-    MultimodeProblem[Task],
     PrecedenceProblem[Task],
-    RenewableResourceProblem[Task, Resource],
-    SchedulingProblem[Task],
+    CumulativeResourceProblem[Task, Resource],
+    MultimodeSchedulingProblem[Task],
 ):
     """Main class for RCPSP problem.
 
@@ -109,7 +109,6 @@ class RcpspProblem(
         precedence constraints, then generating a baseline schedule.
 
         >>> from discrete_optimization.rcpsp.problem import RcpspProblem
-        >>> from discrete_optimization.rcpsp.solution import RcpspSolution
         >>> # Define resources
         >>> resources = {"R1": 5, "R2": 2}
         >>> non_renewable_resources = []  # Empty if all resources replenish when a task ends
@@ -324,28 +323,31 @@ class RcpspProblem(
             if res not in self.non_renewable_resources
         ]
 
+    @cache
     def get_resource_availabilities(
         self, resource: Resource
     ) -> list[tuple[int, int, int]]:
-        calendar = self.resources[resource]
-        if isinstance(calendar, int):  # constant resource
-            return [(0, self.horizon, calendar)]
-        else:  # varying resource
-            intervals = []
-            t = 0
-            start = t
-            value = calendar[t]
-            while t < len(calendar) - 1:
-                t += 1
-                if calendar[t] != value:
-                    # ends current interval, starts the next one
-                    interval = (start, t - 1, value)
-                    value = calendar
-                    start = t
-                start = t
-                value = calendar[t]
+        return convert_calendar_to_availability_intervals(
+            calendar=self.resources[resource], horizon=self.horizon
+        )
 
-        pass
+    def get_resource_consumption(
+        self, resource: Resource, task: Task, mode: int
+    ) -> int:
+        if not self.is_cumulative_resource(resource):
+            raise ValueError(f"{resource} is not a cumulative resource of the problem.")
+        else:
+            mode_detail = self.mode_details[task][mode]
+            if resource not in mode_detail:
+                return 0
+            else:
+                return mode_detail[resource]
+
+    def is_cumulative_resource(self, resource: Resource) -> bool:
+        return resource in self.resources_list
+
+    def get_task_mode_duration(self, task: Task, mode: int) -> int:
+        return self.mode_details[task][mode]["duration"]
 
     def get_task_modes(self, task: Task) -> set[int]:
         return set(self.mode_details[task])

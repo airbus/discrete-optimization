@@ -11,7 +11,6 @@ from typing import Any, Optional
 from ortools.sat.python.cp_model import (
     Constraint,
     CpModel,
-    CpSolver,
     CpSolverSolutionCallback,
     IntervalVar,
     IntVar,
@@ -22,22 +21,25 @@ from ortools.sat.python.cp_model import (
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
-    MultimodeCpSatSolver,
-    SchedulingCpSatSolver,
+    CumulativeResourceSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.do_solver import StatusSolver, WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.problem import RcpspProblem, RcpspSolution, Task
+from discrete_optimization.rcpsp.problem import (
+    RcpspProblem,
+    RcpspSolution,
+    Resource,
+    Task,
+)
 from discrete_optimization.rcpsp.solvers import RcpspSolver
 from discrete_optimization.rcpsp.special_constraints import PairModeConstraint
 from discrete_optimization.rcpsp.utils import (
-    create_fake_tasks,
     get_end_bounds_from_additional_constraint,
     get_start_bounds_from_additional_constraint,
 )
@@ -46,12 +48,12 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatRcpspSolver(
-    SchedulingCpSatSolver[Task],
-    MultimodeCpSatSolver[Task],
+    CumulativeResourceSchedulingCpSatSolver[Task, Resource],
     RcpspSolver,
     WarmstartMixin,
 ):
     problem: RcpspProblem
+    variables: dict[str, Any]
 
     def __init__(
         self,
@@ -64,10 +66,9 @@ class CpSatRcpspSolver(
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        self.cp_model: Optional[CpModel] = None
-        self.cp_solver: Optional[CpSolver] = None
-        self.variables: Optional[dict[str, Any]] = None
-        self.status_solver: Optional[StatusSolver] = None
+
+    def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
+        return self.variables["interval_var"][(task, mode)]
 
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
@@ -142,26 +143,11 @@ class CpSatRcpspSolver(
         for task in interval_per_tasks:
             model.AddExactlyOne([is_present_var[k] for k in interval_per_tasks[task]])
 
-    def create_fake_tasks(self) -> list[dict[str, int]]:
-        """
-        Create tasks representing the variable resource availability.
-        :return:
-        """
-        if self.problem.is_calendar:
-            fake_task: list[dict[str, int]] = create_fake_tasks(
-                rcpsp_problem=self.problem
-            )
-        else:
-            fake_task = []
-        return fake_task
-
     def create_cumulative_constraint(
         self,
         model: CpModel,
         resource: str,
-        interval_var: dict[tuple[Hashable, int], IntervalVar],
         is_present_var: dict[tuple[Hashable, int], IntVar],
-        fake_task: list[dict[str, int]],
     ):
         if resource in self.problem.non_renewable_resources:
             task_modes_consuming = [
@@ -178,39 +164,7 @@ class CpSatRcpspSolver(
                 <= self.problem.get_max_resource_capacity(resource)
             )
         else:
-            task_modes_consuming = [
-                (
-                    (task, mode),
-                    self.problem.mode_details[task][mode].get(resource, 0),
-                )
-                for task in self.problem.tasks_list
-                for mode in self.problem.mode_details[task]
-                if self.problem.mode_details[task][mode].get(resource, 0) > 0
-            ]
-            fake_task_res = [
-                (
-                    model.NewFixedSizeIntervalVar(
-                        start=f["start"], size=f["duration"], name=f"res_"
-                    ),
-                    f.get(resource, 0),
-                )
-                for f in fake_task
-                if f.get(resource, 0) > 0
-            ]
-            capacity = self.problem.get_max_resource_capacity(resource)
-            if capacity > 1:
-                model.AddCumulative(
-                    [interval_var[x[0]] for x in task_modes_consuming]
-                    + [x[0] for x in fake_task_res],
-                    demands=[x[1] for x in task_modes_consuming]
-                    + [x[1] for x in fake_task_res],
-                    capacity=self.problem.get_max_resource_capacity(resource),
-                )
-            if capacity == 1:
-                model.AddNoOverlap(
-                    [interval_var[x[0]] for x in task_modes_consuming]
-                    + [x[0] for x in fake_task_res]
-                )
+            self.create_renewable_resources_constraint(resource=resource)
 
     def create_mode_pair_constraint(
         self,
@@ -345,6 +299,7 @@ class CpSatRcpspSolver(
             "start": starts_var,
             "end": ends_var,
             "is_present": is_present_var,
+            "interval_var": interval_var,
         }
         self.add_one_mode_selected_per_task(
             model=model,
@@ -354,15 +309,12 @@ class CpSatRcpspSolver(
         self.add_classical_precedence_constraints(
             model=model, starts_var=starts_var, ends_var=ends_var
         )
-        fake_task = self.create_fake_tasks()
         resources = self.problem.resources_list
         for resource in resources:
             self.create_cumulative_constraint(
                 model=model,
                 resource=resource,
-                interval_var=interval_var,
                 is_present_var=is_present_var,
-                fake_task=fake_task,
             )
         if include_special_constraints:
             if self.problem.special_constraints.pair_mode_constraint is not None:
@@ -440,9 +392,7 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
         model: CpModel,
         resource: str,
         is_used_resource: dict[str, IntVar],
-        interval_var: dict[tuple[Hashable, int], IntervalVar],
         is_present_var: dict[tuple[Hashable, int], IntVar],
-        fake_task: list[dict[str, int]],
     ):
         if resource in self.problem.non_renewable_resources:
             task_modes_consuming = [
@@ -463,46 +413,21 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
                 [is_present_var[x[0]] for x in task_modes_consuming],
             )
         else:
-            task_modes_consuming = [
-                (
-                    (task, mode),
-                    int(self.problem.mode_details[task][mode].get(resource, 0)),
-                )
+            self.create_renewable_resources_constraint(resource=resource)
+
+            resource_is_present_vars = [
+                self.get_task_mode_is_present_variable(task=task, mode=mode)
                 for task in self.problem.tasks_list
-                for mode in self.problem.mode_details[task]
-                if self.problem.mode_details[task][mode].get(resource, 0) > 0
+                for mode in self.problem.get_task_modes(task=task)
+                if self.problem.get_resource_consumption(
+                    resource=resource, task=task, mode=mode
+                )
+                > 0
             ]
-            if len(task_modes_consuming) == 0:
-                # when empty, the constraints don't work !
-                return
-            fake_task_res = [
-                (
-                    model.NewFixedSizeIntervalVar(
-                        start=f["start"], size=f["duration"], name=f"res_"
-                    ),
-                    int(f.get(resource, 0)),
+            if len(resource_is_present_vars) > 0:
+                model.add_max_equality(
+                    is_used_resource[resource], resource_is_present_vars
                 )
-                for f in fake_task
-                if f.get(resource, 0) > 0
-            ]
-            capacity = int(self.problem.get_max_resource_capacity(resource))
-            if capacity > 1:
-                model.AddCumulative(
-                    [interval_var[x[0]] for x in task_modes_consuming]
-                    + [x[0] for x in fake_task_res],
-                    demands=[x[1] for x in task_modes_consuming]
-                    + [x[1] for x in fake_task_res],
-                    capacity=self.problem.get_max_resource_capacity(resource),
-                )
-            if capacity == 1:
-                model.AddNoOverlap(
-                    [interval_var[x[0]] for x in task_modes_consuming]
-                    + [x[0] for x in fake_task_res]
-                )
-            model.AddMaxEquality(
-                is_used_resource[resource],
-                [is_present_var[x[0]] for x in task_modes_consuming],
-            )
 
     def init_model(self, **kwargs):
         include_special_constraints = kwargs.get(
@@ -519,6 +444,15 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
             interval_var,
             interval_per_tasks,
         ) = self.init_temporal_variable(model=model)
+        resources = self.problem.resources_list
+        is_used_resource = {res: model.NewBoolVar(f"used_{res}") for res in resources}
+        self.variables = {
+            "start": starts_var,
+            "end": ends_var,
+            "is_present": is_present_var,
+            "is_used_resource": is_used_resource,
+            "interval_var": interval_var,
+        }
         self.add_one_mode_selected_per_task(
             model=model,
             is_present_var=is_present_var,
@@ -527,17 +461,12 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
         self.add_classical_precedence_constraints(
             model=model, starts_var=starts_var, ends_var=ends_var
         )
-        fake_task = self.create_fake_tasks()
-        resources = self.problem.resources_list
-        is_used_resource = {res: model.NewBoolVar(f"used_{res}") for res in resources}
         for resource in resources:
             self.create_cumulative_constraint_and_used_resource(
                 model=model,
                 resource=resource,
                 is_used_resource=is_used_resource,
-                interval_var=interval_var,
                 is_present_var=is_present_var,
-                fake_task=fake_task,
             )
         if include_special_constraints:
             if self.problem.special_constraints.pair_mode_constraint is not None:
@@ -557,12 +486,6 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
             * sum([is_used_resource[x] for x in is_used_resource])
             + weight_on_makespan * starts_var[self.problem.sink_task]
         )
-        self.variables = {
-            "start": starts_var,
-            "end": ends_var,
-            "is_present": is_present_var,
-            "is_used_resource": is_used_resource,
-        }
 
     def _internal_used_resource(self) -> LinearExpr:
         return sum(self.variables["is_used_resource"].values())
@@ -654,7 +577,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
         resource_capacity_var: dict[str, IntVar],
         interval_var: dict[tuple[Hashable, int], IntervalVar],
         is_present_var: dict[tuple[Hashable, int], IntVar],
-        fake_task: list[dict[str, int]],
         use_overlap_for_disjunctive_resource: bool,
     ):
         if resource in self.problem.non_renewable_resources:
@@ -672,6 +594,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                 <= resource_capacity_var[resource]
             )
         else:
+            self.create_renewable_resources_constraint(resource=resource)
             task_modes_consuming = [
                 (
                     (task, mode),
@@ -684,29 +607,10 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             if len(task_modes_consuming) == 0:
                 # when empty, the constraints don't work !
                 return
-            fake_task_res = [
-                (
-                    model.NewFixedSizeIntervalVar(
-                        start=f["start"], size=f["duration"], name=f"res_"
-                    ),
-                    f.get(resource, 0),
-                )
-                for f in fake_task
-                if f.get(resource, 0) > 0
-            ]
-            capacity = self.problem.get_max_resource_capacity(resource)
+            capacity = self.problem.get_resource_max_capacity(resource)
             if capacity > 1 or (
                 capacity == 1 and not use_overlap_for_disjunctive_resource
             ):
-                model.AddCumulative(
-                    [interval_var[x[0]] for x in task_modes_consuming]
-                    + [x[0] for x in fake_task_res],
-                    demands=[x[1] for x in task_modes_consuming]
-                    + [x[1] for x in fake_task_res],
-                    capacity=self.problem.get_max_resource_capacity(resource),
-                )
-                # We need to add 2 of this constraint,
-                # With the var capacity we ignore the fake tasks.
                 model.AddCumulative(
                     [interval_var[x[0]] for x in task_modes_consuming],
                     demands=[x[1] for x in task_modes_consuming],
@@ -717,10 +621,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                         resource_capacity_var[resource] >= x[1] * is_present_var[x[0]]
                     )
             elif capacity == 1:
-                model.AddNoOverlap(
-                    [interval_var[x[0]] for x in task_modes_consuming]
-                    + [x[0] for x in fake_task_res]
-                )
                 model.AddMaxEquality(
                     resource_capacity_var[resource],
                     [is_present_var[x[0]] for x in task_modes_consuming],
@@ -744,8 +644,14 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             interval_var,
             interval_per_tasks,
         ) = self.init_temporal_variable(model=model)
-
         resource_capacity_var = self.create_resource_capacity_var(model=model)
+        self.variables = {
+            "start": starts_var,
+            "end": ends_var,
+            "is_present": is_present_var,
+            "resource_capacity": resource_capacity_var,
+            "interval_var": interval_var,
+        }
         self.add_classical_precedence_constraints(
             model=model, starts_var=starts_var, ends_var=ends_var
         )
@@ -754,7 +660,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             is_present_var=is_present_var,
             interval_per_tasks=interval_per_tasks,
         )
-        fake_task = self.create_fake_tasks()
         resources = self.problem.resources_list
         for resource in resources:
             self.create_cumulative_constraint_and_resource_capa(
@@ -763,7 +668,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                 resource_capacity_var=resource_capacity_var,
                 interval_var=interval_var,
                 is_present_var=is_present_var,
-                fake_task=fake_task,
                 use_overlap_for_disjunctive_resource=use_overlap_for_disjunctive_resource,
             )
         if include_special_constraints:
@@ -785,12 +689,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             * sum([resource_capacity_var[x] for x in resource_capacity_var])
             + weight_on_makespan * starts_var[self.problem.sink_task]
         )
-        self.variables = {
-            "start": starts_var,
-            "end": ends_var,
-            "is_present": is_present_var,
-            "resource_capacity": resource_capacity_var,
-        }
 
     def _internal_used_resource(self) -> LinearExpr:
         return sum(self.variables["resource_capacity"].values())
