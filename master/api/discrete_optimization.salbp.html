@@ -1,0 +1,480 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.salbp package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.salbp.solvers package" href="discrete_optimization.salbp.solvers.html" />
+    <link rel="prev" title="discrete_optimization.rcpsp_multiskill.solvers package" href="discrete_optimization.rcpsp_multiskill.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcalbp_l.html">discrete_optimization.rcalbp_l package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.salbp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.salbp package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-salbp-package">
+<h1>discrete_optimization.salbp package<a class="headerlink" href="#discrete-optimization-salbp-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.salbp.solvers.html">discrete_optimization.salbp.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#module-discrete_optimization.salbp.solvers.asp">discrete_optimization.salbp.solvers.asp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.build_heuristic_input"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver.build_heuristic_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.build_string_data_input"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver.build_string_data_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.init_model"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.problem"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.upper_bound"><code class="docutils literal notranslate"><span class="pre">AspSalbpSolver.upper_bound</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#module-discrete_optimization.salbp.solvers.cpsat">discrete_optimization.salbp.solvers.cpsat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.get_task_start_or_end_variable"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.get_task_start_or_end_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.get_task_unary_resource_is_present_variable"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.get_task_unary_resource_is_present_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model_binary"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.init_model_binary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model_scheduling"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.init_model_scheduling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.problem"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">CpSatSalbp12Solver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.get_task_start_or_end_variable"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.get_task_start_or_end_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.get_task_unary_resource_is_present_variable"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.get_task_unary_resource_is_present_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model_binary"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.init_model_binary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model_scheduling"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.init_model_scheduling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.modeling"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.modeling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.problem"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">CpSatSalbpSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp"><code class="docutils literal notranslate"><span class="pre">ModelingCpsatSalbp</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp.BINARY"><code class="docutils literal notranslate"><span class="pre">ModelingCpsatSalbp.BINARY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp.SCHEDULING"><code class="docutils literal notranslate"><span class="pre">ModelingCpsatSalbp.SCHEDULING</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#module-discrete_optimization.salbp.solvers.dp">discrete_optimization.salbp.solvers.dp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.dp.DpSalbpSolver"><code class="docutils literal notranslate"><span class="pre">DpSalbpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.init_model"><code class="docutils literal notranslate"><span class="pre">DpSalbpSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.problem"><code class="docutils literal notranslate"><span class="pre">DpSalbpSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">DpSalbpSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">DpSalbpSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#module-discrete_optimization.salbp.solvers.greedy">discrete_optimization.salbp.solvers.greedy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver"><code class="docutils literal notranslate"><span class="pre">GreedySalbpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver.problem"><code class="docutils literal notranslate"><span class="pre">GreedySalbpSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver.solve"><code class="docutils literal notranslate"><span class="pre">GreedySalbpSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#module-discrete_optimization.salbp.solvers.optal">discrete_optimization.salbp.solvers.optal module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.add_lexico_constraint"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.add_lexico_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_lexico_objective_value"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.get_lexico_objective_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_lexico_objectives_available"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.get_lexico_objectives_available()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_task_interval_variable"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.get_task_interval_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.implements_lexico_api"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.implements_lexico_api()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.init_model"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.init_model_scheduling"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.init_model_scheduling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.problem"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.set_lexico_objective"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.set_lexico_objective()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">OptalSalbp12Solver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.get_task_interval_variable"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver.get_task_interval_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.hyperparameters"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.init_model"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.init_model_scheduling"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver.init_model_scheduling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.problem"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">OptalSalbpSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.salbp.solvers.html#module-discrete_optimization.salbp.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.salbp.parser">
+<span id="discrete-optimization-salbp-parser-module"></span><h2>discrete_optimization.salbp.parser module<a class="headerlink" href="#module-discrete_optimization.salbp.parser" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.parser.get_data_available">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.parser.</span></span><span class="sig-name descname"><span class="pre">get_data_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_home</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/parser.html#get_data_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.parser.get_data_available" title="Link to this definition"></a></dt>
+<dd><p>Get datasets available for tsp.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><dl class="simple">
+<dt>data_folder: folder where datasets for weighted tardiness problem should be found.</dt><dd><p>If None, we look in “wt” subdirectory of <cite>data_home</cite>.</p>
+</dd>
+<dt>data_home: root directory for all datasets. Is None, set by</dt><dd><p>default to “~/discrete_optimization_data “</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.parser.parse_alb_file">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.parser.</span></span><span class="sig-name descname"><span class="pre">parse_alb_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/parser.html#parse_alb_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.parser.parse_alb_file" title="Link to this definition"></a></dt>
+<dd><p>Parses a .alb file using string splitting and tokenization.
+No Regular Expressions used.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.parser.remove_artifacts">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.parser.</span></span><span class="sig-name descname"><span class="pre">remove_artifacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/parser.html#remove_artifacts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.parser.remove_artifacts" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.salbp.problem">
+<span id="discrete-optimization-salbp-problem-module"></span><h2>discrete_optimization.salbp.problem module<a class="headerlink" href="#module-discrete_optimization.salbp.problem" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.problem.</span></span><span class="sig-name descname"><span class="pre">SalbpProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number_of_tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingProblem" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationProblem" title="discrete_optimization.generic_tasks_tools.allocation.AllocationProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the solution.
+Objective: Minimize the number of stations.
+Constraint Penalties: Over-cycle time, Precedence violations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.encoding_register.EncodingRegister" title="discrete_optimization.generic_tools.encoding_register.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.get_attribute_register" title="Link to this definition"></a></dt>
+<dd><p>Register for standard encoding (optional, but good for GA/CP solvers).
+We define the solution as a list of integers (station assignments).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.get_graph_precedence">
+<span class="sig-name descname"><span class="pre">get_graph_precedence</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.graph_api.Graph" title="discrete_optimization.generic_tools.graph_api.Graph"><span class="pre">Graph</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.get_graph_precedence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.get_graph_precedence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.get_last_tasks">
+<span class="sig-name descname"><span class="pre">get_last_tasks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.get_last_tasks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.get_last_tasks" title="Link to this definition"></a></dt>
+<dd><p>Get a sublist of tasks that are candidate to be the last one scheduled.</p>
+<p>Default to all tasks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.get_makespan_upper_bound">
+<span class="sig-name descname"><span class="pre">get_makespan_upper_bound</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.get_makespan_upper_bound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.get_makespan_upper_bound" title="Link to this definition"></a></dt>
+<dd><p>Get a upper bound on global makespan.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.get_objective_register" title="Link to this definition"></a></dt>
+<dd><p>Defines the default objective to minimize.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveDoc.type" title="discrete_optimization.generic_tools.do_problem.ObjectiveDoc.type"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Returns the class implementation of a Solution.</p>
+<p>Returns (class): class object of the given Problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.get_solution_type_member">
+<span class="sig-name descname"><span class="pre">get_solution_type_member</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.get_solution_type_member"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.get_solution_type_member" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Strict check for validity.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.tasks_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tasks_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.tasks_list" title="Link to this definition"></a></dt>
+<dd><p>List of all tasks to schedule or allocate to.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem.unary_resources_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">unary_resources_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem.unary_resources_list" title="Link to this definition"></a></dt>
+<dd><p>Available unary resources.</p>
+<p>It can correspond to employees (rcpsp-multiskill), teams (workforce-scheduling), or
+a mix of several types.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem_1_2">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.problem.</span></span><span class="sig-name descname"><span class="pre">SalbpProblem_1_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number_of_tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem_1_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem_1_2" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SalbpProblem</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem_1_2.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem_1_2.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem_1_2.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the solution.
+Objective: Minimize the number of stations and cycle time</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem_1_2.from_salbp1">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_salbp1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem_1_2.from_salbp1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem_1_2.from_salbp1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem_1_2.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem_1_2.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem_1_2.get_objective_register" title="Link to this definition"></a></dt>
+<dd><p>Defines the default objective to minimize.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpProblem_1_2.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpProblem_1_2.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpProblem_1_2.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Strict check for validity.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpSolution">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.problem.</span></span><span class="sig-name descname"><span class="pre">SalbpSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">allocation_to_station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingSolution" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpSolution.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpSolution.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpSolution.change_problem" title="Link to this definition"></a></dt>
+<dd><p>If relevant to the optimisation problem, change the underlying problem instance for the solution.</p>
+<p>This method can be used to evaluate a solution for different instance of problems.
+It should be implemented in child classes when caching subresults depending on the problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><em>Problem</em></a>) – another problem instance from which the solution can be evaluated</p>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpSolution.copy" title="Link to this definition"></a></dt>
+<dd><p>Deep copy of the solution.</p>
+<p>The copy() function should return a new object containing the same input as the current object,
+that respects the following expected behaviour:
+-y = x.copy()
+-if do some inplace change of y, the changes are not done in x.</p>
+<p>Returns: a new object from which you can manipulate attributes without changing the original object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpSolution.get_end_time">
+<span class="sig-name descname"><span class="pre">get_end_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpSolution.get_end_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpSolution.get_end_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpSolution.get_start_time">
+<span class="sig-name descname"><span class="pre">get_start_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpSolution.get_start_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpSolution.get_start_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpSolution.is_allocated">
+<span class="sig-name descname"><span class="pre">is_allocated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#SalbpSolution.is_allocated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpSolution.is_allocated" title="Link to this definition"></a></dt>
+<dd><p>Return the usage of the unary resource for the given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.SalbpSolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.problem.SalbpSolution.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.problem.calculate_salbp_lower_bounds">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.problem.</span></span><span class="sig-name descname"><span class="pre">calculate_salbp_lower_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/problem.html#calculate_salbp_lower_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.problem.calculate_salbp_lower_bounds" title="Link to this definition"></a></dt>
+<dd><p>Calculates lower bounds for the SALBP-1 problem.
+Inspired by: <a class="reference external" href="https://github.com/domain-independent-dp/didp-rs">https://github.com/domain-independent-dp/didp-rs</a></p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.salbp">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.salbp" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.rcpsp_multiskill.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.rcpsp_multiskill.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.salbp.solvers.html" class="btn btn-neutral float-right" title="discrete_optimization.salbp.solvers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

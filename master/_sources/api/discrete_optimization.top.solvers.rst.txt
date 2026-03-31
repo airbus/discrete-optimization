@@ -1,0 +1,45 @@
+discrete\_optimization.top.solvers package
+==========================================
+
+Submodules
+----------
+
+discrete\_optimization.top.solvers.cpsat module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.top.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.top.solvers.dp module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.top.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.top.solvers.optal module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.top.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.top.solvers.ortools module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.top.solvers.ortools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.top.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:
