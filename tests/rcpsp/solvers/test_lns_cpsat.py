@@ -76,6 +76,7 @@ def test_lns(fix_primary_tasks_modes, fix_secondary_tasks_modes, random_seed):
         nb_iteration_lns=20,
         time_limit_subsolver=10,
         parameters_cp=parameters_cp,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)

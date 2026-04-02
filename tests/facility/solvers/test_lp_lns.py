@@ -20,7 +20,10 @@ from discrete_optimization.facility.solvers.lp import (
     ParametersMilp,
     gurobi_available,
 )
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+    TimerStopper,
+)
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LnsMilp
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
@@ -73,6 +76,7 @@ def test_facility_lns(solver_cls, constraint_handler_cls):
         nb_iteration_lns=5,
         callbacks=[TimerStopper(total_seconds=100)],
         stop_first_iteration_if_optimal=False,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     solution = result_store.get_best_solution_fit()[0]
     assert facility_problem.satisfy(solution)

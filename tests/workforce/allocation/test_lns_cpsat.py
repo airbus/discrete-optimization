@@ -17,6 +17,9 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler
     SCHEDULING_OBJECTIVES,
     TasksConstraintHandler,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.workforce.allocation.parser import (
@@ -35,7 +38,7 @@ def problem():
     return parse_to_allocation_problem(instance, multiobjective=True)
 
 
-TIME_LIMIT_SUBSOLVER = 1
+TIME_LIMIT_SUBSOLVER = 5
 
 
 @pytest.mark.parametrize(
@@ -88,11 +91,20 @@ def test_lns_cpsat(
         subsolver=subsolver,
         constraint_handler=constraint_handler,
     )
+    if modelisation_allocation == ModelisationAllocationOrtools.INTEGER:
+        nb_iteration_per_subsolver = 50
+    elif modelisation_allocation == ModelisationAllocationOrtools.BINARY:
+        nb_iteration_per_subsolver = 1
+    else:
+        nb_iteration_per_subsolver = 1
     res = solver.solve(
         nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
         skip_initial_solution_provider=True,
+        subsolver_kwargs_factory=lambda: dict(
+            callbacks=[NbIterationStopper(nb_iteration_max=nb_iteration_per_subsolver)]
+        ),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
@@ -120,11 +132,20 @@ def test_lns_cpsat_subobjective(problem, objective_subproblem, modelisation_allo
         subsolver=subsolver,
         constraint_handler=constraint_handler,
     )
+    if modelisation_allocation == ModelisationAllocationOrtools.INTEGER:
+        nb_iteration_per_subsolver = 50
+    elif modelisation_allocation == ModelisationAllocationOrtools.BINARY:
+        nb_iteration_per_subsolver = 1
+    else:
+        nb_iteration_per_subsolver = 1
     res = solver.solve(
         nb_iteration_lns=3,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
         skip_initial_solution_provider=True,
+        subsolver_kwargs_factory=lambda: dict(
+            callbacks=[NbIterationStopper(nb_iteration_max=nb_iteration_per_subsolver)]
+        ),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)

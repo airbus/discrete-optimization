@@ -129,6 +129,7 @@ def test_lns_cpsat(
         nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
@@ -163,6 +164,7 @@ def test_lns_cpsat_subobjective(problem_multimode, subojective):
         nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)

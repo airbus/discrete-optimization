@@ -67,6 +67,7 @@ def test_knapsack_lns():
         time_limit_subsolver=2,
         time_limit_subsolver_iter0=2,
         nb_iteration_lns=2,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     solution = result_store.get_best_solution_fit()[0]
     assert model.satisfy(solution)
@@ -106,7 +107,8 @@ def test_knapsack_lns_ortools():
         parameters_cp=params_cp,
         time_limit_subsolver=2,
         time_limit_subsolver_iter0=1,
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     solution = result_store.get_best_solution_fit()[0]
     assert model.satisfy(solution)

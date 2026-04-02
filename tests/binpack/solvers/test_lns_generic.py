@@ -70,6 +70,7 @@ def test_lns_binary_subobjectives(objective_subproblem, problem):
     res = lns_solver.solve(
         nb_iteration_lns=2,
         time_limit_subsolver=2,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
@@ -129,6 +130,7 @@ def test_lns_binary_params_allocation(
     res = lns_solver.solve(
         nb_iteration_lns=2,
         time_limit_subsolver=5,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
@@ -169,6 +171,7 @@ def test_lns_scheduling_subobjectives(problem, objective_subproblem):
     res = lns_solver.solve(
         nb_iteration_lns=2,
         time_limit_subsolver=5,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)

@@ -42,6 +42,7 @@ def test_lns(objective_subproblem, problem):
         nb_iteration_lns=3,
         time_limit_subsolver=5,
         parameters_cp=parameters_cp,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)

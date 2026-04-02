@@ -17,6 +17,9 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler
     ALLOCATION_OBJECTIVES,
     TasksConstraintHandler,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.knapsack.solvers.cpsat import CpSatKnapsackSolver
@@ -81,6 +84,7 @@ def test_lns_cpsat(
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
         skip_initial_solution_provider=True,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
@@ -108,6 +112,7 @@ def test_lns_cpsat_subobjective(problem, objective_subproblem, subsolver):
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
         skip_initial_solution_provider=True,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)
