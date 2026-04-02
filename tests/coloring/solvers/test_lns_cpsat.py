@@ -22,7 +22,10 @@ from discrete_optimization.coloring.solvers.lns_cp import (
     InitialColoring,
     InitialColoringMethod,
 )
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+    TimerStopper,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import (
     NbIterationTracker,
     ObjectiveLogger,
@@ -71,6 +74,7 @@ def test_lns_cpsat_coloring(caplog):
             parameters_cp=p,
             time_limit_subsolver=20,
             stop_first_iteration_if_optimal=False,
+            subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
         )
     assert "`time_limit` arg will be overriden by" not in caplog.text
     print("Status solver : ", solver.status_solver)
@@ -124,6 +128,7 @@ def test_lns_cpsat_coloring_with_constraints():
             TimerStopper(total_seconds=30),
         ],
         parameters_cp=p,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     print("Status solver : ", solver.status_solver)
     solution, fit = result_store.get_best_solution_fit()
@@ -168,7 +173,10 @@ def test_lns_cpsat_coloring_warm_start():
     # w/o warm start
     solver_lns = solver_lns_factory()
     result_store = solver_lns.solve(
-        nb_iteration_lns=3, parameters_cp=p, time_limit_subsolver=10
+        nb_iteration_lns=3,
+        parameters_cp=p,
+        time_limit_subsolver=10,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
 
     # start solution
@@ -186,6 +194,7 @@ def test_lns_cpsat_coloring_warm_start():
     result_store2 = solver_lns.solve(
         nb_iteration_lns=3,
         parameters_cp=p,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
 
     assert result_store[0][0].colors != start_solution.colors

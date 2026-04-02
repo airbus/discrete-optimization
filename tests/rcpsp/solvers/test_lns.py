@@ -11,6 +11,9 @@ from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
 from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder import (
     mix,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp_mzn import LnsCpMzn
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
@@ -40,6 +43,7 @@ def test_lns_solver(file_name):
         parameters_cp=parameters_cp,
         time_limit_subsolver=2,
         nb_iteration_no_improvement=50,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol, fit = results.get_best_solution_fit()
     assert rcpsp_problem.satisfy(sol)

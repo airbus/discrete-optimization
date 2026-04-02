@@ -52,6 +52,7 @@ def test_lnscpsat_fjsp():
     res = lns_solver.solve(
         nb_iteration_lns=2,
         time_limit_subsolver=1,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     sol, fit = res.get_best_solution_fit()
     assert problem.satisfy(sol)

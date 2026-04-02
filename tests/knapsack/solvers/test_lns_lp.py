@@ -1,7 +1,9 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LnsMilp
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
@@ -53,7 +55,8 @@ def test_knapsack_lns():
     result_store = lns_solver.solve(
         parameters_milp=params_milp,
         time_limit_subsolver=2,
-        nb_iteration_lns=3,
+        nb_iteration_lns=2,
+        subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)]),
     )
     solution = result_store.get_best_solution_fit()[0]
     assert model.satisfy(solution)

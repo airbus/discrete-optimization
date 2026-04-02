@@ -112,6 +112,7 @@ def test_lns_cpsat(
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,
         parameters_cp=parameters_cp,
         skip_initial_solution_provider=True,
+        # subsolver_kwargs_factory=lambda: dict(callbacks=[NbIterationStopper(1)])
     )
     sol = res.get_best_solution()
     problem.satisfy(sol)

@@ -5,7 +5,7 @@ import contextlib
 import logging
 import random
 from abc import abstractmethod
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any, Optional, TypedDict
 
 import numpy as np
@@ -325,6 +325,7 @@ class BaseLns(SolverDO, WarmstartMixin):
         skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         callbacks: Optional[list[Callback]] = None,
+        subsolver_kwargs_factory: Optional[Callable[[], dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with an LNS loop
@@ -344,6 +345,8 @@ class BaseLns(SolverDO, WarmstartMixin):
                 its result is optimal after the first `self.subsolver.solve()` (so before any constraint tempering),
                 we stop the solve process.
             callbacks: list of callbacks used to hook into the various stage of the solve
+            subsolver_kwargs_factory: factory for keyword arguments passed to `subsolver.solve()`.
+                Useful to have specific callbacks passed to the subsolver, reinitialized at each new iteration
             **kwargs: passed to the subsolver
 
         Returns:
@@ -403,7 +406,6 @@ class BaseLns(SolverDO, WarmstartMixin):
                     "`time_limit` arg will be overriden by "
                     "`time_limit_subsolver` and `time_limit_subsolver_iter0`."
                 )
-            kwargs_subsolver = dict(kwargs)
             for iteration in range(nb_iteration_lns):
                 logger.info(
                     f"Starting iteration n° {iteration} current objective {best_objective}"
@@ -421,6 +423,7 @@ class BaseLns(SolverDO, WarmstartMixin):
                             result_storage_last_iteration=store_last_iteration,
                         )
                     try:
+                        kwargs_subsolver = dict(kwargs)
                         if (
                             skip_initial_solution_provider
                             and iteration == 0
@@ -429,6 +432,8 @@ class BaseLns(SolverDO, WarmstartMixin):
                             kwargs_subsolver["time_limit"] = time_limit_subsolver_iter0
                         else:
                             kwargs_subsolver["time_limit"] = time_limit_subsolver
+                        if subsolver_kwargs_factory is not None:
+                            kwargs_subsolver.update(subsolver_kwargs_factory())
 
                         store_last_iteration = self.subsolver.solve(
                             instance=child, **kwargs_subsolver
