@@ -5,11 +5,12 @@
 from __future__ import annotations
 
 import logging
+import math
 from collections import defaultdict
 from collections.abc import Hashable
 from copy import deepcopy
 from enum import Enum
-from functools import partial
+from functools import cache, partial
 from typing import Iterable, Optional, Union
 
 import numpy as np
@@ -19,18 +20,14 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
     PermutationRcpsp,
 )
-from discrete_optimization.generic_tasks_tools.allocation import (
-    AllocationProblem,
-    AllocationSolution,
-)
-from discrete_optimization.generic_tasks_tools.multimode import (
-    MultimodeProblem,
-    MultimodeSolution,
+from discrete_optimization.generic_tasks_tools.allocation_scheduling import (
+    AllocationSchedulingProblem,
+    AllocationSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
-from discrete_optimization.generic_tasks_tools.scheduling import (
-    SchedulingProblem,
-    SchedulingSolution,
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    convert_calendar_to_availability_intervals,
+    merge_resources_calendars,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -111,12 +108,12 @@ class TaskDetailsPreemptive:
 
 Task = Hashable
 UnaryResource = Hashable
+CumulativeResource = str
+Resource = Union[CumulativeResource, UnaryResource]
 
 
 class MultiskillRcpspSolution(
-    SchedulingSolution[Task],
-    MultimodeSolution[Task],
-    AllocationSolution[Task, UnaryResource],
+    AllocationSchedulingSolution[Task, UnaryResource, CumulativeResource],
 ):
     problem: MultiskillRcpspProblem
 
@@ -1894,11 +1891,11 @@ def sgs_multi_skill_partial_schedule(
 
 
 class SkillDetail:
-    skill_value: float
+    skill_value: int
     efficiency_ratio: float
     experience: float
 
-    def __init__(self, skill_value: float, efficiency_ratio: float, experience: float):
+    def __init__(self, skill_value: int, efficiency_ratio: float, experience: float):
         self.skill_value = skill_value
         self.efficiency_ratio = efficiency_ratio
         self.experience = experience
@@ -1968,7 +1965,7 @@ class Employee:
                 "calendar_employee": [True],
             }
 
-    def get_skill_level(self, s):
+    def get_skill_level(self, s: str) -> int:
         return self.dict_skill.get(s, SkillDetail(0, 0, 0)).skill_value
 
 
@@ -1982,9 +1979,7 @@ def intersect(i1, i2):
 
 
 class MultiskillRcpspProblem(
-    SchedulingProblem[Task],
-    MultimodeProblem[Task],
-    AllocationProblem[Task, UnaryResource],
+    AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource],
     PrecedenceProblem[Task],
 ):
     sgs: ScheduleGenerationScheme
@@ -2202,12 +2197,111 @@ class MultiskillRcpspProblem(
         else:
             self.resource_blocking_data = resource_blocking_data
 
+        self._max_skill_over_worker_to_recompute = True
         self.create_employee_task_compatibility()
         self.update_functions()
 
     @property
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
+
+    @property
+    def cumulative_resources_list(self) -> list[CumulativeResource]:
+        """List of cumulative resources.
+
+        NB: we consider also skills as cumulative resources.
+
+        """
+        return [
+            res
+            for res in self.resources_list
+            if res not in self.non_renewable_resources
+        ] + self.skills_list
+
+    def get_resource_consumption(
+        self, resource: CumulativeResource, task: Task, mode: int
+    ) -> int:
+        """Get resource consumption of the task in the given mode
+
+        NB: we consider also skills as cumulative resources.
+
+        Args:
+            resource:
+            task:
+            mode: not used for single mode problems
+
+        Returns:
+            the consumption for cumulative resources.
+
+        Raises:
+            ValueError: if resource consumption is depending on other variables than mode
+
+        """
+        if self.is_cumulative_resource(resource):
+            return self.mode_details[task][mode].get(resource, 0)
+        else:
+            raise ValueError(f"{resource} is not a cumulative resource of the problem.")
+
+    @cache
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        if resource in self.resources_availability:
+            return convert_calendar_to_availability_intervals(
+                calendar=self.resources_availability[resource], horizon=self.horizon
+            )
+        elif resource in self.skills_set:
+            return convert_calendar_to_availability_intervals(
+                calendar=merge_resources_calendars(
+                    calendars=[
+                        [
+                            skill_level * int(present)
+                            for present in emp.calendar_employee
+                        ]
+                        for emp in self.employees.values()
+                        if (skill_level := emp.get_skill_level(resource)) > 0
+                    ],
+                    horizon=self.horizon,
+                ),
+                horizon=self.horizon,
+            )
+        elif resource in self.employees:
+            return convert_calendar_to_availability_intervals(
+                calendar=[
+                    int(present)
+                    for present in self.employees[resource].calendar_employee
+                ],
+                horizon=self.horizon,
+            )
+        else:
+            raise ValueError(
+                f"{resource} is neither an actual cumulative resource, nor a skill, nor an employee."
+            )
+
+    def get_task_mode_duration(self, task: Task, mode: int) -> int:
+        return self.mode_details[task][mode]["duration"]
+
+    def get_max_skill_over_worker(self) -> dict[str, int]:
+        if self._max_skill_over_worker_to_recompute:
+            self._max_skill_over_worker = {
+                s: max(emp.get_skill_level(s) for emp in self.employees.values())
+                for s in self.skills_set
+            }
+            self._max_skill_over_worker_to_recompute = False
+        return self._max_skill_over_worker
+
+    def compute_lower_bound_nb_employees_per_task_mode(
+        self, task: Task, mode: int
+    ) -> int:
+        max_skill_over_worker = self.get_max_skill_over_worker()
+        return max(
+            int(
+                math.ceil(
+                    self.mode_details[task][mode].get(s, 0) / max_skill_over_worker[s]
+                )
+            )
+            for s in self.skills_set
+        )
 
     def create_employee_task_compatibility(self) -> None:
         self.employees_per_skill: dict[str, set[UnaryResource]] = {
@@ -3150,7 +3244,7 @@ def discretize_calendar_(capacity_calendar: np.ndarray):
 def compute_discretize_calendar_skills(
     problem: MultiskillRcpspProblem,
 ) -> tuple[dict[str, list[dict]], dict[str, np.ndarray]]:
-    dict_calendar_skills = compute_skills_calendar(problem=problem)
+    dict_calendar_skills = compute_skills_calendar(problem)
     discr_calendar = {}
     for s in dict_calendar_skills:
         discr_calendar[s] = discretize_calendar_(dict_calendar_skills[s])
