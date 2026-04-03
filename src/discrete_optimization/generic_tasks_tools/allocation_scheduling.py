@@ -56,6 +56,27 @@ class AllocationSchedulingProblem(
     def renewable_resources_list(self) -> list[Resource]:
         return self.unary_resources_list + self.cumulative_resources_list
 
+    def check_renewable_resources_list(self) -> None:
+        """Check renewable resources list.
+
+        Raises:
+            AssertionError: if duplicates appear in the list
+
+        Returns:
+
+        """
+        renewable_resources_list = (
+            self.unary_resources_list + self.cumulative_resources_list
+        )
+        assert len(renewable_resources_list) == len(set(renewable_resources_list)), (
+            "There are duplicates in renewable resources list, "
+            "potentially because unary and cumulative resources intersect."
+        )
+
+    def update_resource_availabilities(self) -> None:
+        super().update_resource_availabilities()
+        self.check_renewable_resources_list()
+
     def is_cumulative_resource(self, resource: Resource) -> bool:
         """Check if given resource is a cumulative resource."""
         return resource in self.cumulative_resources_list
