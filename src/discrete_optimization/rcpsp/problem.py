@@ -241,44 +241,47 @@ class RcpspProblem(
         self.index_task_non_dummy = {
             self.tasks_list_non_dummy[i]: i for i in range(self.n_jobs_non_dummy)
         }
-        self.is_calendar = False
-        if any(isinstance(self.resources[res], Iterable) for res in self.resources):
-            self.is_calendar = (
-                max(
-                    (
-                        len(
-                            {self.resources[res]}
-                            if np.isscalar(self.resources[res])
-                            else set(self.resources[res])  # type: ignore
-                        )
-                        for res in self.resources
-                    )
-                )
-                > 1
-            )
-            if not self.is_calendar:
-                self.resources = {
-                    r: self.resources[r]
-                    if np.isscalar(self.resources[r])
-                    else self.resources[r][0]  # type: ignore
-                    for r in self.resources
-                }
-        (
-            self.func_sgs,
-            self.func_sgs_2,
-            self.compute_mean_resource,
-        ) = create_np_data_and_jit_functions(self)
         self.costs: dict[str, bool] = {
             "makespan": True,
             "mean_resource_reserve": kwargs.get("mean_resource_reserve", False),
         }
+        self.relax_the_start_at_end = relax_the_start_at_end
+        self.fixed_permutation = fixed_permutation
+        self.fixed_modes = fixed_modes
 
         if special_constraints is None:
+            self.special_constraints = SpecialConstraintsDescription(
+                skip_special_constraints=True
+            )
+        else:
+            self.special_constraints = special_constraints
+
+        self.update_problem()
+
+    def update_problem(self) -> None:
+        """Method to call when some attributes have been modified.
+
+        It recomputes what is needed (numba functions, calendars, ...)
+        It take into account modifications of:
+        - horizon
+        - resource calendars
+        - duration/resource consumption for a given task, mode
+        - special constraints
+        - successors
+
+        NB: special constraints may add precedence constraints. A new call to update_problem()
+        with different special constraints will not roll back the updated precedence constraints.
+
+        """
+        self.update_calendars()
+        self.update_special_constraints()
+        self.update_functions()
+
+    def update_special_constraints(self):
+        if self.special_constraints.skip_special_constraints:
             self.do_special_constraints = False
-            self.special_constraints = SpecialConstraintsDescription()
         else:
             self.do_special_constraints = True
-            self.special_constraints = special_constraints
             predecessors_dict: dict[Hashable, list[Hashable]] = {
                 task: [] for task in self.successors
             }
@@ -303,9 +306,35 @@ class RcpspProblem(
         )
         if self.do_special_constraints:
             self.predecessors = self.graph.predecessors_dict
-        self.relax_the_start_at_end = relax_the_start_at_end
-        self.fixed_permutation = fixed_permutation
-        self.fixed_modes = fixed_modes
+
+    def update_calendars(self):
+        self.is_calendar = False
+        if any(isinstance(self.resources[res], Iterable) for res in self.resources):
+            self.is_calendar = (
+                max(
+                    (
+                        len(
+                            {self.resources[res]}
+                            if np.isscalar(self.resources[res])
+                            else set(self.resources[res])  # type: ignore
+                        )
+                        for res in self.resources
+                    )
+                )
+                > 1
+            )
+            if not self.is_calendar:
+                self.resources = {
+                    r: self.resources[r]
+                    if np.isscalar(self.resources[r])
+                    else self.resources[r][0]  # type: ignore
+                    for r in self.resources
+                }
+        self.update_resource_availabilities()
+
+    def update_resource_availabilities(self) -> None:
+        super().update_resource_availabilities()
+        self.get_resource_availabilities.cache_clear()
 
     @property
     def tasks_list(self) -> list[Task]:

@@ -120,6 +120,16 @@ class RenewableResourceProblem(SchedulingProblem[Task], Generic[Task, Resource])
             for start, end, value in self.get_resource_availabilities(resource=resource)
         )
 
+    def update_resource_availabilities(self) -> None:
+        """Method to call when the resource availabilities have changed.
+
+        Default implementation clears the cache on `get_resource_max_capacity()`.
+
+        """
+        self.get_resource_max_capacity.cache_clear()
+        self.get_resource_calendar.cache_clear()
+        self.get_resource_consolidated_availabilities.cache_clear()
+
     def get_fake_tasks(self, resource: Resource) -> list[tuple[int, int, int]]:
         """Get fake tasks explaining the delta between resource current capacity and its max capacity
 

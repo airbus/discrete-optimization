@@ -67,6 +67,7 @@ class SpecialConstraintsDescription:
         # Constraint: start(t2) <= start(t1) + offset where offset >= 0 (maximum time lag)
         disjunctive_tasks: Optional[list[tuple[Hashable, Hashable]]] = None,
         pair_mode_constraint: Optional[PairModeConstraint] = None,
+        skip_special_constraints: bool = False,
     ):
         """
         Special constraints for RCPSP scheduling.
@@ -77,6 +78,7 @@ class SpecialConstraintsDescription:
         start_to_start_max_time_lag: List of (t1, t2, offset) tuples enforcing start(t2) <= start(t1) + offset
             where offset >= 0 (non-negative). For maximum time lag constraints in RCPSP/max problems.
         """
+        self.skip_special_constraints = skip_special_constraints
         self.task_mode = task_mode
         self.start_times = start_times
         self.end_times = end_times

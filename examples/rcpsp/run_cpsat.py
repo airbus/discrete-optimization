@@ -120,8 +120,8 @@ def cpsat_with_calendar():
         rcpsp_problem.resources[resource][45:55] = 3
         rcpsp_problem.resources[resource][65:80] = 3
         # rcpsp_problem.resources[resource][10:15] = 0
-    rcpsp_problem.is_calendar = True
-    rcpsp_problem.update_functions()
+    rcpsp_problem.update_problem()
+    assert rcpsp_problem.is_calendar
     solver = CpSatRcpspSolver(problem=rcpsp_problem)
     result_storage = solver.solve(
         callbacks=[

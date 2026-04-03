@@ -179,3 +179,51 @@ def test_partial_sgs(rcpsp_problem_file):
         assert ongoing[task].start == rcpsp_sol_copy.get_start_time(task)
         assert ongoing[task].end == rcpsp_sol_copy.get_end_time(task)
     rcpsp_sol_copy.rcpsp_schedule[rcpsp_problem.sink_task]
+
+
+def test_update_problem():
+    resources = {
+        "R1": [0, 5, 5, 2, 3, 2, 2, 2, 2, 3, 2, 2] + [0] * 3,
+        "R2": [1, 2, 1, 3, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3],
+    }
+    non_renewable_resources = []  # Empty if all resources replenish when a task ends
+    # Define mode details
+    # Format: { task_id: { mode_id: { "duration": int, "resource_name": amount } } }
+    mode_details = {
+        "source": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Source (Dummy)
+        "task-1": {1: {"duration": 4, "R1": 1, "R2": 1}},
+        "task-2": {1: {"duration": 1, "R1": 0, "R2": 1}},
+        "task-3": {1: {"duration": 2, "R1": 0, "R2": 2}},
+        "task-4": {1: {"duration": 2, "R1": 2, "R2": 1}},
+        "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
+    }
+    # Define precedence graph
+    successors = {
+        "source": ["task-1", "task-2"],  # First tasks: 1 and 2
+        "task-1": ["task-3"],  # Task 1 must finish before 3
+        "task-2": ["task-4"],  # Task 2 must finish before 4
+        "task-3": ["sink"],  # Task 3 leads to Sink
+        "task-4": ["sink"],  # Task 4 leads to Sink
+        "sink": [],  # Sink has no successors
+    }
+    # Initialize the Problem
+    problem = RcpspProblem(
+        resources=resources,
+        non_renewable_resources=non_renewable_resources,
+        mode_details=mode_details,
+        successors=successors,
+        horizon=15,  # Maximum time allowed for the project
+        source_task="source",
+        sink_task="sink",
+    )
+
+    assert problem.get_resource_max_capacity("R1") == 5
+    assert len(problem.get_resource_availabilities("R1")) == 8
+
+    problem.resources["R1"][1] = 7
+    assert problem.get_resource_max_capacity("R1") == 5
+    assert len(problem.get_resource_availabilities("R1")) == 8
+
+    problem.update_problem()
+    assert problem.get_resource_max_capacity("R1") == 7
+    assert len(problem.get_resource_availabilities("R1")) == 9
