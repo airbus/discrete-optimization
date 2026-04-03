@@ -306,5 +306,5 @@ class UncertainRcpspProblem:
                         model.mode_details[activity][mode][detail] = self.probas[
                             activity
                         ][mode][detail]["prob-distribution"].rvs(size=1)[0]
-        model.update_functions()
+        model.update_problem()
         return model

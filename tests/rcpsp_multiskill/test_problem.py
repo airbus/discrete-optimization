@@ -195,3 +195,19 @@ def test_partial_sgs(preemptive_version):
                     e in dict_[o].resource_units_used
                     for e in dummy_solution.employee_usage.get(o, {})
                 )
+
+
+def test_update_problem():
+    rcpsp_problem_file = [
+        f for f in get_data_available() if f.endswith("100_5_20_9_D3.def")
+    ][0]
+    problem = parse_file(rcpsp_problem_file)[0]
+
+    worker = 1
+    assert len(problem.get_resource_availabilities(worker)) == 1
+
+    problem.employees[worker].calendar_employee[0] = 0
+    assert len(problem.get_resource_availabilities(worker)) == 1
+
+    problem.update_problem()
+    assert len(problem.get_resource_availabilities(worker)) == 2

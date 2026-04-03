@@ -251,8 +251,8 @@ def test_ortools_with_calendar_resource(model):
             rcpsp_problem.get_resource_availability_array(resource)
         )
         rcpsp_problem.resources[resource][10:15] = 0
-    rcpsp_problem.is_calendar = True
-    rcpsp_problem.update_functions()
+    rcpsp_problem.update_problem()
+    assert rcpsp_problem.is_calendar
     solver = CpSatRcpspSolver(problem=rcpsp_problem)
     result_storage = solver.solve(time_limit=100)
     solution, fit = result_storage.get_best_solution_fit()

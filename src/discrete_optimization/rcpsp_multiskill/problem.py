@@ -2071,31 +2071,7 @@ class MultiskillRcpspProblem(
             self.tasks_list_non_dummy[i]: i for i in range(self.n_jobs_non_dummy)
         }
         self.one_unit_per_task_max = one_unit_per_task_max
-        self.is_calendar = False
-        if any(
-            isinstance(self.resources_availability[res], Iterable)
-            for res in self.resources_availability
-        ):
-            self.is_calendar = (
-                max(
-                    [
-                        len(
-                            set(self.resources_availability[res])
-                            if isinstance(self.resources_availability[res], Iterable)
-                            else {self.resources_availability[res]}
-                        )
-                        for res in self.resources_availability
-                    ]
-                )
-                > 1
-            )
 
-        self.max_resource_capacity = {}
-        for r in self.resources_availability:
-            if isinstance(self.resources_availability[r], Iterable):
-                self.max_resource_capacity[r] = max(self.resources_availability[r])
-            else:
-                self.max_resource_capacity[r] = self.resources_availability[r]
         self.preemptive = preemptive
         self.preemptive_indicator = preemptive_indicator
         if self.preemptive_indicator is None:
@@ -2108,34 +2084,6 @@ class MultiskillRcpspProblem(
         }
         self.nb_employees = len(self.employees_list)
         self.special_constraints = special_constraints
-        self.do_special_constraints = special_constraints is not None
-        if self.special_constraints is None:
-            self.special_constraints = SpecialConstraintsDescription()
-        self.predecessors_dict = {task: [] for task in self.successors}
-        for task in self.successors:
-            for stask in self.successors[task]:
-                self.predecessors_dict[stask] += [task]
-        if self.do_special_constraints:
-            for t1, t2 in self.special_constraints.start_at_end:
-                if t2 not in self.successors[t1]:
-                    self.successors[t1].append(t2)
-            for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
-                if t2 not in self.successors[t1]:
-                    self.successors[t1].append(t2)
-            for t1, t2 in self.special_constraints.start_together:
-                for predt1 in self.predecessors_dict[t1]:
-                    if t2 not in self.successors[predt1]:
-                        self.successors[predt1] += [t2]
-                for predt2 in self.predecessors_dict[t2]:
-                    if t1 not in self.successors[predt2]:
-                        self.successors[predt2] += [t1]
-        self.graph = self.compute_graph()
-        self.predecessors = self.graph.predecessors_dict
-        self.total_number_step_available = {
-            employee: sum(self.employees[employee].calendar_employee[: self.horizon])
-            for employee in self.employees
-        }
-
         self.partial_preemption_data = partial_preemption_data
         self.always_releasable_resources = always_releasable_resources
         self.never_releasable_resources = never_releasable_resources
@@ -2194,9 +2142,89 @@ class MultiskillRcpspProblem(
         else:
             self.resource_blocking_data = resource_blocking_data
 
+        self.update_problem()
+
+    def update_problem(self):
+        """Method to call when some attributes have been modified.
+
+        It recomputes what is needed (numba functions, calendars, ...)
+        It take into account modifications of:
+        - horizon
+        - resource/employee calendars
+        - duration/resource consumption/skill requirement for a given task, mode
+        - special constraints
+        - successors
+
+        NB: special constraints may add precedence constraints. A new call to update_problem()
+        with different special constraints will not roll back the updated precedence constraints.
+
+        """
         self._max_skill_over_worker_to_recompute = True
         self.create_employee_task_compatibility()
+        self.update_calendars()
+        self.update_special_constraints()
         self.update_functions()
+
+    def update_special_constraints(self):
+        self.do_special_constraints = self.special_constraints is not None
+        if self.special_constraints is None:
+            self.special_constraints = SpecialConstraintsDescription()
+        self.predecessors_dict = {task: [] for task in self.successors}
+        for task in self.successors:
+            for stask in self.successors[task]:
+                self.predecessors_dict[stask] += [task]
+        if self.do_special_constraints:
+            for t1, t2 in self.special_constraints.start_at_end:
+                if t2 not in self.successors[t1]:
+                    self.successors[t1].append(t2)
+            for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
+                if t2 not in self.successors[t1]:
+                    self.successors[t1].append(t2)
+            for t1, t2 in self.special_constraints.start_together:
+                for predt1 in self.predecessors_dict[t1]:
+                    if t2 not in self.successors[predt1]:
+                        self.successors[predt1] += [t2]
+                for predt2 in self.predecessors_dict[t2]:
+                    if t1 not in self.successors[predt2]:
+                        self.successors[predt2] += [t1]
+        self.graph = self.compute_graph()
+        self.predecessors = self.graph.predecessors_dict
+
+    def update_calendars(self):
+        self.is_calendar = False
+        if any(
+            isinstance(self.resources_availability[res], Iterable)
+            for res in self.resources_availability
+        ):
+            self.is_calendar = (
+                max(
+                    [
+                        len(
+                            set(self.resources_availability[res])
+                            if isinstance(self.resources_availability[res], Iterable)
+                            else {self.resources_availability[res]}
+                        )
+                        for res in self.resources_availability
+                    ]
+                )
+                > 1
+            )
+        self.max_resource_capacity = {}
+        for r in self.resources_availability:
+            if isinstance(self.resources_availability[r], Iterable):
+                self.max_resource_capacity[r] = max(self.resources_availability[r])
+            else:
+                self.max_resource_capacity[r] = self.resources_availability[r]
+
+        self.total_number_step_available = {
+            employee: sum(self.employees[employee].calendar_employee[: self.horizon])
+            for employee in self.employees
+        }
+        self.update_resource_availabilities()
+
+    def update_resource_availabilities(self) -> None:
+        super().update_resource_availabilities()
+        self.get_resource_availabilities.cache_clear()
 
     @property
     def tasks_list(self) -> list[Task]:
@@ -2392,9 +2420,6 @@ class MultiskillRcpspProblem(
         self.func_sgs, self.func_sgs_partial = create_np_data_and_jit_functions(
             rcpsp_problem=self
         )
-
-    def update_function(self):
-        self.update_functions()
 
     def is_rcpsp_multimode(self):
         return self.is_multimode

@@ -49,7 +49,7 @@ def test_imopse_cpsat_with_calendar():
             model.employees[emp].calendar_employee
         )
         model.employees[emp].calendar_employee[5:10] = 0
-    model.update_functions()
+    model.update_problem()
     cp_model = CpSatMultiskillRcpspSolver(
         problem=model,
     )
@@ -72,7 +72,7 @@ def problem():
             problem.employees[emp].calendar_employee
         )
         problem.employees[emp].calendar_employee[5:10] = 0
-    problem.update_functions()
+    problem.update_problem()
     return problem
 
 
@@ -92,7 +92,7 @@ def problem_multimode(problem):
     new_details["duration"] *= 10
     new_details["Q8"] = 2
     problem.mode_details[task][new_mode] = new_details
-    problem.update_functions()
+    problem.update_problem()
     return problem
 
 
