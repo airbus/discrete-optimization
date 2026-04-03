@@ -53,7 +53,6 @@ def model():
         ),
     }
 
-    employees_availability: list[int] = [2] * 1000
     mode_details = {
         "A0": {1: {"R1": 0, "duration": 0}},
         "A1": {1: {"R1": 1, "l1": 1, "duration": 5}},
@@ -83,7 +82,6 @@ def model():
         non_renewable_resources=set(),
         resources_availability=resources_availability,
         employees=employee,
-        employees_availability=employees_availability,
         mode_details=mode_details,
         successors=successors,
         horizon=12,

@@ -910,10 +910,7 @@ def transform_to_multimode_rcpsp(
         t: list(nx.neighbors(reduced_graph, t)) for t in reduced_graph.nodes()
     }
     horizon: int = problem.horizon
-    horizon_multiplier: int = 1
     tasks_list: Optional[list[Hashable]] = ["source"] + problem.tasks_list + ["sink"]
-    source_task: Optional[Hashable] = "source"
-    sink_task: Optional[Hashable] = "sink"
     special_constraints: Optional[SpecialConstraintsDescription] = (
         SpecialConstraintsDescription(
             start_times_window=problem.start_window

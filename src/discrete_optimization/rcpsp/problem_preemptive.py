@@ -430,7 +430,6 @@ class PreemptiveRcpspProblem(Problem):
         mode_details: dict[Hashable, dict[Union[str, int], dict[str, int]]],
         successors: dict[Union[int, str], list[Union[str, int]]],
         horizon,
-        horizon_multiplier=1,
         tasks_list: list[Union[int, str]] = None,
         source_task=None,
         sink_task=None,
@@ -444,7 +443,6 @@ class PreemptiveRcpspProblem(Problem):
         self.mode_details = mode_details
         self.successors = successors
         self.horizon = horizon
-        self.horizon_multiplier = horizon_multiplier
         self.name_task = name_task
         if name_task is None:
             self.name_task = {x: str(x) for x in self.mode_details}
@@ -727,7 +725,6 @@ class PreemptiveRcpspProblem(Problem):
             mode_details=deepcopy(self.mode_details),
             successors=deepcopy(self.successors),
             horizon=self.horizon,
-            horizon_multiplier=self.horizon_multiplier,
         )
 
     def copy_with_multiplier(self, multiplier=0.5):
@@ -744,7 +741,6 @@ class PreemptiveRcpspProblem(Problem):
             mode_details=mode_details,
             successors=deepcopy(self.successors),
             horizon=int(self.horizon / n),
-            horizon_multiplier=self.horizon_multiplier,
         )
 
     def get_dummy_solution(self):
@@ -1351,7 +1347,6 @@ def get_rcpsp_problemp_preemptive(rcpsp_problem):
         mode_details=rcpsp_problem.mode_details,
         successors=rcpsp_problem.successors,
         horizon=rcpsp_problem.horizon,
-        horizon_multiplier=1,
         tasks_list=rcpsp_problem.tasks_list,
         source_task=rcpsp_problem.source_task,
         sink_task=rcpsp_problem.sink_task,

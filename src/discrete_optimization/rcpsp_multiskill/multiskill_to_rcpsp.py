@@ -162,7 +162,6 @@ class MultiSkillToRcpsp:
             mode_details=mode_details_post_compute,
             successors=self.multiskill_model.successors,
             horizon=self.multiskill_model.horizon,
-            horizon_multiplier=self.multiskill_model.horizon_multiplier,
             tasks_list=self.multiskill_model.tasks_list,
             source_task=self.multiskill_model.source_task,
             sink_task=self.multiskill_model.sink_task,
