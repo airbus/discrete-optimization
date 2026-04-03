@@ -10,15 +10,14 @@ from ortools.sat.python.cp_model import (
     Constraint,
     CpSolverSolutionCallback,
     Domain,
+    IntervalVar,
     LinearExpr,
     LinearExprT,
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
-    AllocationCpSatSolver,
-    MultimodeCpSatSolver,
-    SchedulingCpSatSolver,
+    AllocationSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -28,12 +27,11 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp_multiskill.problem import (
+    CumulativeResource,
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,
     Task,
     UnaryResource,
-    compute_discretize_calendar_skills,
-    create_fake_tasks_multiskills,
     discretize_calendar_,
 )
 
@@ -41,9 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatMultiskillRcpspSolver(
-    SchedulingCpSatSolver[Task],
-    MultimodeCpSatSolver[Task],
-    AllocationCpSatSolver[Task, UnaryResource],
+    AllocationSchedulingCpSatSolver[Task, UnaryResource, CumulativeResource],
 ):
     hyperparameters = [
         CategoricalHyperparameter(
@@ -60,6 +56,17 @@ class CpSatMultiskillRcpspSolver(
         if self.problem.is_preemptive():
             raise NotImplementedError()
         self.variables = {}
+
+    def get_task_unary_resource_interval(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> IntervalVar:
+        return self.variables["worker_variable"]["opt_intervals"][task][unary_resource]
+
+    def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
+        if not self.problem.is_multimode or len(self.problem.get_task_modes(task)) == 1:
+            return self.variables["base_variable"]["intervals"][task]
+        else:
+            return self.variables["mode_variable"]["opt_intervals"][task][mode]
 
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
@@ -118,9 +125,6 @@ class CpSatMultiskillRcpspSolver(
             one_skill_per_task=one_skill_per_task,
         )
         self.create_skills_variables()
-        self.fake_tasks, self.fake_tasks_unit = create_fake_tasks_multiskills(
-            self.problem
-        )
         self.create_constraint_resource()
         if redundant_skill_cumulative:
             self.constraint_redundant_cumulative_skills()
@@ -483,7 +487,7 @@ class CpSatMultiskillRcpspSolver(
             if r in self.problem.non_renewable_resources:
                 self.create_non_renewable_res_constraint(r)
             else:
-                self.create_cumulative_resource_constraint(r)
+                self.create_renewable_resources_constraint(r)
 
     def create_non_renewable_res_constraint(self, res: str):
         vars_consume = []
@@ -512,116 +516,13 @@ class CpSatMultiskillRcpspSolver(
             <= self.problem.get_max_resource_capacity(res)
         )
 
-    def create_cumulative_resource_constraint(self, res: str):
-        intervals_consume = []
-        for task in self.problem.tasks_list:
-            modes = list(self.problem.mode_details[task].keys())
-            if len(modes) == 1:
-                if self.problem.mode_details[task][modes[0]].get(res, 0) > 0:
-                    intervals_consume.append(
-                        (
-                            self.variables["base_variable"]["intervals"][task],
-                            self.problem.mode_details[task][modes[0]][res],
-                        )
-                    )
-            else:
-                for mode in modes:
-                    if self.problem.mode_details[task][mode].get(res, 0) > 0:
-                        intervals_consume.append(
-                            (
-                                self.variables["mode_variable"]["opt_intervals"][task][
-                                    mode
-                                ],
-                                self.problem.mode_details[task][mode][res],
-                            )
-                        )
-        calendar_tasks = [
-            (
-                self.cp_model.NewFixedSizeIntervalVar(
-                    start=f["start"], size=f["duration"], name="calendar_res"
-                ),
-                f.get(res, 0),
-            )
-            for f in self.fake_tasks
-            if f.get(res, 0) > 0
-        ]
-        self.cp_model.AddCumulative(
-            [x[0] for x in intervals_consume] + [x[0] for x in calendar_tasks],
-            [x[1] for x in intervals_consume] + [x[1] for x in calendar_tasks],
-            capacity=self.problem.get_max_resource_capacity(res),
-        )
-
     def create_disjunctive_worker(self):
         for worker in self.problem.employees:
-            intervals_consume = []
-            for task in self.variables["worker_variable"]["opt_intervals"]:
-                if worker in self.variables["worker_variable"]["opt_intervals"][task]:
-                    intervals_consume.append(
-                        (
-                            self.variables["worker_variable"]["opt_intervals"][task][
-                                worker
-                            ],
-                            1,
-                        )
-                    )
-            calendar_tasks = [
-                (
-                    self.cp_model.NewFixedSizeIntervalVar(
-                        start=f["start"], size=f["duration"], name="calendar_res"
-                    ),
-                    f.get(worker, 0),
-                )
-                for f in self.fake_tasks_unit
-                if f.get(worker, 0) > 0
-            ]
-            self.cp_model.AddCumulative(
-                [x[0] for x in intervals_consume] + [x[0] for x in calendar_tasks],
-                [x[1] for x in intervals_consume] + [x[1] for x in calendar_tasks],
-                capacity=1,
-            )
+            self.create_renewable_resources_constraint(worker)
 
     def constraint_redundant_cumulative_skills(self):
-        discr_calendar, dict_calendar_skills = compute_discretize_calendar_skills(
-            problem=self.problem
-        )
         for skill in self.problem.skills_set:
-            intervals_consume = []
-            for task in self.problem.tasks_list:
-                modes = list(self.problem.mode_details[task].keys())
-                if len(modes) == 1:
-                    if self.problem.mode_details[task][modes[0]].get(skill, 0) > 0:
-                        intervals_consume.append(
-                            (
-                                self.variables["base_variable"]["intervals"][task],
-                                self.problem.mode_details[task][modes[0]][skill],
-                            )
-                        )
-                else:
-                    for mode in modes:
-                        if self.problem.mode_details[task][mode].get(skill, 0) > 0:
-                            intervals_consume.append(
-                                (
-                                    self.variables["mode_variable"]["opt_intervals"][
-                                        task
-                                    ][mode],
-                                    self.problem.mode_details[task][mode][skill],
-                                )
-                            )
-            calendar_tasks = [
-                (
-                    self.cp_model.NewFixedSizeIntervalVar(
-                        start=f["start"], size=f["duration"], name="calendar_res"
-                    ),
-                    f.get("value", 0),
-                )
-                for f in discr_calendar[skill]
-                if f.get("value", 0) > 0
-            ]
-            self.cp_model.AddCumulative(
-                [x[0] for x in intervals_consume] + [x[0] for x in calendar_tasks],
-                [x[1] for x in intervals_consume] + [x[1] for x in calendar_tasks],
-                capacity=int(np.max(dict_calendar_skills[skill])),
-            )
+            self.create_renewable_resources_constraint(skill)
 
     def constraint_redundant_cumulative_worker(self):
         some_employee = next(emp for emp in self.problem.employees)

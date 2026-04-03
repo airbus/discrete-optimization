@@ -308,12 +308,18 @@ def merge_resources_calendars(calendars: list[list[int]], horizon: int) -> list[
     Returns:
         calendar for the meta-resource
     """
-    return [
-        sum(values)
-        for values in zip(
-            *(consolidate_calendar(calendar, horizon=horizon) for calendar in calendars)
-        )
-    ]
+    if len(calendars) == 0:
+        return [0] * horizon
+    else:
+        return [
+            sum(values)
+            for values in zip(
+                *(
+                    consolidate_calendar(calendar, horizon=horizon)
+                    for calendar in calendars
+                )
+            )
+        ]
 
 
 def consolidate_calendar(calendar: list[int], horizon: int):
