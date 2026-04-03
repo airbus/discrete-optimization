@@ -783,16 +783,16 @@ def sgs_multi_skill(solution: VariantMultiskillRcpspSolution):
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     unfeasible_in_horizon = False
-    new_horizon = problem.horizon * problem.horizon_multiplier
+    horizon = problem.horizon
     resource_avail_in_time = {}
     for res in problem.resources_set:
         resource_avail_in_time[res] = np.array(
-            problem.resources_availability[res][: new_horizon + 1]
+            problem.resources_availability[res][: horizon + 1]
         )
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
+            problem.employees[i].calendar_employee[: horizon + 1], dtype=bool
         )
     minimum_starting_time = {}
     for act in problem.tasks_list:
@@ -848,7 +848,7 @@ def sgs_multi_skill(solution: VariantMultiskillRcpspSolution):
                 break
             for t in range_time:
                 for res in resource_avail_in_time.keys():
-                    if t < new_horizon:
+                    if t < horizon:
                         if resource_avail_in_time[res][t] < problem.mode_details[
                             act_id
                         ][modes_dict[act_id]].get(res, 0):
@@ -911,7 +911,7 @@ def sgs_multi_skill(solution: VariantMultiskillRcpspSolution):
                             valid = False
             if not valid:
                 current_min_time += 1
-            if current_min_time > new_horizon:
+            if current_min_time > horizon:
                 unfeasible_in_horizon = True
                 break
         if not unfeasible_non_renewable_resources and not unfeasible_in_horizon:
@@ -1008,16 +1008,16 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     unfeasible_in_horizon = False
-    new_horizon = problem.horizon * problem.horizon_multiplier
+    horizon = problem.horizon
     resource_avail_in_time = {}
     for res in problem.resources_set:
         resource_avail_in_time[res] = np.array(
-            problem.resources_availability[res][: new_horizon + 1]
+            problem.resources_availability[res][: horizon + 1]
         )
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
+            problem.employees[i].calendar_employee[: horizon + 1], dtype=bool
         )
     minimum_starting_time = {}
     for act in problem.tasks_list:
@@ -1167,7 +1167,7 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
                         if not valid or not skills_fulfilled:
                             reached_end = False
                             break
-                    if t >= new_horizon:
+                    if t >= horizon:
                         reached_end = False
                         unfeasible_non_renewable_resources = True
                         break
@@ -1197,7 +1197,7 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
                         reached_t + 2
                         if reached_t is not None
                         else current_min_time + 1,
-                        new_horizon,
+                        horizon,
                     )
                     if all(
                         resource_avail_in_time[res][t]
@@ -1205,7 +1205,7 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
                         for res in problem.resources_list
                     )
                 )
-            if current_min_time > new_horizon:
+            if current_min_time > horizon:
                 unfeasible_in_horizon = True
                 break
         if not unfeasible_non_renewable_resources and not unfeasible_in_horizon:
@@ -1273,16 +1273,16 @@ def sgs_multi_skill_preemptive_partial_schedule(
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     unfeasible_in_horizon = False
-    new_horizon = problem.horizon * problem.horizon_multiplier
+    horizon = problem.horizon
     resource_avail_in_time = {}
     for res in problem.resources_set:
         resource_avail_in_time[res] = np.array(
-            problem.resources_availability[res][: new_horizon + 1]
+            problem.resources_availability[res][: horizon + 1]
         )
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
+            problem.employees[i].calendar_employee[: horizon + 1], dtype=bool
         )
     minimum_starting_time = {}
     for act in problem.tasks_list:
@@ -1503,7 +1503,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
                         if not valid or not skills_fulfilled:
                             reached_end = False
                             break
-                    if t >= new_horizon:
+                    if t >= horizon:
                         reached_end = False
                         unfeasible_non_renewable_resources = True
                         break
@@ -1533,7 +1533,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
                         reached_t + 2
                         if reached_t is not None
                         else current_min_time + 1,
-                        new_horizon,
+                        horizon,
                     )
                     if all(
                         resource_avail_in_time[res][t]
@@ -1541,7 +1541,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
                         for res in problem.resources_list
                     )
                 )
-            if current_min_time > new_horizon:
+            if current_min_time > horizon:
                 unfeasible_in_horizon = True
                 break
         if not unfeasible_non_renewable_resources and not unfeasible_in_horizon:
@@ -1610,16 +1610,16 @@ def sgs_multi_skill_partial_schedule(
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     unfeasible_in_horizon = False
-    new_horizon = problem.horizon * problem.horizon_multiplier
+    horizon = problem.horizon
     resource_avail_in_time = {}
     for res in problem.resources_set:
         resource_avail_in_time[res] = np.array(
-            problem.resources_availability[res][: new_horizon + 1]
+            problem.resources_availability[res][: horizon + 1]
         )
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
+            problem.employees[i].calendar_employee[: horizon + 1], dtype=bool
         )
     perm_extended = [
         problem.tasks_list_non_dummy[x] for x in solution.priority_list_task
@@ -1742,7 +1742,7 @@ def sgs_multi_skill_partial_schedule(
                 break
             for t in range_time:
                 for res in resource_avail_in_time.keys():
-                    if t < new_horizon:
+                    if t < horizon:
                         if resource_avail_in_time[res][t] < problem.mode_details[
                             act_id
                         ][modes_dict[act_id]].get(res, 0):
@@ -1803,7 +1803,7 @@ def sgs_multi_skill_partial_schedule(
                             valid = False
             if not valid:
                 current_min_time += 1
-            if current_min_time > new_horizon:
+            if current_min_time > horizon:
                 unfeasible_in_horizon = True
                 break
         if not unfeasible_non_renewable_resources and not unfeasible_in_horizon:
@@ -1990,7 +1990,6 @@ class MultiskillRcpspProblem(
     non_renewable_resources: set[str]
     resources_availability: dict[str, list[int]]
     employees: dict[Hashable, Employee]
-    employees_availability: list[int]
     n_jobs_non_dummy: int
     mode_details: dict[Hashable, dict[int, dict[str, int]]]
     successors: dict[Hashable, list[Hashable]]
@@ -2011,10 +2010,8 @@ class MultiskillRcpspProblem(
         mode_details: dict[Task, dict[int, dict[str, int]]],
         successors: dict[Task, list[Task]],
         horizon: int,
-        employees_availability: Optional[list[int]] = None,
         tasks_list: Optional[list[Task]] = None,
         employees_list: Optional[list[UnaryResource]] = None,
-        horizon_multiplier: int = 1,
         sink_task: Optional[Task] = None,
         source_task: Optional[Task] = None,
         one_unit_per_task_max: bool = False,
@@ -2035,14 +2032,12 @@ class MultiskillRcpspProblem(
         self.non_renewable_resources = non_renewable_resources
         self.resources_availability = resources_availability
         self.employees = employees
-        self.employees_availability = employees_availability
         self.mode_details = mode_details
         self.successors = successors
 
         self.n_jobs = len(self.mode_details)
         self.n_jobs_non_dummy = self.n_jobs - 2
         self.horizon = horizon
-        self.horizon_multiplier = horizon_multiplier
         self.nb_tasks = len(self.mode_details)
         if tasks_list is None:
             self._tasks_list = list(self.mode_details)
@@ -2449,7 +2444,6 @@ class MultiskillRcpspProblem(
             sink_task=self.sink_task,
             successors=self.successors,
             horizon=self.horizon,
-            horizon_multiplier=self.horizon_multiplier,
             name_task={i: str(i) for i in self.tasks_list},
         )
         return rcpsp_problem
@@ -2858,13 +2852,11 @@ class MultiskillRcpspProblem(
             non_renewable_resources=self.non_renewable_resources,
             resources_availability=self.resources_availability,
             employees=self.employees,
-            employees_availability=self.employees_availability,
             mode_details=self.mode_details,
             successors=self.successors,
             horizon=self.horizon,
             sink_task=self.sink_task,
             source_task=self.source_task,
-            horizon_multiplier=self.horizon_multiplier,
             partial_preemption_data=self.partial_preemption_data,
             always_releasable_resources=self.always_releasable_resources,
             never_releasable_resources=self.never_releasable_resources,
@@ -2879,13 +2871,11 @@ class MultiskillRcpspProblem(
             non_renewable_resources=self.non_renewable_resources,
             resources_availability=self.resources_availability,
             employees=self.employees,
-            employees_availability=self.employees_availability,
             mode_details=self.mode_details,
             successors=self.successors,
             horizon=self.horizon,
             sink_task=self.sink_task,
             source_task=self.source_task,
-            horizon_multiplier=self.horizon_multiplier,
             one_unit_per_task_max=self.one_unit_per_task_max,
             preemptive=self.preemptive,
             preemptive_indicator=self.preemptive_indicator,
@@ -2914,13 +2904,11 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
         non_renewable_resources: set[str],
         resources_availability: dict[str, list[int]],
         employees: dict[Hashable, Employee],
-        employees_availability: list[int],
         mode_details: dict[Hashable, dict[int, dict[str, int]]],
         successors: dict[Hashable, list[Hashable]],
         horizon,
         tasks_list: list[Hashable] = None,
         employees_list: list[Hashable] = None,
-        horizon_multiplier=1,
         sink_task: Optional[Hashable] = None,
         source_task: Optional[Hashable] = None,
         one_unit_per_task_max: bool = False,
@@ -2940,13 +2928,11 @@ class VariantMultiskillRcpspProblem(MultiskillRcpspProblem):
             non_renewable_resources=non_renewable_resources,
             resources_availability=resources_availability,
             employees=employees,
-            employees_availability=employees_availability,
             mode_details=mode_details,
             successors=successors,
             horizon=horizon,
             tasks_list=tasks_list,
             employees_list=employees_list,
-            horizon_multiplier=horizon_multiplier,
             sink_task=sink_task,
             source_task=source_task,
             one_unit_per_task_max=one_unit_per_task_max,

@@ -82,7 +82,6 @@ class RcpspProblem(
 
         successors (dict[Hashable, list[Hashable]]): successors in the precedence graph of each task
         horizon (int): max number of time steps allowed
-        horizon_multiplier: not used
         tasks_list(list[Hashable]): list of tasks. Must correspond to `mode_details`. If not given will be equal to `list(mode_details)`.
         source_task (Hashable): the id for the source task (i.e. the root in the precedence graph, all other tasks must follow it).
             If not given and tasks_list is made of integers, the lowest one
@@ -166,7 +165,6 @@ class RcpspProblem(
         mode_details: dict[Hashable, dict[int, dict[str, int]]],
         successors: dict[Hashable, list[Hashable]],
         horizon: int,
-        horizon_multiplier: int = 1,
         tasks_list: Optional[list[Hashable]] = None,
         source_task: Optional[Hashable] = None,
         sink_task: Optional[Hashable] = None,
@@ -186,7 +184,6 @@ class RcpspProblem(
             mode_details:
             successors:
             horizon:
-            horizon_multiplier:
             tasks_list:
             source_task:
             sink_task:
@@ -204,7 +201,6 @@ class RcpspProblem(
         self.mode_details = mode_details
         self.successors = successors
         self.horizon = horizon
-        self.horizon_multiplier = horizon_multiplier
         self.calendar_details = calendar_details
         if name_task is None:
             self.name_task = {x: str(x) for x in self.mode_details}
@@ -643,7 +639,6 @@ class RcpspProblem(
             mode_details=deepcopy(self.mode_details),
             successors=deepcopy(self.successors),
             horizon=self.horizon,
-            horizon_multiplier=self.horizon_multiplier,
             name_task=self.name_task,
             mean_resource_reserve=self.costs.get("mean_resource_reserve", False),
             fixed_modes=self.fixed_modes,

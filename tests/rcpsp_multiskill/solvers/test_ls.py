@@ -50,7 +50,6 @@ def create_toy_msrcpsp():
             employee[emp].calendar_employee[i] = False
         index += 1
 
-    employees_availability: list[int] = [3] * 1000
     mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
         2: {
@@ -84,11 +83,9 @@ def create_toy_msrcpsp():
         non_renewable_resources=non_renewable_resources,
         resources_availability=resources_availability,
         employees=employee,
-        employees_availability=employees_availability,
         mode_details=mode_details,
         successors=successors,
         horizon=100,
-        horizon_multiplier=1,
     )
     return model
 
