@@ -57,6 +57,8 @@ from discrete_optimization.rcpsp_multiskill.fast_function_ms_rcpsp import (
 
 logger = logging.getLogger(__name__)
 
+NB_EMPLOYEES_LB = "nb_employees_lower_bound"
+
 
 def tree():
     return defaultdict(tree)
@@ -2212,11 +2214,15 @@ class MultiskillRcpspProblem(
         NB: we consider also skills as cumulative resources.
 
         """
-        return [
-            res
-            for res in self.resources_list
-            if res not in self.non_renewable_resources
-        ] + self.skills_list
+        return (
+            [
+                res
+                for res in self.resources_list
+                if res not in self.non_renewable_resources
+            ]
+            + self.skills_list
+            + [NB_EMPLOYEES_LB]
+        )
 
     def get_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
@@ -2237,7 +2243,11 @@ class MultiskillRcpspProblem(
             ValueError: if resource consumption is depending on other variables than mode
 
         """
-        if self.is_cumulative_resource(resource):
+        if resource == NB_EMPLOYEES_LB:
+            return self.compute_lower_bound_nb_employees_per_task_mode(
+                task=task, mode=mode
+            )
+        elif self.is_cumulative_resource(resource):
             return self.mode_details[task][mode].get(resource, 0)
         else:
             raise ValueError(f"{resource} is not a cumulative resource of the problem.")
@@ -2246,7 +2256,18 @@ class MultiskillRcpspProblem(
     def get_resource_availabilities(
         self, resource: Resource
     ) -> list[tuple[int, int, int]]:
-        if resource in self.resources_availability:
+        if resource == NB_EMPLOYEES_LB:
+            return convert_calendar_to_availability_intervals(
+                calendar=merge_resources_calendars(
+                    calendars=[
+                        [int(present) for present in emp.calendar_employee]
+                        for emp in self.employees.values()
+                    ],
+                    horizon=self.horizon,
+                ),
+                horizon=self.horizon,
+            )
+        elif resource in self.resources_availability:
             return convert_calendar_to_availability_intervals(
                 calendar=self.resources_availability[resource], horizon=self.horizon
             )

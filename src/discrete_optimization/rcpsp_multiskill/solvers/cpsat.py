@@ -2,10 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-import math
 from typing import Any, Iterable
 
-import numpy as np
 from ortools.sat.python.cp_model import (
     Constraint,
     CpSolverSolutionCallback,
@@ -27,12 +25,12 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp_multiskill.problem import (
+    NB_EMPLOYEES_LB,
     CumulativeResource,
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,
     Task,
     UnaryResource,
-    discretize_calendar_,
 )
 
 logger = logging.getLogger(__name__)
@@ -525,82 +523,7 @@ class CpSatMultiskillRcpspSolver(
             self.create_renewable_resources_constraint(skill)
 
     def constraint_redundant_cumulative_worker(self):
-        some_employee = next(emp for emp in self.problem.employees)
-        len_calendar = len(self.problem.employees[some_employee].calendar_employee)
-        merged_calendar = np.zeros(len_calendar)
-        for emp in self.problem.employees:
-            merged_calendar += np.array(self.problem.employees[emp].calendar_employee)
-        discr_calendar = discretize_calendar_(merged_calendar)
-        intervals_consume = []
-        max_skill_over_worker = {s: 0 for s in self.problem.skills_set}
-        for emp in self.problem.employees:
-            for s in self.problem.skills_set:
-                max_skill_over_worker[s] = max(
-                    max_skill_over_worker[s],
-                    self.problem.employees[emp].get_skill_level(s),
-                )
-        for task in self.problem.tasks_list:
-            modes = list(self.problem.mode_details[task].keys())
-            if len(modes) == 1:
-                skills_needed = {
-                    s: self.problem.mode_details[task][modes[0]].get(s, 0)
-                    for s in self.problem.skills_set
-                    if self.problem.mode_details[task][modes[0]].get(s, 0) > 0
-                }
-                if len(skills_needed) > 0:
-                    lb_nb_worker_needed = max(
-                        [
-                            int(math.ceil(skills_needed[s] / max_skill_over_worker[s]))
-                            for s in skills_needed
-                        ]
-                    )
-                    intervals_consume.append(
-                        (
-                            self.variables["base_variable"]["intervals"][task],
-                            lb_nb_worker_needed,
-                        )
-                    )
-            else:
-                for mode in modes:
-                    skills_needed = {
-                        s: self.problem.mode_details[task][modes[0]].get(s, 0)
-                        for s in self.problem.skills_set
-                        if self.problem.mode_details[task][modes[0]].get(s, 0) > 0
-                    }
-                    if len(skills_needed) > 0:
-                        lb_nb_worker_needed = max(
-                            [
-                                int(
-                                    math.ceil(
-                                        skills_needed[s] / max_skill_over_worker[s]
-                                    )
-                                )
-                                for s in skills_needed
-                            ]
-                        )
-                        intervals_consume.append(
-                            (
-                                self.variables["mode_variable"]["opt_intervals"][task][
-                                    mode
-                                ],
-                                lb_nb_worker_needed,
-                            )
-                        )
-        calendar_tasks = [
-            (
-                self.cp_model.NewFixedSizeIntervalVar(
-                    start=f["start"], size=f["duration"], name="calendar_res"
-                ),
-                f.get("value", 0),
-            )
-            for f in discr_calendar
-            if f.get("value", 0) > 0
-        ]
-        self.cp_model.AddCumulative(
-            [x[0] for x in intervals_consume] + [x[0] for x in calendar_tasks],
-            [x[1] for x in intervals_consume] + [x[1] for x in calendar_tasks],
-            capacity=self.problem.nb_employees,
-        )
+        self.create_renewable_resources_constraint(NB_EMPLOYEES_LB)
 
     def constraint_mode(self):
         for task in self.variables["mode_variable"]["is_present"]:
