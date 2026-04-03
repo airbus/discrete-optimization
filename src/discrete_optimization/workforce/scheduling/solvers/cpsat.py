@@ -8,12 +8,17 @@ from functools import reduce
 from typing import Any, Optional, Union
 
 import numpy as np
-from ortools.sat.python.cp_model import CpSolverSolutionCallback, IntVar, LinearExprT
+from ortools.sat.python.cp_model import (
+    CpSolverSolutionCallback,
+    IntervalVar,
+    IntVar,
+    LinearExprT,
+)
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
-    AllocationCpSatSolver,
-    SchedulingCpSatSolver,
+    AllocationSchedulingCpSatSolver,
+    SinglemodeCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -36,6 +41,7 @@ from discrete_optimization.workforce.commons.fairness_modeling_ortools import (
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
+    CumulativeResource,
     Task,
     UnaryResource,
 )
@@ -88,8 +94,8 @@ class AdditionalCPConstraints:
 
 
 class CPSatAllocSchedulingSolver(
-    SchedulingCpSatSolver[Task],
-    AllocationCpSatSolver[Task, UnaryResource],
+    AllocationSchedulingCpSatSolver[Task, UnaryResource, CumulativeResource],
+    SinglemodeCpSatSolver[Task],
     SolverAllocScheduling,
     WarmstartMixin,
 ):
@@ -271,6 +277,16 @@ class CPSatAllocSchedulingSolver(
                         int(np.max(solution.schedule[:, 1])),
                     )
 
+    def get_task_unary_resource_interval(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> IntervalVar:
+        return self.variables["interval_task_team"][self.problem.tasks_to_index[task]][
+            self.problem.teams_to_index[unary_resource]
+        ]
+
+    def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
+        return self.variables["interval_task"][self.problem.tasks_to_index[task]]
+
     def init_model(
         self, objectives: Optional[list[ObjectivesEnum]] = None, **args: Any
     ) -> None:
@@ -305,13 +321,22 @@ class CPSatAllocSchedulingSolver(
         compatible_teams: dict[int, set[int]] = (
             self.problem.compatible_teams_index_all_activity()
         )
+        self.variables = {
+            "starts_var": starts_var,
+            "ends_var": ends_var,
+            "is_present_var": is_present_var,
+            "objectives": {},
+            "key_per_team": key_per_team,
+            "interval_task_team": opt_interval_var,
+            "interval_task": interval_var,
+        }
         if additional_constraints is not None:
             forced_alloc = additional_constraints.forced_allocation
             if forced_alloc is not None:
                 for i in forced_alloc:
                     if forced_alloc[i] is not None:
                         compatible_teams[i] = {forced_alloc[i]}
-        for i in range(self.problem.number_tasks):
+        for i, task in enumerate(self.problem.tasks_list):
             starts_var[i] = self.cp_model.NewIntVar(
                 lb=st_lb[i][0], ub=st_lb[i][1], name=f"start_{i}"
             )
@@ -341,6 +366,7 @@ class CPSatAllocSchedulingSolver(
                     [is_present_var[i][x] for x in is_present_var[i]]
                 )
                 # else managed later by self.create_actually_done_variables()
+
         # Precedence constraints
         for t in self.problem.precedence_constraints:
             i_t = self.problem.tasks_to_index[t]
@@ -374,26 +400,14 @@ class CPSatAllocSchedulingSolver(
 
         # Overlap constraints
         for index_team in key_per_team:
-            unavailable = self.problem.compute_unavailability_calendar(
+            self.create_renewable_resources_constraint(
                 self.problem.index_to_team[index_team]
             )
-            fake_tasks_unavailable = [
-                self.cp_model.NewFixedSizeIntervalVar(
-                    start=x[0], size=x[1] - x[0], name=""
-                )
-                for x in unavailable
-            ]
-            tasks_team = [
-                opt_interval_var[x[0]][x[1]] for x in key_per_team[index_team]
-            ]
-            if len(fake_tasks_unavailable) + len(tasks_team) > 0:
-                self.cp_model.AddCumulative(
-                    tasks_team + fake_tasks_unavailable,
-                    [1] * (len(tasks_team) + len(fake_tasks_unavailable)),
-                    1,
-                )
-            if len(tasks_team) > 0:
-                if additional_constraints is not None:
+            if additional_constraints is not None:
+                tasks_team = [
+                    opt_interval_var[x[0]][x[1]] for x in key_per_team[index_team]
+                ]
+                if len(tasks_team) > 0:
                     if (
                         additional_constraints.adding_margin_on_sequence[0]
                         and additional_constraints.adding_margin_on_sequence[1] > 0
@@ -416,36 +430,8 @@ class CPSatAllocSchedulingSolver(
                         )
 
         # Resource constraints
-        if self.problem.resources_list is not None:
-            for resource in self.problem.resources_list:
-                capa = self.problem.resources_capacity[resource]
-                interval_cons = [
-                    (
-                        interval_var[self.problem.tasks_to_index[t]],
-                        self.problem.tasks_data[t].resource_consumption.get(
-                            resource, 0
-                        ),
-                    )
-                    for t in self.problem.tasks_data
-                    if self.problem.tasks_data[t].resource_consumption.get(resource, 0)
-                    > 0
-                ]
-                if len(interval_cons) > 0:
-                    if capa == 1 and all(x[1] == 1 for x in interval_cons):
-                        self.cp_model.AddNoOverlap([x[0] for x in interval_cons])
-                    else:
-                        self.cp_model.AddCumulative(
-                            intervals=[x[0] for x in interval_cons],
-                            demands=[x[1] for x in interval_cons],
-                            capacity=capa,
-                        )
-        self.variables = {
-            "starts_var": starts_var,
-            "ends_var": ends_var,
-            "is_present_var": is_present_var,
-            "objectives": {},
-            "key_per_team": key_per_team,
-        }
+        for resource in self.problem.resources_list:
+            self.create_renewable_resources_constraint(resource)
         if optional_activities:
             self.variables["actually_done"] = self.create_actually_done_variables()
         # Objectives definitions
