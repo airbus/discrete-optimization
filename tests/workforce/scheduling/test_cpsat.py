@@ -56,7 +56,8 @@ def test_cpsat(problem):
         time_limit=5,
     )
     assert len(res) == 1
-    sol = res[-1][0]
+    sol: AllocSchedulingSolution = res[-1][0]
+    assert sol.check_all_resource_capacity_constraints()
     assert problem.satisfy(sol)
     problem.evaluate(sol)
 

@@ -42,7 +42,6 @@ class AllocationSchedulingProblem(
     - either cumulative ones
     - or unary resources
 
-    - or a virtual one "nb_unary_resource" which represents the pool of unary resources as one big resource
     This generic class is to be used to construct generic solvers (e.g. cpsat)
     that will require no methods implementation to work.
 

@@ -7,19 +7,22 @@ import itertools
 import logging
 from collections.abc import Hashable
 from functools import reduce
-from typing import Optional
+from typing import Optional, Union
 
 import networkx as nx
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.allocation import (
-    AllocationProblem,
-    AllocationSolution,
+from discrete_optimization.generic_tasks_tools.allocation_scheduling import (
+    AllocationSchedulingProblem,
+    AllocationSchedulingSolution,
+)
+from discrete_optimization.generic_tasks_tools.multimode import (
+    SinglemodeProblem,
+    SinglemodeSolution,
 )
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
-from discrete_optimization.generic_tasks_tools.scheduling import (
-    SchedulingProblem,
-    SchedulingSolution,
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    convert_calendar_to_availability_intervals,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -41,10 +44,13 @@ logger = logging.getLogger(__name__)
 
 Task = Hashable
 UnaryResource = Hashable
+CumulativeResource = str
+Resource = Union[UnaryResource, CumulativeResource]
 
 
 class AllocSchedulingSolution(
-    SchedulingSolution[Task], AllocationSolution[Task, UnaryResource]
+    AllocationSchedulingSolution[Task, UnaryResource, CumulativeResource],
+    SinglemodeSolution[Task],
 ):
     problem: AllocSchedulingProblem
 
@@ -80,7 +86,11 @@ class AllocSchedulingSolution(
 
 
 class TasksDescription:
-    def __init__(self, duration_task: int, resource_consumption: dict[str, int] = None):
+    def __init__(
+        self,
+        duration_task: int,
+        resource_consumption: dict[CumulativeResource, int] = None,
+    ):
         self.duration_task = duration_task
         self.resource_consumption = resource_consumption
         if self.resource_consumption is None:
@@ -88,8 +98,8 @@ class TasksDescription:
 
 
 class AllocSchedulingProblem(
-    SchedulingProblem[Task],
-    AllocationProblem[Task, UnaryResource],
+    AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource],
+    SinglemodeProblem[Task],
     PrecedenceProblem[Task],
 ):
     def __init__(
@@ -108,8 +118,8 @@ class AllocSchedulingProblem(
         end_window: dict[Task, tuple[Optional[int], Optional[int]]],
         original_start: dict[Task, int],
         original_end: dict[Task, int],
-        resources_list: list[str] = None,
-        resources_capacity: dict[str, int] = None,
+        resources_list: Optional[list[str]] = None,
+        resources_capacity: Optional[dict[str, int]] = None,
         horizon_start_shift: Optional[int] = 0,
         objective_handling: ObjectiveHandling = ObjectiveHandling.AGGREGATE,
     ):
@@ -134,17 +144,50 @@ class AllocSchedulingProblem(
         self.index_to_task = {
             self.tasks_to_index[key]: key for key in self.tasks_to_index
         }
-        self.rcpsp, self.ac_mode_to_team = transform_to_multimode_rcpsp(
-            self,
-            build_calendar=True,
-            add_window_time_constraint=True,
-            add_additional_constraint=True,
-        )
         self.objective_handling = objective_handling
-        self.resources_list = resources_list
-        self.resources_capacity = resources_capacity
+        if resources_capacity is None:
+            self.resources_capacity: dict[str, int] = {}
+        else:
+            self.resources_capacity = resources_capacity
+        if resources_list is None:
+            self.resources_list = list(resources_capacity)
+        else:
+            self.resources_list = resources_list
+        assert set(self.resources_list) == set(self.resources_capacity), (
+            "resources_list must contain same resources as resources_capacity"
+        )
+
         self.horizon_start_shift = horizon_start_shift
-        self.compatible_teams_per_activity = self.compatible_teams_all_activity()
+        self.update_problem()
+
+    @property
+    def cumulative_resources_list(self) -> list[CumulativeResource]:
+        return self.resources_list
+
+    def get_resource_consumption(
+        self, resource: Resource, task: Task, mode: int
+    ) -> int:
+        if self.is_cumulative_resource(resource):
+            return self.tasks_data[task].resource_consumption.get(resource, 0)
+        else:
+            raise ValueError(f"{resource} is not a cumulative resource of the problem.")
+
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        if self.is_cumulative_resource(resource):
+            return convert_calendar_to_availability_intervals(
+                self.resources_capacity.get(resource, 0), horizon=self.horizon
+            )
+        elif resource in self.team_names:
+            return [(start, end, 1) for start, end in self.calendar_team[resource]]
+        else:
+            raise ValueError(
+                f"{resource} is neither an actual cumulative resource nor a team."
+            )
+
+    def get_task_mode_duration(self, task: Task, mode: int) -> int:
+        return self.tasks_data[task].duration_task
 
     @property
     def tasks_list(self) -> list[Task]:
@@ -176,12 +219,18 @@ class AllocSchedulingProblem(
     ):
         """Override the available team attribute and update the rcpsp accordingly"""
         self.available_team_for_activity = available_team_for_activity
+        self.update_problem()
+
+    def update_problem(self):
+        """Method to call whenever available_team_for_activity or resources_capacity are updated."""
         self.rcpsp, self.ac_mode_to_team = transform_to_multimode_rcpsp(
             self,
             build_calendar=True,
             add_window_time_constraint=True,
             add_additional_constraint=True,
         )
+        self.update_resource_availabilities()
+        self.compatible_teams_per_activity = self.compatible_teams_all_activity()
 
     def compute_predecessors(self):
         self.predecessors = {}
