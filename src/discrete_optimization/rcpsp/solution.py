@@ -1638,9 +1638,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
                         current_min_time
                         + rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag[
                             act_id
-                        ][
-                            s
-                        ]
+                        ][s]
                     )
                 for s in rcpsp_problem.special_constraints.dict_start_at_end_offset.get(
                     act_id, {}
