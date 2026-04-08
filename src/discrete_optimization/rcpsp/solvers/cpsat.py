@@ -277,11 +277,19 @@ class CpSatRcpspSolver(
             ends_var: Dictionary mapping tasks to their end time variables
         """
         # start_to_start_min_time_lag: start(t1) + offset <= start(t2) where offset >= 0 (minimum time lag)
-        for t1, t2, offset in self.problem.special_constraints.start_to_start_min_time_lag:
+        for (
+            t1,
+            t2,
+            offset,
+        ) in self.problem.special_constraints.start_to_start_min_time_lag:
             model.Add(starts_var[t1] + offset <= starts_var[t2])
 
         # start_to_start_max_time_lag: start(t2) <= start(t1) + offset where offset >= 0 (maximum time lag)
-        for t1, t2, offset in self.problem.special_constraints.start_to_start_max_time_lag:
+        for (
+            t1,
+            t2,
+            offset,
+        ) in self.problem.special_constraints.start_to_start_max_time_lag:
             model.Add(starts_var[t2] <= starts_var[t1] + offset)
 
         # start_together: start(t1) == start(t2)

@@ -29,7 +29,9 @@ from discrete_optimization.rcpsp.solvers.pile import (
     PileCalendarRcpspSolver,
     PileRcpspSolver,
 )
-from discrete_optimization.rcpsp.special_constraints import SpecialConstraintsDescription
+from discrete_optimization.rcpsp.special_constraints import (
+    SpecialConstraintsDescription,
+)
 from discrete_optimization.rcpsp.utils import plot_task_gantt
 
 
@@ -441,7 +443,13 @@ def test_special_constraints():
     assert problem_3.satisfy(solution_3), "Solution should satisfy all constraints"
 
     # Test 4: disjunctive_tasks constraint (with parallel successors)
-    successors_4 = {1: [2, 3], 2: [5], 3: [5], 4: [5], 5: []}  # tasks 2 and 3 are parallel
+    successors_4 = {
+        1: [2, 3],
+        2: [5],
+        3: [5],
+        4: [5],
+        5: [],
+    }  # tasks 2 and 3 are parallel
     special_constraints_4 = SpecialConstraintsDescription(
         disjunctive_tasks=[(2, 3)],  # tasks 2 and 3 cannot overlap
     )
@@ -539,11 +547,15 @@ def test_start_to_start_min_time_lag_negative_offset():
             rcpsp_modes=[1, 1, 1],
         )
 
-        schedule, feasible = generate_schedule_from_permutation_serial_sgs_special_constraints(
-            test_solution, problem
+        schedule, feasible = (
+            generate_schedule_from_permutation_serial_sgs_special_constraints(
+                test_solution, problem
+            )
         )
 
-        assert feasible, f"SGS should generate feasible schedule for permutation {permutation}"
+        assert feasible, (
+            f"SGS should generate feasible schedule for permutation {permutation}"
+        )
 
         # Verify the constraint in the generated schedule
         sgs_start_2 = schedule[2]["start_time"]

@@ -2,7 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import pytest
 
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solution import (
@@ -12,7 +11,9 @@ from discrete_optimization.rcpsp.solution import (
     generate_schedule_from_permutation_iterative_sgs_unblocking,
 )
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
-from discrete_optimization.rcpsp.special_constraints import SpecialConstraintsDescription
+from discrete_optimization.rcpsp.special_constraints import (
+    SpecialConstraintsDescription,
+)
 
 
 def test_basic_rcpsp_max():
@@ -59,10 +60,14 @@ def test_basic_rcpsp_max():
     start_3 = solution.get_start_time(3)
 
     # Check minimum time lag: start(3) >= start(2) + 2
-    assert start_3 >= start_2 + 2, f"Min time lag violated: start(3)={start_3}, start(2)={start_2}"
+    assert start_3 >= start_2 + 2, (
+        f"Min time lag violated: start(3)={start_3}, start(2)={start_2}"
+    )
 
     # Check maximum time lag: start(3) <= start(2) + 8
-    assert start_3 <= start_2 + 8, f"Max time lag violated: start(3)={start_3}, start(2)={start_2}"
+    assert start_3 <= start_2 + 8, (
+        f"Max time lag violated: start(3)={start_3}, start(2)={start_2}"
+    )
 
     assert problem.satisfy(solution), "Solution should satisfy all constraints"
 
@@ -131,9 +136,9 @@ def test_infeasible_time_lag_network():
         # At least one constraint must be violated
         min_satisfied = start_3 >= start_2 + 10
         max_satisfied = start_3 <= start_2 + 5
-        assert not (
-            min_satisfied and max_satisfied
-        ), "Cannot satisfy both conflicting constraints"
+        assert not (min_satisfied and max_satisfied), (
+            "Cannot satisfy both conflicting constraints"
+        )
 
 
 def test_est_lst_computation():
@@ -195,7 +200,9 @@ def test_est_lst_computation():
     scheduled = {1: 0, 2: 0}
     unscheduled = {3, 4, 5}
 
-    lst = compute_lst_with_time_lags(problem, scheduled, unscheduled, modes_dict, horizon=50)
+    lst = compute_lst_with_time_lags(
+        problem, scheduled, unscheduled, modes_dict, horizon=50
+    )
 
     # LST values should all be <= horizon
     for task in unscheduled:

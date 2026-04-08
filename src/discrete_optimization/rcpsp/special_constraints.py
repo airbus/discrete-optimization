@@ -57,9 +57,13 @@ class SpecialConstraintsDescription:
         start_together: Optional[list[tuple[Hashable, Hashable]]] = None,
         start_at_end: Optional[list[tuple[Hashable, Hashable]]] = None,
         start_at_end_plus_offset: Optional[list[tuple[Hashable, Hashable, int]]] = None,
-        start_to_start_min_time_lag: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        start_to_start_min_time_lag: Optional[
+            list[tuple[Hashable, Hashable, int]]
+        ] = None,
         # Constraint: start(t1) + offset <= start(t2) where offset >= 0 (minimum time lag)
-        start_to_start_max_time_lag: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        start_to_start_max_time_lag: Optional[
+            list[tuple[Hashable, Hashable, int]]
+        ] = None,
         # Constraint: start(t2) <= start(t1) + offset where offset >= 0 (maximum time lag)
         disjunctive_tasks: Optional[list[tuple[Hashable, Hashable]]] = None,
         pair_mode_constraint: Optional[PairModeConstraint] = None,
@@ -145,7 +149,9 @@ class SpecialConstraintsDescription:
             self.dict_start_at_end_offset[i][j] = off
 
         self.dict_start_to_start_min_time_lag: dict[Hashable, dict[Hashable, int]] = {}
-        self.dict_start_to_start_min_time_lag_reverse: dict[Hashable, dict[Hashable, int]] = {}
+        self.dict_start_to_start_min_time_lag_reverse: dict[
+            Hashable, dict[Hashable, int]
+        ] = {}
         for i, j, off in self.start_to_start_min_time_lag:
             if i not in self.dict_start_to_start_min_time_lag:
                 self.dict_start_to_start_min_time_lag[i] = {}
@@ -155,7 +161,9 @@ class SpecialConstraintsDescription:
             self.dict_start_to_start_min_time_lag_reverse[j][i] = off
 
         self.dict_start_to_start_max_time_lag: dict[Hashable, dict[Hashable, int]] = {}
-        self.dict_start_to_start_max_time_lag_reverse: dict[Hashable, dict[Hashable, int]] = {}
+        self.dict_start_to_start_max_time_lag_reverse: dict[
+            Hashable, dict[Hashable, int]
+        ] = {}
         for i, j, offset in self.start_to_start_max_time_lag:
             if i not in self.dict_start_to_start_max_time_lag:
                 self.dict_start_to_start_max_time_lag[i] = {}

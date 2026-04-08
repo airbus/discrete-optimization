@@ -950,7 +950,9 @@ def check_solution_with_special_constraints(
     for t1, t2, offset in problem.special_constraints.start_to_start_max_time_lag:
         b = solution.get_start_time(t2) <= solution.get_start_time(t1) + offset
         if not b:
-            logger.debug(("start_to_start_max_time_lag NOT respected: ", t1, t2, offset))
+            logger.debug(
+                ("start_to_start_max_time_lag NOT respected: ", t1, t2, offset)
+            )
             logger.debug(
                 (
                     "start(",
