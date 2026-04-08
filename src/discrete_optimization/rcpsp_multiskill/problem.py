@@ -3297,7 +3297,8 @@ def create_np_data_and_jit_functions(
             dtype=np.int_,
         )
         start_after_nunit = np.zeros(
-            (len(rcpsp_problem.special_constraints.start_after_nunit), 3), dtype=np.int_
+            (len(rcpsp_problem.special_constraints.start_to_start_min_time_lag), 3),
+            dtype=np.int_,
         )
         j = 0
         for t1, t2, off in rcpsp_problem.special_constraints.start_at_end_plus_offset:
@@ -3306,7 +3307,11 @@ def create_np_data_and_jit_functions(
             start_at_end_plus_offset[j, 2] = off
             j += 1
         j = 0
-        for t1, t2, off in rcpsp_problem.special_constraints.start_after_nunit:
+        for (
+            t1,
+            t2,
+            off,
+        ) in rcpsp_problem.special_constraints.start_to_start_min_time_lag:
             start_after_nunit[j, 0] = rcpsp_problem.index_task[t1]
             start_after_nunit[j, 1] = rcpsp_problem.index_task[t2]
             start_after_nunit[j, 2] = off
@@ -3462,7 +3467,7 @@ def compute_constraints_details(
     start_together = constraints.start_together
     start_at_end = constraints.start_at_end
     start_at_end_plus_offset = constraints.start_at_end_plus_offset
-    start_after_nunit = constraints.start_after_nunit
+    start_after_nunit = constraints.start_to_start_min_time_lag
     disjunctive = constraints.disjunctive_tasks
     list_constraints_not_respected = []
     for t1, t2 in start_together:
@@ -3606,7 +3611,7 @@ def check_solution(
     start_together = problem.special_constraints.start_together
     start_at_end = problem.special_constraints.start_at_end
     start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
-    start_after_nunit = problem.special_constraints.start_after_nunit
+    start_after_nunit = problem.special_constraints.start_to_start_min_time_lag
     disjunctive = problem.special_constraints.disjunctive_tasks
     for t1, t2 in start_together:
         if not relax_the_start_at_end:
