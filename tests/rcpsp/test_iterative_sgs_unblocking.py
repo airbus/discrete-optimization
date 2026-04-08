@@ -229,7 +229,13 @@ def test_cyclic_time_lag_constraints():
         start_to_start_min_time_lag=[
             (2, 3, 3),  # start(3) >= start(2) + 3
             (3, 4, 3),  # start(4) >= start(3) + 3
-            (4, 2, -8),  # start(2) >= start(4) - 8, i.e., start(4) - 8 >= start(2)
+        ],
+        start_to_start_max_time_lag=[
+            (
+                2,
+                4,
+                8,
+            ),  # start(4) <= start(2) + 8, equivalent to start(2) >= start(4) - 8
         ],
     )
 
@@ -256,13 +262,13 @@ def test_cyclic_time_lag_constraints():
         # Verify the cycle constraints
         assert start_3 >= start_2 + 3, f"Constraint 2->3 violated"
         assert start_4 >= start_3 + 3, f"Constraint 3->4 violated"
-        assert start_2 >= start_4 - 8, f"Constraint 4->2 violated"
+        assert start_4 <= start_2 + 8, f"Constraint 2->4 violated"
 
         assert problem.satisfy(solution)
 
 
 def test_negative_time_lags():
-    """Test that negative time lags work correctly."""
+    """Test that task 3 can start before task 2 using max time lag."""
     mode_details = {
         1: {1: {"duration": 0}},
         2: {1: {"duration": 5, "R1": 1}},
@@ -273,11 +279,11 @@ def test_negative_time_lags():
     successors = {1: [2, 3], 2: [4], 3: [4], 4: []}
     resources = {"R1": 1}
 
-    # Negative time lag: task 3 can start before task 2
-    # start(2) + (-3) <= start(3) means start(3) >= start(2) - 3
+    # Max time lag: task 3 can start before task 2
+    # start(2) <= start(3) + 3 means start(3) >= start(2) - 3
     # So task 3 can start up to 3 units before task 2
     special_constraints = SpecialConstraintsDescription(
-        start_to_start_min_time_lag=[(2, 3, -3)],
+        start_to_start_max_time_lag=[(3, 2, 3)],
     )
 
     problem = RcpspProblem(
@@ -298,8 +304,8 @@ def test_negative_time_lags():
     start_2 = solution.get_start_time(2)
     start_3 = solution.get_start_time(3)
 
-    # Verify: start(3) >= start(2) - 3
-    assert start_3 >= start_2 - 3, f"Negative time lag constraint violated"
+    # Verify: start(2) <= start(3) + 3, which is equivalent to start(3) >= start(2) - 3
+    assert start_2 <= start_3 + 3, f"Max time lag constraint violated"
 
     assert problem.satisfy(solution)
 
