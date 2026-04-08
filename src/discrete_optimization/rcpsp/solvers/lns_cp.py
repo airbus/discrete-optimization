@@ -32,8 +32,12 @@ class PostProcessLeftShift(PostProcessSolution):
                 start_together = partial_solution.start_together
                 start_at_end = partial_solution.start_at_end
                 start_at_end_plus_offset = partial_solution.start_at_end_plus_offset
-                start_to_start_min_time_lag = partial_solution.start_to_start_min_time_lag
-                start_to_start_max_time_lag = partial_solution.start_to_start_max_time_lag
+                start_to_start_min_time_lag = (
+                    partial_solution.start_to_start_min_time_lag
+                )
+                start_to_start_max_time_lag = (
+                    partial_solution.start_to_start_max_time_lag
+                )
                 for t1, t2 in start_together:
                     b = (
                         solution.rcpsp_schedule[t1]["start_time"]

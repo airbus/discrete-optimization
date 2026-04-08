@@ -503,7 +503,10 @@ def compute_est_with_time_lags(
     for task in unscheduled_tasks:
         est[task] = 0
         # Apply time windows
-        if rcpsp_problem.do_special_constraints and task in rcpsp_problem.special_constraints.start_times_window:
+        if (
+            rcpsp_problem.do_special_constraints
+            and task in rcpsp_problem.special_constraints.start_times_window
+        ):
             window = rcpsp_problem.special_constraints.start_times_window[task]
             if window[0] is not None:
                 est[task] = window[0]
@@ -511,7 +514,9 @@ def compute_est_with_time_lags(
     # Propagate constraints from scheduled tasks
     for task in scheduled_tasks:
         start_time = scheduled_tasks[task]
-        end_time = start_time + rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
+        end_time = (
+            start_time + rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
+        )
 
         # Standard successors: j must start after i ends
         for succ in rcpsp_problem.successors.get(task, []):
@@ -520,7 +525,12 @@ def compute_est_with_time_lags(
 
         # Minimum time lags: start(i) + d_min <= start(j)
         if rcpsp_problem.do_special_constraints:
-            for succ, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(task, {}).items():
+            for (
+                succ,
+                d_min,
+            ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
+                task, {}
+            ).items():
                 if succ in unscheduled_tasks:
                     est[succ] = max(est[succ], start_time + d_min)
 
@@ -539,12 +549,19 @@ def compute_est_with_time_lags(
             # Successors within unscheduled tasks
             for pred in rcpsp_problem.predecessors.get(task_i, {}):
                 if pred in unscheduled_tasks:
-                    pred_duration = rcpsp_problem.mode_details[pred][modes_dict[pred]]["duration"]
+                    pred_duration = rcpsp_problem.mode_details[pred][modes_dict[pred]][
+                        "duration"
+                    ]
                     est[task_i] = max(est[task_i], est[pred] + pred_duration)
 
             # Minimum time lags within unscheduled tasks
             if rcpsp_problem.do_special_constraints:
-                for pred, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(task_i, {}).items():
+                for (
+                    pred,
+                    d_min,
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
+                    task_i, {}
+                ).items():
                     if pred in unscheduled_tasks:
                         est[task_i] = max(est[task_i], est[pred] + d_min)
 
@@ -582,7 +599,10 @@ def compute_lst_with_time_lags(
     for task in unscheduled_tasks:
         lst[task] = horizon
         # Apply time windows
-        if rcpsp_problem.do_special_constraints and task in rcpsp_problem.special_constraints.start_times_window:
+        if (
+            rcpsp_problem.do_special_constraints
+            and task in rcpsp_problem.special_constraints.start_times_window
+        ):
             window = rcpsp_problem.special_constraints.start_times_window[task]
             if window[1] is not None:
                 lst[task] = min(lst[task], window[1])
@@ -593,13 +613,23 @@ def compute_lst_with_time_lags(
 
         # Maximum time lags: start(j) <= start(i) + offset where offset >= 0
         if rcpsp_problem.do_special_constraints:
-            for succ, offset in rcpsp_problem.special_constraints.dict_start_to_start_max_time_lag.get(task, {}).items():
+            for (
+                succ,
+                offset,
+            ) in rcpsp_problem.special_constraints.dict_start_to_start_max_time_lag.get(
+                task, {}
+            ).items():
                 if succ in unscheduled_tasks:
                     lst[succ] = min(lst[succ], start_time + offset)
 
             # Reverse minimum time lags: if start(i) + d_min <= start(j) is scheduled,
             # then start(i) <= start(j) - d_min, so LST[i] = min(LST[i], start(j) - d_min)
-            for pred, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(task, {}).items():
+            for (
+                pred,
+                d_min,
+            ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
+                task, {}
+            ).items():
                 if pred in unscheduled_tasks:
                     lst[pred] = min(lst[pred], start_time - d_min)
 
@@ -617,12 +647,22 @@ def compute_lst_with_time_lags(
 
             # Maximum time lags within unscheduled tasks
             if rcpsp_problem.do_special_constraints:
-                for pred, offset in rcpsp_problem.special_constraints.dict_start_to_start_max_time_lag_reverse.get(task_j, {}).items():
+                for (
+                    pred,
+                    offset,
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_max_time_lag_reverse.get(
+                    task_j, {}
+                ).items():
                     if pred in unscheduled_tasks:
                         lst[pred] = min(lst[pred], lst[task_j] - offset)
 
                 # Reverse of minimum time lags
-                for succ, d_min in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(task_j, {}).items():
+                for (
+                    succ,
+                    d_min,
+                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
+                    task_j, {}
+                ).items():
                     if succ in unscheduled_tasks:
                         lst[task_j] = min(lst[task_j], lst[succ] - d_min)
 
@@ -693,12 +733,18 @@ def is_task_schedulable(
         rcpsp_problem, temp_scheduled, temp_unscheduled, modes_dict
     )
     new_lst = compute_lst_with_time_lags(
-        rcpsp_problem, temp_scheduled, temp_unscheduled, modes_dict, rcpsp_problem.horizon
+        rcpsp_problem,
+        temp_scheduled,
+        temp_unscheduled,
+        modes_dict,
+        rcpsp_problem.horizon,
     )
 
     # Check if all remaining tasks have feasible time windows
     for other_task in temp_unscheduled:
-        other_duration = rcpsp_problem.mode_details[other_task][modes_dict[other_task]]["duration"]
+        other_duration = rcpsp_problem.mode_details[other_task][modes_dict[other_task]][
+            "duration"
+        ]
         if new_est[other_task] + other_duration > new_lst[other_task]:
             return False  # This task would become infeasible
 
@@ -763,7 +809,11 @@ def generate_schedule_from_permutation_iterative_sgs_unblocking(
             rcpsp_problem, scheduled_tasks, unscheduled_tasks, modes_dict
         )
         lst = compute_lst_with_time_lags(
-            rcpsp_problem, scheduled_tasks, unscheduled_tasks, modes_dict, rcpsp_problem.horizon
+            rcpsp_problem,
+            scheduled_tasks,
+            unscheduled_tasks,
+            modes_dict,
+            rcpsp_problem.horizon,
         )
 
         # Check for infeasibility
@@ -786,7 +836,9 @@ def generate_schedule_from_permutation_iterative_sgs_unblocking(
             # Find earliest feasible start time for this task
             duration = rcpsp_problem.mode_details[task][modes_dict[task]]["duration"]
 
-            for start_time_candidate in range(est[task], min(lst[task] + 1, rcpsp_problem.horizon)):
+            for start_time_candidate in range(
+                est[task], min(lst[task] + 1, rcpsp_problem.horizon)
+            ):
                 if is_task_schedulable(
                     task,
                     start_time_candidate,
@@ -803,10 +855,18 @@ def generate_schedule_from_permutation_iterative_sgs_unblocking(
                     unscheduled_tasks.remove(task)
 
                     # Update resource availability
-                    for t in range(start_time_candidate, start_time_candidate + duration):
-                        if t < len(resource_avail_in_time[list(resource_avail_in_time.keys())[0]]):
+                    for t in range(
+                        start_time_candidate, start_time_candidate + duration
+                    ):
+                        if t < len(
+                            resource_avail_in_time[
+                                list(resource_avail_in_time.keys())[0]
+                            ]
+                        ):
                             for res in rcpsp_problem.resources_list:
-                                demand = rcpsp_problem.mode_details[task][modes_dict[task]].get(res, 0)
+                                demand = rcpsp_problem.mode_details[task][
+                                    modes_dict[task]
+                                ].get(res, 0)
                                 resource_avail_in_time[res][t] -= demand
 
                     scheduled_this_iteration = True
@@ -1042,7 +1102,9 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
                 for pred in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                     task_id, {}
                 ):
-                    offset = rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse[task_id][pred]
+                    offset = rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse[
+                        task_id
+                    ][pred]
                     if offset >= 0 and pred in perm_extended:
                         respected = False
                         break
@@ -1151,9 +1213,7 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[act_id]
                     )
-                for (
-                    s
-                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
+                for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     act_id, {}
                 ):
                     minimum_starting_time[s] = max(
@@ -1446,12 +1506,12 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
                     respected = False
                     break
             # Check start_to_start_min_time_lag constraints
-            for (
-                pred
-            ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
+            for pred in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse.get(
                 task_id, {}
             ):
-                offset = rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse[task_id][pred]
+                offset = rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag_reverse[
+                    task_id
+                ][pred]
                 if offset >= 0 and pred in perm_extended:
                     respected = False
                     break
@@ -1554,18 +1614,14 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
                     act_id, {}
                 ):
                     minimum_starting_time[s] = activity_end_times[act_id]
-                for (
-                    s
-                ) in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
+                for s in rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag.get(
                     act_id, {}
                 ):
                     minimum_starting_time[s] = (
                         current_min_time
                         + rcpsp_problem.special_constraints.dict_start_to_start_min_time_lag[
                             act_id
-                        ][
-                            s
-                        ]
+                        ][s]
                     )
                 for s in rcpsp_problem.special_constraints.dict_start_at_end_offset.get(
                     act_id, {}

@@ -270,7 +270,9 @@ def sgs_fast_preemptive_some_special_constraints(
     start_at_end_plus_offset: npt.NDArray[
         np.int_
     ],  # array(N, 3) -> (task1, task2, offset)
-    start_to_start_min_time_lag: npt.NDArray[np.int_],  # array(N, 3) -> (task1, task2, offset)
+    start_to_start_min_time_lag: npt.NDArray[
+        np.int_
+    ],  # array(N, 3) -> (task1, task2, offset)
     minimum_starting_time_array: npt.NDArray[np.int_],
     horizon: int,
     ressource_available: npt.NDArray[np.int_],
@@ -298,7 +300,9 @@ def sgs_fast_preemptive_some_special_constraints(
         minimum_starting_time[act] = minimum_starting_time_array[act]
     start_to_start_min_time_lag_links = np.zeros(nb_task)
     for task in range(nb_task):
-        start_to_start_min_time_lag_links[task] = np.sum(start_to_start_min_time_lag[:, 1] == task)
+        start_to_start_min_time_lag_links[task] = np.sum(
+            start_to_start_min_time_lag[:, 1] == task
+        )
     start_at_end_plus_offset_links = np.zeros(nb_task)
     for task in range(nb_task):
         start_at_end_plus_offset_links[task] = np.sum(
