@@ -1919,9 +1919,9 @@ def add_hard_special_constraints(
         constraint_strings += hard_start_together(
             list_start_together=partial_solution.start_together, cp_solver=cp_solver
         )
-    if partial_solution.start_after_nunit is not None:
+    if partial_solution.start_to_start_min_time_lag is not None:
         constraint_strings += hard_start_after_nunit(
-            list_start_after_nunit=partial_solution.start_after_nunit,
+            list_start_after_nunit=partial_solution.start_to_start_min_time_lag,
             cp_solver=cp_solver,
         )
     if partial_solution.start_at_end_plus_offset is not None:
@@ -1988,9 +1988,9 @@ def add_soft_special_constraints(
         constraint_strings += c
         name_penalty += n
 
-    if partial_solution.start_after_nunit is not None:
+    if partial_solution.start_to_start_min_time_lag is not None:
         c, n = soft_start_after_nunit(
-            list_start_after_nunit=partial_solution.start_after_nunit,
+            list_start_after_nunit=partial_solution.start_to_start_min_time_lag,
             cp_solver=cp_solver,
         )
         constraint_strings += c
