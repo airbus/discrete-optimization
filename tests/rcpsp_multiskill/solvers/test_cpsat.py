@@ -1,7 +1,7 @@
 #  Copyright (c) 2024-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+import logging
 import random
 
 import numpy as np
@@ -34,11 +34,12 @@ def test_imopse_cpsat():
     cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCp.default_cpsat()
     res = cp_model.solve(parameters_cp=p, time_limit=20)
-    solution = res.get_best_solution_fit()[0]
+    solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
     assert model.satisfy(solution)
+    assert solution.check_all_resource_capacity_constraints()
 
 
-def test_imopse_cpsat_with_calendar():
+def test_imopse_cpsat_with_calendar(caplog):
     """
     To test some part of the cp model relative to calendar handling
     """
@@ -61,6 +62,29 @@ def test_imopse_cpsat_with_calendar():
     res = cp_model.solve(parameters_cp=p, time_limit=20)
     solution = res.get_best_solution_fit()[0]
     assert model.satisfy(solution)
+
+    # tweak calendar to make fail the satisfy
+    # find employee used in a task
+    employee_task_found = False
+    for employee in model.employees_list:
+        for task, task_employees in solution.employee_usage.items():
+            if employee in task_employees:
+                employee_task_found = True
+                break
+        if employee_task_found:
+            break
+    # make employee unavailable at task start
+    start = solution.get_start_time(task)
+    model.employees[employee].calendar_employee[start] = 0
+    model.update_problem()
+
+    with caplog.at_level(logging.DEBUG):
+        assert not solution.check_all_resource_capacity_constraints()
+        assert not model.satisfy(solution)
+
+    assert "Violations on renewable resource capacities" in caplog.text
+    assert f"resource '{employee}'" in caplog.text
+    assert f"at time {start}" in caplog.text
 
 
 @pytest.fixture()
