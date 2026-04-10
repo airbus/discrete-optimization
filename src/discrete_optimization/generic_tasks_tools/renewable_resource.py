@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
+import logging
 from abc import abstractmethod
-from collections.abc import Hashable
+from collections.abc import Hashable, Iterable
 from functools import cache
 from typing import Generic, Optional, TypeVar, Union
 
@@ -15,6 +16,8 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
 )
+
+logger = logging.getLogger(__name__)
 
 Resource = TypeVar("Resource", bound=Hashable)
 
@@ -168,6 +171,10 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         ...
 
     def check_resource_capacity_constraint(self, resource: Resource) -> bool:
+        """Check capacity constraint on given renewable resource."""
+        return self._check_resources_capacity_constraint_np(resources=(resource,))
+
+    def _check_resource_capacity_constraint_naive(self, resource: Resource) -> bool:
         makespan = self.get_max_end_time()
         return all(
             sum(
@@ -181,10 +188,60 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             if t < makespan
         )
 
+    def _check_resources_capacity_constraint_np(
+        self, resources: Iterable[Resource]
+    ) -> bool:
+        makespan = self.get_max_end_time()
+        resources_consumption = {
+            resource: np.zeros(makespan, dtype=int) for resource in resources
+        }
+        for task in self.problem.tasks_list:
+            start = self.get_start_time(task)
+            end = self.get_end_time(task)
+            for resource in resources:
+                resources_consumption[resource][start:end] += (
+                    self.get_resource_consumption(resource=resource, task=task)
+                )
+
+        resources_capa_violation = {
+            resource: conso
+            > np.array(
+                self.problem.get_resource_calendar(resource=resource, horizon=makespan)
+            )
+            for resource, conso in resources_consumption.items()
+        }
+        if any(
+            resource_cap_violation.any()
+            for resource_cap_violation in resources_capa_violation.values()
+        ):
+            logger.debug("Violations on renewable resource capacities:")
+            violations = {
+                resource: violation_timesteps
+                for resource, resource_cap_violation in resources_capa_violation.items()
+                if len((violation_timesteps := resource_cap_violation.nonzero()[0])) > 0
+            }
+            for resource, violation_timesteps in violations.items():
+                logger.debug(
+                    f"resource '{resource}': at time {', '.join(str(t) for t in violation_timesteps)}"
+                )
+            return False
+        else:
+            return True
+
+    def check_resources_capacity_constraints(
+        self, resources: Iterable[Resource]
+    ) -> bool:
+        """Check capacity constraint respected on given resources.
+
+        Do it simultaneously on all resources to optimize computation time.
+
+        """
+        return self._check_resources_capacity_constraint_np(resources=resources)
+
     def check_all_resource_capacity_constraints(self) -> bool:
-        return all(
-            self.check_resource_capacity_constraint(resource=resource)
-            for resource in self.problem.renewable_resources_list
+        """Check capacity constraint on all renewable resources."""
+        return self._check_resources_capacity_constraint_np(
+            resources=self.problem.renewable_resources_list
         )
 
 
