@@ -8,6 +8,8 @@ from collections.abc import Hashable
 from functools import cache
 from typing import Generic, Optional, TypeVar, Union
 
+import numpy as np
+
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
@@ -191,8 +193,8 @@ def convert_calendar_to_availability_intervals(
         list of (start,end, value), a sorted partition of [0, horizon)
 
     """
-    if isinstance(calendar, int):  # constant resource
-        return [(0, horizon, calendar)]
+    if np.isscalar(calendar):  # constant resource
+        return [(0, horizon, int(calendar))]
     else:  # varying resource
         intervals = []
         t = 0

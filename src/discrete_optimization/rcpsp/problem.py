@@ -252,7 +252,7 @@ class RcpspProblem(
                     (
                         len(
                             {self.resources[res]}
-                            if isinstance(self.resources[res], int)
+                            if np.isscalar(self.resources[res])
                             else set(self.resources[res])  # type: ignore
                         )
                         for res in self.resources
@@ -263,7 +263,7 @@ class RcpspProblem(
             if not self.is_calendar:
                 self.resources = {
                     r: self.resources[r]
-                    if isinstance(self.resources[r], int)
+                    if np.isscalar(self.resources[r])
                     else self.resources[r][0]  # type: ignore
                     for r in self.resources
                 }
@@ -401,10 +401,10 @@ class RcpspProblem(
         return self.resources_list
 
     def get_resource_availability_array(self, res: str) -> list[int]:
-        if self.is_varying_resource() and not isinstance(self.resources[res], int):
+        if self.is_varying_resource() and not np.isscalar(self.resources[res]):
             return self.resources[res]  # type: ignore
         else:
-            return self.horizon * [self.resources[res]]  # type: ignore
+            return self.horizon * [int(self.resources[res])]
 
     def compute_graph(self, compute_predecessors: bool = False) -> Graph:
         nodes: list[tuple[Hashable, dict[str, Any]]] = [
