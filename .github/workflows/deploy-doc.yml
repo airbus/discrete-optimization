@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     if: inputs.binder-env-fullref != ''
     steps:
-      - uses: actions/checkout@v4  # checkout triggering branch to get scripts/trigger_binder.sh
+      - uses: actions/checkout@v6  # checkout triggering branch to get scripts/trigger_binder.sh
       - name: Trigger a build for default binder env ref on each BinderHub deployments in the mybinder.org federation
         continue-on-error: true
         run: |
@@ -40,9 +40,9 @@ jobs:
   deploy-doc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ inputs.doc-artifact-name }}
           path: ${{ inputs.doc-path }}
@@ -60,10 +60,10 @@ jobs:
     needs: [deploy-doc]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: gh-pages
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
       - name: Generate versions.json
