@@ -531,6 +531,29 @@ def interval_inside(
     return False
 
 
+def satisfy_renewable_resources(
+    problem: AllocSchedulingProblem,
+    solution: AllocSchedulingSolution,
+    partial_solution: bool = False,
+):
+    """Check constraints related to renewable resources (teams + cumulative resources)
+
+    It checks:
+    - team availability when allocated to a task
+    - non overlap of tasks with same team allocated
+    - cumulative resources availability for all tasks
+
+    Args:
+        problem:
+        solution:
+        partial_solution:
+
+    Returns:
+
+    """
+    return solution.check_all_resource_capacity_constraints()
+
+
 def satisfy_calendars(
     problem: AllocSchedulingProblem,
     solution: AllocSchedulingSolution,
@@ -591,13 +614,14 @@ def full_satisfy(
         satisfy_available_team,
         satisfy_same_allocation,
         satisfy_time_window,
-        satisfy_calendars,
-        satisfy_overlap_teams,
+        satisfy_renewable_resources,
+        # satisfy_calendars,
+        # satisfy_overlap_teams,
     ]:
         if not func(
             problem=problem, solution=solution, partial_solution=partial_solution
         ):
-            logger.warning(func, " not satisfied !!")
+            logger.warning(f"{func} not satisfied !!")
             is_satisfied = False
     return is_satisfied
 

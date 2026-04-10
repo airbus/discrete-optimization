@@ -520,44 +520,13 @@ class RcpspProblem(
             ):
                 return False
 
+        if not variable.check_all_resource_capacity_constraints():
+            return False
+
+        # Check for non-renewable resource violation
         modes_dict = self.build_mode_dict(
             rcpsp_modes_from_solution=variable.rcpsp_modes
         )
-        start_times = [
-            variable.rcpsp_schedule[t]["start_time"] for t in variable.rcpsp_schedule
-        ]
-        for t in start_times:
-            resource_usage = {}
-            for res in self.resources_list:
-                resource_usage[res] = 0
-            for act_id in variable.rcpsp_schedule:
-                start = variable.rcpsp_schedule[act_id]["start_time"]
-                end = variable.rcpsp_schedule[act_id]["end_time"]
-                mode = modes_dict[act_id]
-                for res in self.resources_list:
-                    if start <= t < end:
-                        resource_usage[res] += self.mode_details[act_id][mode].get(
-                            res, 0
-                        )
-            for res in self.resources.keys():
-                if resource_usage[res] > self.get_resource_available(res, t):
-                    logger.debug(
-                        [
-                            act
-                            for act in variable.rcpsp_schedule
-                            if variable.rcpsp_schedule[act]["start_time"]
-                            <= t
-                            < variable.rcpsp_schedule[act]["end_time"]
-                        ]
-                    )
-                    logger.debug(
-                        f"Time step resource violation: time: {t} "
-                        f"res {res} res_usage: {resource_usage[res]}"
-                        f"res_avail: {self.resources[res]}"
-                    )
-                    return False
-
-        # Check for non-renewable resource violation
         for res in self.non_renewable_resources:
             usage = 0
             for act_id in variable.rcpsp_schedule:

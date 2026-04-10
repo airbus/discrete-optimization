@@ -36,7 +36,6 @@ def test_imopse_cpsat():
     res = cp_model.solve(parameters_cp=p, time_limit=20)
     solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
     assert model.satisfy(solution)
-    assert solution.check_all_resource_capacity_constraints()
 
 
 def test_imopse_cpsat_with_calendar(caplog):
@@ -79,7 +78,6 @@ def test_imopse_cpsat_with_calendar(caplog):
     model.update_problem()
 
     with caplog.at_level(logging.DEBUG):
-        assert not solution.check_all_resource_capacity_constraints()
         assert not model.satisfy(solution)
 
     assert "Violations on renewable resource capacities" in caplog.text
