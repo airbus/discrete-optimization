@@ -1,7 +1,7 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+import logging
 import random
 from collections.abc import Hashable
 from math import isclose
@@ -181,7 +181,8 @@ def test_partial_sgs(rcpsp_problem_file):
     rcpsp_sol_copy.rcpsp_schedule[rcpsp_problem.sink_task]
 
 
-def test_update_problem():
+@pytest.fixture
+def small_problem():
     resources = {
         "R1": [0, 5, 5, 2, 3, 2, 2, 2, 2, 3, 2, 2] + [0] * 3,
         "R2": [1, 2, 1, 3, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3],
@@ -216,6 +217,11 @@ def test_update_problem():
         source_task="source",
         sink_task="sink",
     )
+    return problem
+
+
+def test_update_problem(small_problem):
+    problem = small_problem
 
     assert problem.get_resource_max_capacity("R1") == 5
     assert len(problem.get_resource_availabilities("R1")) == 8
@@ -227,3 +233,24 @@ def test_update_problem():
     problem.update_problem()
     assert problem.get_resource_max_capacity("R1") == 7
     assert len(problem.get_resource_availabilities("R1")) == 9
+
+
+def test_satisfy_nok(small_problem, caplog):
+    problem = small_problem
+    solution = RcpspSolution(
+        problem=problem,
+        rcpsp_permutation=[1, 0, 3, 2],
+        fast=False,  # avoid overhead for first call to numba functions
+    )  # => task-1 and task-4 together at time 4
+    assert problem.satisfy(solution)
+
+    # tweak calendar to invalidate the solution
+    t = 4
+    resource = "R1"
+    problem.resources[resource][t] = 2
+    problem.update_problem()
+    problem.satisfy(solution)
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(solution)
+    assert resource in caplog.text
+    assert f"time {t}" in caplog.text

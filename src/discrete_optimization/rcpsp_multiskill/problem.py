@@ -2552,104 +2552,11 @@ class MultiskillRcpspProblem(
                     if sum(employees_used) < required_skills[skill]:
                         logger.debug("1")
                         return False
-            if task in rcpsp_sol.employee_usage:
-                employee_used = [
-                    emp
-                    for emp in rcpsp_sol.employee_usage[task]
-                    if len(rcpsp_sol.employee_usage[task][emp]) > 0
-                ]
-                # employee available at this time
-                if len(employee_used) > 0:
-                    for e in employee_used:
-                        if not all(
-                            self.employees[e].calendar_employee[t]
-                            for t in range(
-                                rcpsp_sol.schedule[task]["start_time"],
-                                rcpsp_sol.schedule[task]["end_time"],
-                            )
-                        ):
-                            logger.debug(f"Task : {task}")
-                            logger.debug(f"Employee : {e}")
-                            logger.debug(
-                                (
-                                    e,
-                                    [
-                                        self.employees[e].calendar_employee[t]
-                                        for t in range(
-                                            rcpsp_sol.schedule[task]["start_time"],
-                                            rcpsp_sol.schedule[task]["end_time"],
-                                        )
-                                    ],
-                                )
-                            )
-                            logger.warning("Problem with employee availability")
-                            return False
-        overlaps = [
-            (t1, t2)
-            for t1 in self.tasks_list
-            for t2 in self.tasks_list
-            if self.index_task[t2] > self.index_task[t1]
-            and intersect(
-                (
-                    rcpsp_sol.schedule[t1]["start_time"],
-                    rcpsp_sol.schedule[t1]["end_time"],
-                ),
-                (
-                    rcpsp_sol.schedule[t2]["start_time"],
-                    rcpsp_sol.schedule[t2]["end_time"],
-                ),
-            )
-            is not None
-            and rcpsp_sol.schedule[t1]["end_time"]
-            > rcpsp_sol.schedule[t1]["start_time"]
-            and rcpsp_sol.schedule[t2]["end_time"]
-            > rcpsp_sol.schedule[t2]["start_time"]
-        ]
-        for t1, t2 in overlaps:
-            if any(
-                k in rcpsp_sol.employee_usage.get(t2, {})
-                for k in rcpsp_sol.employee_usage.get(t1, {})
-            ):
-                logger.debug("Worker working on 2 task the same time")
-                logger.debug(
-                    [
-                        k
-                        for k in rcpsp_sol.employee_usage.get(t1, {})
-                        if k in rcpsp_sol.employee_usage.get(t2, {})
-                    ]
-                )
-                logger.debug(("Tasks ", t1, t2))
-                return False
-        # ressource usage respected
-        makespan = rcpsp_sol.schedule[self.sink_task]["end_time"]
-        for t in range(makespan):
-            resource_usage = {}
-            for res in self.resources_set:
-                resource_usage[res] = 0
-            for act_id in self.tasks_list:
-                start = rcpsp_sol.schedule[act_id]["start_time"]
-                end = rcpsp_sol.schedule[act_id]["end_time"]
-                mode = rcpsp_sol.modes[act_id]
-                if start <= t and t < end:
-                    for res in self.resources_set:  # self.mode_details[act_id][mode]:
-                        resource_usage[res] += self.mode_details[act_id][mode].get(
-                            res, 0
-                        )
-            for res in self.resources_set:
-                if resource_usage[res] > self.resources_availability[res][t]:
-                    logger.debug(
-                        (
-                            "Time step resource violation: time: ",
-                            t,
-                            "res",
-                            res,
-                            "res_usage: ",
-                            resource_usage[res],
-                            "res_avail: ",
-                            self.resources_availability[res][t],
-                        )
-                    )
-                    return False
+
+        # Check for renewable resources capacity violations
+        # include employees and cumulative resources
+        if not rcpsp_sol.check_all_resource_capacity_constraints():
+            return False
 
         # Check for non-renewable resource violation
         for res in self.non_renewable_resources:
