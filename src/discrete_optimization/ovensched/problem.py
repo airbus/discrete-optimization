@@ -24,6 +24,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
     TypeObjective,
 )
+from discrete_optimization.generic_tools.encoding_register import Permutation
 
 logger = logging.getLogger(__name__)
 Task = int
@@ -152,6 +153,24 @@ class OvenSchedulingSolution(
             return task in self.schedule_per_machine[machine][index].tasks
         return False
 
+    def get_max_nb_batch_per_machine(self) -> int:
+        """
+        Get the maximum number of batches used on any machine in this solution.
+
+        This is useful for configuring CP-SAT models with warm-start: instead of
+        using a large default, we can set max_nb_batch close to what the warm-start
+        solution uses, reducing the model size.
+
+        Returns:
+            Maximum number of batches across all machines
+        """
+        if not self.schedule_per_machine:
+            return 0
+        return max(
+            len(self.schedule_per_machine.get(m, []))
+            for m in range(self.problem.n_machines)
+        )
+
 
 @dataclass
 class TaskData:
@@ -225,7 +244,11 @@ class OvenSchedulingProblem(
 
     def get_solution_type(self) -> type[Solution]:
         """Returns the solution class type."""
-        return OvenSchedulingSolution
+        from discrete_optimization.ovensched.solution_vector import (
+            VectorOvenSchedulingSolution,
+        )
+
+        return VectorOvenSchedulingSolution
 
     def get_objective_register(self) -> ObjectiveRegister:
         """Defines the problem's objectives."""
@@ -268,7 +291,46 @@ class OvenSchedulingProblem(
 
     def get_attribute_register(self) -> EncodingRegister:
         """Defines the solution's encoding."""
-        return EncodingRegister(dict_attribute_to_type={})
+        return EncodingRegister(
+            dict_attribute_to_type={"permutation": Permutation(range(self.n_jobs))}
+        )
+
+    def get_dummy_solution(self, **kwargs) -> Solution:
+        """
+        Generate a dummy (random) solution using the vector-based encoding.
+
+        This creates a VectorOvenSchedulingSolution with a random permutation,
+        which is then decoded into a feasible schedule using the greedy decoder.
+
+        Args:
+            **kwargs: Optional arguments:
+                - random_seed: Random seed for reproducibility
+                - max_open_batches: Max open batches for decoder (default: use class default)
+
+        Returns:
+            VectorOvenSchedulingSolution with random permutation
+        """
+        import numpy as np
+
+        from discrete_optimization.ovensched.solution_vector import (
+            VectorOvenSchedulingSolution,
+            generate_random_permutation,
+        )
+
+        # Set random seed if provided
+        if "random_seed" in kwargs:
+            np.random.seed(kwargs["random_seed"])
+
+        # Generate random permutation
+        permutation = generate_random_permutation(self)
+
+        # Create vector solution (will be decoded lazily)
+        solution = VectorOvenSchedulingSolution(
+            problem=self,
+            permutation=permutation,
+        )
+
+        return solution
 
     def satisfy(self, variable: OvenSchedulingSolution) -> bool:
         """

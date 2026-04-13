@@ -7,6 +7,7 @@ import logging
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass, field
+from typing import Hashable
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
@@ -67,17 +68,34 @@ class ItemBinPack:
         return "ind: " + str(self.index) + " weight: " + str(self.weight)
 
 
-class BinPackProblem(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
+@dataclass(frozen=True)
+class BinType:
+    type: Hashable
+    capacity: int
+
+
+@dataclass(frozen=True)
+class BinInstance:
+    index: int
+    bin_type: BinType
+    compatible_items: set[int] | None = field(default=None)
+
+
+class BinPackProblemBinType(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
     def __init__(
         self,
         list_items: list[ItemBinPack],
-        capacity_bin: int,
+        list_bin_type: list[BinType],
+        list_bin_instances: list[BinInstance],
         incompatible_items: set[tuple[int, int]] = None,
     ):
         self.list_items = list_items
-        self.nb_items = len(self.list_items)
-        self.capacity_bin = capacity_bin
+        self.list_bin_type = list_bin_type
+        self.list_bin_instances = list_bin_instances
         self.incompatible_items = incompatible_items
+        self.nb_items = len(self.list_items)
+        self.nb_bins = len(self.list_bin_instances)
+        self.nb_bins_type = len(self.list_bin_type)
         self.has_constraint = not (
             incompatible_items is None or len(incompatible_items) == 0
         )
@@ -97,10 +115,16 @@ class BinPackProblem(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
     def satisfy(self, variable: BinPackSolution) -> bool:
         weight_per_bins = defaultdict(lambda: 0)
         for i in range(self.nb_items):
-            weight_per_bins[variable.allocation[i]] += self.list_items[i].weight
-            if weight_per_bins[variable.allocation[i]] > self.capacity_bin:
-                logger.info("capacity not respected ")
+            bin_alloc = variable.allocation[i]
+            capacity = self.list_bin_instances[bin_alloc].bin_type.capacity
+            weight_per_bins[bin_alloc] += self.list_items[i].weight
+            if weight_per_bins[bin_alloc] > capacity:
+                logger.info(f"capacity of bin {bin_alloc} not respected ")
                 return False
+            if self.list_bin_instances[bin_alloc].compatible_items is not None:
+                if i not in self.list_bin_instances[bin_alloc].compatible_items:
+                    logger.info(f"Item {i} put in incompatible bin {bin_alloc}")
+                    return False
         if self.has_constraint:
             for i, j in self.incompatible_items:
                 if variable.allocation[i] == variable.allocation[j]:
@@ -144,3 +168,26 @@ class BinPackProblem(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
 
     def get_makespan_lower_bound(self) -> int:
         return 1
+
+
+class BinPackProblem(BinPackProblemBinType):
+    def __init__(
+        self,
+        list_items: list[ItemBinPack],
+        capacity_bin: int,
+        incompatible_items: set[tuple[int, int]] = None,
+    ):
+        bin_type = BinType(type="unique_type", capacity=capacity_bin)
+        bin_instances = [
+            BinInstance(
+                index=i, bin_type=bin_type, compatible_items=set(range(len(list_items)))
+            )
+            for i in range(len(list_items))
+        ]
+        self.capacity_bin = capacity_bin
+        super().__init__(
+            list_items=list_items,
+            list_bin_type=[bin_type],
+            list_bin_instances=bin_instances,
+            incompatible_items=incompatible_items,
+        )

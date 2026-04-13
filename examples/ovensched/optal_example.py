@@ -5,138 +5,142 @@
 
 import logging
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.ovensched.parser import get_data_available, parse_dat_file
-from discrete_optimization.ovensched.problem import OvenSchedulingSolution
-from discrete_optimization.ovensched.solvers.optal import OvenSchedulingOptalSolver
-from discrete_optimization.ovensched.utils import (
-    plot_attribute_distribution,
-    plot_machine_utilization,
-    plot_solution,
+from example_utils import (
+    load_problem,
+    print_comparison,
+    solve_with_ls,
+    visualize_solution,
 )
 
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.ovensched.problem import OvenSchedulingSolution
+from discrete_optimization.ovensched.solution_vector import VectorOvenSchedulingSolution
+from discrete_optimization.ovensched.solvers.optal import OvenSchedulingOptalSolver
+
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def run_optal_example():
-    """Run a simple example with the OptalCP solver."""
-
-    # Get available data files
-    files = get_data_available()
-
-    if not files:
-        print("No data files found. Please download instances first.")
-        return
-
-    # Use a small instance for demonstration
-    file_path = [
-        f
-        for f in files
-        if "65NewRandomOvenSchedulingInstance-n100-k2-a2--2904-17.08.59.dat" in f
-    ]
-    if file_path:
-        file_path = file_path[0]
-    else:
-        file_path = files[0]
-
-    print(f"Loading instance: {file_path}")
-
-    # Parse the problem
-    problem = parse_dat_file(file_path)
-    print(f"Problem: {problem.n_jobs} jobs, {problem.n_machines} machines")
-    if hasattr(problem, "additional_data"):
-        print(f"Additional data: {problem.additional_data}")
-
-    # Create the OptalCP solver
-    print("\nCreating OptalCP solver...")
-    solver = OvenSchedulingOptalSolver(problem=problem, setup_modeling="baseline")
-
-    # Initialize the model
-    print("Initializing OptalCP model...")
+def solve_with_optal(
+    problem,
+    time_limit: int = 200,
+    solution: OvenSchedulingSolution = None,
+    setup_modeling: str = "baseline",
+):
+    """Solve with OptalCP solver."""
+    solver = OvenSchedulingOptalSolver(problem=problem, setup_modeling=setup_modeling)
     solver.init_model()
 
-    # Set up solve parameters
-    # Optimized configuration based on parameter tuning:
-    # - 12 LNS workers with moderate propagation
-    # - Enable precedence energy propagation (key improvement!)
     params = ParametersCp.default_cpsat()
     params.nb_process = 12
+
     import optalcp as cp
 
-    # Moderate propagation works best for this problem size
     lns_worker = cp.WorkerParameters(
         searchType="LNS",
         noOverlapPropagationLevel=2,
         cumulPropagationLevel=2,
     )
-
-    # Solve the problem
-    print(f"\nSolving with OptalCP (200s time limit)...")
-    result = solver.solve(
-        time_limit=200,
-        parameters_cp=params,
-        workers=[lns_worker] * 12,
-        usePrecedenceEnergy=1,  # Enable precedence energy propagation
-        # Alternative configurations:
-        # - For quick results: preset="Large"
-        # - For mixed strategy: workers=[lns]*10 + [settimes]*2
-        # - For better bounds: workers=[lns]*8 + [fdsdual]*4
+    fds_worker = cp.WorkerParameters(
+        searchType="FDS",
+        noOverlapPropagationLevel=2,
+        cumulPropagationLevel=2,
     )
 
-    print(f"Status: {solver.status_solver}")
+    fds_dual_worker = cp.WorkerParameters(
+        searchType="FDSDual",
+        noOverlapPropagationLevel=2,
+        cumulPropagationLevel=2,
+    )
 
-    # Display results
+    if solution:
+        if isinstance(solution, VectorOvenSchedulingSolution):
+            solution = solution.to_oven_scheduling_solution()
+
+        print(f"Warm-start evaluation: {problem.evaluate(solution)}")
+        print(f"Warm-start feasible: {problem.satisfy(solution)}")
+        solver.set_warm_start(solution)
+
+    result = solver.solve(
+        time_limit=time_limit,
+        parameters_cp=params,
+        # preset="Default",
+        workers=[lns_worker] * 8 + [fds_worker] * 2 + [fds_dual_worker] * 2,
+        # usePrecedenceEnergy=1,
+    )
+
+    return result, solver
+
+
+def run_optal_example():
+    """Run a simple example with the OptalCP solver."""
+    instance_name = "65NewRandomOvenSchedulingInstance-n100-k2-a2--2904-17.08.59.dat"
+
+    print(f"Loading instance: {instance_name}")
+    problem = load_problem(instance_name)
+    print(f"Problem: {problem.n_jobs} jobs, {problem.n_machines} machines")
+    print(f"Additional data: {problem.additional_data}")
+
+    result, solver = solve_with_optal(
+        problem=problem, time_limit=200, setup_modeling="baseline"
+    )
+
+    print(f"\nStatus: {solver.status_solver}")
+
     if len(result) > 0:
         best_solution: OvenSchedulingSolution = result.get_best_solution()
         print(f"\nFound {len(result)} solutions")
         print(f"Best solution fitness: {result.get_best_solution_fit()}")
-        # Use the built-in summary method
         best_solution.print_summary()
-        # Demonstrate warm start
-        print("\n" + "=" * 80)
-        print("Testing warm start feature...")
-        print("=" * 80)
+        visualize_solution(best_solution, "OptalCP Solution")
+    else:
+        print("No solution found within time limit.")
 
-        # solver2 = OvenSchedulingOptalSolver(problem=problem)
-        # solver2.init_model()
-        # solver2.set_warm_start(best_solution)
-        #
-        # print("Solving again with warm start (30s)...")
-        # result2 = solver2.solve(time_limit=30, parameters_cp=params)
-        #
-        # if len(result2) > 0:
-        #     solution2 = result2.get_best_solution()
-        #     print(f"Warm start solution fitness: {result2.get_best_solution_fit()}")
-        #     comparison = result2.get_best_solution_fit() / result.get_best_solution_fit()
-        #     print(f"Improvement ratio: {comparison:.4f}")
 
-        # Visualize the solution
-        print("\n" + "=" * 80)
-        print("Generating visualizations...")
-        print("=" * 80)
+def run_optal_warmstart():
+    """Run OptalCP with warm start from local search."""
+    instance_name = "50NewRandomOvenSchedulingInstance-n50-k2-a5--2904-15.05.46.dat"
 
-        try:
-            # Main Gantt chart with batches and setup times
-            plot_solution(
-                best_solution,
-                show_task_ids=True,
-                show_setup_times=True,
-                title=f"OptalCP Solution - {problem.n_jobs} jobs, {problem.n_machines} machines",
-            )
+    print(f"Loading instance: {instance_name}")
+    problem = load_problem(instance_name)
+    print(f"Problem: {problem.n_jobs} jobs, {problem.n_machines} machines")
+    print(f"Additional data: {problem.additional_data}")
 
-            # Machine utilization analysis
-            plot_machine_utilization(best_solution)
+    # Step 1: Local search
+    print("\n" + "=" * 80)
+    print("STEP 1: Local Search (Simulated Annealing)")
+    print("=" * 80)
+    result_ls = solve_with_ls(problem=problem, ls_solver="sa", time_limit=20)
+    solution_ls = result_ls.get_best_solution()
 
-            # Attribute distribution
-            plot_attribute_distribution(best_solution)
+    if isinstance(solution_ls, VectorOvenSchedulingSolution):
+        solution_ls = solution_ls.to_oven_scheduling_solution()
 
-        except ImportError as e:
-            print(f"Visualization skipped: {e}")
-            print("Install matplotlib to see visualizations: pip install matplotlib")
+    print(f"\nLocal search evaluation: {problem.evaluate(solution_ls)}")
+    print(f"Feasible: {problem.satisfy(solution_ls)}")
 
+    # Step 2: OptalCP with warm start
+    print("\n" + "=" * 80)
+    print("STEP 2: OptalCP with Warm Start")
+    print("=" * 80)
+    result_optal, solver = solve_with_optal(
+        problem=problem, time_limit=200, solution=solution_ls, setup_modeling="baseline"
+    )
+
+    print(f"\nStatus: {solver.status_solver}")
+
+    if len(result_optal) > 0:
+        best_solution: OvenSchedulingSolution = result_optal.get_best_solution()
+        print(f"\nFound {len(result_optal)} solutions")
+        print(f"Best solution fitness: {result_optal.get_best_solution_fit()}")
+        best_solution.print_summary()
+
+        print_comparison(problem, solution_ls, best_solution, "Local Search", "OptalCP")
+        visualize_solution(best_solution, "OptalCP Solution (warm-started)")
     else:
         print("No solution found within time limit.")
 
 
 if __name__ == "__main__":
-    run_optal_example()
+    # run_optal_example()
+    run_optal_warmstart()

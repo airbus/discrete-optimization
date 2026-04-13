@@ -5,82 +5,119 @@
 
 import logging
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.ovensched.parser import get_data_available, parse_dat_file
-from discrete_optimization.ovensched.problem import OvenSchedulingSolution
-from discrete_optimization.ovensched.solvers.cpsat import OvenSchedulingCpSatSolver
-from discrete_optimization.ovensched.utils import (
-    plot_attribute_distribution,
-    plot_machine_utilization,
-    plot_solution,
+from example_utils import (
+    load_problem,
+    print_comparison,
+    solve_with_ls,
+    visualize_solution,
 )
 
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.ovensched.problem import OvenSchedulingSolution
+from discrete_optimization.ovensched.solution_vector import VectorOvenSchedulingSolution
+from discrete_optimization.ovensched.solvers.cpsat import OvenSchedulingCpSatSolver
+
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
+def solve_with_cpsat(
+    problem, time_limit: int = 100, solution: OvenSchedulingSolution = None
+):
+    """Solve with CP-SAT solver."""
+    solver = OvenSchedulingCpSatSolver(problem=problem)
+
+    max_nb_batch = None
+    if solution:
+        if isinstance(solution, VectorOvenSchedulingSolution):
+            solution = solution.to_oven_scheduling_solution()
+        max_batches_in_solution = solution.get_max_nb_batch_per_machine()
+        max_nb_batch = max(1, int(max_batches_in_solution * 1.2))
+        print(
+            f"Warm-start has max {max_batches_in_solution} batches/machine, using {max_nb_batch} for model"
+        )
+
+    solver.init_model(max_nb_batch_per_machine=max_nb_batch)
+
+    params = ParametersCp.default_cpsat()
+    params.nb_process = 12
+
+    if solution:
+        solver.set_warm_start(solution)
+
+    result = solver.solve(
+        time_limit=time_limit,
+        parameters_cp=params,
+        ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
+    )
+    return result, solver
 
 
 def run_cpsat_example():
     """Run a simple example with the CP-SAT solver."""
+    instance_name = "50NewRandomOvenSchedulingInstance-n50-k2-a5--2904-15.05.46.dat"
 
-    # Get available data files
-    files = get_data_available()
-
-    if not files:
-        print("No data files found. Please download instances first.")
-        return
-    # Use the first available instance
-    file_path = [
-        f
-        for f in files
-        if "64NewRandomOvenSchedulingInstance-n100-k2-a2--2904-17.04.52.dat" in f
-    ][0]
-    # file_path = files[0]
-    print(f"Loading instance: {file_path}")
-    # Parse the problem
-    problem = parse_dat_file(file_path)
-    print(problem.additional_data)
+    print(f"Loading instance: {instance_name}")
+    problem = load_problem(instance_name)
     print(f"Problem: {problem.n_jobs} jobs, {problem.n_machines} machines")
-    # Create the solver (params_objective_function is automatically constructed from problem)
-    solver = OvenSchedulingCpSatSolver(problem=problem)
-    # Initialize the model (objective is set automatically using params_objective_function)
-    print("Initializing CP-SAT model...")
-    solver.init_model()
-    p = ParametersCp.default_cpsat()
-    p.nb_process = 12
-    # Solve the problem
-    print("Solving with CP-SAT (60s time limit)...")
-    result = solver.solve(
-        time_limit=100,
-        parameters_cp=p,
-        ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
-    )
-    print("Status : ", solver.status_solver)
-    # Display results
+    print(f"Additional data: {problem.additional_data}")
+
+    result, solver = solve_with_cpsat(problem=problem, time_limit=100, solution=None)
+    print(f"Status: {solver.status_solver}")
+
     if len(result) > 0:
         best_solution: OvenSchedulingSolution = result.get_best_solution()
         print(f"\nFound {len(result)} solutions")
         print(f"Best solution fitness: {result.get_best_solution_fit()}")
-        # Use the built-in summary method
+        best_solution.print_summary()
+        visualize_solution(best_solution)
+    else:
+        print("No solution found within time limit.")
+
+
+def run_cpsat_warmstart():
+    """Run CP-SAT with warm start from local search."""
+    instance_name = "50NewRandomOvenSchedulingInstance-n50-k2-a5--2904-15.05.46.dat"
+
+    print(f"Loading instance: {instance_name}")
+    problem = load_problem(instance_name)
+    print(f"Problem: {problem.n_jobs} jobs, {problem.n_machines} machines")
+    print(f"Additional data: {problem.additional_data}")
+
+    # Step 1: Local search
+    print("\n" + "=" * 80)
+    print("STEP 1: Local Search (Simulated Annealing)")
+    print("=" * 80)
+    result_ls = solve_with_ls(problem=problem, ls_solver="sa", time_limit=20)
+    solution_ls = result_ls.get_best_solution()
+
+    if isinstance(solution_ls, VectorOvenSchedulingSolution):
+        solution_ls = solution_ls.to_oven_scheduling_solution()
+
+    print(f"\nLocal search evaluation: {problem.evaluate(solution_ls)}")
+    print(f"Feasible: {problem.satisfy(solution_ls)}")
+
+    # Step 2: CP-SAT with warm start
+    print("\n" + "=" * 80)
+    print("STEP 2: CP-SAT with Warm Start")
+    print("=" * 80)
+    result, solver = solve_with_cpsat(
+        problem=problem, time_limit=500, solution=solution_ls
+    )
+    print(f"Status: {solver.status_solver}")
+
+    if len(result) > 0:
+        best_solution: OvenSchedulingSolution = result.get_best_solution()
+        print(f"\nFound {len(result)} solutions")
+        print(f"Best solution fitness: {result.get_best_solution_fit()}")
         best_solution.print_summary()
 
-        # Visualize the solution
-        print("\nGenerating visualizations...")
-        # Main Gantt chart with batches and setup times
-        plot_solution(
-            best_solution,
-            show_task_ids=True,
-            show_setup_times=True,
-            title=f"Oven Scheduling - {problem.n_jobs} jobs, {problem.n_machines} machines",
-        )
-
-        # Machine utilization analysis
-        plot_machine_utilization(best_solution)
-
-        # Attribute distribution
-        plot_attribute_distribution(best_solution)
-
+        print_comparison(problem, solution_ls, best_solution, "Local Search", "CP-SAT")
+        visualize_solution(best_solution, "CP-SAT Solution (warm-started)")
     else:
         print("No solution found within time limit.")
 
 
 if __name__ == "__main__":
-    run_cpsat_example()
+    # run_cpsat_example()
+    run_cpsat_warmstart()

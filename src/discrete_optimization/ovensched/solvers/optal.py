@@ -504,14 +504,18 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
             for m in range(self.problem.n_machines)
         }
 
+        # Store dummy initial intervals for warm start
+        self.variables["dummy_initial_intervals"] = {}
+
         for m in range(self.problem.n_machines):
             machine_data = self.problem.machines_data[m]
             intervals_per_attr = self.variables["intervals_per_machines_per_attr"][m]
 
-            # Create sequence with initial state
-            all_intervals = [
-                (self.cp_model.interval_var(-1, 0, 1), machine_data.initial_attribute)
-            ]
+            # Create sequence with initial state - store dummy interval
+            dummy_initial = self.cp_model.interval_var(-1, 0, 1)
+            self.variables["dummy_initial_intervals"][m] = dummy_initial
+
+            all_intervals = [(dummy_initial, machine_data.initial_attribute)]
             all_intervals += [
                 (intervals_per_attr[attr][i], attr)
                 for attr in intervals_per_attr
@@ -590,6 +594,10 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
 
         # Explicit attribute variables per batch (for branching)
         batch_attribute = {}
+
+        # Store dummy initial intervals for warm start
+        self.variables["dummy_initial_intervals"] = {}
+
         for m in range(self.problem.n_machines):
             machine_data = self.problem.machines_data[m]
             intervals_per_attr = self.variables["intervals_per_machines_per_attr"][m]
@@ -612,10 +620,11 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
                         == (attr_var == attr)
                     )
 
-            # Create sequence with initial state
-            all_intervals = [
-                (self.cp_model.interval_var(-1, 0, 1), machine_data.initial_attribute)
-            ]
+            # Create sequence with initial state - store dummy interval
+            dummy_initial = self.cp_model.interval_var(-1, 0, 1)
+            self.variables["dummy_initial_intervals"][m] = dummy_initial
+
+            all_intervals = [(dummy_initial, machine_data.initial_attribute)]
             all_intervals += [
                 (intervals_per_attr[attr][i], attr)
                 for attr in intervals_per_attr
@@ -692,15 +701,19 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
         """
         setup_cost = {m: [] for m in range(self.problem.n_machines)}
 
+        # Store dummy initial intervals for warm start
+        self.variables["dummy_initial_intervals"] = {}
+
         for m in range(self.problem.n_machines):
             machine_data = self.problem.machines_data[m]
             intervals_per_attr = self.variables["intervals_per_machines_per_attr"][m]
             all_attributes = sorted(intervals_per_attr.keys())
 
-            # Standard time-based sequence for actual scheduling
-            time_intervals = [
-                (self.cp_model.interval_var(-1, 0, 1), machine_data.initial_attribute)
-            ]
+            # Standard time-based sequence for actual scheduling - store dummy interval
+            dummy_initial = self.cp_model.interval_var(-1, 0, 1)
+            self.variables["dummy_initial_intervals"][m] = dummy_initial
+
+            time_intervals = [(dummy_initial, machine_data.initial_attribute)]
             time_intervals += [
                 (intervals_per_attr[attr][i], attr)
                 for attr in intervals_per_attr
@@ -1038,20 +1051,31 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
         # Create a CP solution object for warm start
         warm_start = cp.Solution()
 
-        # Set batch variables
-        for m in solution.schedule_per_machine:
-            machine_batches = solution.schedule_per_machine[m]
+        # OptalCP requires hints for ALL variables (present and absent)
+        # Build complete warm start
+
+        # Set dummy initial intervals (used in sequence constraints)
+        if "dummy_initial_intervals" in self.variables:
+            for m in self.variables["dummy_initial_intervals"]:
+                # Dummy interval has fixed values: start=-1, length=1, end=0
+                warm_start.set_value(
+                    self.variables["dummy_initial_intervals"][m], -1, 0
+                )
+
+        for m in range(self.problem.n_machines):
+            machine_batches = solution.schedule_per_machine.get(m, [])
             prev_attr = self.problem.machines_data[m].initial_attribute
 
+            # Process present batches
             for batch_idx, sched_info in enumerate(machine_batches):
                 if batch_idx < self.max_nb_batch:
-                    # Set batch interval presence and timing
+                    # Set batch interval (present)
                     interval = self.variables["intervals_per_machines"][m][batch_idx]
                     warm_start.set_value(
                         interval, sched_info.start_time, sched_info.end_time
                     )
 
-                    # Set attribute interval
+                    # Set attribute interval for used attribute (present)
                     attr = sched_info.task_attribute
                     attr_interval = self.variables["intervals_per_machines_per_attr"][
                         m
@@ -1059,54 +1083,155 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
                     warm_start.set_value(
                         attr_interval, sched_info.start_time, sched_info.end_time
                     )
-                    # Set setup cost
+
+                    # Set absent all OTHER attribute intervals for this batch
+                    for other_attr in self.variables["intervals_per_machines_per_attr"][
+                        m
+                    ]:
+                        if other_attr != attr:
+                            warm_start.set_absent(
+                                self.variables["intervals_per_machines_per_attr"][m][
+                                    other_attr
+                                ][batch_idx]
+                            )
+
+                    # Set setup cost if applicable
                     if "setup_cost_per_machine" in self.variables:
-                        setup_cost = self.problem.setup_costs[prev_attr][attr]
+                        if isinstance(
+                            self.variables["setup_cost_per_machine"][m], list
+                        ):
+                            setup_cost = self.problem.setup_costs[prev_attr][attr]
+                            warm_start.set_value(
+                                self.variables["setup_cost_per_machine"][m][batch_idx],
+                                setup_cost,
+                            )
+
+                    # Set batch attribute variable if using explicit_attrs
+                    if "batch_attribute" in self.variables:
                         warm_start.set_value(
-                            self.variables["setup_cost_per_machine"][m][batch_idx],
-                            setup_cost,
+                            self.variables["batch_attribute"][m][batch_idx], attr
                         )
+
                     prev_attr = attr
 
-                    # Set task assignments
-                    for task in sched_info.tasks:
-                        # Set job interval
-                        warm_start.set_value(
-                            self.variables["interval_job"][task],
-                            sched_info.start_time,
-                            sched_info.end_time,
-                        )
-                        # Set job per machine interval
-                        if m in self.variables["interval_job_per_machine"][task]:
-                            warm_start.set_value(
-                                self.variables["interval_job_per_machine"][task][m],
-                                sched_info.start_time,
-                                sched_info.end_time,
-                            )
-                        # Set batch assignment
-                        if (
-                            m in self.variables["interval_batch_machine_for_job"][task]
-                            and batch_idx < self.max_nb_batch
-                        ):
-                            warm_start.set_value(
-                                self.variables["interval_batch_machine_for_job"][task][
-                                    m
-                                ],
-                                batch_idx,
-                                batch_idx + 1,
-                            )
-            # Set absent batches
+            # Set absent batches beyond those used
             for batch_idx in range(len(machine_batches), self.max_nb_batch):
                 warm_start.set_absent(
                     self.variables["intervals_per_machines"][m][batch_idx]
                 )
-                if "setup_cost_per_machine" in self.variables:
+
+                # Set absent ALL attribute intervals for unused batches
+                for attr in self.variables["intervals_per_machines_per_attr"][m]:
                     warm_start.set_absent(
-                        self.variables["setup_cost_per_machine"][m][batch_idx]
+                        self.variables["intervals_per_machines_per_attr"][m][attr][
+                            batch_idx
+                        ]
                     )
 
+                # Set absent setup cost for unused batches
+                if "setup_cost_per_machine" in self.variables:
+                    if isinstance(self.variables["setup_cost_per_machine"][m], list):
+                        warm_start.set_absent(
+                            self.variables["setup_cost_per_machine"][m][batch_idx]
+                        )
+
+        # Set job assignments - ALL jobs on ALL machines (present/absent)
+        for task in range(self.problem.n_jobs):
+            task_data = self.problem.tasks_data[task]
+
+            # Find which machine this task is assigned to
+            assigned_machine = None
+            assigned_start = None
+            assigned_end = None
+            assigned_batch_idx = None
+
+            for m in solution.schedule_per_machine:
+                for batch_idx, sched_info in enumerate(
+                    solution.schedule_per_machine[m]
+                ):
+                    if task in sched_info.tasks:
+                        assigned_machine = m
+                        assigned_start = sched_info.start_time
+                        assigned_end = sched_info.end_time
+                        assigned_batch_idx = batch_idx
+                        break
+                if assigned_machine is not None:
+                    break
+
+            # Set main job interval (always present)
+            warm_start.set_value(
+                self.variables["interval_job"][task], assigned_start, assigned_end
+            )
+
+            # Set job intervals on all eligible machines
+            for m in self.variables["interval_job_per_machine"][task]:
+                if m == assigned_machine:
+                    # Present on assigned machine
+                    warm_start.set_value(
+                        self.variables["interval_job_per_machine"][task][m],
+                        assigned_start,
+                        assigned_end,
+                    )
+                else:
+                    # Absent on other machines
+                    warm_start.set_absent(
+                        self.variables["interval_job_per_machine"][task][m]
+                    )
+
+            # Set batch assignment intervals on all eligible machines
+            for m in self.variables["interval_batch_machine_for_job"][task]:
+                if m == assigned_machine and assigned_batch_idx < self.max_nb_batch:
+                    # Present on assigned machine
+                    warm_start.set_value(
+                        self.variables["interval_batch_machine_for_job"][task][m],
+                        assigned_batch_idx,
+                        assigned_batch_idx + 1,
+                    )
+                else:
+                    # Absent on other machines
+                    warm_start.set_absent(
+                        self.variables["interval_batch_machine_for_job"][task][m]
+                    )
+
+        # Set A87RandomOvenSchedulingInstance-n250-k2-a5--2212-22.47.15.daLL late job variables (must set all, not just those with constraints)
+        if "late_jobs" in self.variables:
+            for task in self.variables["late_jobs"]:
+                task_data = self.problem.tasks_data[task]
+                # Find task's end time in solution
+                task_end = None
+                for m in solution.schedule_per_machine:
+                    for sched_info in solution.schedule_per_machine[m]:
+                        if task in sched_info.tasks:
+                            task_end = sched_info.end_time
+                            break
+                    if task_end is not None:
+                        break
+
+                if task_end is not None:
+                    is_late = 1 if task_end > task_data.latest_end else 0
+                    warm_start.set_value(self.variables["late_jobs"][task], is_late)
+
+        # Set batch count variables
+        if "nb_batches_per_machine" in self.variables:
+            for m in range(self.problem.n_machines):
+                nb_batches = len(solution.schedule_per_machine.get(m, []))
+                warm_start.set_value(
+                    self.variables["nb_batches_per_machine"][m], nb_batches
+                )
+
+        # Set makespan if it exists as a variable
+        if (
+            "objectives" in self.variables
+            and "makespan" in self.variables["objectives"]
+        ):
+            # Find maximum end time across all batches
+            max_end = 0
+            for m in solution.schedule_per_machine:
+                for sched_info in solution.schedule_per_machine[m]:
+                    max_end = max(max_end, sched_info.end_time)
+            warm_start.set_value(self.variables["objectives"]["makespan"], max_end)
+
         # Set objective value hint
-        evaluation = self.problem.evaluate(solution)
         objective_value = self.aggreg_from_sol(solution)
         warm_start.set_objective(int(objective_value))
 
