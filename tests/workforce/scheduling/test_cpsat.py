@@ -449,7 +449,10 @@ def test_objective_nb_unary_resources_used(problem):
     solver.init_model()
     objective = solver.get_nb_unary_resources_used_variable()
     solver.minimize_variable(objective)
-    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
+    parameters_cp = ParametersCp.default()
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)], parameters_cp=parameters_cp
+    )
     assert solver.solver.ObjectiveValue() == min(
         sum(
             max(sol.is_allocated(task, unary_resource) for task in problem.tasks_list)
