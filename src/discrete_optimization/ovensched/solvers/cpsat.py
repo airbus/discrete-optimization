@@ -28,6 +28,7 @@ from discrete_optimization.ovensched.problem import (
     Task,
     UnaryResource,
 )
+from discrete_optimization.ovensched.solution_vector import VectorOvenSchedulingSolution
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,6 @@ class OvenSchedulingCpSatSolver(
         self,
         problem: OvenSchedulingProblem,
         params_objective_function: ParamsObjectiveFunction | None = None,
-        max_nb_batch_per_machine: int | None = None,
         **kwargs: Any,
     ):
         """Initialize the solver.
@@ -61,16 +61,10 @@ class OvenSchedulingCpSatSolver(
         Args:
             problem: The oven scheduling problem instance
             params_objective_function: Parameters for objective function (weights, handling, etc.)
-            max_nb_batch_per_machine: Maximum number of batches per machine.
-                If None, estimated as 4 * n_jobs / n_machines
             **kwargs: Additional arguments passed to parent constructors
         """
         super().__init__(problem, params_objective_function, **kwargs)
-        self.max_nb_batch = max_nb_batch_per_machine
-        if self.max_nb_batch is None:
-            self.max_nb_batch = max(
-                1, int(4 * self.problem.n_jobs / self.problem.n_machines)
-            )
+        self.max_nb_batch = None  # Will be set in init_model
 
         # Index tasks by eligible machines
         self.tasks_per_machine = {
@@ -85,10 +79,27 @@ class OvenSchedulingCpSatSolver(
         # Variables storage
         self.variables = {}
 
-    def init_model(self, **kwargs: Any) -> None:
-        """Initialize the CP-SAT model."""
+    def init_model(
+        self, max_nb_batch_per_machine: int | None = None, **kwargs: Any
+    ) -> None:
+        """Initialize the CP-SAT model.
+
+        Args:
+            max_nb_batch_per_machine: Maximum number of batches per machine.
+                If None, estimated as 4 * n_jobs / n_machines
+            **kwargs: Additional arguments passed to parent init_model
+        """
         super().init_model(**kwargs)
         self.variables = {}
+
+        # Set max_nb_batch based on parameter or default heuristic
+        if max_nb_batch_per_machine is not None:
+            self.max_nb_batch = max_nb_batch_per_machine
+        elif self.max_nb_batch is None:
+            # Default heuristic
+            self.max_nb_batch = max(
+                1, int(4 * self.problem.n_jobs / self.problem.n_machines)
+            )
 
         # Create decision variables
         self._create_batch_variables()
@@ -629,65 +640,89 @@ class OvenSchedulingCpSatSolver(
 
     def set_warm_start(self, solution: OvenSchedulingSolution) -> None:
         self.cp_model.clear_hints()
-        for m in solution.schedule_per_machine:
-            prev_attr = self.problem.machines_data[m].initial_attribute
-            for i_batch in range(len(solution.schedule_per_machine[m])):
-                sched_info = solution.schedule_per_machine[m][i_batch]
-                attr = sched_info.task_attribute
-                start = sched_info.start_time
-                end = sched_info.end_time
-                self.cp_model.add_hint(
-                    self.variables["setup_time"][m][i_batch],
-                    self.problem.setup_times[prev_attr][attr],
-                )
-                self.cp_model.add_hint(
-                    self.variables["setup_cost"][m][i_batch],
-                    self.problem.setup_costs[prev_attr][attr],
-                )
-                self.cp_model.add_hint(self.variables["batch_start"][m][i_batch], start)
-                self.cp_model.add_hint(self.variables["batch_end"][m][i_batch], end)
-                self.cp_model.add_hint(
-                    self.variables["batch_duration"][m][i_batch], end - start
-                )
-                self.cp_model.add_hint(self.variables["batch_present"][m][i_batch], 1)
-                for attribute in self.variables["batch_attribute_is"][m]:
-                    if attribute == attr:
-                        self.cp_model.add_hint(
-                            self.variables["batch_attribute_is"][m][attribute][i_batch],
-                            1,
-                        )
-                    else:
-                        self.cp_model.add_hint(
-                            self.variables["batch_attribute_is"][m][attribute][i_batch],
-                            0,
-                        )
+        if isinstance(solution, VectorOvenSchedulingSolution):
+            sol = solution.to_oven_scheduling_solution()
+        else:
+            sol = solution
+        # Iterate over ALL machines, not just those with batches
+        for m in range(self.problem.n_machines):
+            # Number of batches on this machine in the solution
+            nb_batches = len(sol.schedule_per_machine.get(m, []))
 
-                for task in self.problem.tasks_list:
-                    if task in sched_info.tasks:
-                        self.cp_model.add_hint(
-                            self.variables["task_on_machine"][task][m], 1
-                        )
-                        for mm in self.variables["task_on_machine"][task]:
-                            if m != mm:
-                                self.cp_model.add_hint(
-                                    self.variables["task_on_machine"][task][mm], 0
-                                )
-                        self.cp_model.add_hint(
-                            self.variables["task_on_machine_batch"][task][m][i_batch], 1
-                        )
-                    else:
-                        if m in self.variables["task_on_machine_batch"][task]:
+            if nb_batches > 0:
+                # Machine has batches in solution - set hints for used batches
+                prev_attr = self.problem.machines_data[m].initial_attribute
+                for i_batch in range(nb_batches):
+                    sched_info = sol.schedule_per_machine[m][i_batch]
+                    attr = sched_info.task_attribute
+                    start = sched_info.start_time
+                    end = sched_info.end_time
+                    self.cp_model.add_hint(
+                        self.variables["setup_time"][m][i_batch],
+                        self.problem.setup_times[prev_attr][attr],
+                    )
+                    self.cp_model.add_hint(
+                        self.variables["setup_cost"][m][i_batch],
+                        self.problem.setup_costs[prev_attr][attr],
+                    )
+                    self.cp_model.add_hint(
+                        self.variables["batch_start"][m][i_batch], start
+                    )
+                    self.cp_model.add_hint(self.variables["batch_end"][m][i_batch], end)
+                    self.cp_model.add_hint(
+                        self.variables["batch_duration"][m][i_batch], end - start
+                    )
+                    self.cp_model.add_hint(
+                        self.variables["batch_present"][m][i_batch], 1
+                    )
+                    for attribute in self.variables["batch_attribute_is"][m]:
+                        if attribute == attr:
                             self.cp_model.add_hint(
-                                self.variables["task_on_machine_batch"][task][m][
+                                self.variables["batch_attribute_is"][m][attribute][
+                                    i_batch
+                                ],
+                                1,
+                            )
+                        else:
+                            self.cp_model.add_hint(
+                                self.variables["batch_attribute_is"][m][attribute][
                                     i_batch
                                 ],
                                 0,
                             )
 
-            last_start = solution.schedule_per_machine[m][-1].end_time
-            for i_batch_after in range(
-                len(solution.schedule_per_machine[m]), self.max_nb_batch
-            ):
+                    for task in self.problem.tasks_list:
+                        if task in sched_info.tasks:
+                            self.cp_model.add_hint(
+                                self.variables["task_on_machine"][task][m], 1
+                            )
+                            for mm in self.variables["task_on_machine"][task]:
+                                if m != mm:
+                                    self.cp_model.add_hint(
+                                        self.variables["task_on_machine"][task][mm], 0
+                                    )
+                            self.cp_model.add_hint(
+                                self.variables["task_on_machine_batch"][task][m][
+                                    i_batch
+                                ],
+                                1,
+                            )
+                        else:
+                            if m in self.variables["task_on_machine_batch"][task]:
+                                self.cp_model.add_hint(
+                                    self.variables["task_on_machine_batch"][task][m][
+                                        i_batch
+                                    ],
+                                    0,
+                                )
+                    # Update prev_attr for next batch
+                    prev_attr = attr
+                last_start = sol.schedule_per_machine[m][-1].end_time
+
+            # Set hints for unused batch positions (from nb_batches to max_nb_batch)
+            # Use first availability window start to ensure hint is in domain
+            safe_time = self.problem.machines_data[m].availability[0][0]
+            for i_batch_after in range(nb_batches, self.max_nb_batch):
                 self.cp_model.add_hint(
                     self.variables["setup_time"][m][i_batch_after], 0
                 )
@@ -695,10 +730,10 @@ class OvenSchedulingCpSatSolver(
                     self.variables["setup_cost"][m][i_batch_after], 0
                 )
                 self.cp_model.add_hint(
-                    self.variables["batch_start"][m][i_batch_after], last_start
+                    self.variables["batch_start"][m][i_batch_after], safe_time
                 )
                 self.cp_model.add_hint(
-                    self.variables["batch_end"][m][i_batch_after], last_start
+                    self.variables["batch_end"][m][i_batch_after], safe_time
                 )
                 self.cp_model.add_hint(
                     self.variables["batch_duration"][m][i_batch_after], 0
@@ -713,9 +748,21 @@ class OvenSchedulingCpSatSolver(
                         ],
                         0,
                     )
+                # Hint that no tasks are assigned to unused batch positions
+                for task in self.tasks_per_machine[m]:
+                    if m in self.variables["task_on_machine_batch"][task]:
+                        if i_batch_after < len(
+                            self.variables["task_on_machine_batch"][task][m]
+                        ):
+                            self.cp_model.add_hint(
+                                self.variables["task_on_machine_batch"][task][m][
+                                    i_batch_after
+                                ],
+                                0,
+                            )
         for task in self.problem.tasks_list:
-            st = solution.get_start_time(task)
-            end = solution.get_end_time(task)
+            st = sol.get_start_time(task)
+            end = sol.get_end_time(task)
             self.cp_model.add_hint(
                 self.get_task_start_or_end_variable(
                     task, start_or_end=StartOrEnd.START

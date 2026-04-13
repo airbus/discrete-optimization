@@ -16,6 +16,7 @@ from ortools.sat.python.cp_model import (
 from discrete_optimization.binpack.problem import (
     BinPack,
     BinPackProblem,
+    BinPackProblemBinType,
     BinPackSolution,
     Item,
 )
@@ -47,7 +48,7 @@ class ModelingError(Exception):
     ...
 
 
-class CpSatBinPackSolver(
+class CpSatBinPackBinTypeSolver(
     AllocationCpSatSolver[Item, BinPack], SchedulingCpSatSolver[Item], WarmstartMixin
 ):
     hyperparameters = [
@@ -55,7 +56,7 @@ class CpSatBinPackSolver(
             name="modeling", enum=ModelingBinPack, default=ModelingBinPack.BINARY
         )
     ]
-    problem: BinPackProblem
+    problem: BinPackProblemBinType
     modeling: ModelingBinPack
 
     def __init__(
@@ -87,7 +88,7 @@ class CpSatBinPackSolver(
         # store modeling and upper_bound (=> allowed resources)
         self.modeling = args["modeling"]
         self.upper_bound = min(
-            args.get("upper_bound", self.problem.nb_items), self.problem.nb_items
+            args.get("upper_bound", self.problem.nb_bins), self.problem.nb_bins
         )
         if args["modeling"] == ModelingBinPack.BINARY:
             self.init_model_binary(**args)
@@ -103,22 +104,26 @@ class CpSatBinPackSolver(
 
         # boolean allocation variables
         variables_allocation = {
-            (i, bin_): self.cp_model.NewBoolVar(f"alloc_{i}_{bin_}")
+            (i, bin_index): self.cp_model.NewBoolVar(f"alloc_{i}_{bin_index}")
             for i in range(self.problem.nb_items)
-            for bin_ in range(self.upper_bound)
+            for bin_index in range(self.upper_bound)
+            if i in self.problem.list_bin_instances[bin_index].compatible_items
         }
         self.variables["allocation"] = variables_allocation
         # item in one bin
         for i in range(self.problem.nb_items):
             self.cp_model.AddExactlyOne(
-                [variables_allocation[(i, bin)] for bin in range(self.upper_bound)]
+                [
+                    variables_allocation[(i, bin_index)]
+                    for bin_index in range(self.upper_bound)
+                ]
             )
         # max capacity of a bin
-        for bin_ in range(self.upper_bound):
+        for bin_index in range(self.upper_bound):
             self.cp_model.Add(
                 LinearExpr.weighted_sum(
                     [
-                        variables_allocation[(i, bin_)]
+                        variables_allocation[(i, bin_index)]
                         for i in range(self.problem.nb_items)
                     ],
                     [
@@ -126,7 +131,7 @@ class CpSatBinPackSolver(
                         for i in range(self.problem.nb_items)
                     ],
                 )
-                <= self.problem.capacity_bin
+                <= self.problem.list_bin_instances[bin_index].bin_type.capacity
             )
         # bin used variable
         self.create_used_variables()
@@ -155,7 +160,9 @@ class CpSatBinPackSolver(
         self, task: Item, unary_resource: BinPack
     ) -> LinearExprT:
         if self.modeling == ModelingBinPack.BINARY:
-            return self.variables["allocation"][(task, unary_resource)]
+            if (task, unary_resource) in self.variables["allocation"]:
+                return self.variables["allocation"][(task, unary_resource)]
+            return 0
         else:
             raise ModelingError(f"No allocation variable with {self.modeling}")
 
@@ -170,11 +177,42 @@ class CpSatBinPackSolver(
             intervals[i] = self.cp_model.NewFixedSizeIntervalVar(
                 start=starts[i], size=1, name=f"interval_{i}"
             )
-        self.cp_model.AddCumulative(
-            [intervals[i] for i in range(self.problem.nb_items)],
-            [self.problem.list_items[i].weight for i in range(self.problem.nb_items)],
-            self.problem.capacity_bin,
-        )
+        capacities = [
+            self.problem.list_bin_instances[i].bin_type.capacity
+            for i in range(self.problem.nb_bins)
+        ]
+        max_capacity = max(capacities)
+        min_capacity = min(capacities)
+        if max_capacity == min_capacity:
+            # All bins have same capacity, classical cumulative:
+            self.cp_model.AddCumulative(
+                [intervals[i] for i in range(self.problem.nb_items)],
+                [
+                    self.problem.list_items[i].weight
+                    for i in range(self.problem.nb_items)
+                ],
+                self.problem.list_bin_instances[0].bin_type.capacity,
+            )
+        else:
+            fake_itv = []
+            fake_consumption = []
+            for i in range(self.problem.nb_bins):
+                if capacities[i] < max_capacity:
+                    fake_itv.append(
+                        self.cp_model.new_fixed_size_interval_var(
+                            start=i, size=1, name=f"interval_capacity_bin_{i}"
+                        )
+                    )
+                    fake_consumption.append(max_capacity - capacities[i])
+            self.cp_model.AddCumulative(
+                [intervals[i] for i in range(self.problem.nb_items)] + fake_itv,
+                [
+                    self.problem.list_items[i].weight
+                    for i in range(self.problem.nb_items)
+                ]
+                + fake_consumption,
+                self.problem.list_bin_instances[0].bin_type.capacity,
+            )
         if self.problem.has_constraint:
             for i, j in self.problem.incompatible_items:
                 self.cp_model.Add(starts[i] != starts[j])
@@ -208,14 +246,22 @@ class CpSatBinPackSolver(
             )
         if self.modeling == ModelingBinPack.BINARY:
             self.cp_model.ClearHints()
-            for i, bin_ in self.variables["allocation"]:
-                if solution.allocation[i] == bin_:
-                    self.cp_model.AddHint(self.variables["allocation"][(i, bin_)], 1)
+            for i, bin_index in self.variables["allocation"]:
+                if solution.allocation[i] == bin_index:
+                    self.cp_model.AddHint(
+                        self.variables["allocation"][(i, bin_index)], 1
+                    )
                 else:
-                    self.cp_model.AddHint(self.variables["allocation"][(i, bin_)], 0)
+                    self.cp_model.AddHint(
+                        self.variables["allocation"][(i, bin_index)], 0
+                    )
             bins = set(solution.allocation)
-            for bin_ in self.variables["used"]:
-                if bin_ in bins:
-                    self.cp_model.AddHint(self.variables["used"][bin_], 1)
+            for bin_index in self.variables["used"]:
+                if bin_index in bins:
+                    self.cp_model.AddHint(self.variables["used"][bin_index], 1)
                 else:
-                    self.cp_model.AddHint(self.variables["used"][bin_], 0)
+                    self.cp_model.AddHint(self.variables["used"][bin_index], 0)
+
+
+# We implemented a more generic bin packing solver, but for retro-compatibility
+CpSatBinPackSolver = CpSatBinPackBinTypeSolver
