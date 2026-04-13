@@ -27,6 +27,7 @@ from discrete_optimization.coloring.solvers.greedy import (
     NxGreedyColoringMethod,
 )
 from discrete_optimization.coloring.solvers.lp import MathOptColoringSolver
+from discrete_optimization.coloring.solvers.toulbar import ToulbarColoringSolver
 from discrete_optimization.coloring.solvers_map import (
     GurobiColoringSolver,
     solve,
@@ -129,9 +130,11 @@ def test_solvers_subset(solver_class):
     assert coloring_problem.number_of_nodes is not None
     assert coloring_problem.graph.nodes_name is not None
 
-    results = solve(
-        method=solver_class, problem=coloring_problem, **solvers_map[solver_class][1]
-    )
+    solver_kwargs = dict(solvers_map[solver_class][1])
+    if solver_class == ToulbarColoringSolver:
+        solver_kwargs["time_limit"] = 10
+
+    results = solve(method=solver_class, problem=coloring_problem, **solver_kwargs)
     sol, fit = results.get_best_solution_fit()
     print(f"Solver {solver_class}, fitness = {fit}")
     print(f"Evaluation : {coloring_problem.evaluate(sol)}")
