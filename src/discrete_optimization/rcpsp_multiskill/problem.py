@@ -3130,6 +3130,12 @@ def create_fake_tasks_multiskills(
 
 def compute_skills_calendar(problem: MultiskillRcpspProblem):
     skills = problem.skills_set
+
+    # Handle case when there are no employees (e.g., RCPSP transformed to Multiskill)
+    if len(problem.employees) == 0:
+        return {}
+
+    # Normal case with employees
     some_employee = next(emp for emp in problem.employees)
     len_calendar = len(problem.employees[some_employee].calendar_employee)
     dict_calendar_skills = {s: np.zeros(len_calendar) for s in skills}

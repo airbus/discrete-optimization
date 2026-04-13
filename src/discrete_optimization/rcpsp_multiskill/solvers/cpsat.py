@@ -339,14 +339,26 @@ class CpSatMultiskillRcpspSolver(
                     for t in tasks
                 ]
             )
-        max_workload = self.cp_model.NewIntVar(
-            lb=0, ub=self.problem.horizon, name=f"max_workload"
-        )
-        min_workload = self.cp_model.NewIntVar(
-            lb=0, ub=self.problem.horizon, name=f"min_workload"
-        )
-        self.cp_model.AddMaxEquality(max_workload, [workload[emp] for emp in workload])
-        self.cp_model.AddMinEquality(min_workload, [workload[emp] for emp in workload])
+
+        # Handle case when there are no employees
+        if len(workload) == 0:
+            # Create dummy variables with value 0
+            max_workload = self.cp_model.NewIntVar(lb=0, ub=0, name=f"max_workload")
+            min_workload = self.cp_model.NewIntVar(lb=0, ub=0, name=f"min_workload")
+        else:
+            max_workload = self.cp_model.NewIntVar(
+                lb=0, ub=self.problem.horizon, name=f"max_workload"
+            )
+            min_workload = self.cp_model.NewIntVar(
+                lb=0, ub=self.problem.horizon, name=f"min_workload"
+            )
+            self.cp_model.AddMaxEquality(
+                max_workload, [workload[emp] for emp in workload]
+            )
+            self.cp_model.AddMinEquality(
+                min_workload, [workload[emp] for emp in workload]
+            )
+
         self.variables["max_workload"] = max_workload
         self.variables["min_workload"] = min_workload
 
