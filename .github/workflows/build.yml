@@ -21,10 +21,10 @@ jobs:
   linters:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: create requirements.txt so that pip cache with setup-python works
         run: echo "pre-commit" > requirements_precommit.txt
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -32,7 +32,7 @@ jobs:
       - name: install pre-commit
         run: python -m pip install pre-commit
       - name: get cached pre-commit hooks
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit
           key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
@@ -58,11 +58,11 @@ jobs:
       do_version: ${{ steps.get_library_version.outputs.version }}
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: create requirements.txt so that pip cache with setup-python works
         run:
           echo "build" > requirements_build.txt
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -72,7 +72,7 @@ jobs:
       - name: Build discrete-optimization (wheel + source code)
         run: python -m build
       - name: Upload as build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
@@ -123,15 +123,15 @@ jobs:
         shell: bash
     steps:
       - name: Checkout discrete-optimization source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: pyproject.toml
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
@@ -165,7 +165,7 @@ jobs:
           echo "path=${{ matrix.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
       - name: Restore MiniZinc cache
         id: cache-minizinc
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.get-mzn-cache-path.outputs.path }}
           key: ${{ matrix.minizinc_url }}
@@ -216,7 +216,7 @@ jobs:
 
       - name: Restore tests data cache
         id: cache-data
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/discrete_optimization_data
           key: data-${{ hashFiles('src/discrete_optimization/datasets.py') }}
@@ -256,7 +256,7 @@ jobs:
           pytest --doctest-modules src -v
       - name: Upload coverage report as artifact
         if: ${{ matrix.coverage }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: |
@@ -275,7 +275,7 @@ jobs:
           # default value: current branch
           echo 'notebooks_branch="${{ github.ref_name}}"' >> $GITHUB_ENV
           echo 'binder_full_ref="${{ github.repository }}/${{ github.ref_name}}"' >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         if: needs.trigger.outputs.is_release == 'true'
       - name: replace d-o version to install in colab notebooks
         if: needs.trigger.outputs.is_release == 'true'
@@ -337,7 +337,7 @@ jobs:
     if: needs.trigger.outputs.is_release == 'true'
     steps:
       - name: Download wheels artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist

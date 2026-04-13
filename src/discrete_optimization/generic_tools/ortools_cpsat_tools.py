@@ -152,7 +152,12 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
         for cstr in constraints:
             if not isinstance(cstr, Constraint):
                 raise RuntimeError()
-            cstr.proto.Clear()
+            try:
+                # lowercase starting from ortools 9.16
+                cstr.proto.clear()
+            except AttributeError:
+                # Uppercase for ortools < 9.15  (NB: method missing for ortools 9.15)
+                cstr.proto.Clear()
 
     def get_current_best_internal_objective_bound(self) -> Optional[float]:
         return self._current_internal_objective_best_bound
