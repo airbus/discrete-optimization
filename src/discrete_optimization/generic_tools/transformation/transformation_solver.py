@@ -131,6 +131,7 @@ class TransformationSolver(SolverDO, WarmstartMixin):
             )
 
         # Instantiate solver for target problem
+        self.solver_brick = solver_brick
         self.wrapped_solver = solver_brick.cls(
             problem=self.target_problem, **solver_brick.kwargs
         )
@@ -164,7 +165,9 @@ class TransformationSolver(SolverDO, WarmstartMixin):
         # For now, callbacks receive target solutions
 
         # Solve in transformed space
-        target_result = self.wrapped_solver.solve(callbacks=callbacks, **kwargs)
+        merged_kwargs = kwargs.copy()
+        merged_kwargs.update(self.solver_brick.kwargs)
+        target_result = self.wrapped_solver.solve(callbacks=callbacks, **merged_kwargs)
 
         # Back-transform all solutions
         source_result = self.create_result_storage()

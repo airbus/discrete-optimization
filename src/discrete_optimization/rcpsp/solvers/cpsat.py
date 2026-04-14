@@ -253,17 +253,17 @@ class CpSatRcpspSolver(
         for task in self.problem.special_constraints.start_times_window:
             lower, upper = self.problem.special_constraints.start_times_window[task]
             if lower is not None:
-                model.Add(starts_var[task] >= lower)
+                model.Add(starts_var[task] >= int(lower))
             if upper is not None:
-                model.Add(starts_var[task] <= upper)
+                model.Add(starts_var[task] <= int(upper))
 
         # end_times_window: lower_bound <= end(task) <= upper_bound
         for task in self.problem.special_constraints.end_times_window:
             lower, upper = self.problem.special_constraints.end_times_window[task]
             if lower is not None:
-                model.Add(ends_var[task] >= lower)
+                model.Add(ends_var[task] >= int(lower))
             if upper is not None:
-                model.Add(ends_var[task] <= upper)
+                model.Add(ends_var[task] <= int(upper))
 
     def init_model(self, **kwargs):
         """Init CP model."""

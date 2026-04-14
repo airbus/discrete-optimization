@@ -11,6 +11,16 @@ from discrete_optimization.generic_tools.transformation.composite import (
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
 )
+from discrete_optimization.generic_tools.transformation.transformation_metadata import (
+    InformationLoss,
+    LossImpact,
+    LossType,
+    TransformationCompleteness,
+    TransformationMetadata,
+    exact_transformation,
+    lossy_transformation,
+    subset_transformation,
+)
 from discrete_optimization.generic_tools.transformation.transformation_solver import (
     TransformationSolver,
 )
@@ -20,4 +30,12 @@ __all__ = [
     "TransformationSolver",
     "CompositeTransformation",
     "chain_transformations",
+    "TransformationMetadata",
+    "TransformationCompleteness",
+    "InformationLoss",
+    "LossType",
+    "LossImpact",
+    "exact_transformation",
+    "lossy_transformation",
+    "subset_transformation",
 ]
