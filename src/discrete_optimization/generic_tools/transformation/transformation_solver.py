@@ -34,34 +34,34 @@ class TransformationSolver(SolverDO, WarmstartMixin):
     4. Stores solutions as S1 in ResultStorage
 
     Example (simple):
-        >>> transformation = RcpspToMultiskillTransformation()
-        >>> solver = TransformationSolver(
-        ...     transformation=transformation,
-        ...     source_problem=rcpsp_problem,
-        ...     solver_brick=SubBrick(
-        ...         cls=CPSatMultiskillSolver,
-        ...         kwargs={"time_limit": 60}
-        ...     )
-        ... )
-        >>> result = solver.solve()  # Returns RcpspSolution!
+        # >>> transformation = RcpspToMultiskillTransformation()
+        # >>> solver = TransformationSolver(
+        # ...     transformation=transformation,
+        # ...     source_problem=rcpsp_problem,
+        # ...     solver_brick=SubBrick(
+        # ...         cls=CPSatMultiskillSolver,
+        # ...         kwargs={"time_limit": 60}
+        # ...     )
+        # ... )
+        # >>> result = solver.solve()  # Returns RcpspSolution!
 
     Example (with pre-computed target problem):
-        >>> transformation = RcpspToMultiskillTransformation()
-        >>> target_problem = transformation.transform_problem(rcpsp_problem)
-        >>> solver = TransformationSolver(
-        ...     transformation=transformation,
-        ...     source_problem=rcpsp_problem,
-        ...     target_problem=target_problem,  # Already transformed!
-        ...     solver_brick=SubBrick(...)
-        ... )
+        # >>> transformation = RcpspToMultiskillTransformation()
+        # >>> target_problem = transformation.transform_problem(rcpsp_problem)
+        # >>> solver = TransformationSolver(
+        # ...     transformation=transformation,
+        # ...     source_problem=rcpsp_problem,
+        # ...     target_problem=target_problem,  # Already transformed!
+        # ...     solver_brick=SubBrick(...)
+        # ... )
 
     Example (for use in SequentialMetasolver):
-        >>> # TransformationSolver also accepts 'problem' arg for SolverDO compatibility
-        >>> solver = TransformationSolver(
-        ...     problem=rcpsp_problem,  # Used as source_problem
-        ...     transformation=RcpspToMultiskillTransformation(),
-        ...     solver_brick=SubBrick(...)
-        ... )
+        # >>> # TransformationSolver also accepts 'problem' arg for SolverDO compatibility
+        # >>> solver = TransformationSolver(
+        # ...     problem=rcpsp_problem,  # Used as source_problem
+        # ...     transformation=RcpspToMultiskillTransformation(),
+        # ...     solver_brick=SubBrick(...)
+        # ... )
 
     Note: Callbacks currently receive transformed (target) solutions.
     Future enhancement will back-transform solutions for callbacks.

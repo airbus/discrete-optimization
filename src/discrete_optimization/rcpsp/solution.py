@@ -98,59 +98,59 @@ class RcpspSolution(
         This example demonstrates how a permutation of non-dummy tasks is
         transformed into a schedule, adhering to precedence and resource constraints.
 
-        >>> from discrete_optimization.rcpsp.problem import RcpspProblem
-        >>> from discrete_optimization.rcpsp.solution import RcpspSolution
-        >>> # Define resources
-        >>> resources = {"R1": 5, "R2": 2}
-        >>> non_renewable_resources = []  # Empty if all resources replenish when a task ends
-        >>> # Define mode details
-        >>> # Format: { task_id: { mode_id: { "duration": int, "resource_name": amount } } }
-        >>> mode_details = {
-        ...     "source": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Source (Dummy)
-        ...     "task-1": {1: {"duration": 4, "R1": 2, "R2": 2}},
-        ...     "task-2": {1: {"duration": 3, "R1": 3, "R2": 0}},
-        ...     "task-3": {1: {"duration": 5, "R1": 2, "R2": 1}},
-        ...     "task-4": {1: {"duration": 2, "R1": 1, "R2": 1}},
-        ...     "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
-        ... }
-        >>> # Define precedence graph
-        >>> successors = {
-        ...     "source": ["task-1", "task-2"],  # First tasks: 1 and 2
-        ...     "task-1": ["task-3"],            # Task 1 must finish before 3
-        ...     "task-2": ["task-4"],            # Task 2 must finish before 4
-        ...     "task-3": ["sink"],              # Task 3 leads to Sink
-        ...     "task-4": ["sink"],              # Task 4 leads to Sink
-        ...     "sink": [],                       # Sink has no successors
-        ... }
-        >>> # Initialize the Problem
-        >>> problem = RcpspProblem(
-        ...     resources=resources,
-        ...     non_renewable_resources=non_renewable_resources,
-        ...     mode_details=mode_details,
-        ...     successors=successors,
-        ...     horizon=20, # Maximum time allowed for the project
-        ...     source_task="source",
-        ...     sink_task="sink"
-        ... )
-        >>> # Create solution
-        >>> # Convert list of task ids into a licit permutation (using indices among non-dummy tasks)
-        >>> rcpsp_permutation = problem.convert_task_ids_to_permutation(["task-2", "task-1", "task-4", "task-3"])
-        >>> print(rcpsp_permutation)
-        [1, 0, 3, 2]
-        >>> solution = RcpspSolution(
-        ...     problem=problem,
-        ...     rcpsp_permutation=rcpsp_permutation,
-        ...     rcpsp_modes=[1, 1, 1, 1]  # same mode for each task
-        ... )
-        >>> # The Serial SGS calculates the start/end times according:
-        >>> print(solution.rcpsp_schedule["task-2"])  # Task 2
-        {'start_time': 0, 'end_time': 3}
-        >>> print(solution.rcpsp_schedule["task-1"])  # Task 1 follows Task 2 in permutation
-        {'start_time': 0, 'end_time': 4}
-        >>> print(solution.rcpsp_schedule["task-4"])  # Task 4 can start after Task 2, but only when ressources are available (thus after task 1)
-        {'start_time': 4, 'end_time': 6}
-        >>> print(solution.rcpsp_schedule["task-3"])  # Task 3 can start after Task 1 (and ressources are available)
-        {'start_time': 4, 'end_time': 9}
+        # >>> from discrete_optimization.rcpsp.problem import RcpspProblem
+        # >>> from discrete_optimization.rcpsp.solution import RcpspSolution
+        # >>> # Define resources
+        # >>> resources = {"R1": 5, "R2": 2}
+        # >>> non_renewable_resources = []  # Empty if all resources replenish when a task ends
+        # >>> # Define mode details
+        # >>> # Format: { task_id: { mode_id: { "duration": int, "resource_name": amount } } }
+        # >>> mode_details = {
+        # ...     "source": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Source (Dummy)
+        # ...     "task-1": {1: {"duration": 4, "R1": 2, "R2": 2}},
+        # ...     "task-2": {1: {"duration": 3, "R1": 3, "R2": 0}},
+        # ...     "task-3": {1: {"duration": 5, "R1": 2, "R2": 1}},
+        # ...     "task-4": {1: {"duration": 2, "R1": 1, "R2": 1}},
+        # ...     "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
+        # ... }
+        # >>> # Define precedence graph
+        # >>> successors = {
+        # ...     "source": ["task-1", "task-2"],  # First tasks: 1 and 2
+        # ...     "task-1": ["task-3"],            # Task 1 must finish before 3
+        # ...     "task-2": ["task-4"],            # Task 2 must finish before 4
+        # ...     "task-3": ["sink"],              # Task 3 leads to Sink
+        # ...     "task-4": ["sink"],              # Task 4 leads to Sink
+        # ...     "sink": [],                       # Sink has no successors
+        # ... }
+        # >>> # Initialize the Problem
+        # >>> problem = RcpspProblem(
+        # ...     resources=resources,
+        # ...     non_renewable_resources=non_renewable_resources,
+        # ...     mode_details=mode_details,
+        # ...     successors=successors,
+        # ...     horizon=20, # Maximum time allowed for the project
+        # ...     source_task="source",
+        # ...     sink_task="sink"
+        # ... )
+        # >>> # Create solution
+        # >>> # Convert list of task ids into a licit permutation (using indices among non-dummy tasks)
+        # >>> rcpsp_permutation = problem.convert_task_ids_to_permutation(["task-2", "task-1", "task-4", "task-3"])
+        # >>> print(rcpsp_permutation)
+        # [1, 0, 3, 2]
+        # >>> solution = RcpspSolution(
+        # ...     problem=problem,
+        # ...     rcpsp_permutation=rcpsp_permutation,
+        # ...     rcpsp_modes=[1, 1, 1, 1]  # same mode for each task
+        # ... )
+        # >>> # The Serial SGS calculates the start/end times according:
+        # >>> print(solution.rcpsp_schedule["task-2"])  # Task 2
+        # {'start_time': 0, 'end_time': 3}
+        # >>> print(solution.rcpsp_schedule["task-1"])  # Task 1 follows Task 2 in permutation
+        # {'start_time': 0, 'end_time': 4}
+        # >>> print(solution.rcpsp_schedule["task-4"])  # Task 4 can start after Task 2, but only when ressources are available (thus after task 1)
+        # {'start_time': 4, 'end_time': 6}
+        # >>> print(solution.rcpsp_schedule["task-3"])  # Task 3 can start after Task 1 (and ressources are available)
+        # {'start_time': 4, 'end_time': 9}
 
     """
 

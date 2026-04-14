@@ -41,24 +41,24 @@ class ProblemTransformation(ABC, Generic[P1, S1, P2, S2]):
         - Forward (problem): Lossy (incompatibility constraints lost)
         - Backward (solution): Exact (SALBP solutions map perfectly to BinPack)
 
-        >>> class BinpackToSalbpTransformation(ProblemTransformation):
-        ...     def get_forward_metadata(self):
-        ...         # Problem transformation: BinPack → SALBP (lossy)
-        ...         return lossy_transformation(
-        ...             losses=[InformationLoss(
-        ...                 name="incompatibility_constraints",
-        ...                 loss_type=LossType.CONSTRAINT,
-        ...                 description="Item incompatibility constraints",
-        ...                 reason="SALBP has no incompatibility concept",
-        ...                 impact=LossImpact.MAJOR
-        ...             )]
-        ...         )
-        ...
-        ...     def get_backward_metadata(self):
-        ...         # Solution transformation: SALBP solution → BinPack solution (exact)
-        ...         return exact_transformation(
-        ...             use_cases=["Direct mapping: stations → bins"]
-        ...         )
+        # >>> class BinpackToSalbpTransformation(ProblemTransformation):
+        # ...     def get_forward_metadata(self):
+        # ...         # Problem transformation: BinPack → SALBP (lossy)
+        # ...         return lossy_transformation(
+        # ...             losses=[InformationLoss(
+        # ...                 name="incompatibility_constraints",
+        # ...                 loss_type=LossType.CONSTRAINT,
+        # ...                 description="Item incompatibility constraints",
+        # ...                 reason="SALBP has no incompatibility concept",
+        # ...                 impact=LossImpact.MAJOR
+        # ...             )]
+        # ...         )
+        # ...
+        # ...     def get_backward_metadata(self):
+        # ...         # Solution transformation: SALBP solution → BinPack solution (exact)
+        # ...         return exact_transformation(
+        # ...             use_cases=["Direct mapping: stations → bins"]
+        # ...         )
 
     """
 

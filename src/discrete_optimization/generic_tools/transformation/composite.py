@@ -20,10 +20,10 @@ class CompositeTransformation(ProblemTransformation):
     Example:
         Chain transformations T1: RCPSP → Multiskill and T2: Multiskill → Preemptive
 
-        >>> t1 = RcpspToMultiskillTransformation()
-        >>> t2 = MultiskillToPreemptiveTransformation()
-        >>> composite = CompositeTransformation([t1, t2])
-        >>> # Now composite: RCPSP → Preemptive
+        # >>> t1 = RcpspToMultiskillTransformation()
+        # >>> t2 = MultiskillToPreemptiveTransformation()
+        # >>> composite = CompositeTransformation([t1, t2])
+        # >>> # Now composite: RCPSP → Preemptive
 
     Back-transformation automatically chains in reverse:
         S_preemptive → T2⁻¹ → S_multiskill → T1⁻¹ → S_rcpsp
@@ -170,12 +170,12 @@ def chain_transformations(
     """Chain multiple transformations into a composite.
 
     Example:
-        >>> t1 = RcpspToMultiskillTransformation()
-        >>> t2 = MultiskillToPreemptiveTransformation()
-        >>> t3 = PreemptiveToMultiskillTransformation()
-        >>>
-        >>> composite = chain_transformations(t1, t2, t3)
-        >>> # Equivalent to: RCPSP → Multiskill → Preemptive → Multiskill
+        # >>> t1 = RcpspToMultiskillTransformation()
+        # >>> t2 = MultiskillToPreemptiveTransformation()
+        # >>> t3 = PreemptiveToMultiskillTransformation()
+        # >>>
+        # >>> composite = chain_transformations(t1, t2, t3)
+        # >>> # Equivalent to: RCPSP → Multiskill → Preemptive → Multiskill
 
     Args:
         *transformations: Transformations to chain

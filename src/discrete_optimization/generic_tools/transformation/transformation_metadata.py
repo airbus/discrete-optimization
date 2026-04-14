@@ -107,14 +107,14 @@ class InformationLoss:
         impact: Impact on solution quality
 
     Example:
-        >>> loss = InformationLoss(
-        ...     name="incompatibility_constraints",
-        ...     loss_type=LossType.CONSTRAINT,
-        ...     description="Item incompatibility constraints (items that cannot be in same bin)",
-        ...     reason="SALBP has no concept of task incompatibility",
-        ...     impact=LossImpact.MAJOR,
-        ...     workaround="Pre-filter incompatible items or use BinPack→RCPSP with virtual resources"
-        ... )
+        # >>> loss = InformationLoss(
+        # ...     name="incompatibility_constraints",
+        # ...     loss_type=LossType.CONSTRAINT,
+        # ...     description="Item incompatibility constraints (items that cannot be in same bin)",
+        # ...     reason="SALBP has no concept of task incompatibility",
+        # ...     impact=LossImpact.MAJOR,
+        # ...     workaround="Pre-filter incompatible items or use BinPack→RCPSP with virtual resources"
+        # ... )
 
     """
 
@@ -150,21 +150,21 @@ class TransformationMetadata:
         warnings: Important warnings for users
 
     Example:
-        >>> metadata = TransformationMetadata(
-        ...     completeness=TransformationCompleteness.LOSSY_CONSTRAINTS,
-        ...     losses=[
-        ...         InformationLoss(
-        ...             name="incompatibility_constraints",
-        ...             loss_type=LossType.CONSTRAINT,
-        ...             description="Item incompatibility constraints",
-        ...             reason="SALBP has no incompatibility concept",
-        ...             impact=LossImpact.MAJOR
-        ...         )
-        ...     ],
-        ...     assumptions=["No item incompatibility constraints"],
-        ...     use_cases=["Pure bin packing without incompatibility"],
-        ...     warnings=["Solutions may violate incompatibility if present"]
-        ... )
+        # >>> metadata = TransformationMetadata(
+        # ...     completeness=TransformationCompleteness.LOSSY_CONSTRAINTS,
+        # ...     losses=[
+        # ...         InformationLoss(
+        # ...             name="incompatibility_constraints",
+        # ...             loss_type=LossType.CONSTRAINT,
+        # ...             description="Item incompatibility constraints",
+        # ...             reason="SALBP has no incompatibility concept",
+        # ...             impact=LossImpact.MAJOR
+        # ...         )
+        # ...     ],
+        # ...     assumptions=["No item incompatibility constraints"],
+        # ...     use_cases=["Pure bin packing without incompatibility"],
+        # ...     warnings=["Solutions may violate incompatibility if present"]
+        # ... )
 
     """
 

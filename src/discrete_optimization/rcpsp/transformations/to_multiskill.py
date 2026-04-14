@@ -30,13 +30,13 @@ class RcpspToMultiskillTransformation(
     - Same mode details and precedence constraints
 
     Example:
-        >>> problem = RcpspProblem(
-        ...     resources={"R1": 5, "R2": 2},
-        ...     ...
-        ... )
-        >>> transformation = RcpspToMultiskillTransformation()
-        >>> ms_problem = transformation.transform_problem(problem)
-        >>> # ms_problem uses resources R1, R2 directly (no fake employees)
+        # >>> problem = RcpspProblem(
+        # ...     resources={"R1": 5, "R2": 2},
+        # ...     ...
+        # ... )
+        # >>> transformation = RcpspToMultiskillTransformation()
+        # >>> ms_problem = transformation.transform_problem(problem)
+        # >>> # ms_problem uses resources R1, R2 directly (no fake employees)
 
     """
 

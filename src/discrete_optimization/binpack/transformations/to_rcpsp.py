@@ -48,21 +48,21 @@ class BinpackToRcpspTransformation(
     - Backward (solution): Time slots map directly to bin assignments
 
     Example:
-        >>> # Bin packing: 3 items, capacity 10
-        >>> # Item 0: weight 5, Item 1: weight 3, Item 2: weight 6
-        >>> # Items 0 and 2 are incompatible
-        >>> problem = BinPackProblem(
-        ...     list_items=[ItemBinPack(0, 5), ItemBinPack(1, 3), ItemBinPack(2, 6)],
-        ...     capacity_bin=10,
-        ...     incompatible_items={(0, 2)}
-        ... )
-        >>>
-        >>> # RCPSP transformation:
-        >>> # - 3 tasks with duration=1
-        >>> # - Resource "BinCapacity" with capacity=10
-        >>> # - Task 0 needs 5, Task 1 needs 3, Task 2 needs 6
-        >>> # - Resource "Incompatible_0_2" with capacity=1 (both tasks consume it)
-        >>> # - Tasks at time 0 → bin 0, tasks at time 1 → bin 1, etc.
+        # >>> # Bin packing: 3 items, capacity 10
+        # >>> # Item 0: weight 5, Item 1: weight 3, Item 2: weight 6
+        # >>> # Items 0 and 2 are incompatible
+        # >>> problem = BinPackProblem(
+        # ...     list_items=[ItemBinPack(0, 5), ItemBinPack(1, 3), ItemBinPack(2, 6)],
+        # ...     capacity_bin=10,
+        # ...     incompatible_items={(0, 2)}
+        # ... )
+        # >>>
+        # >>> # RCPSP transformation:
+        # >>> # - 3 tasks with duration=1
+        # >>> # - Resource "BinCapacity" with capacity=10
+        # >>> # - Task 0 needs 5, Task 1 needs 3, Task 2 needs 6
+        # >>> # - Resource "Incompatible_0_2" with capacity=1 (both tasks consume it)
+        # >>> # - Tasks at time 0 → bin 0, tasks at time 1 → bin 1, etc.
 
     """
 

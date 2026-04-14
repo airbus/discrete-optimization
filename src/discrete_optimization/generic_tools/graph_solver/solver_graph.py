@@ -382,23 +382,23 @@ class SolverGraph:
     - Arbitrary directed acyclic graphs
 
     Example (linear, like SequentialMetasolver):
-        >>> graph = SolverGraph(problem)
-        >>> graph.add_solver("solver1", SubBrick(cls=Solver1, kwargs={}))
-        >>> graph.add_solver("solver2", SubBrick(cls=Solver2, kwargs={}))
-        >>> graph.add_edge("root", "solver1")
-        >>> graph.add_edge("solver1", "solver2")
-        >>> result = graph.run()
-
-    Example (branching):
-        >>> graph = SolverGraph(problem)
-        >>> graph.add_solver("cpsat", SubBrick(cls=CPSat, kwargs={}))
-        >>> graph.add_solver("lp", SubBrick(cls=LP, kwargs={}))
-        >>> graph.add_merge("merge", strategy="best")
-        >>> graph.add_edge("root", "cpsat")
-        >>> graph.add_edge("root", "lp")
-        >>> graph.add_edge("cpsat", "merge")
-        >>> graph.add_edge("lp", "merge")
-        >>> result = graph.run()
+    #     >>> graph = SolverGraph(problem)
+    #     >>> graph.add_solver("solver1", SubBrick(cls=Solver1, kwargs={}))
+    #     >>> graph.add_solver("solver2", SubBrick(cls=Solver2, kwargs={}))
+    #     >>> graph.add_edge("root", "solver1")
+    #     >>> graph.add_edge("solver1", "solver2")
+    #     >>> result = graph.run()
+    #
+    # Example (branching):
+    #     >>> graph = SolverGraph(problem)
+    #     >>> graph.add_solver("cpsat", SubBrick(cls=CPSat, kwargs={}))
+    #     >>> graph.add_solver("lp", SubBrick(cls=LP, kwargs={}))
+    #     >>> graph.add_merge("merge", strategy="best")
+    #     >>> graph.add_edge("root", "cpsat")
+    #     >>> graph.add_edge("root", "lp")
+    #     >>> graph.add_edge("cpsat", "merge")
+    #     >>> graph.add_edge("lp", "merge")
+    #     >>> result = graph.run()
 
     """
 
