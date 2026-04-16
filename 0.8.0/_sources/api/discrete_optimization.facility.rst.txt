@@ -1,0 +1,53 @@
+discrete\_optimization.facility package
+=======================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.facility.solvers
+
+Submodules
+----------
+
+discrete\_optimization.facility.parser module
+---------------------------------------------
+
+.. automodule:: discrete_optimization.facility.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.problem module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.facility.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.solvers\_map module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers_map
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.utils module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.facility.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.facility
+   :members:
+   :show-inheritance:
+   :undoc-members:

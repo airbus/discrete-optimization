@@ -1,0 +1,974 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.ovensched.solvers.dp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.ovensched.solvers.dp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.ovensched.solvers.dp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;DIDPpy-based solver for the Oven Scheduling Problem.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">didppy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dyn_prog_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">DpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+    <span class="n">OvenSchedulingSolution</span><span class="p">,</span>
+    <span class="n">ScheduleInfo</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="DpOvenSchedulingSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DpOvenSchedulingSolver</span><span class="p">(</span><span class="n">DpSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dynamic Programming solver for the Oven Scheduling Problem using DIDPpy.</span>
+
+<span class="sd">    This solver properly models batching by:</span>
+<span class="sd">    - Tracking current open batch on each machine</span>
+<span class="sd">    - Managing batch duration (fixed or dynamic based on allow_batch_duration_update)</span>
+<span class="sd">    - Checking duration compatibility when adding subsequent jobs to a batch</span>
+<span class="sd">    - Two transition types: add to batch vs. close batch and start new one</span>
+<span class="sd">    - Respecting machine availability windows</span>
+<span class="sd">    - Using weighted multi-objective cost function (tardiness + processing + setup)</span>
+<span class="sd">    - Optional dual bounds to guide search (use_dual_bounds=True)</span>
+<span class="sd">    - Optional transition dominance rules (use_dominance=True)</span>
+
+<span class="sd">    Batch duration models:</span>
+<span class="sd">    - Fixed (allow_batch_duration_update=False, default): Duration is set to first job&#39;s</span>
+<span class="sd">      min_duration and never changes. Subsequent jobs must fit within this duration.</span>
+<span class="sd">    - Dynamic (allow_batch_duration_update=True): Duration can increase when adding jobs</span>
+<span class="sd">      with larger min_duration, up to the minimum max_duration of all jobs in batch.</span>
+<span class="sd">      More flexible but may slightly misevaluate tardiness.</span>
+
+<span class="sd">    The objective function correctly includes:</span>
+<span class="sd">    - Tardiness costs (paid when each job is added to a batch)</span>
+<span class="sd">    - Setup costs (paid when closing a batch and starting a new one)</span>
+<span class="sd">    - Processing costs (paid when closing a batch + at base case for final batches)</span>
+
+<span class="sd">    Transition dominance rules (3 rules when use_dominance=True):</span>
+<span class="sd">    1. Add to batch &gt; Close and start new (when job fits: avoids setup costs)</span>
+<span class="sd">    2. Non-late job &gt; Late job (when same attribute: prioritizes on-time delivery)</span>
+<span class="sd">    3. Tighter deadline &gt; Looser deadline (when both on time: reduces future conflicts)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_objective_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract objective weights from params_objective_function.&quot;&quot;&quot;</span>
+        <span class="n">weight_tardiness</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">weight_processing</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">weight_setup</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obj_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">obj_name</span> <span class="o">==</span> <span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">:</span>
+                    <span class="n">weight_tardiness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">obj_name</span> <span class="o">==</span> <span class="s2">&quot;processing_time&quot;</span><span class="p">:</span>
+                    <span class="n">weight_processing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">obj_name</span> <span class="o">==</span> <span class="s2">&quot;setup_cost&quot;</span><span class="p">:</span>
+                    <span class="n">weight_setup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">weight_tardiness</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">weight_processing</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">weight_setup</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DpOvenSchedulingSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the DIDPpy model with proper batching support.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            use_dual_bounds: If True, add dual bounds to guide search (default: False)</span>
+<span class="sd">            use_dominance: If True, add transition dominance rules (default: True)</span>
+<span class="sd">            allow_batch_duration_update: If True, allow batch duration to increase when adding</span>
+<span class="sd">                jobs with larger min_duration (default: False). This provides more flexibility</span>
+<span class="sd">                but may slightly misevaluate tardiness.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">use_dual_bounds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_dual_bounds&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">use_dominance</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_dominance&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">allow_batch_duration_update</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;allow_batch_duration_update&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># Store for use in retrieve_solution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allow_batch_duration_update</span> <span class="o">=</span> <span class="n">allow_batch_duration_update</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>
+
+        <span class="n">n_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span>
+        <span class="n">n_machines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span>
+
+        <span class="c1"># Get objective weights</span>
+        <span class="n">weight_tardiness</span><span class="p">,</span> <span class="n">weight_processing</span><span class="p">,</span> <span class="n">weight_setup</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_objective_weights</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Object types</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">)</span>
+        <span class="n">n_attributes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">)</span>
+        <span class="n">attribute</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="n">n_attributes</span><span class="p">)</span>
+
+        <span class="c1"># State variables</span>
+        <span class="n">unscheduled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_set_var</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)))</span>
+
+        <span class="c1"># For each machine, track:</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)]</span>
+
+        <span class="c1"># Current open batch</span>
+        <span class="n">current_batch</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_set_var</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="nb">set</span><span class="p">())</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Batch start time (fixed when batch is created with first task)</span>
+        <span class="n">batch_start_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)]</span>
+
+        <span class="c1"># Batch duration (can be updated if allow_batch_duration_update=True)</span>
+        <span class="n">batch_duration</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)]</span>
+
+        <span class="c1"># Batch max duration potential: minimum of max_durations of all jobs in batch</span>
+        <span class="c1"># This constrains how much we can increase the batch duration</span>
+        <span class="c1"># Initialized to large value (10000) when batch is empty</span>
+        <span class="n">batch_max_duration_potential</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Batch cumulative size</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)]</span>
+
+        <span class="c1"># Batch attribute (when batch is empty, use last closed batch attribute)</span>
+        <span class="n">batch_attribute</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span>
+                <span class="n">object_type</span><span class="o">=</span><span class="n">attribute</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">initial_attribute</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Store state variables as instance attributes for debugging/warmstart validation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unscheduled</span> <span class="o">=</span> <span class="n">unscheduled</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_batch</span> <span class="o">=</span> <span class="n">current_batch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_start_time</span> <span class="o">=</span> <span class="n">batch_start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_duration</span> <span class="o">=</span> <span class="n">batch_duration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_max_duration_potential</span> <span class="o">=</span> <span class="n">batch_max_duration_potential</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_attribute</span> <span class="o">=</span> <span class="n">batch_attribute</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">current_time</span>
+
+        <span class="c1"># Lookup tables</span>
+        <span class="n">job_attributes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)]</span>
+        <span class="n">job_min_durations</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">job_max_durations</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">job_earliest_starts</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">earliest_start</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">job_latest_ends</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)]</span>
+        <span class="n">job_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)]</span>
+        <span class="n">min_duration_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">job_min_durations</span><span class="p">)</span>
+        <span class="n">max_duration_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">job_max_durations</span><span class="p">)</span>
+        <span class="n">earliest_start_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">job_earliest_starts</span><span class="p">)</span>
+        <span class="n">latest_end_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">job_latest_ends</span><span class="p">)</span>
+        <span class="n">size_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">job_sizes</span><span class="p">)</span>
+        <span class="n">machine_capacities</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">capacity_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">machine_capacities</span><span class="p">)</span>
+        <span class="n">setup_cost_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">)</span>
+        <span class="n">setup_time_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Store transition IDs for dominance rules</span>
+
+        <span class="c1"># Sort jobs to bias transition order:</span>
+        <span class="c1"># 1. Earlier earliest_start first (jobs that need to start soon)</span>
+        <span class="c1"># 2. Larger min_duration first (to put them at the beginning of batches)</span>
+        <span class="c1"># jobs_sorted = sorted(</span>
+        <span class="c1">#    range(n_jobs),</span>
+        <span class="c1">#    key=lambda j: (job_earliest_starts[j], -job_min_durations[j])</span>
+        <span class="c1"># )</span>
+        <span class="n">jobs_sorted</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)</span>
+
+        <span class="c1"># For each job and machine, create two types of transitions</span>
+        <span class="c1"># Process jobs in sorted order to bias search toward better decisions</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">jobs_sorted</span><span class="p">:</span>
+            <span class="n">eligible_machines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span>
+            <span class="n">job_attr</span> <span class="o">=</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">job_min_dur</span> <span class="o">=</span> <span class="n">job_min_durations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">job_max_dur</span> <span class="o">=</span> <span class="n">job_max_durations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">job_size</span> <span class="o">=</span> <span class="n">job_sizes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">eligible_machines</span><span class="p">:</span>
+                <span class="n">machine_capacity</span> <span class="o">=</span> <span class="n">machine_capacities</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                <span class="c1"># TRANSITION TYPE 1: Add job j to current open batch on machine m (same attribute)</span>
+                <span class="c1"># We create this transition only for jobs that could be added to a batch with matching attribute</span>
+                <span class="c1"># Since batch_attribute is a state variable, we create transitions for each possible attribute value</span>
+
+                <span class="k">if</span> <span class="n">allow_batch_duration_update</span><span class="p">:</span>
+                    <span class="c1"># Dynamic batch duration model:</span>
+                    <span class="c1"># - Batch duration can increase to accommodate job&#39;s min_duration</span>
+                    <span class="c1"># - End time uses the potentially updated duration</span>
+                    <span class="n">new_batch_duration</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_min_dur</span><span class="p">)</span>
+                    <span class="n">new_max_potential</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                        <span class="n">batch_max_duration_potential</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_max_dur</span>
+                    <span class="p">)</span>
+                    <span class="n">end_time</span> <span class="o">=</span> <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_batch_duration</span>
+                    <span class="c1"># Compute tardiness cost</span>
+                    <span class="n">is_late</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">latest_end_table</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">tardiness_cost</span> <span class="o">=</span> <span class="n">is_late</span> <span class="o">*</span> <span class="n">weight_tardiness</span>
+                    <span class="n">add_to_batch</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;add_j</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_attr</span><span class="si">{</span><span class="n">job_attr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">cost</span><span class="o">=</span><span class="n">tardiness_cost</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                        <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                            <span class="p">(</span><span class="n">unscheduled</span><span class="p">,</span> <span class="n">unscheduled</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">j</span><span class="p">)),</span>
+                            <span class="p">(</span><span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">j</span><span class="p">)),</span>
+                            <span class="p">(</span><span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">job_size</span><span class="p">),</span>
+                            <span class="c1"># Update batch duration to max of current and new job&#39;s min_duration</span>
+                            <span class="p">(</span><span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">new_batch_duration</span><span class="p">),</span>
+                            <span class="c1"># Update max duration potential to min of current and new job&#39;s max_duration</span>
+                            <span class="p">(</span><span class="n">batch_max_duration_potential</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">new_max_potential</span><span class="p">),</span>
+                        <span class="p">],</span>
+                        <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">unscheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">j</span><span class="p">),</span>
+                            <span class="o">~</span><span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">is_empty</span><span class="p">(),</span>  <span class="c1"># Batch must not be empty</span>
+                            <span class="n">batch_attribute</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                            <span class="o">==</span> <span class="n">job_attr</span><span class="p">,</span>  <span class="c1"># Check batch has this attribute</span>
+                            <span class="n">job_min_dur</span> <span class="o">&lt;=</span> <span class="n">batch_max_duration_potential</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                            <span class="n">job_max_dur</span> <span class="o">&gt;=</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                            <span class="c1"># Duration compatibility: new batch duration must not exceed the new potential max</span>
+                            <span class="c1"># This ensures: max(current_duration, job_min_dur) &lt;= min(current_potential, job_max_dur)</span>
+                            <span class="c1"># new_batch_duration &lt;= new_max_potential,</span>
+                            <span class="c1"># Time compatibility: job can start at the fixed batch start time</span>
+                            <span class="n">earliest_start_table</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                            <span class="c1"># Capacity: current batch size + new job size must fit</span>
+                            <span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">job_size</span> <span class="o">&lt;=</span> <span class="n">machine_capacity</span><span class="p">,</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Fixed batch duration model (original behavior):</span>
+                    <span class="c1"># - Batch duration is fixed when batch is created</span>
+                    <span class="c1"># - Jobs must fit within this fixed duration</span>
+                    <span class="n">end_time</span> <span class="o">=</span> <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                    <span class="c1"># Compute tardiness cost</span>
+                    <span class="n">is_late</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">latest_end_table</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">tardiness_cost</span> <span class="o">=</span> <span class="n">is_late</span> <span class="o">*</span> <span class="n">weight_tardiness</span>
+
+                    <span class="n">add_to_batch</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;add_j</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_attr</span><span class="si">{</span><span class="n">job_attr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">cost</span><span class="o">=</span><span class="n">tardiness_cost</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                        <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                            <span class="p">(</span><span class="n">unscheduled</span><span class="p">,</span> <span class="n">unscheduled</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">j</span><span class="p">)),</span>
+                            <span class="p">(</span><span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">j</span><span class="p">)),</span>
+                            <span class="p">(</span><span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">job_size</span><span class="p">),</span>
+                        <span class="p">],</span>
+                        <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">unscheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">j</span><span class="p">),</span>
+                            <span class="o">~</span><span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">is_empty</span><span class="p">(),</span>  <span class="c1"># Batch must not be empty</span>
+                            <span class="n">batch_attribute</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                            <span class="o">==</span> <span class="n">job_attr</span><span class="p">,</span>  <span class="c1"># Check batch has this attribute</span>
+                            <span class="c1"># Duration compatibility: job&#39;s duration range must contain the fixed batch duration</span>
+                            <span class="c1"># i.e., job.min_duration &lt;= batch_duration &lt;= job.max_duration</span>
+                            <span class="n">job_min_dur</span> <span class="o">&lt;=</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                            <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">job_max_dur</span><span class="p">,</span>
+                            <span class="c1"># Time compatibility: job can start at the fixed batch start time</span>
+                            <span class="n">earliest_start_table</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                            <span class="c1"># Capacity: current batch size + new job size must fit</span>
+                            <span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">job_size</span> <span class="o">&lt;=</span> <span class="n">machine_capacity</span><span class="p">,</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+
+                <span class="n">transition_id</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">add_to_batch</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">job_attr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">add_to_batch</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">job_attr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">transition_id</span>
+
+                <span class="c1"># TRANSITION TYPE 2: Close current batch and start new batch with job j</span>
+                <span class="c1"># This pays the setup cost and updates time</span>
+                <span class="c1"># For each availability slot</span>
+                <span class="n">machine_avail</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span>
+
+                <span class="k">for</span> <span class="n">slot_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">avail_start</span><span class="p">,</span> <span class="n">avail_end</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">machine_avail</span><span class="p">):</span>
+                    <span class="c1"># Check static constraints before creating transition</span>
+                    <span class="k">if</span> <span class="n">avail_end</span> <span class="o">-</span> <span class="n">avail_start</span> <span class="o">&lt;</span> <span class="n">job_min_dur</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">job_size</span> <span class="o">&gt;</span> <span class="n">machine_capacity</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">setup_cost_expr</span> <span class="o">=</span> <span class="n">setup_cost_table</span><span class="p">[</span><span class="n">batch_attribute</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_attr</span><span class="p">]</span>
+                    <span class="n">setup_time_expr</span> <span class="o">=</span> <span class="n">setup_time_table</span><span class="p">[</span><span class="n">batch_attribute</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_attr</span><span class="p">]</span>
+
+                    <span class="c1"># When closing a batch, we need to:</span>
+                    <span class="c1"># 1. Pay processing cost for the closed batch (duration = batch_duration)</span>
+                    <span class="c1"># 2. Pay setup cost for switching attributes</span>
+                    <span class="c1"># 3. Start new batch with job j</span>
+                    <span class="c1"># 4. Fix new batch duration = j.min_duration</span>
+                    <span class="c1"># 5. Fix new batch start time in this availability window</span>
+
+                    <span class="c1"># Batch duration when closing current batch</span>
+                    <span class="n">closed_batch_duration</span> <span class="o">=</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                    <span class="c1"># Earliest we can start new batch after closing current one</span>
+                    <span class="c1"># = batch_start_time + closed_batch_duration + setup_time</span>
+                    <span class="n">time_after_close</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">closed_batch_duration</span> <span class="o">+</span> <span class="n">setup_time_expr</span>
+                    <span class="p">)</span>
+
+                    <span class="c1"># Earliest possible start for new batch in this availability window</span>
+                    <span class="n">earliest_possible</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+                        <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">time_after_close</span><span class="p">,</span> <span class="n">earliest_start_table</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span> <span class="n">avail_start</span>
+                    <span class="p">)</span>
+
+                    <span class="c1"># New batch duration = min_duration of first job (j)</span>
+                    <span class="n">new_batch_duration</span> <span class="o">=</span> <span class="n">job_min_dur</span>
+                    <span class="n">end_time</span> <span class="o">=</span> <span class="n">earliest_possible</span> <span class="o">+</span> <span class="n">new_batch_duration</span>
+
+                    <span class="c1"># Compute tardiness cost for job j (first job of new batch)</span>
+                    <span class="n">is_late</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">latest_end_table</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">tardiness_cost</span> <span class="o">=</span> <span class="n">is_late</span> <span class="o">*</span> <span class="n">weight_tardiness</span>
+
+                    <span class="c1"># Cost = processing time of closed batch + setup cost + tardiness of new job</span>
+                    <span class="n">transition_cost</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">weight_processing</span> <span class="o">*</span> <span class="n">closed_batch_duration</span>
+                        <span class="o">+</span> <span class="n">weight_setup</span> <span class="o">*</span> <span class="n">setup_cost_expr</span>
+                        <span class="o">+</span> <span class="n">tardiness_cost</span>
+                        <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">()</span>
+                    <span class="p">)</span>
+
+                    <span class="n">close_and_start</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;close_start_j</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_slot</span><span class="si">{</span><span class="n">slot_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">cost</span><span class="o">=</span><span class="n">transition_cost</span><span class="p">,</span>
+                        <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                            <span class="p">(</span><span class="n">unscheduled</span><span class="p">,</span> <span class="n">unscheduled</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">j</span><span class="p">)),</span>
+                            <span class="p">(</span>
+                                <span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                                <span class="n">model</span><span class="o">.</span><span class="n">create_set_const</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">job</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="p">{</span><span class="n">j</span><span class="p">}),</span>
+                            <span class="p">),</span>
+                            <span class="p">(</span><span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">new_batch_duration</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">earliest_possible</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_size</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">batch_attribute</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_attr</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">current_time</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">earliest_possible</span><span class="p">),</span>  <span class="c1"># Track current time</span>
+                            <span class="c1"># Initialize max duration potential for new batch</span>
+                            <span class="p">(</span><span class="n">batch_max_duration_potential</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_max_dur</span><span class="p">),</span>
+                        <span class="p">],</span>
+                        <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">unscheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">j</span><span class="p">),</span>
+                            <span class="c1"># Must fit in availability window</span>
+                            <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">avail_end</span><span class="p">,</span>
+                            <span class="n">earliest_possible</span> <span class="o">&gt;=</span> <span class="n">avail_start</span><span class="p">,</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="n">transition_id</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">close_and_start</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;close_start&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">slot_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">close_and_start</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[(</span><span class="s2">&quot;close_start&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">slot_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">transition_id</span>
+
+        <span class="c1"># Transition dominance rules</span>
+        <span class="k">if</span> <span class="n">use_dominance</span><span class="p">:</span>
+            <span class="c1"># Rule 1: Adding to current batch dominates closing and starting new batch</span>
+            <span class="c1"># If we can fit job j in the current batch on machine m, prefer that over</span>
+            <span class="c1"># closing the batch and starting a new one (avoids setup costs)</span>
+            <span class="n">dominance_count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">jobs_sorted</span><span class="p">:</span>  <span class="c1"># Use sorted jobs list</span>
+                <span class="n">job_attr</span> <span class="o">=</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">job_min_dur</span> <span class="o">=</span> <span class="n">job_min_durations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">job_max_dur</span> <span class="o">=</span> <span class="n">job_max_durations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">job_size</span> <span class="o">=</span> <span class="n">job_sizes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">eligible_machines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span>
+
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">eligible_machines</span><span class="p">:</span>
+                    <span class="n">machine_capacity</span> <span class="o">=</span> <span class="n">machine_capacities</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                    <span class="c1"># Check if add_to_batch transition exists for this job/machine/attribute</span>
+                    <span class="n">add_key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">job_attr</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">add_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># For all close_start transitions of the same job on the same machine</span>
+                    <span class="k">for</span> <span class="n">slot_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span><span class="p">)</span>
+                    <span class="p">):</span>
+                        <span class="n">close_key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;close_start&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">slot_idx</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">close_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">:</span>
+                            <span class="k">continue</span>
+
+                        <span class="c1"># Conditions when adding to batch is better than closing:</span>
+                        <span class="c1"># 1. Current batch is not empty</span>
+                        <span class="c1"># 2. Batch has the same attribute as job j</span>
+                        <span class="c1"># 3. Job fits in batch (duration compatibility)</span>
+                        <span class="c1"># 4. Job fits in capacity</span>
+                        <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="o">~</span><span class="n">current_batch</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">is_empty</span><span class="p">(),</span>
+                            <span class="n">batch_attribute</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">==</span> <span class="n">job_attr</span><span class="p">,</span>
+                            <span class="n">job_min_dur</span> <span class="o">&lt;=</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                            <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">job_max_dur</span><span class="p">,</span>
+                            <span class="n">earliest_start_table</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+                            <span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">job_size</span> <span class="o">&lt;=</span> <span class="n">machine_capacity</span><span class="p">,</span>
+                        <span class="p">]</span>
+
+                        <span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[</span><span class="n">add_key</span><span class="p">],</span>  <span class="c1"># Dominant: add to batch</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[</span>
+                                <span class="n">close_key</span>
+                            <span class="p">],</span>  <span class="c1"># Dominated: close and start</span>
+                            <span class="n">conditions</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">dominance_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Rule 2: Non-late job dominates late job for similar tasks</span>
+            <span class="c1"># If two jobs have the same attribute and can both fit in the current batch,</span>
+            <span class="c1"># prefer the one that won&#39;t be late</span>
+            <span class="n">dominance_count_2</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j1</span> <span class="ow">in</span> <span class="n">jobs_sorted</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">j2</span> <span class="ow">in</span> <span class="n">jobs_sorted</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># Only consider jobs with same attribute</span>
+                    <span class="k">if</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j2</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">attr</span> <span class="o">=</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span>
+
+                    <span class="c1"># Check if both have overlapping duration ranges</span>
+                    <span class="c1"># (can potentially fit in the same batch)</span>
+                    <span class="n">min_dur_overlap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">job_min_durations</span><span class="p">[</span><span class="n">j1</span><span class="p">],</span> <span class="n">job_min_durations</span><span class="p">[</span><span class="n">j2</span><span class="p">])</span>
+                    <span class="n">max_dur_overlap</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">job_max_durations</span><span class="p">[</span><span class="n">j1</span><span class="p">],</span> <span class="n">job_max_durations</span><span class="p">[</span><span class="n">j2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">min_dur_overlap</span> <span class="o">&gt;</span> <span class="n">max_dur_overlap</span><span class="p">:</span>
+                        <span class="k">continue</span>  <span class="c1"># No overlap in duration ranges</span>
+
+                    <span class="c1"># Find common eligible machines</span>
+                    <span class="n">common_machines</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span>
+                    <span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j2</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span><span class="p">)</span>
+
+                    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">common_machines</span><span class="p">:</span>
+                        <span class="c1"># Check if both add transitions exist</span>
+                        <span class="n">add_key_j1</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                        <span class="n">add_key_j2</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">add_key_j1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span>
+                            <span class="ow">or</span> <span class="n">add_key_j2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span>
+                        <span class="p">):</span>
+                            <span class="k">continue</span>
+
+                        <span class="c1"># Condition: j1 would not be late, but j2 would be late</span>
+                        <span class="c1"># End time of batch: batch_start_time + batch_duration</span>
+                        <span class="n">end_time</span> <span class="o">=</span> <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                        <span class="n">j1_not_late</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">latest_end_table</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span>
+                        <span class="n">j2_is_late</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">&gt;</span> <span class="n">latest_end_table</span><span class="p">[</span><span class="n">j2</span><span class="p">]</span>
+
+                        <span class="c1"># j1 dominates j2 if j1 is not late and j2 is late</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[</span><span class="n">add_key_j1</span><span class="p">],</span>  <span class="c1"># Dominant: non-late job</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[</span><span class="n">add_key_j2</span><span class="p">],</span>  <span class="c1"># Dominated: late job</span>
+                            <span class="p">[</span><span class="n">j1_not_late</span><span class="p">,</span> <span class="n">j2_is_late</span><span class="p">],</span>
+                        <span class="p">)</span>
+                        <span class="n">dominance_count_2</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Rule 3: Tighter deadline dominates when both would be on time</span>
+            <span class="c1"># If we can schedule either j1 or j2, and both would be on time,</span>
+            <span class="c1"># prefer the one with tighter deadline to avoid future conflicts</span>
+            <span class="n">dominance_count_3</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j1</span> <span class="ow">in</span> <span class="n">jobs_sorted</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">j2</span> <span class="ow">in</span> <span class="n">jobs_sorted</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="k">if</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j2</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># j1 has tighter deadline (earlier latest_end)</span>
+                    <span class="k">if</span> <span class="n">job_latest_ends</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">job_latest_ends</span><span class="p">[</span><span class="n">j2</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># j2&#39;s deadline is loose enough that the difference is meaningful (at least 10 time units)</span>
+                    <span class="k">if</span> <span class="n">job_latest_ends</span><span class="p">[</span><span class="n">j2</span><span class="p">]</span> <span class="o">-</span> <span class="n">job_latest_ends</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># Similar duration requirements</span>
+                    <span class="n">min_dur_overlap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">job_min_durations</span><span class="p">[</span><span class="n">j1</span><span class="p">],</span> <span class="n">job_min_durations</span><span class="p">[</span><span class="n">j2</span><span class="p">])</span>
+                    <span class="n">max_dur_overlap</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">job_max_durations</span><span class="p">[</span><span class="n">j1</span><span class="p">],</span> <span class="n">job_max_durations</span><span class="p">[</span><span class="n">j2</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">min_dur_overlap</span> <span class="o">&gt;</span> <span class="n">max_dur_overlap</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">attr</span> <span class="o">=</span> <span class="n">job_attributes</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span>
+                    <span class="n">common_machines</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span>
+                    <span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j2</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span><span class="p">)</span>
+
+                    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">common_machines</span><span class="p">:</span>
+                        <span class="n">add_key_j1</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                        <span class="n">add_key_j2</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">add_key_j1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span>
+                            <span class="ow">or</span> <span class="n">add_key_j2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span>
+                        <span class="p">):</span>
+                            <span class="k">continue</span>
+
+                        <span class="c1"># CRITICAL: Only dominate when BOTH would be on time</span>
+                        <span class="c1"># This ensures we&#39;re not forcing a late job just because it has tight deadline</span>
+                        <span class="n">end_time</span> <span class="o">=</span> <span class="n">batch_start_time</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                        <span class="n">both_on_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">latest_end_table</span><span class="p">[</span><span class="n">j1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span>
+                            <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">latest_end_table</span><span class="p">[</span><span class="n">j2</span><span class="p">]</span>
+                        <span class="p">)</span>
+
+                        <span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[</span>
+                                <span class="n">add_key_j1</span>
+                            <span class="p">],</span>  <span class="c1"># Dominant: tighter deadline</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">transition_ids</span><span class="p">[</span>
+                                <span class="n">add_key_j2</span>
+                            <span class="p">],</span>  <span class="c1"># Dominated: looser deadline</span>
+                            <span class="p">[</span><span class="n">both_on_time</span><span class="p">],</span>
+                        <span class="p">)</span>
+                        <span class="n">dominance_count_3</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Dual bounds (lower bound on cost-to-go)</span>
+        <span class="k">if</span> <span class="n">use_dual_bounds</span><span class="p">:</span>
+            <span class="c1"># A dual bound is a lower bound on the remaining cost</span>
+            <span class="c1"># We use the number of unscheduled jobs to estimate minimum remaining work</span>
+
+            <span class="c1"># Count remaining jobs</span>
+            <span class="n">remaining_jobs_count</span> <span class="o">=</span> <span class="n">unscheduled</span><span class="o">.</span><span class="n">len</span><span class="p">()</span>
+
+            <span class="c1"># Lower bound on processing time: use global minimum across ALL jobs</span>
+            <span class="c1"># (can&#39;t use table.min(unscheduled) as it may panic in certain states)</span>
+            <span class="n">remaining_size</span> <span class="o">=</span> <span class="n">batch_size</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+            <span class="n">global_min_duration</span> <span class="o">=</span> <span class="p">(</span><span class="n">remaining_jobs_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="n">min_duration_table</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">unscheduled</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Lower bound: remaining_jobs * min_duration * weight</span>
+            <span class="c1"># This assumes we can schedule all jobs optimally (which we can&#39;t always do)</span>
+            <span class="n">processing_lower_bound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">remaining_jobs_count</span> <span class="o">*</span> <span class="n">global_min_duration</span> <span class="o">*</span> <span class="n">weight_processing</span>
+            <span class="p">)</span>
+
+            <span class="c1"># For tardiness: very hard to estimate without knowing which jobs remain</span>
+            <span class="c1"># Use 0 as conservative estimate (assumes we might schedule everything on time)</span>
+            <span class="n">tardiness_lower_bound</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># Setup costs: also hard to predict, use 0</span>
+            <span class="n">setup_lower_bound</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">dual_bound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">processing_lower_bound</span> <span class="o">+</span> <span class="n">tardiness_lower_bound</span> <span class="o">+</span> <span class="n">setup_lower_bound</span>
+            <span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">dual_bound</span><span class="p">)</span>
+
+        <span class="c1"># Base case: all jobs scheduled</span>
+        <span class="c1"># When we reach the base case, we need to pay processing cost for all remaining open batches</span>
+        <span class="n">final_processing_cost</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">weight_processing</span> <span class="o">*</span> <span class="n">batch_duration</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">([</span><span class="n">unscheduled</span><span class="o">.</span><span class="n">is_empty</span><span class="p">()],</span> <span class="n">cost</span><span class="o">=</span><span class="n">final_processing_cost</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="DpOvenSchedulingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve solution from DIDPpy by replaying transitions.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">extract_info</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Extract transition info from name.&quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;add_&quot;</span><span class="p">):</span>
+                <span class="c1"># add_j{j}_m{m}_attr{attr}</span>
+                <span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\d+&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">numbers</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">numbers</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>  <span class="c1"># j, m, attr</span>
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;close_start_&quot;</span><span class="p">):</span>
+                <span class="c1"># close_start_j{j}_m{m}_slot{slot}</span>
+                <span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\d+&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="s2">&quot;close_start&quot;</span><span class="p">,</span>
+                        <span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="n">numbers</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                        <span class="n">numbers</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                    <span class="p">)</span>  <span class="c1"># j, m, slot</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Simulate the transitions to reconstruct batches</span>
+        <span class="c1"># Track current state</span>
+        <span class="n">current_batches</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">m</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">}</span>  <span class="c1"># Current open batch jobs</span>
+        <span class="n">closed_batches</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">m</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">}</span>  <span class="c1"># List of closed batches</span>
+        <span class="n">batch_start_times</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span>  <span class="c1"># Fixed when batch is created</span>
+        <span class="n">batch_durations</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span>  <span class="c1"># Fixed when batch is created</span>
+        <span class="n">batch_attributes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">initial_attribute</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">transition</span> <span class="ow">in</span> <span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">extract_info</span><span class="p">(</span><span class="n">transition</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">info</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;add&quot;</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">info</span>
+                <span class="c1"># Add job to current open batch</span>
+                <span class="n">current_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+
+                <span class="c1"># For dynamic duration model, update the batch duration</span>
+                <span class="c1"># It becomes the maximum of min_durations of all jobs in the batch</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_allow_batch_duration_update&quot;</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_batch_duration_update</span>
+                <span class="p">):</span>
+                    <span class="n">job_min_dur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span>
+                    <span class="n">batch_durations</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">batch_durations</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">job_min_dur</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;close_start&quot;</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">slot_idx</span> <span class="o">=</span> <span class="n">info</span>
+
+                <span class="c1"># Close current batch if not empty</span>
+                <span class="k">if</span> <span class="n">current_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                    <span class="n">jobs_in_batch</span> <span class="o">=</span> <span class="n">current_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                    <span class="n">attr</span> <span class="o">=</span> <span class="n">batch_attributes</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                    <span class="c1"># For dynamic model, recompute final duration based on all jobs</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_allow_batch_duration_update&quot;</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_batch_duration_update</span>
+                    <span class="p">):</span>
+                        <span class="c1"># Final duration = max of min_durations of all jobs in batch</span>
+                        <span class="n">duration</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j_id</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span>
+                            <span class="k">for</span> <span class="n">j_id</span> <span class="ow">in</span> <span class="n">jobs_in_batch</span>
+                        <span class="p">)</span>
+                        <span class="c1"># Verify it doesn&#39;t exceed min of max_durations (should already be satisfied by model)</span>
+                        <span class="n">max_duration_limit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j_id</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span>
+                            <span class="k">for</span> <span class="n">j_id</span> <span class="ow">in</span> <span class="n">jobs_in_batch</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">duration</span> <span class="o">&gt;</span> <span class="n">max_duration_limit</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Warning: batch duration </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2"> exceeds max limit </span><span class="si">{</span><span class="n">max_duration_limit</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                            <span class="n">duration</span> <span class="o">=</span> <span class="n">max_duration_limit</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">duration</span> <span class="o">=</span> <span class="n">batch_durations</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                    <span class="n">start_time</span> <span class="o">=</span> <span class="n">batch_start_times</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                    <span class="n">end_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">duration</span>
+
+                    <span class="n">closed_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">&quot;jobs&quot;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">jobs_in_batch</span><span class="p">),</span>
+                            <span class="s2">&quot;attribute&quot;</span><span class="p">:</span> <span class="n">attr</span><span class="p">,</span>
+                            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start_time</span><span class="p">,</span>
+                            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">end_time</span><span class="p">,</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
+
+                <span class="c1"># Start new batch with job j</span>
+                <span class="n">job_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+                <span class="c1"># Calculate setup time</span>
+                <span class="n">setup_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">batch_attributes</span><span class="p">[</span><span class="n">m</span><span class="p">]][</span>
+                    <span class="n">job_data</span><span class="o">.</span><span class="n">attribute</span>
+                <span class="p">]</span>
+
+                <span class="c1"># Get availability window</span>
+                <span class="n">avail_windows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span>
+                <span class="n">avail_start</span><span class="p">,</span> <span class="n">avail_end</span> <span class="o">=</span> <span class="n">avail_windows</span><span class="p">[</span><span class="n">slot_idx</span><span class="p">]</span>
+
+                <span class="c1"># Calculate start time for new batch (this is fixed for this batch)</span>
+                <span class="n">prev_end</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">batch_start_times</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_durations</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">current_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                    <span class="k">else</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">prev_end</span> <span class="o">+</span> <span class="n">setup_time</span><span class="p">,</span> <span class="n">job_data</span><span class="o">.</span><span class="n">earliest_start</span><span class="p">,</span> <span class="n">avail_start</span><span class="p">)</span>
+
+                <span class="c1"># Fix new batch parameters</span>
+                <span class="n">current_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">batch_attributes</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_data</span><span class="o">.</span><span class="n">attribute</span>
+                <span class="n">batch_start_times</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">start</span>
+                <span class="n">batch_durations</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">job_data</span><span class="o">.</span><span class="n">min_duration</span>
+                <span class="p">)</span>  <span class="c1"># Fixed to first job&#39;s min_duration</span>
+
+        <span class="c1"># Close any remaining open batches</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">current_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                <span class="n">jobs_in_batch</span> <span class="o">=</span> <span class="n">current_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                <span class="n">attr</span> <span class="o">=</span> <span class="n">batch_attributes</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                <span class="c1"># For dynamic model, recompute final duration based on all jobs</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_allow_batch_duration_update&quot;</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_batch_duration_update</span>
+                <span class="p">):</span>
+                    <span class="n">duration</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j_id</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span>
+                        <span class="k">for</span> <span class="n">j_id</span> <span class="ow">in</span> <span class="n">jobs_in_batch</span>
+                    <span class="p">)</span>
+                    <span class="n">max_duration_limit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j_id</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span>
+                        <span class="k">for</span> <span class="n">j_id</span> <span class="ow">in</span> <span class="n">jobs_in_batch</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">duration</span> <span class="o">&gt;</span> <span class="n">max_duration_limit</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Warning: final batch duration </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2"> exceeds max limit </span><span class="si">{</span><span class="n">max_duration_limit</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                        <span class="n">duration</span> <span class="o">=</span> <span class="n">max_duration_limit</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">duration</span> <span class="o">=</span> <span class="n">batch_durations</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">batch_start_times</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                <span class="n">end_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">duration</span>
+
+                <span class="n">closed_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;jobs&quot;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">jobs_in_batch</span><span class="p">),</span>
+                        <span class="s2">&quot;attribute&quot;</span><span class="p">:</span> <span class="n">attr</span><span class="p">,</span>
+                        <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start_time</span><span class="p">,</span>
+                        <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">end_time</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Convert to OvenSchedulingSolution format</span>
+        <span class="n">schedule_per_machine</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="n">batches</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">batch_info</span> <span class="ow">in</span> <span class="n">closed_batches</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                <span class="n">batches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ScheduleInfo</span><span class="p">(</span>
+                        <span class="n">tasks</span><span class="o">=</span><span class="n">batch_info</span><span class="p">[</span><span class="s2">&quot;jobs&quot;</span><span class="p">],</span>
+                        <span class="n">task_attribute</span><span class="o">=</span><span class="n">batch_info</span><span class="p">[</span><span class="s2">&quot;attribute&quot;</span><span class="p">],</span>
+                        <span class="n">start_time</span><span class="o">=</span><span class="n">batch_info</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">],</span>
+                        <span class="n">end_time</span><span class="o">=</span><span class="n">batch_info</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">],</span>
+                        <span class="n">machine_batch_index</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">batches</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">OvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">schedule_per_machine</span><span class="o">=</span><span class="n">schedule_per_machine</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Relative performance: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">additional_data</span><span class="p">[</span><span class="s1">&#39;ub&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+<div class="viewcode-block" id="DpOvenSchedulingSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">OvenSchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert an OvenSchedulingSolution into a sequence of transitions for warm start.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: An existing solution to use as warm start</span>
+
+<span class="sd">        The conversion depends on the batch duration model:</span>
+<span class="sd">        - Fixed duration model: Jobs in each batch are sorted by min_duration (descending)</span>
+<span class="sd">          to ensure the first job sets an appropriate batch duration</span>
+<span class="sd">        - Dynamic duration model: Jobs can be added in any feasible order</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model must be initialized before setting warm start&quot;</span><span class="p">)</span>
+
+        <span class="n">transitions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Process each machine&#39;s schedule</span>
+        <span class="k">for</span> <span class="n">machine_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">machine_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">batches</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="n">batch_info</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batches</span><span class="p">):</span>
+                <span class="n">jobs_in_batch</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">batch_info</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">jobs_in_batch</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Sort jobs for optimal transition sequence</span>
+                <span class="c1"># CRITICAL: The first job sets batch_start_time in the DP model.</span>
+                <span class="c1"># All subsequent jobs must satisfy: earliest_start &lt;= batch_start_time</span>
+                <span class="c1"># Therefore, we must start with the job that has the LATEST earliest_start</span>
+                <span class="c1"># to ensure all jobs in the batch can satisfy this constraint.</span>
+                <span class="c1"># Secondary sort by min_duration (descending) for fixed duration model.</span>
+                <span class="n">jobs_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="n">jobs_in_batch</span><span class="p">,</span>
+                    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">j</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span>
+                            <span class="n">j</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">earliest_start</span><span class="p">,</span>  <span class="c1"># Latest earliest_start first</span>
+                        <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span>
+                            <span class="n">j</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">min_duration</span><span class="p">,</span>  <span class="c1"># Then largest min_duration</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+
+                <span class="c1"># First job: close previous batch and start new one</span>
+                <span class="n">first_job</span> <span class="o">=</span> <span class="n">jobs_sorted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">job_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">first_job</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span>
+
+                <span class="c1"># Find appropriate availability slot for this batch</span>
+                <span class="n">slot_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_slot_for_batch</span><span class="p">(</span><span class="n">machine_id</span><span class="p">,</span> <span class="n">batch_info</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span>
+
+                <span class="c1"># Create close_and_start transition</span>
+                <span class="n">transition_key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;close_start&quot;</span><span class="p">,</span> <span class="n">first_job</span><span class="p">,</span> <span class="n">machine_id</span><span class="p">,</span> <span class="n">slot_idx</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">transition_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+                    <span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">transition_key</span><span class="p">])</span>
+
+                <span class="c1"># Remaining jobs: add to current batch</span>
+                <span class="k">for</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="n">jobs_sorted</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                    <span class="n">job_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span>
+
+                    <span class="c1"># Create add_to_batch transition</span>
+                    <span class="n">transition_key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">machine_id</span><span class="p">,</span> <span class="n">job_attr</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">transition_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+                        <span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">transition_key</span><span class="p">])</span>
+
+        <span class="c1"># Set the initial solution in DIDPpy</span>
+        <span class="k">if</span> <span class="n">transitions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="n">transitions</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warm start: converted solution to </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">transitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> transitions&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;Warning: could not generate any transitions from warm start solution&quot;</span>
+            <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_slot_for_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">machine_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">start_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the availability slot index that contains the given start time.&quot;&quot;&quot;</span>
+        <span class="n">availability</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span>
+
+        <span class="k">for</span> <span class="n">slot_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">slot_start</span><span class="p">,</span> <span class="n">slot_end</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">availability</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">slot_start</span> <span class="o">&lt;=</span> <span class="n">start_time</span> <span class="o">&lt;</span> <span class="n">slot_end</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">slot_idx</span>
+
+        <span class="c1"># Fallback: return first slot</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,37 @@
+discrete\_optimization.singlebatch package
+==========================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.singlebatch.solvers
+
+Submodules
+----------
+
+discrete\_optimization.singlebatch.problem module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.singlebatch.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlebatch.utils module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.singlebatch.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.singlebatch
+   :members:
+   :show-inheritance:
+   :undoc-members:

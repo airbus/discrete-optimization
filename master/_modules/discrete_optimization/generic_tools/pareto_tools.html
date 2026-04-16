@@ -1,0 +1,297 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.pareto_tools &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.pareto_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.pareto_tools</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">cp_model</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span><span class="p">,</span> <span class="n">StatusSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ortools_cpsat_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrtoolsCpSatSolver</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CpsatParetoSolver">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.pareto_tools.CpsatParetoSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpsatParetoSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds the Pareto front for N objectives using Iterative Blocking with Lexicographic Tightening.</span>
+
+<span class="sd">    Algorithm:</span>
+<span class="sd">    1. Search for a feasible solution (optimizing primary objective).</span>
+<span class="sd">    2. &#39;Tighten&#39; the solution to ensure Pareto optimality (Lexicographic minimization chain).</span>
+<span class="sd">    3. Record the solution.</span>
+<span class="sd">    4. Add a &#39;Blocking Clause&#39; to the model: Next solution must be strictly better</span>
+<span class="sd">       in at least one objective.</span>
+<span class="sd">    5. Repeat until Infeasible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">OrtoolsCpSatSolver</span><span class="p">,</span>
+        <span class="n">objective_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">dict_function</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Solution</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">delta_abs_improvement</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">delta_ref_improvement</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            solver: The base CP-SAT solver instance.</span>
+<span class="sd">            objective_names: list of objectives as string, to consider in the pareto</span>
+<span class="sd">            dict_function: a map of function to compute objective kpi on a solution</span>
+<span class="sd">            delta_abs_improvement: list of absolute improvement for each objective to add in the blocking clauses</span>
+<span class="sd">            delta_ref_improvement: list of relative improvement for each objective to add in the blocking clauses</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objective_names</span> <span class="o">=</span> <span class="n">objective_names</span>
+        <span class="k">if</span> <span class="n">dict_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dict_function</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">key</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">sol</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">sol</span><span class="p">)[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective_names</span>
+            <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict_function</span> <span class="o">=</span> <span class="n">dict_function</span>
+        <span class="k">if</span> <span class="n">delta_abs_improvement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">delta_abs_improvement</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objective_names</span><span class="p">))]</span>
+        <span class="k">if</span> <span class="n">delta_ref_improvement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">delta_ref_improvement</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.01</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objective_names</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_abs_improvement</span> <span class="o">=</span> <span class="n">delta_abs_improvement</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_ref_improvement</span> <span class="o">=</span> <span class="n">delta_ref_improvement</span>
+
+<div class="viewcode-block" id="CpsatParetoSolver.solve">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.pareto_tools.CpsatParetoSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">obj_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">cp_model</span><span class="o">.</span><span class="n">LinearExpr</span><span class="p">],</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">subsolver_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">subsolver_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subsolver_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># 1. Initialize Model</span>
+        <span class="c1"># self.solver.init_model()</span>
+        <span class="n">pareto_front</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">objectives</span> <span class="o">=</span> <span class="n">obj_vars</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="k">while</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">time_limit</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--- Iteration: Searching for non-dominated solutions ---&quot;</span><span class="p">)</span>
+            <span class="c1"># --- Step 1: Find a point on the pareto frontier with first objective ---</span>
+            <span class="c1"># We minimize the first objective to find *some* point on the frontier.</span>
+            <span class="c1"># (Constraints from previous steps ensure we don&#39;t find known points).</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">set_lexico_objective</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">objective_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">set_warm_start_from_previous_run</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="o">**</span><span class="n">subsolver_kwargs</span><span class="p">)</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">status_solver</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="ow">in</span> <span class="p">{</span><span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">}:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  -&gt; Infeasible. Pareto Front Search Complete.&quot;</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="c1"># Get candidate solution</span>
+            <span class="n">sol_candidate</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">get_best_solution</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">sol_candidate</span><span class="p">)</span>
+            <span class="n">vals_candidate</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dict_function</span><span class="p">[</span><span class="n">obj</span><span class="p">](</span><span class="n">sol_candidate</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective_names</span>
+            <span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Candidate found (pre-tightening): </span><span class="si">{</span><span class="n">vals_candidate</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># --- Step 2: Lexicographic Tightening ---</span>
+            <span class="c1"># Ensure the point is strictly Pareto optimal.</span>
+            <span class="c1"># Chain: Fix f1, Min f2 -&gt; Fix f1,f2, Min f3 -&gt; ...</span>
+            <span class="n">tightening_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">current_vals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">vals_candidate</span><span class="p">)</span>  <span class="c1"># We update these as we tighten</span>
+            <span class="n">sol_lex</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">fit_lex</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objectives</span><span class="p">)):</span>
+                <span class="c1"># For the objective we are about to optimize (obj[i]), we don&#39;t fix it yet.</span>
+                <span class="c1"># For all PREVIOUS objectives (0 to i-1), we fix them to their best found values.</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">prev_var</span> <span class="o">=</span> <span class="n">objectives</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">prev_val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">current_vals</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="c1"># Add constraint: obj[i-1] &lt;= val</span>
+                    <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">add_bound_constraint</span><span class="p">(</span>
+                        <span class="n">prev_var</span><span class="p">,</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">,</span> <span class="n">prev_val</span>
+                    <span class="p">)</span>
+                    <span class="n">tightening_constraints</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+                <span class="c1"># Now minimize current objective i</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">minimize_variable</span><span class="p">(</span><span class="n">objectives</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="c1"># Solve</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">set_warm_start_from_previous_run</span><span class="p">()</span>
+                <span class="n">res_lex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="o">**</span><span class="n">subsolver_kwargs</span><span class="p">)</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">status_solver</span>
+                <span class="k">if</span> <span class="n">status</span> <span class="ow">in</span> <span class="p">{</span><span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">}:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;  -&gt; Tightening failed (Infeasible). Keeping previous candidate.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">break</span>
+                <span class="c1"># Update current best values based on this tightening step</span>
+                <span class="c1"># Again, re-evaluate via problem</span>
+                <span class="n">sol_lex</span><span class="p">,</span> <span class="n">fit_lex</span> <span class="o">=</span> <span class="n">res_lex</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+                <span class="n">current_vals</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dict_function</span><span class="p">[</span><span class="n">obj</span><span class="p">](</span><span class="n">sol_lex</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective_names</span>
+                <span class="p">]</span>
+            <span class="c1"># Capture Final Tightened Solution</span>
+            <span class="c1"># Usually the last solution in the chain is the Tightened one</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Tightened Result: </span><span class="si">{</span><span class="n">current_vals</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">pareto_front</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol_lex</span><span class="p">,</span> <span class="n">fit_lex</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">tightening_constraints</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">remove_constraints</span><span class="p">(</span><span class="n">tightening_constraints</span><span class="p">)</span>
+            <span class="c1"># Block regions dominated by or equal to the found values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_blocking_constraint</span><span class="p">(</span><span class="n">objectives</span><span class="p">,</span> <span class="n">current_vals</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pareto_front</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_blocking_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objectives</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a permanent constraint: OR(obj[i] &lt;= val[i] - 1) for all i.</span>
+<span class="sd">        This blocks any solution that is &#39;worse or equal&#39; in all dimensions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">literals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obj_var</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">objectives</span><span class="p">):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="c1"># New boolean for this implication</span>
+            <span class="n">lit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;block_</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">literals</span><span class="p">)</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Enforce: lit =&gt; obj_var &lt;= val - 1</span>
+            <span class="c1"># (Strict improvement in this objective)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                <span class="n">obj_var</span>
+                <span class="o">&lt;=</span> <span class="n">val</span>
+                <span class="o">-</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">delta_abs_improvement</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta_ref_improvement</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">val</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">lit</span><span class="p">)</span>
+            <span class="n">literals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lit</span><span class="p">)</span>
+        <span class="c1"># Enforce: At least one of these strict improvements must happen</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddBoolOr</span><span class="p">(</span><span class="n">literals</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

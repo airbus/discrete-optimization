@@ -1,0 +1,582 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.renewable_resource &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.renewable_resource</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.renewable_resource</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchedulingProblem</span><span class="p">,</span>
+    <span class="n">SchedulingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">Resource</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Resource&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RenewableResourceProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RenewableResourceProblem</span><span class="p">(</span><span class="n">SchedulingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Resource</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for scheduling problems dealing with renewable resources whose availability depend on a calendar.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">renewable_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Resource</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Renewable resources used by the tasks.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            - renewable = the resource replenishes as soon as a task using it ends;</span>
+<span class="sd">            - it can be a mix of unary resources (e.g. employees) and cumulative resources (e.g. tool types).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+<div class="viewcode-block" id="RenewableResourceProblem.get_resource_availabilities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceProblem.get_resource_availabilities">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_availabilities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get availabilities intervals for a given resource</span>
+
+<span class="sd">        List of availability intervals of a resource.</span>
+<span class="sd">        If the resource is not available, potentially no interval returned.</span>
+
+<span class="sd">        It is assumed that the intervals are disjunct though.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of intervals of the form (start, end, value), which means from time `start` to time `end`,</span>
+<span class="sd">            there are `value` of the resource available.</span>
+<span class="sd">            NB: the start is included, the end is excluded (start &lt;= t &lt; end)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="RenewableResourceProblem.get_resource_consolidated_availabilities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceProblem.get_resource_consolidated_availabilities">[docs]</a>
+    <span class="nd">@cache</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_consolidated_availabilities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">horizon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get availabilities intervals for a given resource, consolidated as a partition of [0, horizon)</span>
+
+<span class="sd">        Default implementation use the `get_calendar_resource_availabilities`, by assuming the intervals are disjunct</span>
+<span class="sd">        but potentially lacking 0-valued intervals.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource:</span>
+<span class="sd">            horizon: max value of time considered. Default to `self.get_makespan_upper_bound()`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            sorted list of intervals of the form (start, end, value), which means from time `start` to time `end`,</span>
+<span class="sd">            there are `value` of the resource available</span>
+<span class="sd">            NB: the start is included, the end is excluded (start &lt;= t &lt; end)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">horizon</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">consolidate_availability_intervals</span><span class="p">(</span>
+            <span class="n">intervals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_resource_availabilities</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">),</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RenewableResourceProblem.get_resource_calendar">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceProblem.get_resource_calendar">[docs]</a>
+    <span class="nd">@cache</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_calendar</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">horizon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute resource calendar.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource:</span>
+<span class="sd">            horizon: max value of time considered. Default to `self.get_makespan_upper_bound()`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of resource value by time step from 0 to horizon-1.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">horizon</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">convert_availability_intervals_to_calendar</span><span class="p">(</span>
+            <span class="n">intervals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_resource_availabilities</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">),</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RenewableResourceProblem.get_resource_max_capacity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceProblem.get_resource_max_capacity">[docs]</a>
+    <span class="nd">@cache</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_max_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get max capacity of the given resource</span>
+
+<span class="sd">        Default implementation take the max over its calendar and cache it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="n">value</span>
+            <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_availabilities</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RenewableResourceProblem.update_resource_availabilities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceProblem.update_resource_availabilities">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_resource_availabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to call when the resource availabilities have changed.</span>
+
+<span class="sd">        Default implementation clears the cache on `get_resource_max_capacity()`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_max_capacity</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_calendar</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_consolidated_availabilities</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RenewableResourceProblem.get_fake_tasks">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceProblem.get_fake_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_fake_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get fake tasks explaining the delta between resource current capacity and its max capacity</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of intervals of the form (start, end, value),</span>
+<span class="sd">            for task starting at `start` and ending at `end`, using `value` resource.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">max_capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_max_capacity</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">consumption</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_consolidated_availabilities</span><span class="p">(</span>
+                <span class="n">resource</span><span class="o">=</span><span class="n">resource</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">consumption</span> <span class="o">:=</span> <span class="n">max_capacity</span> <span class="o">-</span> <span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RenewableResourceSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RenewableResourceSolution</span><span class="p">(</span><span class="n">SchedulingSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Resource</span><span class="p">]):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">RenewableResourceProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Resource</span><span class="p">]</span>
+
+<div class="viewcode-block" id="RenewableResourceSolution.get_resource_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceSolution.get_resource_consumption">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_consumption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get resource consumption by given task.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource:</span>
+<span class="sd">            task:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="RenewableResourceSolution.check_resource_capacity_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceSolution.check_resource_capacity_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_resource_capacity_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check capacity constraint on given renewable resource.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_resources_capacity_constraint_np</span><span class="p">(</span><span class="n">resources</span><span class="o">=</span><span class="p">(</span><span class="n">resource</span><span class="p">,))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_resource_capacity_constraint_naive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_max_end_time</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="nb">sum</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_consumption</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_running_tasks</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">&lt;=</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_resource_calendar</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">makespan</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_resources_capacity_constraint_np</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_max_end_time</span><span class="p">()</span>
+        <span class="n">resources_consumption</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">resource</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">makespan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                <span class="n">resources_consumption</span><span class="p">[</span><span class="n">resource</span><span class="p">][</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_consumption</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="n">resources_capa_violation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">resource</span><span class="p">:</span> <span class="n">conso</span>
+            <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_resource_calendar</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span> <span class="n">horizon</span><span class="o">=</span><span class="n">makespan</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">resource</span><span class="p">,</span> <span class="n">conso</span> <span class="ow">in</span> <span class="n">resources_consumption</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">resource_cap_violation</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">resource_cap_violation</span> <span class="ow">in</span> <span class="n">resources_capa_violation</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Violations on renewable resource capacities:&quot;</span><span class="p">)</span>
+            <span class="n">violations</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">resource</span><span class="p">:</span> <span class="n">violation_timesteps</span>
+                <span class="k">for</span> <span class="n">resource</span><span class="p">,</span> <span class="n">resource_cap_violation</span> <span class="ow">in</span> <span class="n">resources_capa_violation</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">((</span><span class="n">violation_timesteps</span> <span class="o">:=</span> <span class="n">resource_cap_violation</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">resource</span><span class="p">,</span> <span class="n">violation_timesteps</span> <span class="ow">in</span> <span class="n">violations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;resource &#39;</span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2">&#39;: at time </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">violation_timesteps</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="RenewableResourceSolution.check_resources_capacity_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceSolution.check_resources_capacity_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_resources_capacity_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check capacity constraint respected on given resources.</span>
+
+<span class="sd">        Do it simultaneously on all resources to optimize computation time.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_resources_capacity_constraint_np</span><span class="p">(</span><span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RenewableResourceSolution.check_all_resource_capacity_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.RenewableResourceSolution.check_all_resource_capacity_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_all_resource_capacity_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check capacity constraint on all renewable resources.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_resources_capacity_constraint_np</span><span class="p">(</span>
+            <span class="n">resources</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">renewable_resources_list</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="convert_calendar_to_availability_intervals">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.convert_calendar_to_availability_intervals">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_calendar_to_availability_intervals</span><span class="p">(</span>
+    <span class="n">calendar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a calendar into availability intervals.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        calendar: if integer means a constant value, else list of values for each time step.</span>
+<span class="sd">            If len(calendar)&lt;horizon, last values are assumed to be 0.</span>
+<span class="sd">            If len(calendar)&gt;horizon, it is truncated to calendar[:horizon]</span>
+<span class="sd">        horizon: maximum time step considered</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of (start,end, value), a sorted partition of [0, horizon)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">calendar</span><span class="p">):</span>  <span class="c1"># constant resource</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">calendar</span><span class="p">))]</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># varying resource</span>
+        <span class="n">intervals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">calendar</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="n">end_calendar</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">calendar</span><span class="p">),</span> <span class="n">horizon</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">end_calendar</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">calendar</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>
+                <span class="c1"># ends current interval, starts the next one</span>
+                <span class="n">intervals</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">t</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">calendar</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="n">intervals</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start</span><span class="p">,</span> <span class="n">end_calendar</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">intervals</span></div>
+
+
+
+<div class="viewcode-block" id="consolidate_availability_intervals">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.consolidate_availability_intervals">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">consolidate_availability_intervals</span><span class="p">(</span>
+    <span class="n">intervals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that the intervals are a partition of [0, horizon).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        intervals: intervals (start, end, value). Supposed to be disjunct.</span>
+<span class="sd">        horizon: max value of time considered</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        sorted list of intervals constituting a partition of [0, horizon)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># truncate to horizon</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">new_end</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">intervals</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">new_end</span> <span class="o">:=</span> <span class="nb">min</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">horizon</span><span class="p">))</span>  <span class="c1"># remove empty intervals</span>
+    <span class="p">]</span>
+
+    <span class="c1"># sort intervals</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">intervals</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">interval</span><span class="p">:</span> <span class="n">interval</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="c1"># look for gaps between intervals =&gt; 0 resource</span>
+    <span class="n">ends</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">end</span> <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">intervals</span><span class="p">]</span>
+    <span class="n">next_starts</span> <span class="o">=</span> <span class="p">[</span><span class="n">start</span> <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">intervals</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">horizon</span><span class="p">]</span>
+    <span class="n">missing_intervals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">next_start</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ends</span><span class="p">,</span> <span class="n">next_starts</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">end</span> <span class="o">&lt;</span> <span class="n">next_start</span><span class="p">:</span>
+            <span class="n">missing_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">end</span><span class="p">,</span> <span class="n">next_start</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">end</span> <span class="o">&gt;</span> <span class="n">next_start</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Availability intervals intersecting.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_intervals</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">intervals</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">intervals</span> <span class="o">+</span> <span class="n">missing_intervals</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">interval</span><span class="p">:</span> <span class="n">interval</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">intervals</span></div>
+
+
+
+<div class="viewcode-block" id="convert_availability_intervals_to_calendar">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.convert_availability_intervals_to_calendar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_availability_intervals_to_calendar</span><span class="p">(</span>
+    <span class="n">intervals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert availability intervals into a calendar.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        intervals: availability intervals, assumed to be disjunct</span>
+<span class="sd">        horizon: maximum time step considered</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of available resource values for each time step</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">value</span>
+        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">consolidate_availability_intervals</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="n">horizon</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="merge_resources_availability_intervals">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.merge_resources_availability_intervals">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_resources_availability_intervals</span><span class="p">(</span>
+    <span class="n">intervals_per_resource</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge several resources availability intervals, considering all resources as one meta-resource</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        intervals_per_resource: availability for each resource</span>
+<span class="sd">        horizon: maximum time step considered</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        availability intervals for the meta-resource</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">convert_calendar_to_availability_intervals</span><span class="p">(</span>
+        <span class="n">merge_resources_calendars</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">convert_availability_intervals_to_calendar</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">intervals</span> <span class="ow">in</span> <span class="n">intervals_per_resource</span>
+            <span class="p">],</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="merge_resources_calendars">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.merge_resources_calendars">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_resources_calendars</span><span class="p">(</span><span class="n">calendars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge several resources calendars, considering all resources as one meta-resource</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        calendars: calendars for each resource to merge</span>
+<span class="sd">        horizon: maximum time step considered</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        calendar for the meta-resource</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">horizon</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">(</span>
+                    <span class="n">consolidate_calendar</span><span class="p">(</span><span class="n">calendar</span><span class="p">,</span> <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">calendar</span> <span class="ow">in</span> <span class="n">calendars</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="consolidate_calendar">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.renewable_resource.consolidate_calendar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">consolidate_calendar</span><span class="p">(</span><span class="n">calendar</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Consoidate the calendar to correspond to the given horizon</span>
+
+
+<span class="sd">    If too long, retursn calendar[:horizon].</span>
+<span class="sd">    If too short, fill with 0&#39;s.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        calendar:</span>
+<span class="sd">        horizon:</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        a calendar of size `horizon`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">calendar</span><span class="p">[:</span><span class="n">horizon</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">horizon</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendar</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

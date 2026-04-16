@@ -1,0 +1,682 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.salbp.solvers package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.singlebatch package" href="discrete_optimization.singlebatch.html" />
+    <link rel="prev" title="discrete_optimization.salbp package" href="discrete_optimization.salbp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcalbp_l.html">discrete_optimization.rcalbp_l package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.salbp.html">discrete_optimization.salbp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.salbp.html">discrete_optimization.salbp package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.salbp.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-salbp-solvers-package">
+<h1>discrete_optimization.salbp.solvers package<a class="headerlink" href="#discrete-optimization-salbp-solvers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.salbp.solvers.asp">
+<span id="discrete-optimization-salbp-solvers-asp-module"></span><h2>discrete_optimization.salbp.solvers.asp module<a class="headerlink" href="#module-discrete_optimization.salbp.solvers.asp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.asp.</span></span><span class="sig-name descname"><span class="pre">AspSalbpSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/asp.html#AspSalbpSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.asp_tools.AspClingoSolver" title="discrete_optimization.generic_tools.asp_tools.AspClingoSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AspClingoSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<p>Solver based on Answer Set Programming for the Simple Assembly Line Balancing Problem.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver.build_heuristic_input">
+<span class="sig-name descname"><span class="pre">build_heuristic_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/asp.html#AspSalbpSolver.build_heuristic_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.build_heuristic_input" title="Link to this definition"></a></dt>
+<dd><p>Builds clingo heuristics based on an existing solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver.build_string_data_input">
+<span class="sig-name descname"><span class="pre">build_string_data_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/asp.html#AspSalbpSolver.build_string_data_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.build_string_data_input" title="Link to this definition"></a></dt>
+<dd><p>Converts SalbpProblem instance data into ASP facts.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/asp.html#AspSalbpSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/asp.html#AspSalbpSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Parses the Clingo model to construct a SalbpSolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/asp.html#AspSalbpSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Re-initializes the control object with a solution hint.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.asp.AspSalbpSolver.upper_bound">
+<span class="sig-name descname"><span class="pre">upper_bound</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.asp.AspSalbpSolver.upper_bound" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.salbp.solvers.cpsat">
+<span id="discrete-optimization-salbp-solvers-cpsat-module"></span><h2>discrete_optimization.salbp.solvers.cpsat module<a class="headerlink" href="#module-discrete_optimization.salbp.solvers.cpsat" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">CpSatSalbp12Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem_1_2" title="discrete_optimization.salbp.problem.SalbpProblem_1_2"><span class="pre">SalbpProblem_1_2</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.get_task_start_or_end_variable">
+<span class="sig-name descname"><span class="pre">get_task_start_or_end_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver.get_task_start_or_end_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.get_task_start_or_end_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the variable storing the start or end time of given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='modeling',</span> <span class="pre">default=&lt;ModelingCpsatSalbp.SCHEDULING:</span> <span class="pre">0&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='modeling')]</span></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model_binary">
+<span class="sig-name descname"><span class="pre">init_model_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver.init_model_binary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model_binary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model_scheduling">
+<span class="sig-name descname"><span class="pre">init_model_scheduling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver.init_model_scheduling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.init_model_scheduling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem_1_2" title="discrete_optimization.salbp.problem.SalbpProblem_1_2"><span class="pre">SalbpProblem_1_2</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbp12Solver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbp12Solver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">CpSatSalbpSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.get_task_start_or_end_variable">
+<span class="sig-name descname"><span class="pre">get_task_start_or_end_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver.get_task_start_or_end_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.get_task_start_or_end_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the variable storing the start or end time of given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExpr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IntVar</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint8</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint32</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int64</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">uint64</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='modeling',</span> <span class="pre">default=&lt;ModelingCpsatSalbp.SCHEDULING:</span> <span class="pre">0&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='modeling'),</span> <span class="pre">CategoricalHyperparameter(name='use_lb',</span> <span class="pre">default=True,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='use_lb')]</span></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model_binary">
+<span class="sig-name descname"><span class="pre">init_model_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver.init_model_binary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model_binary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model_scheduling">
+<span class="sig-name descname"><span class="pre">init_model_scheduling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver.init_model_scheduling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.init_model_scheduling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.modeling">
+<span class="sig-name descname"><span class="pre">modeling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp" title="discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp"><span class="pre">ModelingCpsatSalbp</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.modeling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#CpSatSalbpSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.CpSatSalbpSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">ModelingCpsatSalbp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/cpsat.html#ModelingCpsatSalbp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp.BINARY">
+<span class="sig-name descname"><span class="pre">BINARY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp.BINARY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp.SCHEDULING">
+<span class="sig-name descname"><span class="pre">SCHEDULING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.cpsat.ModelingCpsatSalbp.SCHEDULING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.salbp.solvers.dp">
+<span id="discrete-optimization-salbp-solvers-dp-module"></span><h2>discrete_optimization.salbp.solvers.dp module<a class="headerlink" href="#module-discrete_optimization.salbp.solvers.dp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.dp.DpSalbpSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.dp.</span></span><span class="sig-name descname"><span class="pre">DpSalbpSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/dp.html#DpSalbpSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.dp.DpSalbpSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.dyn_prog_tools.DpSolver" title="discrete_optimization.generic_tools.dyn_prog_tools.DpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DpSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.dp.DpSalbpSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/dp.html#DpSalbpSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Model adapted from :
+<a class="reference external" href="https://github.com/domain-independent-dp/didp-rs/blob/main/didppy/examples/salbp-1.ipynb">https://github.com/domain-independent-dp/didp-rs/blob/main/didppy/examples/salbp-1.ipynb</a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.dp.DpSalbpSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.dp.DpSalbpSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/dp.html#DpSalbpSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.dp.DpSalbpSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/dp.html#DpSalbpSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.dp.DpSalbpSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.salbp.solvers.greedy">
+<span id="discrete-optimization-salbp-solvers-greedy-module"></span><h2>discrete_optimization.salbp.solvers.greedy module<a class="headerlink" href="#module-discrete_optimization.salbp.solvers.greedy" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.greedy.</span></span><span class="sig-name descname"><span class="pre">GreedySalbpSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/greedy.html#GreedySalbpSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/greedy.html#GreedySalbpSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.greedy.GreedySalbpSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.salbp.solvers.optal">
+<span id="discrete-optimization-salbp-solvers-optal-module"></span><h2>discrete_optimization.salbp.solvers.optal module<a class="headerlink" href="#module-discrete_optimization.salbp.solvers.optal" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.optal.</span></span><span class="sig-name descname"><span class="pre">OptalSalbp12Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver" title="discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingOptalSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.add_lexico_constraint">
+<span class="sig-name descname"><span class="pre">add_lexico_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.add_lexico_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.add_lexico_constraint" title="Link to this definition"></a></dt>
+<dd><p>Add a constraint on a computed sub-objective</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>value</strong> – the limiting value.
+If the optimization direction is maximizing, this is a lower bound,
+else this is an upper bound.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the created constraints.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_lexico_objective_value">
+<span class="sig-name descname"><span class="pre">get_lexico_objective_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.get_lexico_objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_lexico_objective_value" title="Link to this definition"></a></dt>
+<dd><p>Get best internal model objective value found by last call to <cite>solve()</cite>.</p>
+<p>The default implementation consists in using the fit of the last solution in result_storage.
+This assumes:
+- that the last solution is the best one for the objective considered
+- that no aggregation was performed but rather that the fitness is a TupleFitness</p>
+<blockquote>
+<div><p>with values in the same order as <cite>self.problem.get_objective_names()</cite>.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>res</strong> – result storage returned by last call to solve().</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_lexico_objectives_available">
+<span class="sig-name descname"><span class="pre">get_lexico_objectives_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.get_lexico_objectives_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_lexico_objectives_available" title="Link to this definition"></a></dt>
+<dd><p>List objectives available for lexico optimization</p>
+<p>It corresponds to the labels accepted for obj argument for
+- <cite>set_lexico_objective()</cite>
+- <cite>add_lexico_constraint()</cite>
+- <cite>get_lexico_objective_value()</cite></p>
+<p>Default to <cite>self.problem.get_objective_names()</cite>.</p>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_task_interval_variable">
+<span class="sig-name descname"><span class="pre">get_task_interval_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.IntervalVar</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.get_task_interval_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.get_task_interval_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the interval variable of given task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.implements_lexico_api">
+<span class="sig-name descname"><span class="pre">implements_lexico_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.implements_lexico_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.implements_lexico_api" title="Link to this definition"></a></dt>
+<dd><p>Tell whether this solver is implementing the api for lexicographic optimization.</p>
+<p>Should return True only if</p>
+<ul class="simple">
+<li><p><cite>set_lexico_objective()</cite></p></li>
+<li><p><cite>add_lexico_constraint()</cite></p></li>
+<li><p><cite>get_lexico_objective_value()</cite></p></li>
+</ul>
+<p>have been really implemented, i.e.
+- calling <cite>set_lexico_objective()</cite> and <cite>add_lexico_constraint()</cite></p>
+<blockquote>
+<div><p>should actually change the next call to <cite>solve()</cite>,</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><cite>get_lexico_objective_value()</cite> should correspond to the internal model objective</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a CP model instance</p>
+<p>Afterwards, self.instance should not be None anymore.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.init_model_scheduling">
+<span class="sig-name descname"><span class="pre">init_model_scheduling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.init_model_scheduling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.init_model_scheduling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem_1_2" title="discrete_optimization.salbp.problem.SalbpProblem_1_2"><span class="pre">SalbpProblem_1_2</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cp.SolveResult</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Return a d-o solution from the variables computed by minizinc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>result</strong> – output of the cp.solve</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.set_lexico_objective">
+<span class="sig-name descname"><span class="pre">set_lexico_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.set_lexico_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.set_lexico_objective" title="Link to this definition"></a></dt>
+<dd><p>Update internal model objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbp12Solver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbp12Solver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.salbp.solvers.optal.</span></span><span class="sig-name descname"><span class="pre">OptalSalbpSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbpSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver" title="discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingOptalSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.get_task_interval_variable">
+<span class="sig-name descname"><span class="pre">get_task_interval_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.IntervalVar</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbpSolver.get_task_interval_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.get_task_interval_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the interval variable of given task.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='use_lb',</span> <span class="pre">default=True,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='use_lb')]</span></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbpSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a CP model instance</p>
+<p>Afterwards, self.instance should not be None anymore.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.init_model_scheduling">
+<span class="sig-name descname"><span class="pre">init_model_scheduling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbpSolver.init_model_scheduling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.init_model_scheduling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpProblem" title="discrete_optimization.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cp.SolveResult</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbpSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Return a d-o solution from the variables computed by minizinc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>result</strong> – output of the cp.solve</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.salbp.html#discrete_optimization.salbp.problem.SalbpSolution" title="discrete_optimization.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/salbp/solvers/optal.html#OptalSalbpSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.salbp.solvers.optal.OptalSalbpSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.salbp.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.salbp.solvers" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.salbp.html" class="btn btn-neutral float-left" title="discrete_optimization.salbp package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.singlebatch.html" class="btn btn-neutral float-right" title="discrete_optimization.singlebatch package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

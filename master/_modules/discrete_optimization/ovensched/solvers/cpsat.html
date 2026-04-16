@@ -1,0 +1,921 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.ovensched.solvers.cpsat &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.ovensched.solvers.cpsat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.ovensched.solvers.cpsat</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSolverSolutionCallback</span><span class="p">,</span>
+    <span class="n">Domain</span><span class="p">,</span>
+    <span class="n">LinearExpr</span><span class="p">,</span>
+    <span class="n">LinearExprT</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cpsat</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationCpSatSolver</span><span class="p">,</span>
+    <span class="n">SchedulingCpSatSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">WarmstartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Machine</span><span class="p">,</span>
+    <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+    <span class="n">OvenSchedulingSolution</span><span class="p">,</span>
+    <span class="n">ScheduleInfo</span><span class="p">,</span>
+    <span class="n">Task</span><span class="p">,</span>
+    <span class="n">UnaryResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.solution_vector</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorOvenSchedulingSolution</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OvenSchedulingCpSatSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenSchedulingCpSatSolver</span><span class="p">(</span>
+    <span class="n">SchedulingCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">AllocationCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+    <span class="n">WarmstartMixin</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;CP-SAT solver for the Oven Scheduling Problem.</span>
+
+<span class="sd">    This solver models:</span>
+<span class="sd">    - Tasks that must be scheduled</span>
+<span class="sd">    - Machines with availability windows and initial states</span>
+<span class="sd">    - Batching: tasks with the same attribute can be batched together</span>
+<span class="sd">    - Batch capacity constraints</span>
+<span class="sd">    - Setup times and costs between different task attributes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">ParamsObjectiveFunction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: The oven scheduling problem instance</span>
+<span class="sd">            params_objective_function: Parameters for objective function (weights, handling, etc.)</span>
+<span class="sd">            **kwargs: Additional arguments passed to parent constructors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Will be set in init_model</span>
+
+        <span class="c1"># Index tasks by eligible machines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">m</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">t</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Variables storage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="OvenSchedulingCpSatSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">max_nb_batch_per_machine</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the CP-SAT model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_nb_batch_per_machine: Maximum number of batches per machine.</span>
+<span class="sd">                If None, estimated as 4 * n_jobs / n_machines</span>
+<span class="sd">            **kwargs: Additional arguments passed to parent init_model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Set max_nb_batch based on parameter or default heuristic</span>
+        <span class="k">if</span> <span class="n">max_nb_batch_per_machine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span> <span class="o">=</span> <span class="n">max_nb_batch_per_machine</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Default heuristic</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create decision variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_batch_variables</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_task_variables</span><span class="p">()</span>
+
+        <span class="c1"># Add constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_batch_ordering_constraints</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calendar_constraints</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_task_allocation_constraints</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_batch_capacity_constraints</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_setup_constraints</span><span class="p">()</span>
+
+        <span class="c1"># Set objective using params_objective_function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_objective_from_params</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_batch_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create variables for batches on each machine.&quot;&quot;&quot;</span>
+        <span class="c1"># For each machine and batch position, create:</span>
+        <span class="c1"># - start/end/duration variables</span>
+        <span class="c1"># - presence variable (is this batch used?)</span>
+        <span class="c1"># - attribute variables (which task attribute is this batch processing?)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_interval&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="n">machine_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+            <span class="n">calendar</span> <span class="o">=</span> <span class="n">machine_data</span><span class="o">.</span><span class="n">availability</span>
+            <span class="c1"># Get possible attributes for this machine</span>
+            <span class="n">possible_attributes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="c1"># Get possible durations</span>
+            <span class="n">possible_durations</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                <span class="n">possible_durations</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span><span class="p">)</span>
+                <span class="n">possible_durations</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_duration&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_interval&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">possible_attributes</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                <span class="c1"># Start/end must be in availability windows</span>
+                <span class="n">start_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVarFromDomain</span><span class="p">(</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">FromIntervals</span><span class="p">(</span><span class="n">calendar</span><span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;batch_start_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">end_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVarFromDomain</span><span class="p">(</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">FromIntervals</span><span class="p">(</span><span class="n">calendar</span><span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;batch_end_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">duration_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVarFromDomain</span><span class="p">(</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">FromValues</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">possible_durations</span><span class="p">)),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;batch_duration_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">present_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;batch_present_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start_var</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end_var</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_duration&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">duration_var</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">present_var</span><span class="p">)</span>
+                <span class="c1"># Optional interval for this batch</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_interval&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewOptionalIntervalVar</span><span class="p">(</span>
+                        <span class="n">start</span><span class="o">=</span><span class="n">start_var</span><span class="p">,</span>
+                        <span class="n">size</span><span class="o">=</span><span class="n">duration_var</span><span class="p">,</span>
+                        <span class="n">end</span><span class="o">=</span><span class="n">end_var</span><span class="p">,</span>
+                        <span class="n">is_present</span><span class="o">=</span><span class="n">present_var</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;batch_interval_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="c1"># Attribute indicator variables</span>
+                <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">possible_attributes</span><span class="p">:</span>
+                    <span class="n">attr_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;batch_attr_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">_a</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">attr</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attr_var</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_task_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create variables for task scheduling and allocation.&quot;&quot;&quot;</span>
+        <span class="c1"># For each task:</span>
+        <span class="c1"># - which machine is it allocated to?</span>
+        <span class="c1"># - which batch on that machine?</span>
+        <span class="c1"># - what are its start/end times?</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_end&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_interval&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">horizon</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="n">interval</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">machine_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span>
+            <span class="k">for</span> <span class="n">interval</span> <span class="ow">in</span> <span class="n">machine_data</span><span class="o">.</span><span class="n">availability</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">):</span>
+            <span class="n">task_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+            <span class="c1"># Task timing variables</span>
+            <span class="n">start_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">task_data</span><span class="o">.</span><span class="n">earliest_start</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task_start_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">end_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">task_data</span><span class="o">.</span><span class="n">earliest_start</span> <span class="o">+</span> <span class="n">task_data</span><span class="o">.</span><span class="n">min_duration</span><span class="p">,</span>
+                <span class="n">ub</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task_end_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">duration_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">task_data</span><span class="o">.</span><span class="n">min_duration</span><span class="p">,</span>
+                <span class="n">ub</span><span class="o">=</span><span class="n">task_data</span><span class="o">.</span><span class="n">max_duration</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task_duration_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_start&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_var</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_end&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">end_var</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_duration&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">duration_var</span>
+
+            <span class="c1"># Link start + duration = end</span>
+            <span class="n">interval_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">start_var</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">duration_var</span><span class="p">,</span>
+                <span class="n">end</span><span class="o">=</span><span class="n">end_var</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task_interval_m</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_interval&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">interval_var</span>
+            <span class="c1"># Machine allocation variables</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">task_data</span><span class="o">.</span><span class="n">eligible_machines</span><span class="p">:</span>
+                <span class="c1"># Binary: is task t on machine m?</span>
+                <span class="n">machine_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">_on_machine_</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">machine_var</span>
+                <span class="c1"># For each batch position on machine m</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                    <span class="n">batch_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">_on_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_var</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_batch_ordering_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints on batch ordering and presence.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="c1"># Batches must be used in order (no gaps)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="p">)</span>
+
+                <span class="c1"># If batch b+1 is present, batch b+1 must start after batch b ends</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># Each present batch must have exactly one attribute</span>
+            <span class="n">possible_attributes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddAtMostOne</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">attr</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">possible_attributes</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">attr</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">possible_attributes</span>
+                    <span class="p">)</span>
+                    <span class="o">==</span> <span class="mi">1</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calendar_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="n">availability</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span>
+            <span class="n">virtual_itv</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">new_fixed_size_interval_var</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">av</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;avail_</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">av</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">av</span> <span class="ow">in</span> <span class="n">availability</span>
+            <span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_no_overlap</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_interval&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">virtual_itv</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_task_allocation_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add constraints linking tasks to batches.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">):</span>
+            <span class="n">task_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+            <span class="c1"># Each task must be on exactly one machine</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddExactlyOne</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">task_data</span><span class="o">.</span><span class="n">eligible_machines</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Each task must be in exactly one batch</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">task_data</span><span class="o">.</span><span class="n">eligible_machines</span><span class="p">:</span>
+                <span class="c1"># If task is on machine m, it must be in exactly one batch on m</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">])</span>
+
+                <span class="c1"># If task is not on machine m, it&#39;s in no batch on m</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">())</span>
+
+                <span class="c1"># Link task-in-batch to batch presence and attributes</span>
+                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                    <span class="n">task_in_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+
+                    <span class="c1"># If task t is in batch b on machine m:</span>
+                    <span class="c1"># 1. Batch b must be present</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">task_in_batch</span><span class="p">)</span>
+
+                    <span class="c1"># 2. Batch attribute must match task attribute</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">task_data</span><span class="o">.</span><span class="n">attribute</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="mi">1</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">task_in_batch</span><span class="p">)</span>
+
+                    <span class="c1"># 3. Task timing = batch timing</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_start&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">task_in_batch</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_end&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">task_in_batch</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_duration&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_duration&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">task_in_batch</span><span class="p">)</span>
+
+            <span class="c1"># Each present batch must have at least one task</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                    <span class="n">tasks_in_batch</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">tasks_in_batch</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">tasks_in_batch</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">tasks_in_batch</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">()</span>
+                        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_batch_capacity_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add capacity constraints for each batch.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span>
+
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                <span class="c1"># Sum of sizes of tasks in this batch &lt;= capacity</span>
+                <span class="n">tasks_sizes</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                <span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">tasks_sizes</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                        <span class="n">LinearExpr</span><span class="o">.</span><span class="n">weighted_sum</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tasks_sizes</span><span class="p">],</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tasks_sizes</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="o">&lt;=</span> <span class="n">capacity</span>
+                    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_setup_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add setup time and cost constraints.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Get all possible setup values</span>
+        <span class="n">all_setup_times</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">}</span>
+        <span class="n">all_setup_costs</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">:</span>
+            <span class="n">all_setup_times</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">:</span>
+            <span class="n">all_setup_costs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="n">machine_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+            <span class="n">possible_attributes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_time&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                <span class="c1"># Setup time/cost variables</span>
+                <span class="n">setup_time_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVarFromDomain</span><span class="p">(</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">FromValues</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_setup_times</span><span class="p">)),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;setup_time_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">setup_cost_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVarFromDomain</span><span class="p">(</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">FromValues</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_setup_costs</span><span class="p">)),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;setup_cost_m</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">_b</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_time&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">setup_time_var</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">setup_cost_var</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># Setup from initial state</span>
+                    <span class="n">prev_attr</span> <span class="o">=</span> <span class="n">machine_data</span><span class="o">.</span><span class="n">initial_attribute</span>
+                    <span class="k">for</span> <span class="n">curr_attr</span> <span class="ow">in</span> <span class="n">possible_attributes</span><span class="p">:</span>
+                        <span class="n">is_curr_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span>
+                            <span class="n">curr_attr</span>
+                        <span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                        <span class="n">setup_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">curr_attr</span><span class="p">]</span>
+                        <span class="n">setup_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">curr_attr</span><span class="p">]</span>
+
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">setup_time_var</span> <span class="o">==</span> <span class="n">setup_time</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">is_curr_attr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]]</span>
+                        <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">setup_cost_var</span> <span class="o">==</span> <span class="n">setup_cost</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">is_curr_attr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]]</span>
+                        <span class="p">)</span>
+
+                        <span class="c1"># Start time must account for setup</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">setup_time</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">is_curr_attr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]]</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Setup from previous batch</span>
+                    <span class="k">for</span> <span class="n">prev_attr</span> <span class="ow">in</span> <span class="n">possible_attributes</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">curr_attr</span> <span class="ow">in</span> <span class="n">possible_attributes</span><span class="p">:</span>
+                            <span class="n">is_prev_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span>
+                                <span class="n">prev_attr</span>
+                            <span class="p">][</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                            <span class="n">is_curr_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span>
+                                <span class="n">curr_attr</span>
+                            <span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                            <span class="n">setup_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">curr_attr</span><span class="p">]</span>
+                            <span class="n">setup_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">curr_attr</span><span class="p">]</span>
+
+                            <span class="n">both_present</span> <span class="o">=</span> <span class="p">[</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">],</span>
+                                <span class="n">is_prev_attr</span><span class="p">,</span>
+                                <span class="n">is_curr_attr</span><span class="p">,</span>
+                            <span class="p">]</span>
+
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                                <span class="n">setup_time_var</span> <span class="o">==</span> <span class="n">setup_time</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">both_present</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                                <span class="n">setup_cost_var</span> <span class="o">==</span> <span class="n">setup_cost</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">both_present</span><span class="p">)</span>
+
+                            <span class="c1"># Start time must be after previous end + setup</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                                <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">setup_time</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">both_present</span><span class="p">)</span>
+
+                <span class="c1"># If batch not present, setup is 0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">setup_time_var</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">setup_cost_var</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">Not</span><span class="p">()</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_objective_from_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the objective function using params_objective_function.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">objective_terms</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Get weights from params_objective_function</span>
+        <span class="n">weights_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">obj_name</span><span class="p">:</span> <span class="n">weight</span>
+            <span class="k">for</span> <span class="n">obj_name</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Processing time: sum of all batch durations</span>
+        <span class="k">if</span> <span class="s2">&quot;processing_time&quot;</span> <span class="ow">in</span> <span class="n">weights_dict</span> <span class="ow">and</span> <span class="n">weights_dict</span><span class="p">[</span><span class="s2">&quot;processing_time&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">total_processing</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_duration&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="s2">&quot;processing_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_processing</span>
+            <span class="n">objective_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">weights_dict</span><span class="p">[</span><span class="s2">&quot;processing_time&quot;</span><span class="p">]</span>
+                <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="s2">&quot;processing_time&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Tardiness: number of jobs finishing after their deadline</span>
+        <span class="k">if</span> <span class="s2">&quot;nb_late_jobs&quot;</span> <span class="ow">in</span> <span class="n">weights_dict</span> <span class="ow">and</span> <span class="n">weights_dict</span><span class="p">[</span><span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">late_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;late_tasks&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">):</span>
+                <span class="n">task_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">task_data</span><span class="o">.</span><span class="n">latest_end</span> <span class="o">&lt;</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">):</span>
+                    <span class="n">is_late</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">_late&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_end&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">task_data</span><span class="o">.</span><span class="n">latest_end</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">is_late</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_end&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">task_data</span><span class="o">.</span><span class="n">latest_end</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">is_late</span><span class="o">.</span><span class="n">Not</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;late_tasks&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_late</span>
+                    <span class="n">late_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">is_late</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">late_jobs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinearExpr</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">late_jobs</span><span class="p">)</span>
+                <span class="n">objective_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">weights_dict</span><span class="p">[</span><span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">]</span>
+                    <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Setup cost: sum of all setup costs</span>
+        <span class="k">if</span> <span class="s2">&quot;setup_cost&quot;</span> <span class="ow">in</span> <span class="n">weights_dict</span> <span class="ow">and</span> <span class="n">weights_dict</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">total_setup_cost</span> <span class="o">=</span> <span class="n">LinearExpr</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_setup_cost</span>
+            <span class="n">objective_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">weights_dict</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">])</span>
+                <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;objectives&quot;</span><span class="p">][</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">objective_terms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">objective_terms</span><span class="p">))</span>
+
+<div class="viewcode-block" id="OvenSchedulingCpSatSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OvenSchedulingSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a solution from the CP-SAT solver&#39;s internal state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cpsolvercb: The OR-Tools callback providing variable values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An OvenSchedulingSolution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">schedule_per_machine</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Machine</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScheduleInfo</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">m</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Extract solution for each machine</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># Find which tasks are in this batch</span>
+                    <span class="n">tasks_in_batch</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="o">==</span> <span class="mi">1</span>
+                        <span class="p">):</span>
+                            <span class="n">tasks_in_batch</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">tasks_in_batch</span><span class="p">:</span>
+                        <span class="c1"># Determine the attribute of this batch</span>
+                        <span class="n">task_attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span>
+                            <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">tasks_in_batch</span><span class="p">))</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">attribute</span>
+
+                        <span class="n">start_time</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="n">end_time</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">b</span><span class="p">])</span>
+
+                        <span class="n">schedule_info</span> <span class="o">=</span> <span class="n">ScheduleInfo</span><span class="p">(</span>
+                            <span class="n">tasks</span><span class="o">=</span><span class="n">tasks_in_batch</span><span class="p">,</span>
+                            <span class="n">task_attribute</span><span class="o">=</span><span class="n">task_attribute</span><span class="p">,</span>
+                            <span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+                            <span class="n">end_time</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
+                            <span class="n">machine_batch_index</span><span class="o">=</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">schedule_info</span><span class="p">)</span>
+
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">OvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">schedule_per_machine</span><span class="o">=</span><span class="n">schedule_per_machine</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">additional_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ub&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+
+    <span class="c1"># Implement abstract methods from SchedulingCpSatSolver</span>
+<div class="viewcode-block" id="OvenSchedulingCpSatSolver.get_task_start_or_end_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.get_task_start_or_end_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve the variable storing the start or end time of given task.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_start&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_end&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span></div>
+
+
+    <span class="c1"># Implement abstract methods from AllocationCpSatSolver</span>
+<div class="viewcode-block" id="OvenSchedulingCpSatSolver.get_task_unary_resource_is_present_variable">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.get_task_unary_resource_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a 0-1 variable telling if the unary_resource is used for the task.&quot;&quot;&quot;</span>
+        <span class="n">machine</span><span class="p">,</span> <span class="n">batch_idx</span> <span class="o">=</span> <span class="n">unary_resource</span>
+        <span class="k">if</span> <span class="n">machine</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">batch_idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">machine</span><span class="p">]):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">machine</span><span class="p">][</span><span class="n">batch_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># Not compatible</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingCpSatSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">OvenSchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">clear_hints</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">to_oven_scheduling_solution</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">solution</span>
+        <span class="c1"># Iterate over ALL machines, not just those with batches</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="c1"># Number of batches on this machine in the solution</span>
+            <span class="n">nb_batches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">[]))</span>
+
+            <span class="k">if</span> <span class="n">nb_batches</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Machine has batches in solution - set hints for used batches</span>
+                <span class="n">prev_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">initial_attribute</span>
+                <span class="k">for</span> <span class="n">i_batch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_batches</span><span class="p">):</span>
+                    <span class="n">sched_info</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">]</span>
+                    <span class="n">attr</span> <span class="o">=</span> <span class="n">sched_info</span><span class="o">.</span><span class="n">task_attribute</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">sched_info</span><span class="o">.</span><span class="n">start_time</span>
+                    <span class="n">end</span> <span class="o">=</span> <span class="n">sched_info</span><span class="o">.</span><span class="n">end_time</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_time&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">attr</span><span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">attr</span><span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">start</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">end</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_duration&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">],</span> <span class="mi">1</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">attribute</span> <span class="o">==</span> <span class="n">attr</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">attribute</span><span class="p">][</span>
+                                    <span class="n">i_batch</span>
+                                <span class="p">],</span>
+                                <span class="mi">1</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">attribute</span><span class="p">][</span>
+                                    <span class="n">i_batch</span>
+                                <span class="p">],</span>
+                                <span class="mi">0</span><span class="p">,</span>
+                            <span class="p">)</span>
+
+                    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">sched_info</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">m</span><span class="p">],</span> <span class="mi">1</span>
+                            <span class="p">)</span>
+                            <span class="k">for</span> <span class="n">mm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]:</span>
+                                <span class="k">if</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">mm</span><span class="p">:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">mm</span><span class="p">],</span> <span class="mi">0</span>
+                                    <span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">m</span><span class="p">][</span>
+                                    <span class="n">i_batch</span>
+                                <span class="p">],</span>
+                                <span class="mi">1</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">m</span><span class="p">][</span>
+                                        <span class="n">i_batch</span>
+                                    <span class="p">],</span>
+                                    <span class="mi">0</span><span class="p">,</span>
+                                <span class="p">)</span>
+                    <span class="c1"># Update prev_attr for next batch</span>
+                    <span class="n">prev_attr</span> <span class="o">=</span> <span class="n">attr</span>
+                <span class="n">last_start</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end_time</span>
+
+            <span class="c1"># Set hints for unused batch positions (from nb_batches to max_nb_batch)</span>
+            <span class="c1"># Use first availability window start to ensure hint is in domain</span>
+            <span class="n">safe_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i_batch_after</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_batches</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_nb_batch</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_time&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch_after</span><span class="p">],</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;setup_cost&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch_after</span><span class="p">],</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_start&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch_after</span><span class="p">],</span> <span class="n">safe_time</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_end&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch_after</span><span class="p">],</span> <span class="n">safe_time</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_duration&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch_after</span><span class="p">],</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_present&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch_after</span><span class="p">],</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;batch_attribute_is&quot;</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">attribute</span><span class="p">][</span>
+                            <span class="n">i_batch_after</span>
+                        <span class="p">],</span>
+                        <span class="mi">0</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="c1"># Hint that no tasks are assigned to unused batch positions</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">i_batch_after</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">m</span><span class="p">]</span>
+                        <span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_on_machine_batch&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">m</span><span class="p">][</span>
+                                    <span class="n">i_batch_after</span>
+                                <span class="p">],</span>
+                                <span class="mi">0</span><span class="p">,</span>
+                            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+                    <span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="p">),</span>
+                <span class="n">st</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">),</span>
+                <span class="n">end</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_duration&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">],</span> <span class="n">end</span> <span class="o">-</span> <span class="n">st</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;late_tasks&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;late_tasks&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">end</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;late_tasks&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_hint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;late_tasks&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

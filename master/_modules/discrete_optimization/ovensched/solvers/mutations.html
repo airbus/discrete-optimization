@@ -1,0 +1,971 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.ovensched.solvers.mutations &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.ovensched.solvers.mutations</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.ovensched.solvers.mutations</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Mutation operators for the Oven Scheduling Problem.</span>
+
+<span class="sd">This module provides mutation operators that work with the VectorOvenSchedulingSolution</span>
+<span class="sd">using the permutation encoding..</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_mutation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LocalMove</span><span class="p">,</span>
+    <span class="n">LocalMoveDefault</span><span class="p">,</span>
+    <span class="n">Mutation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched</span><span class="w"> </span><span class="kn">import</span> <span class="n">OvenSchedulingProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">OvenSchedulingProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.solution_vector</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorOvenSchedulingSolution</span>
+
+
+<div class="viewcode-block" id="OvenPermutationSwap">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationSwap">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenPermutationSwap</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mutation operator that swaps two random positions in the permutation.</span>
+<span class="sd">    This is a simple but effective mutation for permutation-based solutions.</span>
+<span class="sd">    We dont use common SwapMutation to handle the cache mecanism happening in VectorOvenSchedulingSolution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OvenPermutationSwap.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationSwap.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply swap mutation to a solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The solution to mutate (must be VectorOvenSchedulingSolution)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (new solution, local move object)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">solution</span><span class="p">,</span> <span class="n">move</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Solution must be VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span>
+
+        <span class="c1"># Choose two random distinct positions</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Create new permutation with swapped elements</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">new_perm</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">new_perm</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_perm</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">new_perm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create local move (for backtracking if needed)</span>
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OvenPermutationInsert">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationInsert">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenPermutationInsert</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mutation operator that moves an element from one position to another.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OvenPermutationInsert.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationInsert.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply insert mutation to a solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The solution to mutate (must be VectorOvenSchedulingSolution)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (new solution, local move object)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Solution must be VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span>
+
+        <span class="c1"># Choose source and target positions</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Create new permutation with element moved</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="n">new_perm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Remove from position i</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># Insert at position j</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create local move</span>
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OvenPermutationPartialShuffle">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationPartialShuffle">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenPermutationPartialShuffle</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mutation operator that shuffles a random subsequence of the permutation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the partial shuffle mutation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: The problem instance</span>
+<span class="sd">            min_length: Minimum length of subsequence to shuffle</span>
+<span class="sd">            max_length: Maximum length of subsequence to shuffle (default: n_jobs // 4)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_length</span> <span class="o">=</span> <span class="n">min_length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="n">max_length</span> <span class="k">if</span> <span class="n">max_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">//</span> <span class="mi">4</span>
+
+<div class="viewcode-block" id="OvenPermutationPartialShuffle.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationPartialShuffle.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply partial shuffle mutation to a solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The solution to mutate (must be VectorOvenSchedulingSolution)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (new solution, local move object)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Solution must be VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span>
+
+        <span class="c1"># Choose subsequence length</span>
+        <span class="n">max_len</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">subseq_length</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_length</span><span class="p">,</span> <span class="n">max_len</span><span class="p">)</span>
+
+        <span class="c1"># Choose starting position</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">subseq_length</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">subseq_length</span>
+
+        <span class="c1"># Create new permutation with shuffled subsequence</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">subseq</span> <span class="o">=</span> <span class="n">new_perm</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">subseq</span><span class="p">)</span>
+        <span class="n">new_perm</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">=</span> <span class="n">subseq</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create local move</span>
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OvenPermutationTwoOpt">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationTwoOpt">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenPermutationTwoOpt</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    2-opt mutation: reverses a random subsequence of the permutation.</span>
+
+<span class="sd">    This is a classic neighborhood operator for permutation problems.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OvenPermutationTwoOpt.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationTwoOpt.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply 2-opt mutation to a solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The solution to mutate (must be VectorOvenSchedulingSolution)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (new solution, local move object)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Solution must be VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span>
+
+        <span class="c1"># Choose two distinct positions</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="c1"># Create new permutation with reversed subsequence</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">new_perm</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_perm</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create local move</span>
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OvenPermutationMixedMutation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationMixedMutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenPermutationMixedMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixed mutation that randomly applies one of several mutation operators.</span>
+
+<span class="sd">    This provides diversity in the search process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+        <span class="n">swap_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span>
+        <span class="n">insert_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">two_opt_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">shuffle_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize mixed mutation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: The problem instance</span>
+<span class="sd">            swap_prob: Probability of applying swap mutation</span>
+<span class="sd">            insert_prob: Probability of applying insert mutation</span>
+<span class="sd">            two_opt_prob: Probability of applying 2-opt mutation</span>
+<span class="sd">            shuffle_prob: Probability of applying partial shuffle mutation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Normalize probabilities</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">swap_prob</span> <span class="o">+</span> <span class="n">insert_prob</span> <span class="o">+</span> <span class="n">two_opt_prob</span> <span class="o">+</span> <span class="n">shuffle_prob</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">swap_prob</span> <span class="o">=</span> <span class="n">swap_prob</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insert_prob</span> <span class="o">=</span> <span class="n">insert_prob</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">two_opt_prob</span> <span class="o">=</span> <span class="n">two_opt_prob</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shuffle_prob</span> <span class="o">=</span> <span class="n">shuffle_prob</span> <span class="o">/</span> <span class="n">total</span>
+
+        <span class="c1"># Create mutation operators</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;swap&quot;</span><span class="p">:</span> <span class="n">OvenPermutationSwap</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+            <span class="s2">&quot;insert&quot;</span><span class="p">:</span> <span class="n">OvenPermutationInsert</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+            <span class="s2">&quot;two_opt&quot;</span><span class="p">:</span> <span class="n">OvenPermutationTwoOpt</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+            <span class="s2">&quot;shuffle&quot;</span><span class="p">:</span> <span class="n">OvenPermutationPartialShuffle</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="OvenPermutationMixedMutation.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationMixedMutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply a randomly selected mutation to a solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The solution to mutate (must be VectorOvenSchedulingSolution)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (new solution, local move object)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Choose mutation based on probabilities</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_prob</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;swap&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_prob</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_prob</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;insert&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_prob</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_prob</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">two_opt_prob</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;two_opt&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;shuffle&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SwapBatchesMutation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.SwapBatchesMutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SwapBatchesMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Swap Batches (SB) mutation from the paper.</span>
+
+<span class="sd">    Swaps two batches on the same machine by reordering their tasks in the permutation.</span>
+<span class="sd">    This changes the processing order of batches on a machine.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SwapBatchesMutation.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.SwapBatchesMutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Swap two batches on the same machine.</span>
+
+<span class="sd">        Strategy:</span>
+<span class="sd">        1. Decode permutation to identify batches</span>
+<span class="sd">        2. Choose a machine with at least 2 batches</span>
+<span class="sd">        3. Pick two batches to swap</span>
+<span class="sd">        4. Reorder permutation to swap these batches</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Decode to get batch structure</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_schedule</span><span class="p">()</span>
+
+        <span class="c1"># Find machines with at least 2 batches</span>
+        <span class="n">machines_with_batches</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">m</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">machines_with_batches</span><span class="p">:</span>
+            <span class="c1"># No batches to swap, return unchanged</span>
+            <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Choose random machine</span>
+        <span class="n">machine</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">machines_with_batches</span><span class="p">)</span>
+        <span class="n">batches</span> <span class="o">=</span> <span class="n">schedule</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine</span><span class="p">]</span>
+
+        <span class="c1"># Choose two random batches to swap</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)),</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="c1"># Get tasks in each batch</span>
+        <span class="n">batch_i_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">batches</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+        <span class="n">batch_j_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">batches</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+
+        <span class="c1"># Create new permutation by swapping batch task groups</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Find positions of tasks in permutation</span>
+        <span class="n">batch_i_positions</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_perm</span> <span class="o">==</span> <span class="n">task</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">batch_i_tasks</span><span class="p">]</span>
+        <span class="n">batch_j_positions</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_perm</span> <span class="o">==</span> <span class="n">task</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">batch_j_tasks</span><span class="p">]</span>
+
+        <span class="c1"># Sort positions to maintain relative order within batches</span>
+        <span class="n">batch_i_positions</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">batch_j_positions</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="c1"># Swap the task groups in the permutation</span>
+        <span class="c1"># Extract tasks</span>
+        <span class="n">batch_i_extracted</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_perm</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">batch_i_positions</span><span class="p">]</span>
+        <span class="n">batch_j_extracted</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_perm</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">batch_j_positions</span><span class="p">]</span>
+
+        <span class="c1"># Place batch_j tasks where batch_i was</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batch_i_positions</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_j_extracted</span><span class="p">):</span>
+                <span class="n">new_perm</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_j_extracted</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+        <span class="c1"># Place batch_i tasks where batch_j was</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batch_j_positions</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_i_extracted</span><span class="p">):</span>
+                <span class="n">new_perm</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_i_extracted</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MoveJobToExistingBatchMutation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToExistingBatchMutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MoveJobToExistingBatchMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Moves a job closer to an existing compatible batch in the permutation.</span>
+<span class="sd">    This encourages the decoder to batch them together.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MoveJobToExistingBatchMutation.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToExistingBatchMutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move a job close to a compatible batch.</span>
+
+<span class="sd">        Strategy:</span>
+<span class="sd">        1. Decode to identify batches</span>
+<span class="sd">        2. Pick a random batch</span>
+<span class="sd">        3. Find a job compatible with this batch (same attribute)</span>
+<span class="sd">        4. Move job close to batch tasks in permutation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Decode to get batch structure</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_schedule</span><span class="p">()</span>
+
+        <span class="c1"># Collect all batches</span>
+        <span class="n">all_batches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">schedule</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                <span class="n">all_batches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">batch</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">all_batches</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Choose random batch</span>
+        <span class="n">machine</span><span class="p">,</span> <span class="n">target_batch</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">all_batches</span><span class="p">)</span>
+        <span class="n">target_attr</span> <span class="o">=</span> <span class="n">target_batch</span><span class="o">.</span><span class="n">task_attribute</span>
+        <span class="n">target_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">target_batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+
+        <span class="c1"># Find jobs with same attribute not in this batch</span>
+        <span class="n">compatible_jobs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">job</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">job</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span> <span class="o">==</span> <span class="n">target_attr</span>
+            <span class="ow">and</span> <span class="n">job</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_batch</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">compatible_jobs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Choose random compatible job</span>
+        <span class="n">job_to_move</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">compatible_jobs</span><span class="p">)</span>
+
+        <span class="c1"># Create new permutation: move job close to target batch</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Find position of job and position of first task in target batch</span>
+        <span class="n">job_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_perm</span> <span class="o">==</span> <span class="n">job_to_move</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">target_task</span> <span class="o">=</span> <span class="n">target_tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">target_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_perm</span> <span class="o">==</span> <span class="n">target_task</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Remove job from current position</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">job_pos</span><span class="p">)</span>
+
+        <span class="c1"># Insert near target batch (right after target_task)</span>
+        <span class="c1"># Adjust target_pos if job was before it</span>
+        <span class="k">if</span> <span class="n">job_pos</span> <span class="o">&lt;</span> <span class="n">target_pos</span><span class="p">:</span>
+            <span class="n">target_pos</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">target_pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">job_to_move</span><span class="p">)</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MoveJobToNewBatchMutation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToNewBatchMutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MoveJobToNewBatchMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move Job to New Batch</span>
+<span class="sd">    Moves a job away from its current batch neighbors to encourage</span>
+<span class="sd">    creating a new batch.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MoveJobToNewBatchMutation.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToNewBatchMutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move a job away from its batch to create a new batch.</span>
+
+<span class="sd">        Strategy:</span>
+<span class="sd">        1. Decode to identify batches</span>
+<span class="sd">        2. Pick a batch with at least 2 jobs</span>
+<span class="sd">        3. Move one job far from its batch neighbors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Decode to get batch structure</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_schedule</span><span class="p">()</span>
+
+        <span class="c1"># Find batches with at least 2 jobs</span>
+        <span class="n">splittable_batches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">schedule</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">splittable_batches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">batch</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">splittable_batches</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Choose random batch to split</span>
+        <span class="n">machine</span><span class="p">,</span> <span class="n">source_batch</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">splittable_batches</span><span class="p">)</span>
+        <span class="n">batch_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+
+        <span class="c1"># Choose random job to move away</span>
+        <span class="n">job_to_move</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">batch_tasks</span><span class="p">)</span>
+
+        <span class="c1"># Create new permutation: move job to a random distant position</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Find current position</span>
+        <span class="n">job_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_perm</span> <span class="o">==</span> <span class="n">job_to_move</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Remove job</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">job_pos</span><span class="p">)</span>
+
+        <span class="c1"># Insert at random position (prefer far from current position)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_perm</span><span class="p">)</span>
+        <span class="c1"># Choose from positions at least n/4 away</span>
+        <span class="n">min_distance</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">far_positions</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">pos</span> <span class="o">-</span> <span class="n">job_pos</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_distance</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">far_positions</span><span class="p">:</span>
+            <span class="n">new_pos</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">far_positions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_pos</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">new_pos</span><span class="p">,</span> <span class="n">job_to_move</span><span class="p">)</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="InvertBatchesOrderMutation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.InvertBatchesOrderMutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InvertBatchesOrderMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Invert Batches Order</span>
+<span class="sd">    Reverses the order of a sequence of batches on a machine.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="InvertBatchesOrderMutation.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.InvertBatchesOrderMutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Invert order of consecutive batches.</span>
+
+<span class="sd">        Strategy:</span>
+<span class="sd">        1. Decode to identify batches</span>
+<span class="sd">        2. Choose machine and range of batches</span>
+<span class="sd">        3. Reverse their order in the permutation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Decode to get batch structure</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_schedule</span><span class="p">()</span>
+
+        <span class="c1"># Find machines with at least 2 batches</span>
+        <span class="n">machines_with_batches</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">m</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">machines_with_batches</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Choose random machine</span>
+        <span class="n">machine</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">machines_with_batches</span><span class="p">)</span>
+        <span class="n">batches</span> <span class="o">=</span> <span class="n">schedule</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine</span><span class="p">]</span>
+
+        <span class="c1"># Choose range of batches to invert</span>
+        <span class="n">num_batches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">num_batches</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Choose start and end positions</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_batches</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="c1"># Get all tasks in the batches to invert</span>
+        <span class="n">tasks_to_invert</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">batch_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">tasks_to_invert</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">batches</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">]</span><span class="o">.</span><span class="n">tasks</span><span class="p">))</span>
+
+        <span class="c1"># Find positions of these tasks in permutation</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">task_positions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks_to_invert</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_perm</span> <span class="o">==</span> <span class="n">task</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">task_positions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pos</span><span class="p">,</span> <span class="n">task</span><span class="p">))</span>
+
+        <span class="c1"># Sort by position</span>
+        <span class="n">task_positions</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="c1"># Reverse the tasks</span>
+        <span class="n">reversed_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">task</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">task_positions</span><span class="p">)]</span>
+
+        <span class="c1"># Place reversed tasks back</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">task_positions</span><span class="p">):</span>
+            <span class="n">new_perm</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="n">reversed_tasks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MoveJobsToNewBatchMutation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobsToNewBatchMutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MoveJobsToNewBatchMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Moves multiple jobs from one batch to create a new batch elsewhere.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+        <span class="n">min_jobs_to_move</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">max_jobs_to_move</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_jobs_to_move</span> <span class="o">=</span> <span class="n">min_jobs_to_move</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_jobs_to_move</span> <span class="o">=</span> <span class="n">max_jobs_to_move</span>
+
+<div class="viewcode-block" id="MoveJobsToNewBatchMutation.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobsToNewBatchMutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move multiple jobs together to form a new batch.</span>
+
+<span class="sd">        Strategy:</span>
+<span class="sd">        1. Find a batch with enough jobs</span>
+<span class="sd">        2. Select subset of jobs (with same attribute)</span>
+<span class="sd">        3. Move them together to a new position</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected VectorOvenSchedulingSolution, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Decode to get batch structure</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_schedule</span><span class="p">()</span>
+
+        <span class="c1"># Find batches with enough jobs</span>
+        <span class="n">suitable_batches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">schedule</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_jobs_to_move</span><span class="p">:</span>
+                    <span class="n">suitable_batches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">batch</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">suitable_batches</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solution</span><span class="p">,</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Choose random batch</span>
+        <span class="n">machine</span><span class="p">,</span> <span class="n">source_batch</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">suitable_batches</span><span class="p">)</span>
+        <span class="n">batch_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+
+        <span class="c1"># Determine how many jobs to move</span>
+        <span class="n">num_to_move</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">min_jobs_to_move</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_jobs_to_move</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_tasks</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Choose random jobs to move</span>
+        <span class="n">jobs_to_move</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">batch_tasks</span><span class="p">,</span> <span class="n">num_to_move</span><span class="p">)</span>
+
+        <span class="c1"># Create new permutation</span>
+        <span class="n">new_perm</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Find positions of jobs to move</span>
+        <span class="n">job_positions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_to_move</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_perm</span> <span class="o">==</span> <span class="n">job</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">job_positions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pos</span><span class="p">,</span> <span class="n">job</span><span class="p">))</span>
+
+        <span class="c1"># Sort by position</span>
+        <span class="n">job_positions</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="c1"># Remove jobs from current positions (in reverse order to maintain indices)</span>
+        <span class="k">for</span> <span class="n">pos</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">job_positions</span><span class="p">):</span>
+            <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+
+        <span class="c1"># Insert jobs together at new position</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_perm</span><span class="p">)</span>
+        <span class="n">new_pos</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_to_move</span><span class="p">:</span>
+            <span class="n">new_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">new_perm</span><span class="p">,</span> <span class="n">new_pos</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+            <span class="n">new_pos</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># Keep them together</span>
+
+        <span class="c1"># Create new solution</span>
+        <span class="n">new_solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">new_perm</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">move</span> <span class="o">=</span> <span class="n">LocalMoveDefault</span><span class="p">(</span><span class="n">prev_solution</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span> <span class="n">new_solution</span><span class="o">=</span><span class="n">new_solution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_solution</span><span class="p">,</span> <span class="n">move</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ScheduleAwareMixedMutation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.ScheduleAwareMixedMutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScheduleAwareMixedMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixed mutation combining all schedule-aware operators.</span>
+
+<span class="sd">    Randomly applies one of the schedule-aware mutations from the paper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+        <span class="n">swap_batches_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">mjeb_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">mjnb_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.20</span><span class="p">,</span>
+        <span class="n">invert_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>
+        <span class="n">move_jobs_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Normalize probabilities</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">swap_batches_prob</span> <span class="o">+</span> <span class="n">mjeb_prob</span> <span class="o">+</span> <span class="n">mjnb_prob</span> <span class="o">+</span> <span class="n">invert_prob</span> <span class="o">+</span> <span class="n">move_jobs_prob</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">swap_batches_prob</span> <span class="o">=</span> <span class="n">swap_batches_prob</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mjeb_prob</span> <span class="o">=</span> <span class="n">mjeb_prob</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mjnb_prob</span> <span class="o">=</span> <span class="n">mjnb_prob</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invert_prob</span> <span class="o">=</span> <span class="n">invert_prob</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">move_jobs_prob</span> <span class="o">=</span> <span class="n">move_jobs_prob</span> <span class="o">/</span> <span class="n">total</span>
+
+        <span class="c1"># Create mutation operators</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;swap_batches&quot;</span><span class="p">:</span> <span class="n">SwapBatchesMutation</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+            <span class="s2">&quot;mjeb&quot;</span><span class="p">:</span> <span class="n">MoveJobToExistingBatchMutation</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+            <span class="s2">&quot;mjnb&quot;</span><span class="p">:</span> <span class="n">MoveJobToNewBatchMutation</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+            <span class="s2">&quot;invert&quot;</span><span class="p">:</span> <span class="n">InvertBatchesOrderMutation</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+            <span class="s2">&quot;move_jobs&quot;</span><span class="p">:</span> <span class="n">MoveJobsToNewBatchMutation</span><span class="p">(</span><span class="n">problem</span><span class="p">),</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="ScheduleAwareMixedMutation.mutate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.ScheduleAwareMixedMutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">LocalMove</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply randomly selected schedule-aware mutation.&quot;&quot;&quot;</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_batches_prob</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;swap_batches&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_batches_prob</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjeb_prob</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;mjeb&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_batches_prob</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjeb_prob</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjnb_prob</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;mjnb&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">r</span>
+            <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_batches_prob</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjeb_prob</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjnb_prob</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">invert_prob</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;invert&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">[</span><span class="s2">&quot;move_jobs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

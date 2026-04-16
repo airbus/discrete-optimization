@@ -1,0 +1,1126 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.ovensched package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.ovensched.solvers package" href="discrete_optimization.ovensched.solvers.html" />
+    <link rel="prev" title="discrete_optimization.maximum_independent_set.solvers package" href="discrete_optimization.maximum_independent_set.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcalbp_l.html">discrete_optimization.rcalbp_l package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.html">discrete_optimization.salbp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.ovensched package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-ovensched-package">
+<h1>discrete_optimization.ovensched package<a class="headerlink" href="#discrete-optimization-ovensched-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html">discrete_optimization.ovensched.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#module-discrete_optimization.ovensched.solvers.cpsat">discrete_optimization.ovensched.solvers.cpsat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingCpSatSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.get_task_start_or_end_variable"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingCpSatSolver.get_task_start_or_end_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.get_task_unary_resource_is_present_variable"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingCpSatSolver.get_task_unary_resource_is_present_variable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.init_model"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingCpSatSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.problem"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingCpSatSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingCpSatSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.cpsat.OvenSchedulingCpSatSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingCpSatSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#module-discrete_optimization.ovensched.solvers.dp">discrete_optimization.ovensched.solvers.dp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver"><code class="docutils literal notranslate"><span class="pre">DpOvenSchedulingSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver.init_model"><code class="docutils literal notranslate"><span class="pre">DpOvenSchedulingSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver.problem"><code class="docutils literal notranslate"><span class="pre">DpOvenSchedulingSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">DpOvenSchedulingSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.dp.DpOvenSchedulingSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">DpOvenSchedulingSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#module-discrete_optimization.ovensched.solvers.greedy">discrete_optimization.ovensched.solvers.greedy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.greedy.GreedyOvenSchedulingSolver"><code class="docutils literal notranslate"><span class="pre">GreedyOvenSchedulingSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.greedy.GreedyOvenSchedulingSolver.init_model"><code class="docutils literal notranslate"><span class="pre">GreedyOvenSchedulingSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.greedy.GreedyOvenSchedulingSolver.problem"><code class="docutils literal notranslate"><span class="pre">GreedyOvenSchedulingSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.greedy.GreedyOvenSchedulingSolver.solve"><code class="docutils literal notranslate"><span class="pre">GreedyOvenSchedulingSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#module-discrete_optimization.ovensched.solvers.mutations">discrete_optimization.ovensched.solvers.mutations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.InvertBatchesOrderMutation"><code class="docutils literal notranslate"><span class="pre">InvertBatchesOrderMutation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.InvertBatchesOrderMutation.mutate"><code class="docutils literal notranslate"><span class="pre">InvertBatchesOrderMutation.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.InvertBatchesOrderMutation.problem"><code class="docutils literal notranslate"><span class="pre">InvertBatchesOrderMutation.problem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToExistingBatchMutation"><code class="docutils literal notranslate"><span class="pre">MoveJobToExistingBatchMutation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToExistingBatchMutation.mutate"><code class="docutils literal notranslate"><span class="pre">MoveJobToExistingBatchMutation.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToExistingBatchMutation.problem"><code class="docutils literal notranslate"><span class="pre">MoveJobToExistingBatchMutation.problem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToNewBatchMutation"><code class="docutils literal notranslate"><span class="pre">MoveJobToNewBatchMutation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToNewBatchMutation.mutate"><code class="docutils literal notranslate"><span class="pre">MoveJobToNewBatchMutation.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobToNewBatchMutation.problem"><code class="docutils literal notranslate"><span class="pre">MoveJobToNewBatchMutation.problem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobsToNewBatchMutation"><code class="docutils literal notranslate"><span class="pre">MoveJobsToNewBatchMutation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.MoveJobsToNewBatchMutation.mutate"><code class="docutils literal notranslate"><span class="pre">MoveJobsToNewBatchMutation.mutate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationInsert"><code class="docutils literal notranslate"><span class="pre">OvenPermutationInsert</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationInsert.mutate"><code class="docutils literal notranslate"><span class="pre">OvenPermutationInsert.mutate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationMixedMutation"><code class="docutils literal notranslate"><span class="pre">OvenPermutationMixedMutation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationMixedMutation.mutate"><code class="docutils literal notranslate"><span class="pre">OvenPermutationMixedMutation.mutate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationPartialShuffle"><code class="docutils literal notranslate"><span class="pre">OvenPermutationPartialShuffle</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationPartialShuffle.mutate"><code class="docutils literal notranslate"><span class="pre">OvenPermutationPartialShuffle.mutate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationSwap"><code class="docutils literal notranslate"><span class="pre">OvenPermutationSwap</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationSwap.mutate"><code class="docutils literal notranslate"><span class="pre">OvenPermutationSwap.mutate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationTwoOpt"><code class="docutils literal notranslate"><span class="pre">OvenPermutationTwoOpt</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.OvenPermutationTwoOpt.mutate"><code class="docutils literal notranslate"><span class="pre">OvenPermutationTwoOpt.mutate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.ScheduleAwareMixedMutation"><code class="docutils literal notranslate"><span class="pre">ScheduleAwareMixedMutation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.ScheduleAwareMixedMutation.mutate"><code class="docutils literal notranslate"><span class="pre">ScheduleAwareMixedMutation.mutate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.SwapBatchesMutation"><code class="docutils literal notranslate"><span class="pre">SwapBatchesMutation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.SwapBatchesMutation.mutate"><code class="docutils literal notranslate"><span class="pre">SwapBatchesMutation.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.mutations.SwapBatchesMutation.problem"><code class="docutils literal notranslate"><span class="pre">SwapBatchesMutation.problem</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#module-discrete_optimization.ovensched.solvers.optal">discrete_optimization.ovensched.solvers.optal module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenObjectivesEnum"><code class="docutils literal notranslate"><span class="pre">OvenObjectivesEnum</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenObjectivesEnum.MAKESPAN"><code class="docutils literal notranslate"><span class="pre">OvenObjectivesEnum.MAKESPAN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenObjectivesEnum.NB_BATCH"><code class="docutils literal notranslate"><span class="pre">OvenObjectivesEnum.NB_BATCH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenObjectivesEnum.PROCESSING_TIME"><code class="docutils literal notranslate"><span class="pre">OvenObjectivesEnum.PROCESSING_TIME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenObjectivesEnum.SETUP_COST"><code class="docutils literal notranslate"><span class="pre">OvenObjectivesEnum.SETUP_COST</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenObjectivesEnum.TARDINESS"><code class="docutils literal notranslate"><span class="pre">OvenObjectivesEnum.TARDINESS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenSchedulingOptalSolver"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingOptalSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenSchedulingOptalSolver.init_model"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingOptalSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenSchedulingOptalSolver.problem"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingOptalSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenSchedulingOptalSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingOptalSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenSchedulingOptalSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingOptalSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.optal.OvenSchedulingOptalSolver.set_warm_start_from_previous_run"><code class="docutils literal notranslate"><span class="pre">OvenSchedulingOptalSolver.set_warm_start_from_previous_run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.ovensched.solvers.html#module-discrete_optimization.ovensched.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.ovensched.parser">
+<span id="discrete-optimization-ovensched-parser-module"></span><h2>discrete_optimization.ovensched.parser module<a class="headerlink" href="#module-discrete_optimization.ovensched.parser" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.parser.get_data_available">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.parser.</span></span><span class="sig-name descname"><span class="pre">get_data_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_home</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/parser.html#get_data_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.parser.get_data_available" title="Link to this definition"></a></dt>
+<dd><p>Get datasets available for oven scheduling problem.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><dl class="simple">
+<dt>data_folder: folder where datasets for ovensched should be found.</dt><dd><p>If None, we look in “ovensched” subdirectory of <cite>data_home</cite>.</p>
+</dd>
+<dt>data_home: root directory for all datasets. If None, set by</dt><dd><p>default to “~/discrete_optimization_data”</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.parser.parse_dat_file">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.parser.</span></span><span class="sig-name descname"><span class="pre">parse_dat_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/parser.html#parse_dat_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.parser.parse_dat_file" title="Link to this definition"></a></dt>
+<dd><p>Parses a .dat file and returns an OvenSchedulingProblem instance.
+This version includes robust error handling.</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.ovensched.problem">
+<span id="discrete-optimization-ovensched-problem-module"></span><h2>discrete_optimization.ovensched.problem module<a class="headerlink" href="#module-discrete_optimization.ovensched.problem" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.MachineData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.problem.</span></span><span class="sig-name descname"><span class="pre">MachineData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'TaskAttribute'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">availability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list[tuple[int,</span> <span class="pre">int]]'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#MachineData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.MachineData" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.MachineData.availability">
+<span class="sig-name descname"><span class="pre">availability</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.MachineData.availability" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.MachineData.capacity">
+<span class="sig-name descname"><span class="pre">capacity</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.MachineData.capacity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.MachineData.initial_attribute">
+<span class="sig-name descname"><span class="pre">initial_attribute</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.MachineData.initial_attribute" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.problem.</span></span><span class="sig-name descname"><span class="pre">OvenSchedulingProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_machines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.ovensched.problem.TaskData" title="discrete_optimization.ovensched.problem.TaskData"><span class="pre">TaskData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machines_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.ovensched.problem.MachineData" title="discrete_optimization.ovensched.problem.MachineData"><span class="pre">MachineData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingProblem" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationProblem" title="discrete_optimization.generic_tasks_tools.allocation.AllocationProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+<p>Defines an instance of the Oven Scheduling Problem (OSP) and its evaluation logic.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluates a solution’s performance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.fix_availability_intervals">
+<span class="sig-name descname"><span class="pre">fix_availability_intervals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.fix_availability_intervals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.fix_availability_intervals" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.encoding_register.EncodingRegister" title="discrete_optimization.generic_tools.encoding_register.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_attribute_register" title="Link to this definition"></a></dt>
+<dd><p>Defines the solution’s encoding.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_dummy_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_dummy_solution" title="Link to this definition"></a></dt>
+<dd><p>Generate a dummy (random) solution using the vector-based encoding.</p>
+<p>This creates a VectorOvenSchedulingSolution with a random permutation,
+which is then decoded into a feasible schedule using the greedy decoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Optional arguments:
+- random_seed: Random seed for reproducibility
+- max_open_batches: Max open batches for decoder (default: use class default)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VectorOvenSchedulingSolution with random permutation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_makespan_upper_bound">
+<span class="sig-name descname"><span class="pre">get_makespan_upper_bound</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_makespan_upper_bound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_makespan_upper_bound" title="Link to this definition"></a></dt>
+<dd><p>Get a upper bound on global makespan.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_objective_register" title="Link to this definition"></a></dt>
+<dd><p>Defines the problem’s objectives.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_set_task_attributes">
+<span class="sig-name descname"><span class="pre">get_set_task_attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_set_task_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_set_task_attributes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinType.type" title="discrete_optimization.binpack.problem.BinType.type"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Returns the solution class type.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Checks if a solution is feasible by verifying static and temporal constraints.</p>
+<p>If a timed_schedule is already cached in the solution, this function will
+validate the cached timings. Otherwise, it will attempt to compute them.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.tasks_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tasks_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.tasks_list" title="Link to this definition"></a></dt>
+<dd><p>List of all tasks to schedule or allocate to.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingProblem.unary_resources_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">unary_resources_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem.unary_resources_list" title="Link to this definition"></a></dt>
+<dd><p>Available unary resources.</p>
+<p>It can correspond to employees (rcpsp-multiskill), teams (workforce-scheduling), or
+a mix of several types.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.problem.</span></span><span class="sig-name descname"><span class="pre">OvenSchedulingSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_per_machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.ovensched.problem.ScheduleInfo" title="discrete_optimization.ovensched.problem.ScheduleInfo"><span class="pre">ScheduleInfo</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingSolution" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+<p>Represents a solution to the Oven Scheduling Problem.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.copy" title="Link to this definition"></a></dt>
+<dd><p>Creates a deep copy of the solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_end_time">
+<span class="sig-name descname"><span class="pre">get_end_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_end_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_end_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_max_nb_batch_per_machine">
+<span class="sig-name descname"><span class="pre">get_max_nb_batch_per_machine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_max_nb_batch_per_machine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_max_nb_batch_per_machine" title="Link to this definition"></a></dt>
+<dd><p>Get the maximum number of batches used on any machine in this solution.</p>
+<p>This is useful for configuring CP-SAT models with warm-start: instead of
+using a large default, we can set max_nb_batch close to what the warm-start
+solution uses, reducing the model size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Maximum number of batches across all machines</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_start_time">
+<span class="sig-name descname"><span class="pre">get_start_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_start_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_start_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_summary_string">
+<span class="sig-name descname"><span class="pre">get_summary_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_summary_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_summary_string" title="Link to this definition"></a></dt>
+<dd><p>Generate a human-readable summary of the solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A formatted string describing the solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.is_allocated">
+<span class="sig-name descname"><span class="pre">is_allocated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.is_allocated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.is_allocated" title="Link to this definition"></a></dt>
+<dd><p>Return the usage of the unary resource for the given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.print_summary">
+<span class="sig-name descname"><span class="pre">print_summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.print_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.print_summary" title="Link to this definition"></a></dt>
+<dd><p>Print a human-readable summary of the solution.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.OvenSchedulingSolution.schedule_per_task">
+<span class="sig-name descname"><span class="pre">schedule_per_task</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution.schedule_per_task" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.ScheduleInfo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.problem.</span></span><span class="sig-name descname"><span class="pre">ScheduleInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine_batch_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#ScheduleInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.ScheduleInfo" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Describe the batch</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.ScheduleInfo.end_time">
+<span class="sig-name descname"><span class="pre">end_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.ScheduleInfo.end_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.ScheduleInfo.machine_batch_index">
+<span class="sig-name descname"><span class="pre">machine_batch_index</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.ScheduleInfo.machine_batch_index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.ScheduleInfo.start_time">
+<span class="sig-name descname"><span class="pre">start_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.ScheduleInfo.start_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.ScheduleInfo.task_attribute">
+<span class="sig-name descname"><span class="pre">task_attribute</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.ScheduleInfo.task_attribute" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.ScheduleInfo.tasks">
+<span class="sig-name descname"><span class="pre">tasks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.ScheduleInfo.tasks" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.problem.</span></span><span class="sig-name descname"><span class="pre">TaskData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'TaskAttribute'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">earliest_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latest_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_machines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'set[Machine]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#TaskData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData.attribute">
+<span class="sig-name descname"><span class="pre">attribute</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData.attribute" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData.earliest_start">
+<span class="sig-name descname"><span class="pre">earliest_start</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData.earliest_start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData.eligible_machines">
+<span class="sig-name descname"><span class="pre">eligible_machines</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData.eligible_machines" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData.latest_end">
+<span class="sig-name descname"><span class="pre">latest_end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData.latest_end" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData.max_duration">
+<span class="sig-name descname"><span class="pre">max_duration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData.max_duration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData.min_duration">
+<span class="sig-name descname"><span class="pre">min_duration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData.min_duration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.problem.TaskData.size">
+<span class="sig-name descname"><span class="pre">size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.problem.TaskData.size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.ovensched.solution_vector">
+<span id="discrete-optimization-ovensched-solution-vector-module"></span><h2>discrete_optimization.ovensched.solution_vector module<a class="headerlink" href="#module-discrete_optimization.ovensched.solution_vector" title="Link to this heading"></a></h2>
+<p>Vector-based solution encoding for the Oven Scheduling Problem.</p>
+<p>This module provides a permutation-based encoding suitable for metaheuristic
+algorithms like simulated annealing, hill climbing, and genetic algorithms.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.solution_vector.</span></span><span class="sig-name descname"><span class="pre">VectorOvenSchedulingSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">permutation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.int_</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_per_machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'Machine'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'ScheduleInfo'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Solution</span></code></a></p>
+<p>Vector-based solution for the Oven Scheduling Problem.</p>
+<p>This solution is encoded as a permutation of tasks, which is decoded
+into a schedule using a greedy decoding scheme. This encoding is suitable
+for metaheuristic algorithms like simulated annealing and genetic algorithms.</p>
+<p>The permutation represents the priority order in which tasks are scheduled.
+A greedy decoder processes tasks in this order and assigns them to machines.</p>
+<p>The decoder can maintain multiple open batches per machine, allowing better
+consolidation of tasks with the same attribute.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.problem" title="Link to this definition"></a></dt>
+<dd><p>The OvenSchedulingProblem instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem">OvenSchedulingProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.permutation">
+<span class="sig-name descname"><span class="pre">permutation</span></span><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.permutation" title="Link to this definition"></a></dt>
+<dd><p>Task permutation (numpy array of task indices)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution._schedule_cache">
+<span class="sig-name descname"><span class="pre">_schedule_cache</span></span><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution._schedule_cache" title="Link to this definition"></a></dt>
+<dd><p>Cached decoded schedule</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution._cache_max_open">
+<span class="sig-name descname"><span class="pre">_cache_max_open</span></span><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution._cache_max_open" title="Link to this definition"></a></dt>
+<dd><p>Max open batches used for cached schedule</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.DEFAULT_MAX_OPEN_BATCHES">
+<span class="sig-name descname"><span class="pre">DEFAULT_MAX_OPEN_BATCHES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></span><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.DEFAULT_MAX_OPEN_BATCHES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution" title="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution"><span class="pre">VectorOvenSchedulingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.change_problem" title="Link to this definition"></a></dt>
+<dd><p>Change the problem instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> – New problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New solution with the new problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution" title="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution"><span class="pre">VectorOvenSchedulingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.copy" title="Link to this definition"></a></dt>
+<dd><p>Create a deep copy of the solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_open_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_open_batches</strong> – Maximum open batches for decoder (uses DEFAULT_MAX_OPEN_BATCHES if None)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary of objective values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.get_schedule">
+<span class="sig-name descname"><span class="pre">get_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_open_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.get_schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.get_schedule" title="Link to this definition"></a></dt>
+<dd><p>Get the decoded schedule (cached).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_open_batches</strong> – Maximum open batches per machine during decoding.
+If None, uses DEFAULT_MAX_OPEN_BATCHES.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>OvenSchedulingSolution instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.get_summary_string">
+<span class="sig-name descname"><span class="pre">get_summary_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_open_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.get_summary_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.get_summary_string" title="Link to this definition"></a></dt>
+<dd><p>Generate a human-readable summary of the solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_open_batches</strong> – Maximum open batches for decoder (uses DEFAULT_MAX_OPEN_BATCHES if None)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Formatted string describing the solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.is_feasible">
+<span class="sig-name descname"><span class="pre">is_feasible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_open_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.is_feasible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.is_feasible" title="Link to this definition"></a></dt>
+<dd><p>Check if the solution is feasible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_open_batches</strong> – Maximum open batches for decoder (uses DEFAULT_MAX_OPEN_BATCHES if None)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if feasible, False otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.print_summary">
+<span class="sig-name descname"><span class="pre">print_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_open_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.print_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.print_summary" title="Link to this definition"></a></dt>
+<dd><p>Print a human-readable summary of the solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_open_batches</strong> – Maximum open batches for decoder (uses DEFAULT_MAX_OPEN_BATCHES if None)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.schedule_per_machine">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">schedule_per_machine</span></span><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.schedule_per_machine" title="Link to this definition"></a></dt>
+<dd><p>Get the schedule_per_machine dictionary (delegates to decoded schedule).</p>
+<p>This property makes VectorOvenSchedulingSolution compatible with
+the problem’s evaluate() and satisfy() methods.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.to_oven_scheduling_solution">
+<span class="sig-name descname"><span class="pre">to_oven_scheduling_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_open_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#VectorOvenSchedulingSolution.to_oven_scheduling_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.VectorOvenSchedulingSolution.to_oven_scheduling_solution" title="Link to this definition"></a></dt>
+<dd><p>Convert to standard OvenSchedulingSolution.</p>
+<p>This is useful for compatibility with solvers that expect
+the standard solution format (e.g., CP-SAT warm-start).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_open_batches</strong> – Max open batches for decoder (uses DEFAULT_MAX_OPEN_BATCHES if None)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>OvenSchedulingSolution with decoded schedule</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.decode_permutation_to_schedule">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.solution_vector.</span></span><span class="sig-name descname"><span class="pre">decode_permutation_to_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">permutation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.int_</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_open_batches_per_machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'Machine'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'ScheduleInfo'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#decode_permutation_to_schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.decode_permutation_to_schedule" title="Link to this definition"></a></dt>
+<dd><p>Decode a task permutation into a schedule using an improved greedy strategy.</p>
+<p>This decoder maintains multiple open batches per machine simultaneously,
+allowing better batching of tasks with the same attribute even if they
+appear at different positions in the permutation.</p>
+<dl class="simple">
+<dt>Strategy:</dt><dd><ol class="arabic simple">
+<li><p>Process tasks in permutation order</p></li>
+<li><p>For each task, try to add it to any compatible open batch on eligible machines</p></li>
+<li><p>Compatible = same attribute, fits capacity, duration compatible</p></li>
+<li><p>If no compatible batch, start new one (closing oldest if max batches reached)</p></li>
+<li><p>Uses heap to manage batch priority (oldest batches get closed first)</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>problem</strong> – The OvenSchedulingProblem instance</p></li>
+<li><p><strong>permutation</strong> – Array of task indices in scheduling order</p></li>
+<li><p><strong>max_open_batches_per_machine</strong> – Maximum number of open batches per machine (default: 3)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary mapping each machine to its list of scheduled batches</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.extract_permutation_from_schedule">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.solution_vector.</span></span><span class="sig-name descname"><span class="pre">extract_permutation_from_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_per_machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'Machine'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'ScheduleInfo'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.int_</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#extract_permutation_from_schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.extract_permutation_from_schedule" title="Link to this definition"></a></dt>
+<dd><p>Extract a task permutation from a schedule.</p>
+<p>Tasks are sorted by their start time (earlier tasks first).
+If two tasks start at the same time, they are sorted by task ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>problem</strong> – The problem instance (for validation)</p></li>
+<li><p><strong>schedule_per_machine</strong> – The schedule to extract from</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of task indices in start-time order</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.solution_vector.generate_random_permutation">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.solution_vector.</span></span><span class="sig-name descname"><span class="pre">generate_random_permutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.int_</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/solution_vector.html#generate_random_permutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.solution_vector.generate_random_permutation" title="Link to this definition"></a></dt>
+<dd><p>Generate a random task permutation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>problem</strong> – The problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random permutation of task indices</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.ovensched.utils">
+<span id="discrete-optimization-ovensched-utils-module"></span><h2>discrete_optimization.ovensched.utils module<a class="headerlink" href="#module-discrete_optimization.ovensched.utils" title="Link to this heading"></a></h2>
+<p>Utility functions for visualization and analysis of oven scheduling solutions.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.utils.plot_attribute_distribution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.utils.</span></span><span class="sig-name descname"><span class="pre">plot_attribute_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">6)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/utils.html#plot_attribute_distribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.utils.plot_attribute_distribution" title="Link to this definition"></a></dt>
+<dd><p>Plot distribution of task attributes across batches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – The solution to analyze</p></li>
+<li><p><strong>figsize</strong> – Figure size (width, height) in inches</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ImportError</strong> – If matplotlib is not available</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.utils.plot_machine_utilization">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.utils.</span></span><span class="sig-name descname"><span class="pre">plot_machine_utilization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(12,</span> <span class="pre">6)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/utils.html#plot_machine_utilization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.utils.plot_machine_utilization" title="Link to this definition"></a></dt>
+<dd><p>Plot machine utilization statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – The solution to analyze</p></li>
+<li><p><strong>figsize</strong> – Figure size (width, height) in inches</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ImportError</strong> – If matplotlib is not available</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.utils.plot_solution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.utils.</span></span><span class="sig-name descname"><span class="pre">plot_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(16,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_task_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_setup_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/utils.html#plot_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.utils.plot_solution" title="Link to this definition"></a></dt>
+<dd><p>Plot a Gantt chart visualization of the oven scheduling solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – The solution to visualize</p></li>
+<li><p><strong>figsize</strong> – Figure size (width, height) in inches</p></li>
+<li><p><strong>show_task_ids</strong> – Whether to show task IDs on the chart</p></li>
+<li><p><strong>show_setup_times</strong> – Whether to show setup times as hatched areas</p></li>
+<li><p><strong>title</strong> – Custom title for the plot (default: auto-generated)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ImportError</strong> – If matplotlib is not available</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.ovensched">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.ovensched" title="Link to this heading"></a></h2>
+<p>Oven Scheduling Problem module.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.MachineData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.</span></span><span class="sig-name descname"><span class="pre">MachineData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'TaskAttribute'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">availability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list[tuple[int,</span> <span class="pre">int]]'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#MachineData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.MachineData" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.MachineData.availability">
+<span class="sig-name descname"><span class="pre">availability</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.MachineData.availability" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.MachineData.capacity">
+<span class="sig-name descname"><span class="pre">capacity</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.MachineData.capacity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.MachineData.initial_attribute">
+<span class="sig-name descname"><span class="pre">initial_attribute</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.MachineData.initial_attribute" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.</span></span><span class="sig-name descname"><span class="pre">OvenSchedulingProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_machines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.ovensched.problem.TaskData" title="discrete_optimization.ovensched.problem.TaskData"><span class="pre">TaskData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machines_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.ovensched.problem.MachineData" title="discrete_optimization.ovensched.problem.MachineData"><span class="pre">MachineData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingProblem" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationProblem" title="discrete_optimization.generic_tasks_tools.allocation.AllocationProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+<p>Defines an instance of the Oven Scheduling Problem (OSP) and its evaluation logic.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.evaluate" title="Link to this definition"></a></dt>
+<dd><p>Evaluates a solution’s performance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.fix_availability_intervals">
+<span class="sig-name descname"><span class="pre">fix_availability_intervals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.fix_availability_intervals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.fix_availability_intervals" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.encoding_register.EncodingRegister" title="discrete_optimization.generic_tools.encoding_register.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.get_attribute_register" title="Link to this definition"></a></dt>
+<dd><p>Defines the solution’s encoding.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.get_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_dummy_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.get_dummy_solution" title="Link to this definition"></a></dt>
+<dd><p>Generate a dummy (random) solution using the vector-based encoding.</p>
+<p>This creates a VectorOvenSchedulingSolution with a random permutation,
+which is then decoded into a feasible schedule using the greedy decoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Optional arguments:
+- random_seed: Random seed for reproducibility
+- max_open_batches: Max open batches for decoder (default: use class default)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VectorOvenSchedulingSolution with random permutation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.get_makespan_upper_bound">
+<span class="sig-name descname"><span class="pre">get_makespan_upper_bound</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_makespan_upper_bound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.get_makespan_upper_bound" title="Link to this definition"></a></dt>
+<dd><p>Get a upper bound on global makespan.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.get_objective_register" title="Link to this definition"></a></dt>
+<dd><p>Defines the problem’s objectives.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.get_set_task_attributes">
+<span class="sig-name descname"><span class="pre">get_set_task_attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_set_task_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.get_set_task_attributes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinType.type" title="discrete_optimization.binpack.problem.BinType.type"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Returns the solution class type.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Checks if a solution is feasible by verifying static and temporal constraints.</p>
+<p>If a timed_schedule is already cached in the solution, this function will
+validate the cached timings. Otherwise, it will attempt to compute them.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.tasks_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tasks_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.tasks_list" title="Link to this definition"></a></dt>
+<dd><p>List of all tasks to schedule or allocate to.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingProblem.unary_resources_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">unary_resources_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingProblem.unary_resources_list" title="Link to this definition"></a></dt>
+<dd><p>Available unary resources.</p>
+<p>It can correspond to employees (rcpsp-multiskill), teams (workforce-scheduling), or
+a mix of several types.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.</span></span><span class="sig-name descname"><span class="pre">OvenSchedulingSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_per_machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.ovensched.problem.ScheduleInfo" title="discrete_optimization.ovensched.problem.ScheduleInfo"><span class="pre">ScheduleInfo</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingSolution" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+<p>Represents a solution to the Oven Scheduling Problem.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.copy" title="Link to this definition"></a></dt>
+<dd><p>Creates a deep copy of the solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.get_end_time">
+<span class="sig-name descname"><span class="pre">get_end_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_end_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.get_end_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.get_max_nb_batch_per_machine">
+<span class="sig-name descname"><span class="pre">get_max_nb_batch_per_machine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_max_nb_batch_per_machine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.get_max_nb_batch_per_machine" title="Link to this definition"></a></dt>
+<dd><p>Get the maximum number of batches used on any machine in this solution.</p>
+<p>This is useful for configuring CP-SAT models with warm-start: instead of
+using a large default, we can set max_nb_batch close to what the warm-start
+solution uses, reducing the model size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Maximum number of batches across all machines</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.get_start_time">
+<span class="sig-name descname"><span class="pre">get_start_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_start_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.get_start_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.get_summary_string">
+<span class="sig-name descname"><span class="pre">get_summary_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.get_summary_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.get_summary_string" title="Link to this definition"></a></dt>
+<dd><p>Generate a human-readable summary of the solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A formatted string describing the solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.is_allocated">
+<span class="sig-name descname"><span class="pre">is_allocated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.is_allocated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.is_allocated" title="Link to this definition"></a></dt>
+<dd><p>Return the usage of the unary resource for the given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.print_summary">
+<span class="sig-name descname"><span class="pre">print_summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#OvenSchedulingSolution.print_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.print_summary" title="Link to this definition"></a></dt>
+<dd><p>Print a human-readable summary of the solution.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.OvenSchedulingSolution.schedule_per_task">
+<span class="sig-name descname"><span class="pre">schedule_per_task</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.OvenSchedulingSolution.schedule_per_task" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.ScheduleInfo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.</span></span><span class="sig-name descname"><span class="pre">ScheduleInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine_batch_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#ScheduleInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.ScheduleInfo" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Describe the batch</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.ScheduleInfo.end_time">
+<span class="sig-name descname"><span class="pre">end_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.ScheduleInfo.end_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.ScheduleInfo.machine_batch_index">
+<span class="sig-name descname"><span class="pre">machine_batch_index</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.ScheduleInfo.machine_batch_index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.ScheduleInfo.start_time">
+<span class="sig-name descname"><span class="pre">start_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.ScheduleInfo.start_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.ScheduleInfo.task_attribute">
+<span class="sig-name descname"><span class="pre">task_attribute</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.ScheduleInfo.task_attribute" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.ScheduleInfo.tasks">
+<span class="sig-name descname"><span class="pre">tasks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.ScheduleInfo.tasks" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.ovensched.</span></span><span class="sig-name descname"><span class="pre">TaskData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'TaskAttribute'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">earliest_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latest_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_machines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'set[Machine]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/ovensched/problem.html#TaskData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.ovensched.TaskData" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData.attribute">
+<span class="sig-name descname"><span class="pre">attribute</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.TaskData.attribute" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData.earliest_start">
+<span class="sig-name descname"><span class="pre">earliest_start</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.TaskData.earliest_start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData.eligible_machines">
+<span class="sig-name descname"><span class="pre">eligible_machines</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.ovensched.TaskData.eligible_machines" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData.latest_end">
+<span class="sig-name descname"><span class="pre">latest_end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.TaskData.latest_end" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData.max_duration">
+<span class="sig-name descname"><span class="pre">max_duration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.TaskData.max_duration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData.min_duration">
+<span class="sig-name descname"><span class="pre">min_duration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.TaskData.min_duration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.ovensched.TaskData.size">
+<span class="sig-name descname"><span class="pre">size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.ovensched.TaskData.size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.maximum_independent_set.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.maximum_independent_set.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.ovensched.solvers.html" class="btn btn-neutral float-right" title="discrete_optimization.ovensched.solvers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

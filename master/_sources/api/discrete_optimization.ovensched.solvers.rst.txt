@@ -1,0 +1,53 @@
+discrete\_optimization.ovensched.solvers package
+================================================
+
+Submodules
+----------
+
+discrete\_optimization.ovensched.solvers.cpsat module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.ovensched.solvers.dp module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.ovensched.solvers.greedy module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.ovensched.solvers.mutations module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.solvers.mutations
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.ovensched.solvers.optal module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.ovensched.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

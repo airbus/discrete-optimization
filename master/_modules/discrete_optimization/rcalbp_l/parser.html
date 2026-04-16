@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcalbp_l.parser &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcalbp_l.parser</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcalbp_l.parser</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">ERROR_MSG_MISSING_DATASETS</span><span class="p">,</span> <span class="n">get_data_home</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcalbp_l.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RCALBPLProblem</span>
+
+
+<div class="viewcode-block" id="get_data_available">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.parser.get_data_available">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_data_available</span><span class="p">(</span>
+    <span class="n">data_folder</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">data_home</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get datasets available for rcpsp.</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        data_folder: folder where datasets for rcpsp whould be find.</span>
+<span class="sd">            If None, we look in &quot;rcpsp&quot; subdirectory of `data_home`.</span>
+<span class="sd">        data_home: root directory for all datasets. Is None, set by</span>
+<span class="sd">            default to &quot;~/discrete_optimization_data &quot;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">data_folder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data_home</span> <span class="o">=</span> <span class="n">get_data_home</span><span class="p">(</span><span class="n">data_home</span><span class="o">=</span><span class="n">data_home</span><span class="p">)</span>
+        <span class="n">data_folder</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_home</span><span class="si">}</span><span class="s2">/rcalb_l&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">data_folder</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)]</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="n">ERROR_MSG_MISSING_DATASETS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_folder</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="parse_rcalbpl_json">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.parser.parse_rcalbpl_json">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_rcalbpl_json</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RCALBPLProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses the RC-ALBP/L JSON data and constructs the Problem instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c1"># 1. Base Variables</span>
+    <span class="n">c_target</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;c_target&quot;</span><span class="p">]</span>
+    <span class="n">c_max</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;c_max&quot;</span><span class="p">]</span>
+    <span class="n">nb_stations</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;nb_stations&quot;</span><span class="p">]</span>
+    <span class="n">nb_periods</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;nb_periods&quot;</span><span class="p">]</span>
+    <span class="n">nb_tasks</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;nb_tasks&quot;</span><span class="p">]</span>
+
+    <span class="c1"># 2. Precedences</span>
+    <span class="n">precedences</span> <span class="o">=</span> <span class="p">[(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;precedences&quot;</span><span class="p">,</span> <span class="p">[])]</span>
+
+    <span class="c1"># 3. Durations matrix</span>
+    <span class="n">durations</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;durations&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="c1"># 4. Resources</span>
+    <span class="n">nb_resources</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_resources&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">capa_resources</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;capa_resources&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">cons_resources</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cons_resources&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="c1"># 5. Zones</span>
+    <span class="n">nb_zones</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_zones&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">capa_zones</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;capa_zones&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">cons_zones</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cons_zones&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">neutr_zones</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;neutr_zones&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">neutr_zones</span> <span class="o">=</span> <span class="p">[[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">neutr_zones</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">RCALBPLProblem</span><span class="p">(</span>
+        <span class="n">c_target</span><span class="o">=</span><span class="n">c_target</span><span class="p">,</span>
+        <span class="n">c_max</span><span class="o">=</span><span class="n">c_max</span><span class="p">,</span>
+        <span class="n">nb_stations</span><span class="o">=</span><span class="n">nb_stations</span><span class="p">,</span>
+        <span class="n">nb_periods</span><span class="o">=</span><span class="n">nb_periods</span><span class="p">,</span>
+        <span class="n">nb_tasks</span><span class="o">=</span><span class="n">nb_tasks</span><span class="p">,</span>
+        <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+        <span class="n">durations</span><span class="o">=</span><span class="n">durations</span><span class="p">,</span>
+        <span class="n">nb_resources</span><span class="o">=</span><span class="n">nb_resources</span><span class="p">,</span>
+        <span class="n">capa_resources</span><span class="o">=</span><span class="n">capa_resources</span><span class="p">,</span>
+        <span class="n">cons_resources</span><span class="o">=</span><span class="n">cons_resources</span><span class="p">,</span>
+        <span class="n">nb_zones</span><span class="o">=</span><span class="n">nb_zones</span><span class="p">,</span>
+        <span class="n">capa_zones</span><span class="o">=</span><span class="n">capa_zones</span><span class="p">,</span>
+        <span class="n">cons_zones</span><span class="o">=</span><span class="n">cons_zones</span><span class="p">,</span>
+        <span class="n">neutr_zones</span><span class="o">=</span><span class="n">neutr_zones</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
