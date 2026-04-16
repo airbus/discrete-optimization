@@ -44,7 +44,7 @@ def load_preemptive_rcpsp_problem(problem: RcpspProblem = None):
             max_capa = problem.get_max_resource_capacity(r)
             problem.resources[r] = [max_capa] * (problem.horizon * 3)
     problem.horizon = problem.horizon * 3
-    problem.update_functions()
+    problem.update_problem()
     preemptive = get_rcpsp_problemp_preemptive(problem)
     return preemptive
 

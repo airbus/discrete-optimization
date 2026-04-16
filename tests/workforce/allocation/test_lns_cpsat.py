@@ -94,9 +94,9 @@ def test_lns_cpsat(
     if modelisation_allocation == ModelisationAllocationOrtools.INTEGER:
         nb_iteration_per_subsolver = 50
     elif modelisation_allocation == ModelisationAllocationOrtools.BINARY:
-        nb_iteration_per_subsolver = 1
+        nb_iteration_per_subsolver = 2
     else:
-        nb_iteration_per_subsolver = 1
+        nb_iteration_per_subsolver = 2
     res = solver.solve(
         nb_iteration_lns=2,
         time_limit_subsolver=TIME_LIMIT_SUBSOLVER,

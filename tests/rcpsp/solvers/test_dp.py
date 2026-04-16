@@ -48,8 +48,8 @@ def test_rcpsp_dp_calendar(model, solver_cls):
         if resource not in rcpsp_problem.non_renewable_resources:
             rcpsp_problem.resources[resource][10:15] = 0
             rcpsp_problem.resources[resource][30:35] = 0
-    rcpsp_problem.is_calendar = True
-    rcpsp_problem.update_functions()
+    rcpsp_problem.update_problem()
+    assert rcpsp_problem.is_calendar
     solver = DpRcpspSolver(problem=rcpsp_problem)
     solver.init_model(modeling=DpRcpspModeling.TASK_MULTIMODE)
     result_storage = solver.solve(

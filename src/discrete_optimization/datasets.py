@@ -103,6 +103,8 @@ MIS_FILES = [
 
 BPPC_ZIP = "https://site.unibo.it/operations-research/en/research/library-of-codes-and-instances-1/bppc.zip/@@download/file/BPPC.zip"
 
+OVENSCHED_REPO_URL = "https://github.com/iolab-uniud/osp-ls"
+OVENSCHED_REPO_URL_SHA1 = "d29ec2dfc29f357ce7b1158edca0745b812bd493"
 
 FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
@@ -686,6 +688,63 @@ def fetch_data_from_rcalb_l(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_ovensched_repo(data_home: Optional[str] = None):
+    """Fetch data from osp-ls repo for oven scheduling examples.
+
+    https://github.com/iolab-uniud/osp-ls
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    # get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get ovensched data directory
+    ovensched_dir = f"{data_home}/ovensched"
+    os.makedirs(ovensched_dir, exist_ok=True)
+
+    # download in a temporary file the repo data
+    url = f"{OVENSCHED_REPO_URL}/archive/{OVENSCHED_REPO_URL_SHA1}.zip"
+    print(url)
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data from instances/ folder
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            dataset_prefix_in_zip = f"{rootdir}/instances/"
+
+            # Extract all files from instances/ folder preserving subdirectory structure
+            for name in namelist:
+                if name.startswith(dataset_prefix_in_zip) and name.endswith(".dat"):
+                    # Extract to temporary location
+                    zipf.extract(name, path=ovensched_dir)
+
+                    # Get relative path from instances/
+                    relative_path = name.replace(dataset_prefix_in_zip, "")
+                    destination = os.path.join(ovensched_dir, relative_path)
+
+                    # Create subdirectory if needed
+                    dest_dir = os.path.dirname(destination)
+                    if dest_dir and not os.path.exists(dest_dir):
+                        os.makedirs(dest_dir, exist_ok=True)
+
+                    # Move file to final location
+                    source_path = os.path.join(ovensched_dir, name)
+                    if os.path.exists(source_path):
+                        os.replace(src=source_path, dst=destination)
+
+            # Clean up temporary directories
+            temp_root = os.path.join(ovensched_dir, rootdir)
+            if os.path.exists(temp_root):
+                shutil.rmtree(temp_root)
+
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -709,6 +768,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_alb(data_home=data_home)
     fetch_data_from_top(data_home=data_home)
     fetch_data_from_rcalb_l(data_home=data_home)
+    fetch_data_from_ovensched_repo(data_home=data_home)
 
 
 if __name__ == "__main__":

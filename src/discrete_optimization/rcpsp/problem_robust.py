@@ -40,7 +40,6 @@ class AggregRcpspProblem(RobustProblem, RcpspProblem):
             mode_details=list_problem[0].mode_details,
             successors=list_problem[0].successors,
             horizon=list_problem[0].horizon,
-            horizon_multiplier=list_problem[0].horizon_multiplier,
             tasks_list=list_problem[0].tasks_list,
             source_task=list_problem[0].source_task,
             sink_task=list_problem[0].sink_task,
@@ -307,5 +306,5 @@ class UncertainRcpspProblem:
                         model.mode_details[activity][mode][detail] = self.probas[
                             activity
                         ][mode][detail]["prob-distribution"].rvs(size=1)[0]
-        model.update_functions()
+        model.update_problem()
         return model

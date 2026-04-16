@@ -17,7 +17,7 @@ def run_cpsat():
     file = [f for f in files if "j301_4.sm" in f][0]
     problem = parse_file(file)
     problem.horizon = 300
-    problem.update_functions()
+    problem.update_problem()
     solver = CpSatCumulativeResourceRcpspSolver(problem)
     solver.init_model()
     pareto = CpsatParetoSolver(

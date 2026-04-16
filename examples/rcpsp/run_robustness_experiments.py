@@ -127,7 +127,7 @@ def run_cp_multiscenario():
     ]
 
     for m in list_rcpsp_problem:
-        m.update_functions()
+        m.update_problem()
     for model in list_rcpsp_problem:
         model.costs["mean_resource_reserve"] = True
     dummy = list_rcpsp_problem[0].get_dummy_solution()

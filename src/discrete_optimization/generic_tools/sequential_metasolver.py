@@ -98,6 +98,7 @@ class SequentialMetasolver(SolverDO):
             # get previous best solution
             if i_subbrick > 0:
                 start_solution = res.get_best_solution()
+                start_solution = res[-1][0]
             else:
                 start_solution = None
             # update subbrick kwargs with functions of previous solutions

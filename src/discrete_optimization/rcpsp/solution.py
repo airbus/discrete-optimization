@@ -13,14 +13,19 @@ from typing import TYPE_CHECKING, Any, Optional
 import numpy as np
 from numpy import typing as npt
 
-from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
-from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    CumulativeResourceSolution,
+)
+from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+    MultimodeSchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import RobustProblem
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
     from discrete_optimization.rcpsp.problem import RcpspProblem
 
 Task = Hashable
+Resource = str
 
 
 class TaskDetails:
@@ -29,7 +34,9 @@ class TaskDetails:
         self.end = end
 
 
-class RcpspSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
+class RcpspSolution(
+    CumulativeResourceSolution[Task, Resource], MultimodeSchedulingSolution[Task]
+):
     """Solution to RcpspProblem problems.
 
     Attributes:

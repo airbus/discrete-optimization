@@ -191,7 +191,6 @@ def parse_imopse(
                 )
                 for res in resource_dict
             },
-            employees_availability=[len(resource_dict)] * max_horizon,
             mode_details=mode_details,
             successors=successors,
             horizon=max_horizon,

@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
+
 import pytest
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
@@ -56,7 +58,8 @@ def test_cpsat(problem):
         time_limit=5,
     )
     assert len(res) == 1
-    sol = res[-1][0]
+    sol: AllocSchedulingSolution = res[-1][0]
+    assert sol.check_all_resource_capacity_constraints()
     assert problem.satisfy(sol)
     problem.evaluate(sol)
 
@@ -309,6 +312,39 @@ def test_cpsat_lexico(problem):
     # assert len(res) == len(objectives)  # not always a new solution found for each objective
 
 
+def test_satisfy_w_resource(problem, caplog):
+    # add a cumulative resource to the problem
+    resource = "R0"
+    problem.resources_list = [resource]
+    problem.resources_capacity = {resource: 2}
+    i_task = 0
+    task = problem.tasks_list[i_task]
+    problem.tasks_data[task].resource_consumption[resource] = 2
+    problem.update_problem()
+    # solve => ok
+    solver = CPSatAllocSchedulingSolver(problem)
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+    )
+    sol: AllocSchedulingSolution = res.get_best_solution()
+    assert problem.satisfy(sol)
+
+    # restrict resource capacity
+    problem.resources_capacity = {resource: 1}
+    # tweak teams calendar
+    start = sol.get_start_time(task)
+    end = sol.get_end_time(task)
+    i_team = sol.allocation[i_task]
+    team = problem.index_to_team[i_team]
+    problem.calendar_team[team] = [[end, problem.horizon]]
+    problem.update_problem()
+    # => sol nok
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(sol)
+    assert "R0" in caplog.text
+    assert team in caplog.text
+
+
 def test_task_constraint(problem):
     solver = CPSatAllocSchedulingSolver(problem)
     res = solver.solve(
@@ -449,7 +485,10 @@ def test_objective_nb_unary_resources_used(problem):
     solver.init_model()
     objective = solver.get_nb_unary_resources_used_variable()
     solver.minimize_variable(objective)
-    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
+    parameters_cp = ParametersCp.default()
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)], parameters_cp=parameters_cp
+    )
     assert solver.solver.ObjectiveValue() == min(
         sum(
             max(sol.is_allocated(task, unary_resource) for task in problem.tasks_list)

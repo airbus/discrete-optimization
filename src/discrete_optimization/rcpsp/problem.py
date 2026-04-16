@@ -6,7 +6,7 @@ import logging
 from collections.abc import Callable, Hashable, Iterable
 from copy import deepcopy
 from enum import Enum
-from functools import partial
+from functools import cache, partial
 from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
@@ -17,9 +17,16 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
     PermutationRcpsp,
 )
-from discrete_optimization.generic_tasks_tools.multimode import MultimodeProblem
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    CumulativeResourceProblem,
+)
+from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+    MultimodeSchedulingProblem,
+)
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
-from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    convert_calendar_to_availability_intervals,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -36,7 +43,7 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
-from discrete_optimization.rcpsp.solution import RcpspSolution, Task
+from discrete_optimization.rcpsp.solution import RcpspSolution, Resource, Task
 from discrete_optimization.rcpsp.special_constraints import (
     PairModeConstraint,
     SpecialConstraintsDescription,
@@ -52,7 +59,9 @@ class ScheduleGenerationScheme(Enum):
 
 
 class RcpspProblem(
-    MultimodeProblem[Task], SchedulingProblem[Task], PrecedenceProblem[Task]
+    PrecedenceProblem[Task],
+    CumulativeResourceProblem[Task, Resource],
+    MultimodeSchedulingProblem[Task],
 ):
     """Main class for RCPSP problem.
 
@@ -73,7 +82,6 @@ class RcpspProblem(
 
         successors (dict[Hashable, list[Hashable]]): successors in the precedence graph of each task
         horizon (int): max number of time steps allowed
-        horizon_multiplier: not used
         tasks_list(list[Hashable]): list of tasks. Must correspond to `mode_details`. If not given will be equal to `list(mode_details)`.
         source_task (Hashable): the id for the source task (i.e. the root in the precedence graph, all other tasks must follow it).
             If not given and tasks_list is made of integers, the lowest one
@@ -100,7 +108,6 @@ class RcpspProblem(
         precedence constraints, then generating a baseline schedule.
 
         >>> from discrete_optimization.rcpsp.problem import RcpspProblem
-        >>> from discrete_optimization.rcpsp.solution import RcpspSolution
         >>> # Define resources
         >>> resources = {"R1": 5, "R2": 2}
         >>> non_renewable_resources = []  # Empty if all resources replenish when a task ends
@@ -158,7 +165,6 @@ class RcpspProblem(
         mode_details: dict[Hashable, dict[int, dict[str, int]]],
         successors: dict[Hashable, list[Hashable]],
         horizon: int,
-        horizon_multiplier: int = 1,
         tasks_list: Optional[list[Hashable]] = None,
         source_task: Optional[Hashable] = None,
         sink_task: Optional[Hashable] = None,
@@ -178,7 +184,6 @@ class RcpspProblem(
             mode_details:
             successors:
             horizon:
-            horizon_multiplier:
             tasks_list:
             source_task:
             sink_task:
@@ -196,7 +201,6 @@ class RcpspProblem(
         self.mode_details = mode_details
         self.successors = successors
         self.horizon = horizon
-        self.horizon_multiplier = horizon_multiplier
         self.calendar_details = calendar_details
         if name_task is None:
             self.name_task = {x: str(x) for x in self.mode_details}
@@ -237,44 +241,47 @@ class RcpspProblem(
         self.index_task_non_dummy = {
             self.tasks_list_non_dummy[i]: i for i in range(self.n_jobs_non_dummy)
         }
-        self.is_calendar = False
-        if any(isinstance(self.resources[res], Iterable) for res in self.resources):
-            self.is_calendar = (
-                max(
-                    (
-                        len(
-                            {self.resources[res]}
-                            if isinstance(self.resources[res], int)
-                            else set(self.resources[res])  # type: ignore
-                        )
-                        for res in self.resources
-                    )
-                )
-                > 1
-            )
-            if not self.is_calendar:
-                self.resources = {
-                    r: self.resources[r]
-                    if isinstance(self.resources[r], int)
-                    else self.resources[r][0]  # type: ignore
-                    for r in self.resources
-                }
-        (
-            self.func_sgs,
-            self.func_sgs_2,
-            self.compute_mean_resource,
-        ) = create_np_data_and_jit_functions(self)
         self.costs: dict[str, bool] = {
             "makespan": True,
             "mean_resource_reserve": kwargs.get("mean_resource_reserve", False),
         }
+        self.relax_the_start_at_end = relax_the_start_at_end
+        self.fixed_permutation = fixed_permutation
+        self.fixed_modes = fixed_modes
 
         if special_constraints is None:
+            self.special_constraints = SpecialConstraintsDescription(
+                skip_special_constraints=True
+            )
+        else:
+            self.special_constraints = special_constraints
+
+        self.update_problem()
+
+    def update_problem(self) -> None:
+        """Method to call when some attributes have been modified.
+
+        It recomputes what is needed (numba functions, calendars, ...)
+        It take into account modifications of:
+        - horizon
+        - resource calendars
+        - duration/resource consumption for a given task, mode
+        - special constraints
+        - successors
+
+        NB: special constraints may add precedence constraints. A new call to update_problem()
+        with different special constraints will not roll back the updated precedence constraints.
+
+        """
+        self.update_calendars()
+        self.update_special_constraints()
+        self.update_functions()
+
+    def update_special_constraints(self):
+        if self.special_constraints.skip_special_constraints:
             self.do_special_constraints = False
-            self.special_constraints = SpecialConstraintsDescription()
         else:
             self.do_special_constraints = True
-            self.special_constraints = special_constraints
             predecessors_dict: dict[Hashable, list[Hashable]] = {
                 task: [] for task in self.successors
             }
@@ -299,13 +306,73 @@ class RcpspProblem(
         )
         if self.do_special_constraints:
             self.predecessors = self.graph.predecessors_dict
-        self.relax_the_start_at_end = relax_the_start_at_end
-        self.fixed_permutation = fixed_permutation
-        self.fixed_modes = fixed_modes
+
+    def update_calendars(self):
+        self.is_calendar = False
+        if any(isinstance(self.resources[res], Iterable) for res in self.resources):
+            self.is_calendar = (
+                max(
+                    (
+                        len(
+                            {self.resources[res]}
+                            if np.isscalar(self.resources[res])
+                            else set(self.resources[res])  # type: ignore
+                        )
+                        for res in self.resources
+                    )
+                )
+                > 1
+            )
+            if not self.is_calendar:
+                self.resources = {
+                    r: self.resources[r]
+                    if np.isscalar(self.resources[r])
+                    else self.resources[r][0]  # type: ignore
+                    for r in self.resources
+                }
+        self.update_resource_availabilities()
+
+    def update_resource_availabilities(self) -> None:
+        super().update_resource_availabilities()
+        self.get_resource_availabilities.cache_clear()
 
     @property
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
+
+    @property
+    def renewable_resources_list(self) -> list[Resource]:
+        return [
+            res
+            for res in self.resources_list
+            if res not in self.non_renewable_resources
+        ]
+
+    @cache
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        return convert_calendar_to_availability_intervals(
+            calendar=self.resources[resource], horizon=self.horizon
+        )
+
+    def get_resource_consumption(
+        self, resource: Resource, task: Task, mode: int
+    ) -> int:
+        if not self.is_cumulative_resource(resource):
+            raise ValueError(f"{resource} is not a cumulative resource of the problem.")
+        else:
+            mode_detail = self.mode_details[task][mode]
+            if resource not in mode_detail:
+                return 0
+            else:
+                return mode_detail[resource]
+
+    def is_cumulative_resource(self, resource: Resource) -> bool:
+        return resource in self.resources_list
+
+    def get_task_mode_duration(self, task: Task, mode: int) -> int:
+        return self.mode_details[task][mode]["duration"]
 
     def get_task_modes(self, task: Task) -> set[int]:
         return set(self.mode_details[task])
@@ -359,10 +426,10 @@ class RcpspProblem(
         return self.resources_list
 
     def get_resource_availability_array(self, res: str) -> list[int]:
-        if self.is_varying_resource() and not isinstance(self.resources[res], int):
+        if self.is_varying_resource() and not np.isscalar(self.resources[res]):
             return self.resources[res]  # type: ignore
         else:
-            return self.horizon * [self.resources[res]]  # type: ignore
+            return self.horizon * [int(self.resources[res])]
 
     def compute_graph(self, compute_predecessors: bool = False) -> Graph:
         nodes: list[tuple[Hashable, dict[str, Any]]] = [
@@ -453,44 +520,13 @@ class RcpspProblem(
             ):
                 return False
 
+        if not variable.check_all_resource_capacity_constraints():
+            return False
+
+        # Check for non-renewable resource violation
         modes_dict = self.build_mode_dict(
             rcpsp_modes_from_solution=variable.rcpsp_modes
         )
-        start_times = [
-            variable.rcpsp_schedule[t]["start_time"] for t in variable.rcpsp_schedule
-        ]
-        for t in start_times:
-            resource_usage = {}
-            for res in self.resources_list:
-                resource_usage[res] = 0
-            for act_id in variable.rcpsp_schedule:
-                start = variable.rcpsp_schedule[act_id]["start_time"]
-                end = variable.rcpsp_schedule[act_id]["end_time"]
-                mode = modes_dict[act_id]
-                for res in self.resources_list:
-                    if start <= t < end:
-                        resource_usage[res] += self.mode_details[act_id][mode].get(
-                            res, 0
-                        )
-            for res in self.resources.keys():
-                if resource_usage[res] > self.get_resource_available(res, t):
-                    logger.debug(
-                        [
-                            act
-                            for act in variable.rcpsp_schedule
-                            if variable.rcpsp_schedule[act]["start_time"]
-                            <= t
-                            < variable.rcpsp_schedule[act]["end_time"]
-                        ]
-                    )
-                    logger.debug(
-                        f"Time step resource violation: time: {t} "
-                        f"res {res} res_usage: {resource_usage[res]}"
-                        f"res_avail: {self.resources[res]}"
-                    )
-                    return False
-
-        # Check for non-renewable resource violation
         for res in self.non_renewable_resources:
             usage = 0
             for act_id in variable.rcpsp_schedule:
@@ -601,7 +637,6 @@ class RcpspProblem(
             mode_details=deepcopy(self.mode_details),
             successors=deepcopy(self.successors),
             horizon=self.horizon,
-            horizon_multiplier=self.horizon_multiplier,
             name_task=self.name_task,
             mean_resource_reserve=self.costs.get("mean_resource_reserve", False),
             fixed_modes=self.fixed_modes,

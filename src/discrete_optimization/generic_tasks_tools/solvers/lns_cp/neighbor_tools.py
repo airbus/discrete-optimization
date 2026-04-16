@@ -61,6 +61,19 @@ def intersect(i1: tuple[int, int], i2: tuple[int, int]):
         return [s, e]
 
 
+class NeighborBuilderAll(NeighborBuilder[Task]):
+    """
+    Put all tasks into primary set
+    """
+
+    def find_subtasks(
+        self,
+        current_solution: TasksSolution[Task],
+        subtasks: Optional[set[Task]] = None,
+    ) -> tuple[set[Task], set[Task]]:
+        return set(current_solution.problem.tasks_list), set()
+
+
 class NeighborBuilderSubPart(NeighborBuilder[Task]):
     """
     Cut the schedule in different subpart in the increasing order of the schedule.

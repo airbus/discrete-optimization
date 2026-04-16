@@ -56,8 +56,6 @@ def create_toy_msrcpsp_medium():
         ),
     }
 
-    employees_availability: list[int] = [3] * 100
-
     # Task structure with single mode per task (to avoid complexity)
     mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "R2": 0, "duration": 0}},
@@ -83,11 +81,9 @@ def create_toy_msrcpsp_medium():
         non_renewable_resources=non_renewable_resources,
         resources_availability=resources_availability,
         employees=employee,
-        employees_availability=employees_availability,
         mode_details=mode_details,
         successors=successors,
         horizon=100,
-        horizon_multiplier=1,
     )
     return model
 

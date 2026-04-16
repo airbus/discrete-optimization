@@ -86,8 +86,8 @@ def run_dp_rcpsp_calendar():
         rcpsp_problem.resources[resource][30:35] = 5
         rcpsp_problem.resources[resource][45:55] = 3
         rcpsp_problem.resources[resource][65:80] = 2
-    rcpsp_problem.is_calendar = True
-    rcpsp_problem.update_functions()
+    rcpsp_problem.update_problem()
+    assert rcpsp_problem.is_calendar
     solver = DpRcpspSolver(problem=rcpsp_problem)
     solver.init_model(modeling=DpRcpspModeling.TASK_AND_TIME)
     # solver.init_model(modeling=DpRcpspModeling.TASK_MULTIMODE, dual_bound=False)

@@ -42,8 +42,6 @@ def create_toy_msrcpsp_simple():
         ),
     }
 
-    employees_availability: list[int] = [2] * 100
-
     mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "duration": 0}},
         2: {1: {"S1": 1, "R1": 1, "duration": 2}},
@@ -64,11 +62,9 @@ def create_toy_msrcpsp_simple():
         non_renewable_resources=non_renewable_resources,
         resources_availability=resources_availability,
         employees=employee,
-        employees_availability=employees_availability,
         mode_details=mode_details,
         successors=successors,
         horizon=100,
-        horizon_multiplier=1,
     )
     return model
 
@@ -105,8 +101,6 @@ def create_toy_msrcpsp_medium():
         ),
     }
 
-    employees_availability: list[int] = [3] * 100
-
     mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "R2": 0, "duration": 0}},
         2: {1: {"S1": 1, "R1": 2, "R2": 0, "duration": 2}},
@@ -131,11 +125,9 @@ def create_toy_msrcpsp_medium():
         non_renewable_resources=non_renewable_resources,
         resources_availability=resources_availability,
         employees=employee,
-        employees_availability=employees_availability,
         mode_details=mode_details,
         successors=successors,
         horizon=100,
-        horizon_multiplier=1,
     )
     return model
 

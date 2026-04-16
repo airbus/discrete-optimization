@@ -36,7 +36,7 @@ def run_lns_generic():
             problem.employees[emp].calendar_employee
         )
         problem.employees[emp].calendar_employee[5:10] = 0
-    problem.update_functions()
+    problem.update_problem()
     subsolver = CpSatMultiskillRcpspSolver(
         problem=problem,
     )

@@ -106,7 +106,6 @@ def parse_psplib(input_data: str) -> RcpspProblem:
         mode_details=mode_details,
         successors=successors,
         horizon=horizon,
-        horizon_multiplier=30,
     )
 
 
@@ -179,7 +178,6 @@ def parse_patterson(input_data: str) -> RcpspProblem:
         mode_details=mode_details,
         successors=successors,
         horizon=horizon,
-        horizon_multiplier=30,
     )
 
 
