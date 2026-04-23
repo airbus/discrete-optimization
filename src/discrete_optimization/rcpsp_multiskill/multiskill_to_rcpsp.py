@@ -73,7 +73,10 @@ class MultiSkillToRcpsp:
                     dtype=np.int_,
                 )
             calendar_worker_type[map_names_to_understandable[worker_type]] = calend
-        resources_dict = self.multiskill_model.resources_availability
+        resources_dict = {
+            r: np.array([av]) if np.isscalar(av) else np.array(av)
+            for r, av in self.multiskill_model.resources_availability.items()
+        }
         usage_worker_in_chosen_modes = {k: 0 for k in calendar_worker_type}
         for k in calendar_worker_type:
             resources_dict[k] = calendar_worker_type[k]

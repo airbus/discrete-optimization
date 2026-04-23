@@ -1161,7 +1161,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                         for res in rcpsp_problem.resources_list:
                             for t in range(starts[ac][-1], ends[ac][-1]):
                                 resource_avail_in_time[res][t] -= (
-                                    rcpsp_problem.mode_details[ac][modes_dict[ac]][res]
+                                    rcpsp_problem.mode_details[ac][modes_dict[ac]].get(
+                                        res, 0
+                                    )
                                 )
                                 if resource_avail_in_time[res][t] < 0:
                                     logger.warning(
@@ -1178,7 +1180,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                         for res in rcpsp_problem.resources_list:
                             for t in range(starts[ac][-1], ends[ac][-1]):
                                 resource_avail_in_time[res][t] -= (
-                                    rcpsp_problem.mode_details[ac][modes_dict[ac]][res]
+                                    rcpsp_problem.mode_details[ac][modes_dict[ac]].get(
+                                        res, 0
+                                    )
                                 )
                                 if resource_avail_in_time[res][t] < 0:
                                     logger.warning(
@@ -1192,7 +1196,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                                         resource_avail_in_time[res][tt] -= (
                                             rcpsp_problem.mode_details[ac][
                                                 modes_dict[ac]
-                                            ][res]
+                                            ].get(res, 0)
                                         )
                                         if resource_avail_in_time[res][tt] < 0:
                                             unfeasible_non_renewable_resources = True

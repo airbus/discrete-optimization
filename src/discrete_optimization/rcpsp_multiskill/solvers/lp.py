@@ -217,7 +217,7 @@ class MathOptMultiskillRcpspSolver(OrtoolsMathOptMilpSolver):
         for r, t in product(renewable, times):
             self.add_linear_constraint(
                 self.construct_linear_sum(
-                    int(self.problem.mode_details[task][mode][r])
+                    int(self.problem.mode_details[task][mode].get(r, 0))
                     * self.start_times[task][mode][time]
                     for task in self.start_times
                     for mode in self.start_times[task]
@@ -232,7 +232,7 @@ class MathOptMultiskillRcpspSolver(OrtoolsMathOptMilpSolver):
         for r in non_renewable:
             self.add_linear_constraint(
                 self.construct_linear_sum(
-                    int(self.problem.mode_details[task][mode][r])
+                    int(self.problem.mode_details[task][mode].get(r, 0))
                     * self.start_times[task][mode][time]
                     for task in self.start_times
                     for mode in self.start_times[task]
