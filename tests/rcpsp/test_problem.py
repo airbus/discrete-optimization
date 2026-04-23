@@ -184,10 +184,11 @@ def test_partial_sgs(rcpsp_problem_file):
 @pytest.fixture
 def small_problem():
     resources = {
-        "R1": [0, 5, 5, 2, 3, 2, 2, 2, 2, 3, 2, 2] + [0] * 3,
+        "R1": [0, 5, 5, 2, 3, 2, 2, 2, 2, 3, 2, 2],
         "R2": [1, 2, 1, 3, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3],
+        "R3": 4,
     }
-    non_renewable_resources = []  # Empty if all resources replenish when a task ends
+    non_renewable_resources = ["R3"]
     # Define mode details
     # Format: { task_id: { mode_id: { "duration": int, "resource_name": amount } } }
     mode_details = {
@@ -195,7 +196,49 @@ def small_problem():
         "task-1": {1: {"duration": 4, "R1": 1, "R2": 1}},
         "task-2": {1: {"duration": 1, "R1": 0, "R2": 1}},
         "task-3": {1: {"duration": 2, "R1": 0, "R2": 2}},
-        "task-4": {1: {"duration": 2, "R1": 2, "R2": 1}},
+        "task-4": {
+            1: {"duration": 2, "R1": 2, "R2": 1, "R3": 3},
+            2: {"duration": 2, "R1": 2, "R2": 1, "R3": 5},
+        },
+        "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
+    }
+    # Define precedence graph
+    successors = {
+        "source": ["task-1", "task-2"],  # First tasks: 1 and 2
+        "task-1": ["task-3"],  # Task 1 must finish before 3
+        "task-2": ["task-4"],  # Task 2 must finish before 4
+        "task-3": ["sink"],  # Task 3 leads to Sink
+        "task-4": ["sink"],  # Task 4 leads to Sink
+        "sink": [],  # Sink has no successors
+    }
+    # Initialize the Problem
+    problem = RcpspProblem(
+        resources=resources,
+        non_renewable_resources=non_renewable_resources,
+        mode_details=mode_details,
+        successors=successors,
+        horizon=15,  # Maximum time allowed for the project
+        source_task="source",
+        sink_task="sink",
+    )
+    return problem
+
+
+@pytest.fixture
+def small_problem_no_calendar():
+    resources = {"R1": 5, "R2": 3, "R3": 4}
+    non_renewable_resources = ["R3"]
+    # Define mode details
+    # Format: { task_id: { mode_id: { "duration": int, "resource_name": amount } } }
+    mode_details = {
+        "source": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Source (Dummy)
+        "task-1": {1: {"duration": 4, "R1": 1, "R2": 1}},
+        "task-2": {1: {"duration": 1, "R1": 0, "R2": 1}},
+        "task-3": {1: {"duration": 2, "R1": 0, "R2": 2}},
+        "task-4": {
+            1: {"duration": 2, "R1": 2, "R2": 1, "R3": 3},
+            2: {"duration": 2, "R1": 2, "R2": 1, "R3": 5},
+        },
         "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
     }
     # Define precedence graph
@@ -235,7 +278,7 @@ def test_update_problem(small_problem):
     assert len(problem.get_resource_availabilities("R1")) == 9
 
 
-def test_satisfy_nok(small_problem, caplog):
+def test_satisfy_renewable_nok(small_problem, caplog):
     problem = small_problem
     solution = RcpspSolution(
         problem=problem,
@@ -254,3 +297,41 @@ def test_satisfy_nok(small_problem, caplog):
         assert not problem.satisfy(solution)
     assert resource in caplog.text
     assert f"time {t}" in caplog.text
+
+
+def test_satisfy_non_renewable_nok(small_problem):
+    problem = small_problem
+    solution = RcpspSolution(
+        problem=problem,
+        rcpsp_permutation=[1, 0, 3, 2],
+        fast=False,  # avoid overhead for first call to numba functions
+    )  # => task-1 and task-4 together at time 4
+    assert problem.satisfy(solution)
+
+    # change mode to violate non-renewable constraint
+    solution = RcpspSolution(
+        problem=problem,
+        rcpsp_permutation=[1, 0, 3, 2],
+        rcpsp_modes=[1, 1, 1, 2],
+        fast=True,  # avoid overhead for first call to numba functions
+    )
+    assert not problem.satisfy(solution)
+
+
+def test_satisfy_non_renewable_no_calendar_nok(small_problem_no_calendar):
+    problem = small_problem_no_calendar
+    solution = RcpspSolution(
+        problem=problem,
+        rcpsp_permutation=[1, 0, 3, 2],
+        fast=False,  # avoid overhead for first call to numba functions
+    )  # => task-1 and task-4 together at time 4
+    assert problem.satisfy(solution)
+
+    # change mode to violate non-renewable constraint
+    solution = RcpspSolution(
+        problem=problem,
+        rcpsp_permutation=[1, 0, 3, 2],
+        rcpsp_modes=[1, 1, 1, 2],
+        fast=True,  # avoid overhead for first call to numba functions
+    )
+    assert not problem.satisfy(solution)

@@ -29,6 +29,7 @@ from discrete_optimization.rcpsp_multiskill.problem import (
     CumulativeResource,
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,
+    NonRenewableResource,
     Task,
     UnaryResource,
 )
@@ -37,7 +38,9 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatMultiskillRcpspSolver(
-    AllocationSchedulingCpSatSolver[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingCpSatSolver[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
 ):
     hyperparameters = [
         CategoricalHyperparameter(
@@ -483,36 +486,9 @@ class CpSatMultiskillRcpspSolver(
     def create_constraint_resource(self):
         for r in self.problem.resources_list:
             if r in self.problem.non_renewable_resources:
-                self.create_non_renewable_res_constraint(r)
+                self.create_non_renewable_resources_constraint(r)
             else:
                 self.create_renewable_resources_constraint(r)
-
-    def create_non_renewable_res_constraint(self, res: str):
-        vars_consume = []
-        for task in self.problem.tasks_list:
-            modes = list(self.problem.mode_details[task].keys())
-            if len(modes) == 1:
-                if self.problem.mode_details[task][modes[0]].get(res, 0) > 0:
-                    vars_consume.append(
-                        (1, self.problem.mode_details[task][modes[0]][res])
-                    )
-            else:
-                for mode in modes:
-                    if self.problem.mode_details[task][mode].get(res, 0) > 0:
-                        vars_consume.append(
-                            (
-                                self.variables["mode_variable"]["is_present"][task][
-                                    mode
-                                ],
-                                self.problem.mode_details[task][mode][res],
-                            )
-                        )
-        self.cp_model.Add(
-            LinearExpr.weighted_sum(
-                [x[0] for x in vars_consume], [x[1] for x in vars_consume]
-            )
-            <= self.problem.get_max_resource_capacity(res)
-        )
 
     def create_disjunctive_worker(self):
         for worker in self.problem.employees:

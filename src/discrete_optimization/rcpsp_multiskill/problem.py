@@ -112,10 +112,13 @@ Task = Hashable
 UnaryResource = Hashable
 CumulativeResource = str
 Resource = Union[CumulativeResource, UnaryResource]
+NonRenewableResource = str
 
 
 class MultiskillRcpspSolution(
-    AllocationSchedulingSolution[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingSolution[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
 ):
     problem: MultiskillRcpspProblem
 
@@ -1981,7 +1984,9 @@ def intersect(i1, i2):
 
 
 class MultiskillRcpspProblem(
-    AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingProblem[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
     PrecedenceProblem[Task],
 ):
     sgs: ScheduleGenerationScheme
@@ -2030,6 +2035,7 @@ class MultiskillRcpspProblem(
         self.resources_set = resources_set
         self.resources_list = list(self.resources_set)
         self.non_renewable_resources = non_renewable_resources
+        self._non_renewable_resources_list = list(non_renewable_resources)
         self.resources_availability = resources_availability
         self.employees = employees
         self.mode_details = mode_details
@@ -2231,6 +2237,20 @@ class MultiskillRcpspProblem(
         return self._tasks_list
 
     @property
+    def non_renewable_resources_list(self) -> list[NonRenewableResource]:
+        return self._non_renewable_resources_list
+
+    def get_non_renewable_resource_capacity(
+        self, resource: NonRenewableResource
+    ) -> int:
+        return self.max_resource_capacity[resource]
+
+    def get_non_renewable_resource_consumption(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ) -> int:
+        return self.mode_details[task][mode].get(resource, 0)
+
+    @property
     def cumulative_resources_list(self) -> list[CumulativeResource]:
         """List of cumulative resources.
 
@@ -2247,7 +2267,7 @@ class MultiskillRcpspProblem(
             + [NB_EMPLOYEES_LB]
         )
 
-    def get_resource_consumption(
+    def get_renewable_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         """Get resource consumption of the task in the given mode
@@ -2559,23 +2579,9 @@ class MultiskillRcpspProblem(
             return False
 
         # Check for non-renewable resource violation
-        for res in self.non_renewable_resources:
-            usage = 0
-            for act_id in self.tasks_list:
-                mode = rcpsp_sol.modes[act_id]
-                usage += self.mode_details[act_id][mode][res]
-            if usage > self.resources_availability[res][0]:
-                logger.debug(
-                    (
-                        "Non-renewable res",
-                        res,
-                        "res_usage: ",
-                        usage,
-                        "res_avail: ",
-                        self.resources_availability[res][0],
-                    )
-                )
-                return False
+        if not rcpsp_sol.check_all_non_renewable_resource_capacity_constraints():
+            return False
+
         # Check precedences / successors
         for act_id in list(self.successors.keys()):
             for succ_id in self.successors[act_id]:
