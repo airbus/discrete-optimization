@@ -30,6 +30,10 @@ from discrete_optimization.generic_tasks_tools.multimode import (
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingProblem,
 )
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NonRenewableResource,
+    NonRenewableResourceProblem,
+)
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     RenewableResourceProblem,
     Resource,
@@ -764,12 +768,7 @@ class CumulativeResourceSchedulingCpSatSolver(
     MultimodeSchedulingCpSatSolver[Task],
     Generic[Task, Resource],
 ):
-    """Base class for cpast solvers dealing with scheduling problems handling cumulative resources.
-
-    This class manages the creation of interval variables for each (task, mode) tuple, with
-    If actually single mode  (only 1 mode per task), it
-
-    """
+    """Base class for cpsat solvers dealing with scheduling problems handling cumulative resources."""
 
     problem: CumulativeResourceProblem[Task, Resource]
 
@@ -780,7 +779,7 @@ class CumulativeResourceSchedulingCpSatSolver(
             return [
                 (
                     self.get_task_mode_interval(task=task, mode=mode),
-                    self.problem.get_resource_consumption(
+                    self.problem.get_renewable_resource_consumption(
                         resource=resource, task=task, mode=mode
                     ),
                 )
@@ -793,15 +792,47 @@ class CumulativeResourceSchedulingCpSatSolver(
             )
 
 
+class NonRenewableCpSatSolver(
+    MultimodeCpSatSolver[Task], Generic[Task, NonRenewableResource]
+):
+    """Base class for cpsat solvers dealing with problem with non-renewable resources."""
+
+    problem: NonRenewableResourceProblem
+
+    def create_non_renewable_resources_constraint(self, resource: NonRenewableResource):
+        """Add the constraint for a non-renewable resource to the cpsat model.
+
+        Constraint ensuring that the total demand on the given resource stay below its capacity.
+
+        """
+        self.cp_model.add(
+            sum(
+                self.get_task_mode_is_present_variable(task=task, mode=mode) * conso
+                for task in self.problem.tasks_list
+                for mode in self.problem.get_task_modes(task)
+                if (
+                    conso := self.problem.get_non_renewable_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                )
+                > 0
+            )
+            <= self.problem.get_non_renewable_resource_capacity(resource)
+        )
+
+
 Resource = UnaryOrCumulativeResource
 
 
 class AllocationSchedulingCpSatSolver(
     CumulativeResourceSchedulingCpSatSolver[Task, Resource],
+    NonRenewableCpSatSolver[Task, NonRenewableResource],
     AllocationCpSatSolver[Task, UnaryResource],
-    Generic[Task, UnaryResource, CumulativeResource],
+    Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
-    problem: AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource]
+    problem: AllocationSchedulingProblem[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ]
 
     def get_resource_consumption_intervals(
         self, resource: Resource

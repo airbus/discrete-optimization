@@ -164,7 +164,7 @@ class AllocSchedulingProblem(
     def cumulative_resources_list(self) -> list[CumulativeResource]:
         return self.resources_list
 
-    def get_resource_consumption(
+    def get_renewable_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         if self.is_cumulative_resource(resource):
@@ -551,7 +551,7 @@ def satisfy_renewable_resources(
     Returns:
 
     """
-    return solution.check_all_resource_capacity_constraints()
+    return solution.check_all_renewable_resource_capacity_constraints()
 
 
 def satisfy_calendars(

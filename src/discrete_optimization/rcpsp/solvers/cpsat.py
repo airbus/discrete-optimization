@@ -419,7 +419,7 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
                 self.get_task_mode_is_present_variable(task=task, mode=mode)
                 for task in self.problem.tasks_list
                 for mode in self.problem.get_task_modes(task=task)
-                if self.problem.get_resource_consumption(
+                if self.problem.get_renewable_resource_consumption(
                     resource=resource, task=task, mode=mode
                 )
                 > 0
