@@ -19,6 +19,9 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NonRenewableResourceSolution,
+)
 from discrete_optimization.generic_tools.do_problem import RobustProblem
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
@@ -26,6 +29,7 @@ if TYPE_CHECKING:  # avoid circular imports due to annotations
 
 Task = Hashable
 Resource = str
+NonRenewableResource = str
 
 
 class TaskDetails:
@@ -35,7 +39,9 @@ class TaskDetails:
 
 
 class RcpspSolution(
-    CumulativeResourceSolution[Task, Resource], MultimodeSchedulingSolution[Task]
+    CumulativeResourceSolution[Task, Resource],
+    NonRenewableResourceSolution[Task, NonRenewableResource],
+    MultimodeSchedulingSolution[Task],
 ):
     """Solution to RcpspProblem problems.
 
