@@ -356,7 +356,7 @@ class RcpspProblem(
             calendar=self.resources[resource], horizon=self.horizon
         )
 
-    def get_resource_consumption(
+    def get_renewable_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         if not self.is_cumulative_resource(resource):
@@ -520,7 +520,8 @@ class RcpspProblem(
             ):
                 return False
 
-        if not variable.check_all_resource_capacity_constraints():
+        # Check for cumumative resource violation
+        if not variable.check_all_renewable_resource_capacity_constraints():
             return False
 
         # Check for non-renewable resource violation

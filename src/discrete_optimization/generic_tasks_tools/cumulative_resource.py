@@ -32,13 +32,13 @@ class CumulativeResourceProblem(
     """
 
     @abstractmethod
-    def get_resource_consumption(
+    def get_renewable_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         """Get resource consumption of the task in the given mode
 
         Args:
-            resource:
+            resource: *renewable* resource
             task:
             mode: not used for single mode problems
 
@@ -73,7 +73,7 @@ class CumulativeResourceSolution(
 
     problem: CumulativeResourceProblem[Task, Resource]
 
-    def get_resource_consumption(self, resource: Resource, task: Task) -> int:
+    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
         """Get resource consumption by given task.
 
         Default implementation works only for cumulative resources whose consumptions depend only on task mode.
@@ -86,7 +86,7 @@ class CumulativeResourceSolution(
 
         """
         if self.problem.is_cumulative_resource(resource):
-            return self.problem.get_resource_consumption(
+            return self.problem.get_renewable_resource_consumption(
                 resource=resource, task=task, mode=self.get_mode(task)
             )
         else:

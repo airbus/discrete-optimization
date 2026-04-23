@@ -158,7 +158,7 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
     problem: RenewableResourceProblem[Task, Resource]
 
     @abstractmethod
-    def get_resource_consumption(self, resource: Resource, task: Task) -> int:
+    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
         """Get resource consumption by given task.
 
         Args:
@@ -170,15 +170,17 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         """
         ...
 
-    def check_resource_capacity_constraint(self, resource: Resource) -> bool:
+    def check_renewable_resource_capacity_constraint(self, resource: Resource) -> bool:
         """Check capacity constraint on given renewable resource."""
-        return self._check_resources_capacity_constraint_np(resources=(resource,))
+        return self.check_renewable_resource_capacity_constraints(resources=(resource,))
 
-    def _check_resource_capacity_constraint_naive(self, resource: Resource) -> bool:
+    def _check_renewable_resource_capacity_constraint_naive(
+        self, resource: Resource
+    ) -> bool:
         makespan = self.get_max_end_time()
         return all(
             sum(
-                self.get_resource_consumption(resource=resource, task=task)
+                self.get_renewable_resource_consumption(resource=resource, task=task)
                 for task in self.get_running_tasks(time=t)
             )
             <= value
@@ -188,7 +190,7 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             if t < makespan
         )
 
-    def _check_resources_capacity_constraint_np(
+    def _check_renewable_resource_capacity_constraint_np(
         self, resources: Iterable[Resource]
     ) -> bool:
         makespan = self.get_max_end_time()
@@ -200,7 +202,9 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             end = self.get_end_time(task)
             for resource in resources:
                 resources_consumption[resource][start:end] += (
-                    self.get_resource_consumption(resource=resource, task=task)
+                    self.get_renewable_resource_consumption(
+                        resource=resource, task=task
+                    )
                 )
 
         resources_capa_violation = {
@@ -228,7 +232,7 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         else:
             return True
 
-    def check_resources_capacity_constraints(
+    def check_renewable_resource_capacity_constraints(
         self, resources: Iterable[Resource]
     ) -> bool:
         """Check capacity constraint respected on given resources.
@@ -236,11 +240,13 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         Do it simultaneously on all resources to optimize computation time.
 
         """
-        return self._check_resources_capacity_constraint_np(resources=resources)
+        return self._check_renewable_resource_capacity_constraint_np(
+            resources=resources
+        )
 
-    def check_all_resource_capacity_constraints(self) -> bool:
+    def check_all_renewable_resource_capacity_constraints(self) -> bool:
         """Check capacity constraint on all renewable resources."""
-        return self._check_resources_capacity_constraint_np(
+        return self.check_renewable_resource_capacity_constraints(
             resources=self.problem.renewable_resources_list
         )
 

@@ -2555,7 +2555,7 @@ class MultiskillRcpspProblem(
 
         # Check for renewable resources capacity violations
         # include employees and cumulative resources
-        if not rcpsp_sol.check_all_resource_capacity_constraints():
+        if not rcpsp_sol.check_all_renewable_resource_capacity_constraints():
             return False
 
         # Check for non-renewable resource violation
