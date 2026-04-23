@@ -23,6 +23,9 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingProblem,
 )
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NonRenewableResourceProblem,
+)
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     convert_calendar_to_availability_intervals,
@@ -43,7 +46,12 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
-from discrete_optimization.rcpsp.solution import RcpspSolution, Resource, Task
+from discrete_optimization.rcpsp.solution import (
+    NonRenewableResource,
+    RcpspSolution,
+    Resource,
+    Task,
+)
 from discrete_optimization.rcpsp.special_constraints import (
     PairModeConstraint,
     SpecialConstraintsDescription,
@@ -61,14 +69,16 @@ class ScheduleGenerationScheme(Enum):
 class RcpspProblem(
     PrecedenceProblem[Task],
     CumulativeResourceProblem[Task, Resource],
+    NonRenewableResourceProblem[Task, NonRenewableResource],
     MultimodeSchedulingProblem[Task],
 ):
     """Main class for RCPSP problem.
 
     Attributes:
         resources (dict[str, Union[int, list[int]): mapping: name -> number of resources available,
-            either at each time (-if an integer),
+            either at each time (if an integer),
             or time step by time step (if a list of integers).
+            For non-renewable resources, should be an integer or a constant list (i.e. with same integer repeated)
         non_renewable_resources (list[str]): list of resources (specified by name) that are non-renewable
         mode_details (dict[Hashable, dict[int, dict[str, int]]]): task -> (mode number -> resource needs and duration)
             Ex:
@@ -323,12 +333,20 @@ class RcpspProblem(
                 )
                 > 1
             )
-            if not self.is_calendar:
+            if self.is_calendar:
+                # consolidate calendars: same length = horizon, missing values = 0
                 self.resources = {
-                    r: self.resources[r]
-                    if np.isscalar(self.resources[r])
-                    else self.resources[r][0]  # type: ignore
-                    for r in self.resources
+                    r: [int(calendar)] * self.horizon
+                    if np.isscalar(calendar)
+                    else list(calendar)[: self.horizon]
+                    + [0] * (self.horizon - len(calendar))
+                    for r, calendar in self.resources.items()
+                }
+            else:
+                # keep only integers
+                self.resources = {
+                    r: int(calendar) if np.isscalar(calendar) else int(calendar[0])
+                    for r, calendar in self.resources.items()
                 }
         self.update_resource_availabilities()
 
@@ -339,6 +357,25 @@ class RcpspProblem(
     @property
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
+
+    @property
+    def non_renewable_resources_list(self) -> list[NonRenewableResource]:
+        return self.non_renewable_resources
+
+    def get_non_renewable_resource_capacity(
+        self, resource: NonRenewableResource
+    ) -> int:
+        capacity = self.resources[resource]
+        if np.isscalar(capacity):
+            return capacity
+        else:
+            return capacity[0]
+
+    def get_non_renewable_resource_consumption(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ) -> int:
+        mode_detail = self.mode_details[task][mode]
+        return mode_detail.get(resource, 0)
 
     @property
     def renewable_resources_list(self) -> list[Resource]:
@@ -363,10 +400,7 @@ class RcpspProblem(
             raise ValueError(f"{resource} is not a cumulative resource of the problem.")
         else:
             mode_detail = self.mode_details[task][mode]
-            if resource not in mode_detail:
-                return 0
-            else:
-                return mode_detail[resource]
+            return mode_detail.get(resource, 0)
 
     def is_cumulative_resource(self, resource: Resource) -> bool:
         return resource in self.resources_list
@@ -525,20 +559,9 @@ class RcpspProblem(
             return False
 
         # Check for non-renewable resource violation
-        modes_dict = self.build_mode_dict(
-            rcpsp_modes_from_solution=variable.rcpsp_modes
-        )
-        for res in self.non_renewable_resources:
-            usage = 0
-            for act_id in variable.rcpsp_schedule:
-                mode = modes_dict[act_id]
-                usage += self.mode_details[act_id][mode][res]
-                if usage > self.get_max_resource_capacity(res):
-                    logger.debug(
-                        f"Non-renewable resource violation: act_id: {act_id}"
-                        f"res {res} res_usage: {usage} res_avail: {self.resources[res]}"
-                    )
-                    return False
+        if not variable.check_all_non_renewable_resource_capacity_constraints():
+            return False
+
         # Check precedences / successors
         for act_id in list(self.successors.keys()):
             for succ_id in self.successors[act_id]:
