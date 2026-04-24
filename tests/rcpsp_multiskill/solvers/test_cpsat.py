@@ -33,9 +33,66 @@ def test_imopse_cpsat():
     )
     cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCp.default_cpsat()
-    res = cp_model.solve(parameters_cp=p, time_limit=20)
+    res = cp_model.solve(
+        parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
+    )
     solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
     assert model.satisfy(solution)
+
+
+def test_imopse_cpsat_w_non_renewable_n_cumulative_resource():
+    file = [f for f in get_data_available() if "100_5_64_9.def" in f][0]
+    model, _ = parse_file(file, max_horizon=1000)
+
+    cp_model = CpSatMultiskillRcpspSolver(
+        problem=model,
+    )
+    cp_model.init_model(
+        one_worker_per_task=True,
+    )
+    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
+    p = ParametersCp.default_cpsat()
+    res = cp_model.solve(
+        parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
+    )
+    solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
+    assert model.satisfy(solution)
+
+    # add resources that should change schedule and mode choice
+    task = model.tasks_list[0]
+    t = solution.get_start_time(task)
+    assert solution.get_mode(task) == 1
+    calendar = [2] * model.horizon
+    calendar[t] = 1
+    model.non_renewable_resources = {"R0"}
+    model.resources_availability = {"R0": [1], "R1": calendar}
+    model.resources_set = set(model.resources_availability)
+    model.partial_preemption_data = None
+    model.always_releasable_resources = None
+    model.never_releasable_resources = None
+    # resource R1 not available at previous starting time
+    model.mode_details[task][1]["R1"] = 2
+    # new mode ok
+    model.mode_details[task][2] = dict(model.mode_details[task][1])
+    model.mode_details[task][2]["R0"] = 1
+    # previous mode ko
+    model.mode_details[task][1]["R0"] = 2
+    model.update_problem()
+    cp_model = CpSatMultiskillRcpspSolver(
+        problem=model,
+    )
+    cp_model.init_model(
+        one_worker_per_task=True,
+    )
+    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
+    p = ParametersCp.default_cpsat()
+    res = cp_model.solve(
+        parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
+    )
+    solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
+    assert model.satisfy(solution)
+    assert solution.get_start_time(task) != t
+    assert solution.get_mode(task) == 2
 
 
 def test_imopse_cpsat_with_calendar(caplog):
@@ -58,7 +115,9 @@ def test_imopse_cpsat_with_calendar(caplog):
     )
     cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCp.default_cpsat()
-    res = cp_model.solve(parameters_cp=p, time_limit=20)
+    res = cp_model.solve(
+        parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
+    )
     solution = res.get_best_solution_fit()[0]
     assert model.satisfy(solution)
 

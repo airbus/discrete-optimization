@@ -15,7 +15,7 @@ from discrete_optimization.facility.problem import (
     FacilityProblem,
     FacilitySolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ModeOptim

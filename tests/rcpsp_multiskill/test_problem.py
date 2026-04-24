@@ -1,7 +1,7 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+import logging
 import random
 from collections.abc import Hashable
 
@@ -233,3 +233,76 @@ def test_nok_same_name_resource_n_skill():
     problem.resources_availability["Q1"] = [0] * problem.horizon
     with pytest.raises(AssertionError):
         problem.update_problem()
+
+
+def test_check_non_renewable_resource_nok(caplog):
+    rcpsp_problem_file = [
+        f for f in get_data_available() if f.endswith("100_5_64_9.def")
+    ][0]
+    problem = parse_file(rcpsp_problem_file)[0]
+    problem = problem.to_variant_model()
+    # dummy solution
+    sol = VariantMultiskillRcpspSolution(
+        problem=problem,
+        priority_list_task=[i for i in range(problem.n_jobs_non_dummy)],
+        modes_vector=[1 for i in range(problem.n_jobs_non_dummy)],
+        priority_worker_per_task=[
+            [w for w in problem.employees] for i in range(problem.n_jobs_non_dummy)
+        ],
+        fast=False,  # avoid overhead for first call to numba functions
+    )
+    assert problem.satisfy(sol)
+    # add resources and twist mode details to violate max capacity
+    problem.non_renewable_resources = {"R0"}
+    problem.resources_availability = {
+        "R0": [1],
+        "R1": [2] + [1] * (problem.horizon - 1),
+    }
+    problem.resources_set = set(problem.resources_availability)
+    problem.partial_preemption_data = None
+    problem.always_releasable_resources = None
+    problem.never_releasable_resources = None
+    problem.mode_details[2][1]["R0"] = 2
+    problem.update_problem()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(sol)
+    assert "R0" in caplog.text
+
+
+def test_check_cumulative_resource_nok(caplog):
+    rcpsp_problem_file = [
+        f for f in get_data_available() if f.endswith("100_5_64_9.def")
+    ][0]
+    problem = parse_file(rcpsp_problem_file)[0]
+    problem = problem.to_variant_model()
+    # dummy solution
+    sol = VariantMultiskillRcpspSolution(
+        problem=problem,
+        priority_list_task=[i for i in range(problem.n_jobs_non_dummy)],
+        modes_vector=[1 for i in range(problem.n_jobs_non_dummy)],
+        priority_worker_per_task=[
+            [w for w in problem.employees] for i in range(problem.n_jobs_non_dummy)
+        ],
+        fast=False,  # avoid overhead for first call to numba functions
+    )
+    assert problem.satisfy(sol)
+    # add resources and twist mode details to violate availability
+    problem.non_renewable_resources = ["R0"]
+    problem.resources_availability = {
+        "R0": [1],
+        "R1": [2] + [1] * (problem.horizon - 1),
+    }
+    problem.resources_set = set(problem.resources_availability)
+    problem.partial_preemption_data = None
+    problem.always_releasable_resources = None
+    problem.never_releasable_resources = None
+    problem.mode_details[2][1]["R1"] = 1
+    problem.update_problem()
+    assert problem.satisfy(sol)
+    task = problem.tasks_list[0]
+    t = sol.get_start_time(task)
+    problem.resources_availability["R1"][t] = 0
+    problem.update_problem()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(sol)
+    assert "R1" in caplog.text

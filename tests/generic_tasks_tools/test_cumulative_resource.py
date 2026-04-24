@@ -73,7 +73,7 @@ class MyCumulativeResourceProblem(CumulativeResourceProblem[Task, Resource]):
     def tasks_list(self) -> list[Task]:
         return list(self.mode_details)
 
-    def get_resource_consumption(
+    def get_renewable_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         try:
@@ -167,34 +167,34 @@ def test_cumulative_resource_solution():
         modes={"task-1": 0, "task-2": 0},
         starts={"task-1": 0, "task-2": 0},
     )
-    assert solution.check_resource_capacity_constraint("R1")
-    assert not solution.check_resource_capacity_constraint("R5")
-    assert not solution.check_all_resource_capacity_constraints()
+    assert solution.check_renewable_resource_capacity_constraint("R1")
+    assert not solution.check_renewable_resource_capacity_constraint("R5")
+    assert not solution.check_all_renewable_resource_capacity_constraints()
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 1, "task-2": 0},
         starts={"task-1": 2, "task-2": 3},
     )
-    assert not solution.check_all_resource_capacity_constraints()
+    assert not solution.check_all_renewable_resource_capacity_constraints()
     # ok
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 0, "task-2": 0},
         starts={"task-1": 1, "task-2": 2},
     )
-    assert solution.check_all_resource_capacity_constraints()
+    assert solution.check_all_renewable_resource_capacity_constraints()
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 1, "task-2": 0},
         starts={"task-1": 1, "task-2": 1},
     )
-    assert solution.check_all_resource_capacity_constraints()
+    assert solution.check_all_renewable_resource_capacity_constraints()
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 1, "task-2": 0},
         starts={"task-1": 1, "task-2": 3},
     )
-    assert solution.check_all_resource_capacity_constraints()
+    assert solution.check_all_renewable_resource_capacity_constraints()
 
 
 def test_convert_calendar_to_availability_intervals():

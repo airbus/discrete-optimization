@@ -20,8 +20,14 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
     CumulativeResourceSchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resource import (
+    NonRenewableCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
+    PrecedenceSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -37,6 +43,7 @@ from discrete_optimization.rcpsp.problem import (
     Resource,
     Task,
 )
+from discrete_optimization.rcpsp.solution import NonRenewableResource
 from discrete_optimization.rcpsp.solvers import RcpspSolver
 from discrete_optimization.rcpsp.special_constraints import PairModeConstraint
 from discrete_optimization.rcpsp.utils import (
@@ -48,7 +55,9 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatRcpspSolver(
+    PrecedenceSchedulingCpSatSolver[Task],
     CumulativeResourceSchedulingCpSatSolver[Task, Resource],
+    NonRenewableCpSatSolver[Task, NonRenewableResource],
     RcpspSolver,
     WarmstartMixin,
 ):
@@ -122,17 +131,6 @@ class CpSatRcpspSolver(
                 interval_per_tasks[task].add((task, mode))
         return starts_var, ends_var, is_present_var, interval_var, interval_per_tasks
 
-    def add_classical_precedence_constraints(
-        self,
-        model: CpModel,
-        starts_var: dict[Hashable, IntVar],
-        ends_var: dict[Hashable, IntVar],
-    ):
-        # Precedence constraints
-        for task in self.problem.successors:
-            for successor_task in self.problem.successors[task]:
-                model.Add(starts_var[successor_task] >= ends_var[task])
-
     def add_one_mode_selected_per_task(
         self,
         model: CpModel,
@@ -145,24 +143,10 @@ class CpSatRcpspSolver(
 
     def create_cumulative_constraint(
         self,
-        model: CpModel,
         resource: str,
-        is_present_var: dict[tuple[Hashable, int], IntVar],
     ):
         if resource in self.problem.non_renewable_resources:
-            task_modes_consuming = [
-                (
-                    (task, mode),
-                    self.problem.mode_details[task][mode].get(resource, 0),
-                )
-                for task in self.problem.tasks_list
-                for mode in self.problem.mode_details[task]
-                if self.problem.mode_details[task][mode].get(resource, 0) > 0
-            ]
-            model.Add(
-                sum([is_present_var[x[0]] * x[1] for x in task_modes_consuming])
-                <= self.problem.get_max_resource_capacity(resource)
-            )
+            self.create_non_renewable_resources_constraint(resource=resource)
         else:
             self.create_renewable_resources_constraint(resource=resource)
 
@@ -306,15 +290,11 @@ class CpSatRcpspSolver(
             is_present_var=is_present_var,
             interval_per_tasks=interval_per_tasks,
         )
-        self.add_classical_precedence_constraints(
-            model=model, starts_var=starts_var, ends_var=ends_var
-        )
+        self.create_precedence_constraints()
         resources = self.problem.resources_list
         for resource in resources:
             self.create_cumulative_constraint(
-                model=model,
                 resource=resource,
-                is_present_var=is_present_var,
             )
         if include_special_constraints:
             if self.problem.special_constraints.pair_mode_constraint is not None:
@@ -419,7 +399,7 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
                 self.get_task_mode_is_present_variable(task=task, mode=mode)
                 for task in self.problem.tasks_list
                 for mode in self.problem.get_task_modes(task=task)
-                if self.problem.get_resource_consumption(
+                if self.problem.get_renewable_resource_consumption(
                     resource=resource, task=task, mode=mode
                 )
                 > 0
@@ -458,9 +438,7 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
             is_present_var=is_present_var,
             interval_per_tasks=interval_per_tasks,
         )
-        self.add_classical_precedence_constraints(
-            model=model, starts_var=starts_var, ends_var=ends_var
-        )
+        self.create_precedence_constraints()
         for resource in resources:
             self.create_cumulative_constraint_and_used_resource(
                 model=model,
@@ -652,9 +630,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             "resource_capacity": resource_capacity_var,
             "interval_var": interval_var,
         }
-        self.add_classical_precedence_constraints(
-            model=model, starts_var=starts_var, ends_var=ends_var
-        )
+        self.create_precedence_constraints()
         self.add_one_mode_selected_per_task(
             model=model,
             is_present_var=is_present_var,
