@@ -20,6 +20,10 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResourceProblem,
     NonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
+    PrecedenceSchedulingProblem,
+    PrecedenceSchedulingSolution,
+)
 
 CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
 Resource = Union[CumulativeResource, UnaryResource]
@@ -29,6 +33,7 @@ class AllocationSchedulingProblem(
     CumulativeResourceProblem[Task, Resource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     AllocationProblem[Task, UnaryResource],
+    PrecedenceSchedulingProblem[Task],
     Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
     """Scheduling problem with unary resource allocation.
@@ -39,12 +44,14 @@ class AllocationSchedulingProblem(
     - cumulative: the tasks consume cumulative resources according to the chosen mode
     - allocation
     - non-renewable: the tasks consume non-renewable resources according to the chosen mode
+    - precedence
 
     Even though this class is generic but encompasses also more specific cases:
     - singlemode: actually only one mode per task
     - no cumulative ressources: if resources_list list only unary resources
     - no calendar: resource capacity can be given as a constant on [0, horizon)
     - no non-renewable ressources: if non_renewable_resources_list empty
+    - no precedence constraints: precedence constraints empty
 
     We suppose that all renewable resources are
     - either cumulative ones
@@ -96,6 +103,7 @@ class AllocationSchedulingProblem(
 class AllocationSchedulingSolution(
     CumulativeResourceSolution[Task, Resource],
     NonRenewableResourceSolution[Task, NonRenewableResource],
+    PrecedenceSchedulingSolution[Task],
     AllocationSolution[Task, UnaryResource],
     Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
