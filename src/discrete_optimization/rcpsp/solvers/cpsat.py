@@ -26,6 +26,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resource import (
     NonRenewableCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
+    PrecedenceSchedulingCpSatSolver,
+)
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -52,6 +55,7 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatRcpspSolver(
+    PrecedenceSchedulingCpSatSolver[Task],
     CumulativeResourceSchedulingCpSatSolver[Task, Resource],
     NonRenewableCpSatSolver[Task, NonRenewableResource],
     RcpspSolver,
@@ -126,17 +130,6 @@ class CpSatRcpspSolver(
                 )
                 interval_per_tasks[task].add((task, mode))
         return starts_var, ends_var, is_present_var, interval_var, interval_per_tasks
-
-    def add_classical_precedence_constraints(
-        self,
-        model: CpModel,
-        starts_var: dict[Hashable, IntVar],
-        ends_var: dict[Hashable, IntVar],
-    ):
-        # Precedence constraints
-        for task in self.problem.successors:
-            for successor_task in self.problem.successors[task]:
-                model.Add(starts_var[successor_task] >= ends_var[task])
 
     def add_one_mode_selected_per_task(
         self,
@@ -297,9 +290,7 @@ class CpSatRcpspSolver(
             is_present_var=is_present_var,
             interval_per_tasks=interval_per_tasks,
         )
-        self.add_classical_precedence_constraints(
-            model=model, starts_var=starts_var, ends_var=ends_var
-        )
+        self.create_precedence_constraints()
         resources = self.problem.resources_list
         for resource in resources:
             self.create_cumulative_constraint(
@@ -447,9 +438,7 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
             is_present_var=is_present_var,
             interval_per_tasks=interval_per_tasks,
         )
-        self.add_classical_precedence_constraints(
-            model=model, starts_var=starts_var, ends_var=ends_var
-        )
+        self.create_precedence_constraints()
         for resource in resources:
             self.create_cumulative_constraint_and_used_resource(
                 model=model,
@@ -641,9 +630,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             "resource_capacity": resource_capacity_var,
             "interval_var": interval_var,
         }
-        self.add_classical_precedence_constraints(
-            model=model, starts_var=starts_var, ends_var=ends_var
-        )
+        self.create_precedence_constraints()
         self.add_one_mode_selected_per_task(
             model=model,
             is_present_var=is_present_var,

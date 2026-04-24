@@ -9,8 +9,8 @@ from typing import Any
 from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
-    SchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
+    PrecedenceSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution, Task
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatJspSolver(
-    SchedulingCpSatSolver[Task],
+    PrecedenceSchedulingCpSatSolver[Task],
     WarmstartMixin,
 ):
     problem: JobShopProblem
@@ -68,19 +68,17 @@ class CpSatJspSolver(
             ]
             for j in range(self.problem.n_jobs)
         ]
+        # Store the variables in some dictionaries.
+        self.variables["starts"] = starts
+        self.variables["ends"] = ends
+        self.variables["intervals"] = intervals
         # Precedence constraint between sub-parts of each job.
-        for j in range(self.problem.n_jobs):
-            for k in range(1, len(self.problem.list_jobs[j])):
-                self.cp_model.Add(starts[j][k] >= ends[j][k - 1])
+        self.create_precedence_constraints()
         # No overlap task on the same machine.
         for machine in self.problem.job_per_machines:
             self.cp_model.AddNoOverlap(
                 [intervals[x[0]][x[1]] for x in self.problem.job_per_machines[machine]]
             )
-        # Store the variables in some dictionaries.
-        self.variables["starts"] = starts
-        self.variables["ends"] = ends
-        self.variables["intervals"] = intervals
 
         objective = self.get_global_makespan_variable()
         self.minimize_variable(objective)
