@@ -9,8 +9,10 @@ from ortools.sat.python.cp_model import CpSolverSolutionCallback, Domain, Linear
 
 from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution, Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     MultimodeCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution

@@ -20,8 +20,10 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
     CumulativeResourceSchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resource import (
     NonRenewableCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction

@@ -16,8 +16,10 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation_scheduling import (
     AllocationSchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     SinglemodeCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution

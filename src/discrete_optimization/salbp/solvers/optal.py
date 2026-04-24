@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any, Iterable
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
+from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin

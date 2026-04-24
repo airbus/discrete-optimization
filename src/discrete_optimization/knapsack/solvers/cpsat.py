@@ -14,7 +14,7 @@ from ortools.sat.python.cp_model import (
     ObjLinearExprT,
 )
 
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
