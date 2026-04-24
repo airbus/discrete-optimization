@@ -7,7 +7,7 @@ import logging
 from typing import Optional
 
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
+from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
     AllocationOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (

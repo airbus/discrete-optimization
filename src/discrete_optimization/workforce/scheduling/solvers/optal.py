@@ -11,8 +11,10 @@ from typing import Any, Optional, Union
 
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver import (
+from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
     AllocationOptalSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution

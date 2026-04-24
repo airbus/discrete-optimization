@@ -16,7 +16,7 @@ from discrete_optimization.coloring.problem import (
 from discrete_optimization.coloring.solvers.starting_solution import (
     WithStartingSolutionColoringSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationBinaryOrIntegerModellingCpSatSolver,
     AllocationModelling,
 )
