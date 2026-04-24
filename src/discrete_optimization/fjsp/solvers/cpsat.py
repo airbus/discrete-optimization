@@ -5,15 +5,20 @@
 import logging
 from typing import Any
 
-from ortools.sat.python.cp_model import CpSolverSolutionCallback, Domain, LinearExprT
+from ortools.sat.python.cp_model import (
+    CpSolverSolutionCallback,
+    Domain,
+    IntervalVar,
+    LinearExprT,
+)
 
 from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution, Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
-    MultimodeCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
+    MultimodeSchedulingCpSatSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
-    SchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
+    PrecedenceSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -25,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatFjspSolver(
-    SchedulingCpSatSolver[Task],
-    MultimodeCpSatSolver[Task],
+    PrecedenceSchedulingCpSatSolver[Task],
+    MultimodeSchedulingCpSatSolver[Task],
     WarmstartMixin,
 ):
     hyperparameters = [
@@ -56,6 +61,11 @@ class CpSatFjspSolver(
         objective = self.get_global_makespan_variable()
         self.variables["makespan"] = objective
         self.minimize_variable(objective)
+
+    def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
+        j, k = task
+        key = j, k, mode
+        return self.variables["opt_intervals"][key]
 
     def get_makespan_upper_bound(self) -> int:
         return self._max_time
@@ -182,14 +192,6 @@ class CpSatFjspSolver(
             "keys_per_subjob": keys_per_subjob,
             "key_to_machine": key_to_machine,
         }
-
-    def create_precedence_constraints(self):
-        for i in range(self.problem.n_jobs):
-            for j in range(1, len(self.problem.list_jobs[i].sub_jobs)):
-                self.cp_model.Add(
-                    self.variables["starts"][(i, j)]
-                    >= self.variables["ends"][(i, j - 1)]
-                )
 
     def create_is_present_constraints(self):
         for subjob in self.variables["keys_per_subjob"]:

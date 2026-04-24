@@ -22,6 +22,9 @@ from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
+    PrecedenceSchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import RobustProblem
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
@@ -39,6 +42,7 @@ class TaskDetails:
 
 
 class RcpspSolution(
+    PrecedenceSchedulingSolution[Task],
     CumulativeResourceSolution[Task, Resource],
     NonRenewableResourceSolution[Task, NonRenewableResource],
     MultimodeSchedulingSolution[Task],
