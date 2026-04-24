@@ -20,6 +20,9 @@ from discrete_optimization.generic_tasks_tools.multimode import (
     SinglemodeProblem,
     SinglemodeSolution,
 )
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    WithoutNonRenewableResourceProblem,
+)
 from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     convert_calendar_to_availability_intervals,
@@ -46,10 +49,13 @@ Task = Hashable
 UnaryResource = Hashable
 CumulativeResource = str
 Resource = Union[UnaryResource, CumulativeResource]
+NonRenewableResource = str
 
 
 class AllocSchedulingSolution(
-    AllocationSchedulingSolution[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingSolution[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
     SinglemodeSolution[Task],
 ):
     problem: AllocSchedulingProblem
@@ -98,7 +104,10 @@ class TasksDescription:
 
 
 class AllocSchedulingProblem(
-    AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingProblem[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
+    WithoutNonRenewableResourceProblem[Task, NonRenewableResource],
     SinglemodeProblem[Task],
     PrecedenceProblem[Task],
 ):
@@ -164,7 +173,7 @@ class AllocSchedulingProblem(
     def cumulative_resources_list(self) -> list[CumulativeResource]:
         return self.resources_list
 
-    def get_resource_consumption(
+    def get_renewable_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         if self.is_cumulative_resource(resource):
@@ -551,7 +560,7 @@ def satisfy_renewable_resources(
     Returns:
 
     """
-    return solution.check_all_resource_capacity_constraints()
+    return solution.check_all_renewable_resource_capacity_constraints()
 
 
 def satisfy_calendars(

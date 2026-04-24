@@ -61,7 +61,7 @@ def test_ortools(model):
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
     assert fit == -fit_2["makespan"]
     assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_resource_capacity_constraints()
+    assert solution.check_all_renewable_resource_capacity_constraints()
     rcpsp_problem.plot_ressource_view(solution)
     plot_task_gantt(rcpsp_problem, solution)
 
@@ -264,7 +264,7 @@ def test_ortools_with_calendar_resource(model):
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
     assert fit == -fit_2["makespan"]
     assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_resource_capacity_constraints()
+    assert solution.check_all_renewable_resource_capacity_constraints()
 
     rcpsp_problem.plot_ressource_view(solution)
     plot_task_gantt(rcpsp_problem, solution)
@@ -301,7 +301,7 @@ def test_ortools_cumulativeresource_optim(model):
     result_storage = solver.solve(time_limit=50)
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_resource_capacity_constraints()
+    assert solution.check_all_renewable_resource_capacity_constraints()
 
 
 @pytest.mark.parametrize(
@@ -316,7 +316,7 @@ def test_ortools_resource_optim(model):
     result_storage = solver.solve(time_limit=50)
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_resource_capacity_constraints()
+    assert solution.check_all_renewable_resource_capacity_constraints()
 
 
 def test_ortools_with_cb(caplog, random_seed):

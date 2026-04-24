@@ -11,7 +11,7 @@ from collections.abc import Hashable
 from copy import deepcopy
 from enum import Enum
 from functools import cache, partial
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import scipy.stats as ss
@@ -112,10 +112,13 @@ Task = Hashable
 UnaryResource = Hashable
 CumulativeResource = str
 Resource = Union[CumulativeResource, UnaryResource]
+NonRenewableResource = str
 
 
 class MultiskillRcpspSolution(
-    AllocationSchedulingSolution[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingSolution[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
 ):
     problem: MultiskillRcpspProblem
 
@@ -927,7 +930,7 @@ def sgs_multi_skill(solution: VariantMultiskillRcpspSolution):
                 if res in problem.non_renewable_resources:
                     resource_avail_in_time[res][end_t + 1 :] -= problem.mode_details[
                         act_id
-                    ][modes_dict[act_id]][res]
+                    ][modes_dict[act_id]].get(res, 0)
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
             if worker_ids is not None:
@@ -1217,7 +1220,7 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
                     ].get(res, 0)
                     if res in problem.non_renewable_resources and e == end_t:
                         resource_avail_in_time[res][end_t + 1 :] -= (
-                            problem.mode_details[act_id][modes_dict[act_id]][res]
+                            problem.mode_details[act_id][modes_dict[act_id]].get(res, 0)
                         )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
@@ -1324,7 +1327,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
                 ].get(res, 0)
                 if res in problem.non_renewable_resources and e == end_time[-1]:
                     resource_avail_in_time[res][end_time[-1] + 1 :] -= (
-                        problem.mode_details[c][modes_dict[c]][res]
+                        problem.mode_details[c][modes_dict[c]].get(res, 0)
                     )
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
@@ -1360,7 +1363,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
                 ].get(res, 0)
                 if res in problem.non_renewable_resources and e == end_time[-1]:
                     resource_avail_in_time[res][end_time[-1] + 1 :] -= (
-                        problem.mode_details[c][modes_dict[c]][res]
+                        problem.mode_details[c][modes_dict[c]].get(res, 0)
                     )
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
@@ -1553,7 +1556,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
                     ].get(res, 0)
                     if res in problem.non_renewable_resources and e == end_t:
                         resource_avail_in_time[res][end_t + 1 :] -= (
-                            problem.mode_details[act_id][modes_dict[act_id]][res]
+                            problem.mode_details[act_id][modes_dict[act_id]].get(res, 0)
                         )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
@@ -1650,7 +1653,7 @@ def sgs_multi_skill_partial_schedule(
             if res in problem.non_renewable_resources:
                 resource_avail_in_time[res][end_time:] -= problem.mode_details[c][
                     modes_dict[c]
-                ][res]
+                ].get(res, 0)
                 if resource_avail_in_time[res][-1] < 0:
                     unfeasible_non_renewable_resources = True
         for unit in completed_tasks[c].resource_units_used:
@@ -1685,7 +1688,7 @@ def sgs_multi_skill_partial_schedule(
             if res in problem.non_renewable_resources:
                 resource_avail_in_time[res][end_time:] -= problem.mode_details[c][
                     modes_dict[c]
-                ][res]
+                ].get(res, 0)
                 if resource_avail_in_time[res][-1] < 0:
                     unfeasible_non_renewable_resources = True
         for unit in scheduled_tasks_start_times[c].resource_units_used:
@@ -1819,7 +1822,7 @@ def sgs_multi_skill_partial_schedule(
                 if res in problem.non_renewable_resources:
                     resource_avail_in_time[res][end_t + 1 :] -= problem.mode_details[
                         act_id
-                    ][modes_dict[act_id]][res]
+                    ][modes_dict[act_id]].get(res, 0)
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
             if worker_ids is not None:
@@ -1981,7 +1984,9 @@ def intersect(i1, i2):
 
 
 class MultiskillRcpspProblem(
-    AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingProblem[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
     PrecedenceProblem[Task],
 ):
     sgs: ScheduleGenerationScheme
@@ -2028,7 +2033,6 @@ class MultiskillRcpspProblem(
         self.skills_list = sorted(self.skills_set)
 
         self.resources_set = resources_set
-        self.resources_list = list(self.resources_set)
         self.non_renewable_resources = non_renewable_resources
         self.resources_availability = resources_availability
         self.employees = employees
@@ -2087,6 +2091,42 @@ class MultiskillRcpspProblem(
         self.partial_preemption_data = partial_preemption_data
         self.always_releasable_resources = always_releasable_resources
         self.never_releasable_resources = never_releasable_resources
+        self.strictly_disjunctive_subtasks = strictly_disjunctive_subtasks
+        if resource_blocking_data is None:
+            self.resource_blocking_data = []
+        else:
+            self.resource_blocking_data = resource_blocking_data
+
+        self.update_problem()
+
+    def update_problem(self):
+        """Method to call when some attributes have been modified.
+
+        It recomputes what is needed (numba functions, calendars, ...)
+        It take into account modifications of:
+        - horizon
+        - resource/employee calendars
+        - duration/resource consumption/skill requirement for a given task, mode
+        - special constraints
+        - successors
+
+        NB: special constraints may add precedence constraints. A new call to update_problem()
+        with different special constraints will not roll back the updated precedence constraints.
+
+        """
+        self._max_skill_over_worker_to_recompute = True
+        self.update_resource_sets()
+        self.create_employee_task_compatibility()
+        self.update_calendars()
+        self.update_special_constraints()
+        self.update_functions()
+
+    def update_resource_sets(self):
+        assert self.resources_set == set(self.resources_availability), (
+            "resources_set should match resources_availability keys."
+        )
+        self.resources_list = list(self.resources_set)
+        self._non_renewable_resources_list = list(self.non_renewable_resources)
         if all(
             f is None
             for f in [
@@ -2136,34 +2176,6 @@ class MultiskillRcpspProblem(
                     for m in self.partial_preemption_data[t]
                 ):
                     self.always_releasable_resources.add(r)
-        self.strictly_disjunctive_subtasks = strictly_disjunctive_subtasks
-        if resource_blocking_data is None:
-            self.resource_blocking_data = []
-        else:
-            self.resource_blocking_data = resource_blocking_data
-
-        self.update_problem()
-
-    def update_problem(self):
-        """Method to call when some attributes have been modified.
-
-        It recomputes what is needed (numba functions, calendars, ...)
-        It take into account modifications of:
-        - horizon
-        - resource/employee calendars
-        - duration/resource consumption/skill requirement for a given task, mode
-        - special constraints
-        - successors
-
-        NB: special constraints may add precedence constraints. A new call to update_problem()
-        with different special constraints will not roll back the updated precedence constraints.
-
-        """
-        self._max_skill_over_worker_to_recompute = True
-        self.create_employee_task_compatibility()
-        self.update_calendars()
-        self.update_special_constraints()
-        self.update_functions()
 
     def update_special_constraints(self):
         self.do_special_constraints = self.special_constraints is not None
@@ -2191,31 +2203,22 @@ class MultiskillRcpspProblem(
         self.predecessors = self.graph.predecessors_dict
 
     def update_calendars(self):
-        self.is_calendar = False
-        if any(
-            isinstance(self.resources_availability[res], Iterable)
-            for res in self.resources_availability
-        ):
-            self.is_calendar = (
-                max(
-                    [
-                        len(
-                            set(self.resources_availability[res])
-                            if isinstance(self.resources_availability[res], Iterable)
-                            else {self.resources_availability[res]}
-                        )
-                        for res in self.resources_availability
-                    ]
-                )
-                > 1
+        self.is_calendar = len(self.resources_availability) > 0
+        self.max_resource_capacity = {
+            r: max(self.resources_availability[r]) for r in self.resources_availability
+        }
+        # consolidate calendars -> list of size horizon
+        self.resources_availability = {
+            res: (
+                # non-renewable: constant calendar with max capacity
+                [calendar[0]] * self.horizon
+                if res in self.non_renewable_resources
+                # renewable: fill missing values with 0
+                else list(calendar)[: self.horizon]
+                + [0] * (self.horizon - len(calendar))
             )
-        self.max_resource_capacity = {}
-        for r in self.resources_availability:
-            if isinstance(self.resources_availability[r], Iterable):
-                self.max_resource_capacity[r] = max(self.resources_availability[r])
-            else:
-                self.max_resource_capacity[r] = self.resources_availability[r]
-
+            for res, calendar in self.resources_availability.items()
+        }
         self.total_number_step_available = {
             employee: sum(self.employees[employee].calendar_employee[: self.horizon])
             for employee in self.employees
@@ -2229,6 +2232,20 @@ class MultiskillRcpspProblem(
     @property
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
+
+    @property
+    def non_renewable_resources_list(self) -> list[NonRenewableResource]:
+        return self._non_renewable_resources_list
+
+    def get_non_renewable_resource_capacity(
+        self, resource: NonRenewableResource
+    ) -> int:
+        return self.max_resource_capacity[resource]
+
+    def get_non_renewable_resource_consumption(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ) -> int:
+        return self.mode_details[task][mode].get(resource, 0)
 
     @property
     def cumulative_resources_list(self) -> list[CumulativeResource]:
@@ -2247,7 +2264,7 @@ class MultiskillRcpspProblem(
             + [NB_EMPLOYEES_LB]
         )
 
-    def get_resource_consumption(
+    def get_renewable_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         """Get resource consumption of the task in the given mode
@@ -2537,9 +2554,10 @@ class MultiskillRcpspProblem(
         for task in self.tasks_list:
             mode = rcpsp_sol.modes[task]
             required_skills = {
-                s: self.mode_details[task][mode][s]
+                s: conso
                 for s in self.mode_details[task][mode]
-                if s in self.skills_set and self.mode_details[task][mode][s] > 0
+                if s in self.skills_set
+                and (conso := self.mode_details[task][mode][s]) > 0
             }
             # Skills for the given task are used
             if len(required_skills) > 0:
@@ -2555,27 +2573,13 @@ class MultiskillRcpspProblem(
 
         # Check for renewable resources capacity violations
         # include employees and cumulative resources
-        if not rcpsp_sol.check_all_resource_capacity_constraints():
+        if not rcpsp_sol.check_all_renewable_resource_capacity_constraints():
             return False
 
         # Check for non-renewable resource violation
-        for res in self.non_renewable_resources:
-            usage = 0
-            for act_id in self.tasks_list:
-                mode = rcpsp_sol.modes[act_id]
-                usage += self.mode_details[act_id][mode][res]
-            if usage > self.resources_availability[res][0]:
-                logger.debug(
-                    (
-                        "Non-renewable res",
-                        res,
-                        "res_usage: ",
-                        usage,
-                        "res_avail: ",
-                        self.resources_availability[res][0],
-                    )
-                )
-                return False
+        if not rcpsp_sol.check_all_non_renewable_resource_capacity_constraints():
+            return False
+
         # Check precedences / successors
         for act_id in list(self.successors.keys()):
             for succ_id in self.successors[act_id]:
@@ -2708,7 +2712,7 @@ class MultiskillRcpspProblem(
             usage = 0
             for act_id in self.tasks_list:
                 mode = rcpsp_sol.modes[act_id]
-                usage += self.mode_details[act_id][mode][res]
+                usage += self.mode_details[act_id][mode].get(res, 0)
             if usage > self.resources_availability[res][0]:
                 logger.debug(
                     (

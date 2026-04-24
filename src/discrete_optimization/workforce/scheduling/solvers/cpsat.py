@@ -42,6 +42,7 @@ from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
     CumulativeResource,
+    NonRenewableResource,
     Task,
     UnaryResource,
 )
@@ -94,7 +95,9 @@ class AdditionalCPConstraints:
 
 
 class CPSatAllocSchedulingSolver(
-    AllocationSchedulingCpSatSolver[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingCpSatSolver[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
     SinglemodeCpSatSolver[Task],
     SolverAllocScheduling,
     WarmstartMixin,

@@ -22,6 +22,7 @@ from ortools.sat.python.cp_model import (
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
     CumulativeResourceSchedulingCpSatSolver,
+    NonRenewableCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -37,6 +38,7 @@ from discrete_optimization.rcpsp.problem import (
     Resource,
     Task,
 )
+from discrete_optimization.rcpsp.solution import NonRenewableResource
 from discrete_optimization.rcpsp.solvers import RcpspSolver
 from discrete_optimization.rcpsp.special_constraints import PairModeConstraint
 from discrete_optimization.rcpsp.utils import (
@@ -49,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 class CpSatRcpspSolver(
     CumulativeResourceSchedulingCpSatSolver[Task, Resource],
+    NonRenewableCpSatSolver[Task, NonRenewableResource],
     RcpspSolver,
     WarmstartMixin,
 ):
@@ -145,24 +148,10 @@ class CpSatRcpspSolver(
 
     def create_cumulative_constraint(
         self,
-        model: CpModel,
         resource: str,
-        is_present_var: dict[tuple[Hashable, int], IntVar],
     ):
         if resource in self.problem.non_renewable_resources:
-            task_modes_consuming = [
-                (
-                    (task, mode),
-                    self.problem.mode_details[task][mode].get(resource, 0),
-                )
-                for task in self.problem.tasks_list
-                for mode in self.problem.mode_details[task]
-                if self.problem.mode_details[task][mode].get(resource, 0) > 0
-            ]
-            model.Add(
-                sum([is_present_var[x[0]] * x[1] for x in task_modes_consuming])
-                <= self.problem.get_max_resource_capacity(resource)
-            )
+            self.create_non_renewable_resources_constraint(resource=resource)
         else:
             self.create_renewable_resources_constraint(resource=resource)
 
@@ -312,9 +301,7 @@ class CpSatRcpspSolver(
         resources = self.problem.resources_list
         for resource in resources:
             self.create_cumulative_constraint(
-                model=model,
                 resource=resource,
-                is_present_var=is_present_var,
             )
         if include_special_constraints:
             if self.problem.special_constraints.pair_mode_constraint is not None:
@@ -419,7 +406,7 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
                 self.get_task_mode_is_present_variable(task=task, mode=mode)
                 for task in self.problem.tasks_list
                 for mode in self.problem.get_task_modes(task=task)
-                if self.problem.get_resource_consumption(
+                if self.problem.get_renewable_resource_consumption(
                     resource=resource, task=task, mode=mode
                 )
                 > 0

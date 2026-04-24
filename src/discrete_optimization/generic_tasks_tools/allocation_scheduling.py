@@ -15,6 +15,11 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResourceProblem,
     CumulativeResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NonRenewableResource,
+    NonRenewableResourceProblem,
+    NonRenewableResourceSolution,
+)
 
 CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
 Resource = Union[CumulativeResource, UnaryResource]
@@ -22,8 +27,9 @@ Resource = Union[CumulativeResource, UnaryResource]
 
 class AllocationSchedulingProblem(
     CumulativeResourceProblem[Task, Resource],
+    NonRenewableResourceProblem[Task, NonRenewableResource],
     AllocationProblem[Task, UnaryResource],
-    Generic[Task, UnaryResource, CumulativeResource],
+    Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
     """Scheduling problem with unary resource allocation.
 
@@ -32,11 +38,13 @@ class AllocationSchedulingProblem(
     - multimode: the tasks have several mode on which the duration depends
     - cumulative: the tasks consume cumulative resources according to the chosen mode
     - allocation
+    - non-renewable: the tasks consume non-renewable resources according to the chosen mode
 
     Even though this class is generic but encompasses also more specific cases:
     - singlemode: actually only one mode per task
     - no cumulative ressources: if resources_list list only unary resources
     - no calendar: resource capacity can be given as a constant on [0, horizon)
+    - no non-renewable ressources: if non_renewable_resources_list empty
 
     We suppose that all renewable resources are
     - either cumulative ones
@@ -87,18 +95,23 @@ class AllocationSchedulingProblem(
 
 class AllocationSchedulingSolution(
     CumulativeResourceSolution[Task, Resource],
+    NonRenewableResourceSolution[Task, NonRenewableResource],
     AllocationSolution[Task, UnaryResource],
-    Generic[Task, UnaryResource, CumulativeResource],
+    Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
     """Solution type associated to AllocationSchedulingProblem."""
 
-    problem: AllocationSchedulingProblem[Task, UnaryResource, CumulativeResource]
+    problem: AllocationSchedulingProblem[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ]
 
-    def get_resource_consumption(self, resource: Resource, task: Task) -> int:
+    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
         """"""
         if self.problem.is_unary_resource(resource=resource):
             # unary resources: 0 (not allocated) or 1 (allocated)
             return int(self.is_allocated(task=task, unary_resource=resource))
         else:
             # cumulative resources
-            return super().get_resource_consumption(resource=resource, task=task)
+            return super().get_renewable_resource_consumption(
+                resource=resource, task=task
+            )

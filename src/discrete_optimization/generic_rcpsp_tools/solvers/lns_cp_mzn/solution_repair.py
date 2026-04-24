@@ -64,9 +64,6 @@ ANY_RCPSP = Union[
 
 def compute_shift_extremities(model: ANY_RCPSP):
     ressource_names = model.get_resource_names()
-    ressource_arrays = {
-        r: model.get_resource_availability_array(r) for r in ressource_names
-    }
     if isinstance(model, MultiskillRcpspProblem):
         fake_tasks, fake_tasks_unit = create_fake_tasks_multiskills(model)
         f = fake_tasks + fake_tasks_unit
