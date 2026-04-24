@@ -24,7 +24,6 @@ from discrete_optimization.generic_tasks_tools.allocation_scheduling import (
     AllocationSchedulingProblem,
     AllocationSchedulingSolution,
 )
-from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     convert_calendar_to_availability_intervals,
     merge_resources_calendars,
@@ -1987,7 +1986,6 @@ class MultiskillRcpspProblem(
     AllocationSchedulingProblem[
         Task, UnaryResource, CumulativeResource, NonRenewableResource
     ],
-    PrecedenceProblem[Task],
 ):
     sgs: ScheduleGenerationScheme
     skills_set: set[str]
@@ -2581,24 +2579,9 @@ class MultiskillRcpspProblem(
             return False
 
         # Check precedences / successors
-        for act_id in list(self.successors.keys()):
-            for succ_id in self.successors[act_id]:
-                start_succ = rcpsp_sol.schedule[succ_id]["start_time"]
-                end_pred = rcpsp_sol.schedule[act_id]["end_time"]
-                if start_succ < end_pred:
-                    logger.debug(
-                        (
-                            "Precedence relationship broken: ",
-                            act_id,
-                            "end at ",
-                            end_pred,
-                            "while ",
-                            succ_id,
-                            "start at",
-                            start_succ,
-                        )
-                    )
-                    return False
+        if not rcpsp_sol.check_precedence_constraints():
+            return False
+
         return True
 
     def satisfy_preemptive(self, rcpsp_sol: PreemptiveMultiskillRcpspSolution) -> bool:

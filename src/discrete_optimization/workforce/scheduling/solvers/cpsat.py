@@ -373,11 +373,7 @@ class CPSatAllocSchedulingSolver(
                 # else managed later by self.create_actually_done_variables()
 
         # Precedence constraints
-        for t in self.problem.precedence_constraints:
-            i_t = self.problem.tasks_to_index[t]
-            for t_suc in self.problem.precedence_constraints[t]:
-                i_t_suc = self.problem.tasks_to_index[t_suc]
-                self.cp_model.Add(starts_var[i_t_suc] >= ends_var[i_t])
+        self.create_precedence_constraints()
 
         # Same allocation constraints
         for l_t in self.problem.same_allocation:

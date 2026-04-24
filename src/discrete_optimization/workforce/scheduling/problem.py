@@ -412,21 +412,28 @@ def satisfy_precedence(
     """
     Partial solution = True means we ignore variable set to None when we check the constraint.
     """
-    for task in problem.precedence_constraints:
-        index_task = problem.tasks_to_index[task]
-        end_task = solution.schedule[index_task, 1]
-        if partial_solution and np.isnan(end_task):
-            continue
-        elif np.isnan(end_task):
-            return False
-        for successor_task in problem.precedence_constraints[task]:
-            if partial_solution and np.isnan(
-                solution.schedule[problem.tasks_to_index[successor_task], 0]
-            ):
+    if not partial_solution:
+        # generic check only if not partial solution
+        return solution.check_precedence_constraints()
+    else:
+        for task in problem.precedence_constraints:
+            index_task = problem.tasks_to_index[task]
+            end_task = solution.schedule[index_task, 1]
+            if partial_solution and np.isnan(end_task):
                 continue
-            if solution.schedule[problem.tasks_to_index[successor_task], 0] < end_task:
-                logging.info("Precedence not respected")
+            elif np.isnan(end_task):
                 return False
+            for successor_task in problem.precedence_constraints[task]:
+                if partial_solution and np.isnan(
+                    solution.schedule[problem.tasks_to_index[successor_task], 0]
+                ):
+                    continue
+                if (
+                    solution.schedule[problem.tasks_to_index[successor_task], 0]
+                    < end_task
+                ):
+                    logging.info("Precedence not respected")
+                    return False
     return True
 
 

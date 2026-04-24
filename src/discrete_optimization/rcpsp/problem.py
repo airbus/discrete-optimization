@@ -26,7 +26,9 @@ from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResourceProblem,
 )
-from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
+    PrecedenceSchedulingProblem,
+)
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     convert_calendar_to_availability_intervals,
 )
@@ -67,7 +69,7 @@ class ScheduleGenerationScheme(Enum):
 
 
 class RcpspProblem(
-    PrecedenceProblem[Task],
+    PrecedenceSchedulingProblem[Task],
     CumulativeResourceProblem[Task, Resource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     MultimodeSchedulingProblem[Task],
@@ -563,16 +565,8 @@ class RcpspProblem(
             return False
 
         # Check precedences / successors
-        for act_id in list(self.successors.keys()):
-            for succ_id in self.successors[act_id]:
-                start_succ = variable.rcpsp_schedule[succ_id]["start_time"]
-                end_pred = variable.rcpsp_schedule[act_id]["end_time"]
-                if start_succ < end_pred:
-                    logger.debug(
-                        f"Precedence relationship broken: {act_id} end at {end_pred} "
-                        f"while {succ_id} start at {start_succ}"
-                    )
-                    return False
+        if not variable.check_precedence_constraints():
+            return False
 
         return True
 

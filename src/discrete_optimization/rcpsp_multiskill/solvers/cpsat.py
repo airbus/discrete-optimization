@@ -135,7 +135,7 @@ class CpSatMultiskillRcpspSolver(
         self.create_skills_constraint_to_mode()
         self.create_skills_constraint_worker(**args)
         self.create_skills_constraints_v2(**args)
-        self.constraint_precedence()
+        self.create_precedence_constraints()
         self.variables["makespan"] = self.variables["base_variable"]["ends"][
             self.problem.sink_task
         ]
@@ -474,14 +474,6 @@ class CpSatMultiskillRcpspSolver(
                         )
         if slack_skill:
             self.variables["slack_skill_var"] = slack_skill_dict
-
-    def constraint_precedence(self):
-        for task in self.problem.successors:
-            for succ in self.problem.successors[task]:
-                self.cp_model.Add(
-                    self.variables["base_variable"]["starts"][succ]
-                    >= self.variables["base_variable"]["ends"][task]
-                )
 
     def create_constraint_resource(self):
         for r in self.problem.resources_list:

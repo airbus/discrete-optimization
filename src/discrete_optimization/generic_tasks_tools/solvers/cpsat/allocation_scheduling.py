@@ -27,7 +27,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resou
     NonRenewableCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
-    PrecedenceSchedulingCpsatSolver,
+    PrecedenceSchedulingCpSatSolver,
 )
 
 
@@ -35,7 +35,7 @@ class AllocationSchedulingCpSatSolver(
     CumulativeResourceSchedulingCpSatSolver[Task, Resource],
     NonRenewableCpSatSolver[Task, NonRenewableResource],
     AllocationCpSatSolver[Task, UnaryResource],
-    PrecedenceSchedulingCpsatSolver[Task],
+    PrecedenceSchedulingCpSatSolver[Task],
     Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
     problem: AllocationSchedulingProblem[
