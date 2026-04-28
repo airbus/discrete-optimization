@@ -312,7 +312,7 @@ class AllocationIntegerModellingCpSatSolver(
             self.is_present_variables = {}
             for task in tasks:
                 for unary_resource in unary_resources:
-                    if self.problem.is_compatible_task_unary_resource(
+                    if self.is_compatible_task_unary_resource(
                         task=task, unary_resource=unary_resource
                     ):
                         boolvar = self.cp_model.new_bool_var(

@@ -67,7 +67,7 @@ class GenericSchedulingCpSatSolver(
                     1,
                 )
                 for task in tasks
-                if self.problem.is_compatible_task_unary_resource(
+                if self.is_compatible_task_unary_resource(
                     task=task, unary_resource=resource
                 )
             ]
