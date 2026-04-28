@@ -262,6 +262,21 @@ class AllocationCpSolver(TasksCpSolver[Task], Generic[Task, UnaryResource]):
         """
         ...
 
+    def is_compatible_task_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> bool:
+        """Should return False if the unary_resource can never be allocated to task.
+
+        This is only a hint used to reduce the number of variables or constraints generated.
+        Default to use `problem.is_compatible_task_unary_resource()`.
+
+        But you can override it if you want to have more constraints in the solver than in the problem.
+
+        """
+        return self.problem.is_compatible_task_unary_resource(
+            task=task, unary_resource=unary_resource
+        )
+
 
 def get_default_tasks_n_unary_resources(
     problem: AllocationProblem,
