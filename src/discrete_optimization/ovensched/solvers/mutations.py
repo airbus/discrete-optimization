@@ -46,8 +46,6 @@ class OvenPermutationSwap(Mutation):
         Returns:
             Tuple of (new solution, local move object)
         """
-        solution, move = super().mutate(solution)
-
         if not isinstance(solution, VectorOvenSchedulingSolution):
             raise ValueError(
                 f"Solution must be VectorOvenSchedulingSolution, got {type(solution)}"

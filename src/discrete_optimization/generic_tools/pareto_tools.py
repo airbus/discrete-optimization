@@ -52,7 +52,7 @@ class CpsatParetoSolver(SolverDO):
         self.objective_names = objective_names
         if dict_function is None:
             dict_function = {
-                key: lambda sol: self.problem.evaluate(sol)[key]
+                key: (lambda sol: self.problem.evaluate(sol)[str(key)])
                 for key in self.objective_names
             }
         self.dict_function = dict_function
@@ -95,7 +95,6 @@ class CpsatParetoSolver(SolverDO):
                 break
             # Get candidate solution
             sol_candidate = res.get_best_solution()
-            print(status, sol_candidate)
             vals_candidate = [
                 self.dict_function[obj](sol_candidate) for obj in self.objective_names
             ]

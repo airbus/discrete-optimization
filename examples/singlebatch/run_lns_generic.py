@@ -1,0 +1,113 @@
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+    ConstraintExtractorList,
+    ParamsConstraintExtractor,
+    SchedulingConstraintExtractor,
+)
+from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+    ObjectiveSubproblem,
+    TasksConstraintHandler,
+)
+from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
+    NeighborBuilderMix,
+    NeighborBuilderSubPart,
+    NeighborRandom,
+)
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
+from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
+    WarmStartCallback,
+)
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.lns_tools import (
+    BaseLns,
+    ReinitModelCallback,
+    TrivialInitialSolution,
+)
+from discrete_optimization.singlebatch.solvers.cpsat import (
+    CpSatSingleBatchSolver,
+    ModelingBpm,
+)
+from discrete_optimization.singlebatch.utils import (
+    GenerationMode,
+    generate_random_batch_problem,
+)
+
+
+def run_lns():
+    problem = generate_random_batch_problem(
+        nb_jobs=100,
+        capacity=100,
+        size_range=(5, 30),
+        duration_range=(5, 100),
+        mode=GenerationMode.POSITIVE_CORRELATION,
+    )
+    subsolver = CpSatSingleBatchSolver(problem=problem)
+    subsolver.init_model(modeling=ModelingBpm.SCHEDULING)
+    parameters_cp = ParametersCp.default()
+    initial_res = subsolver.solve(
+        parameters_cp=parameters_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    )
+    initial_solution_provider = TrivialInitialSolution(solution=initial_res)
+
+    constraints_extractor = ConstraintExtractorList(
+        extractors=[
+            SchedulingConstraintExtractor(
+                minus_delta_primary=200,
+                plus_delta_primary=200,
+                minus_delta_secondary=25,
+                plus_delta_secondary=25,
+            ),
+            # MultimodeConstraintExtractor(
+            #    fix_primary_tasks_modes=False,
+            #    fix_secondary_tasks_modes=True,
+            # ),
+        ]
+    )
+    list_neighbor = [
+        NeighborRandom(problem=problem, fraction_subproblem=0.1),
+        NeighborBuilderSubPart(problem=problem, nb_cut_part=5),
+        # NeighborBuilderTimeWindow(problem=problem, time_window_length=10),
+    ]
+    constraint_handler = TasksConstraintHandler(
+        problem=problem,
+        neighbor_builder=NeighborBuilderMix(
+            list_neighbor=list_neighbor,
+            weight_neighbor=[1 / len(list_neighbor)] * len(list_neighbor),
+        ),
+        params_constraint_extractor=ParamsConstraintExtractor(
+            constraint_to_current_solution_makespan=False,
+            margin_rel_to_current_solution_makespan=0.05,
+            fix_primary_tasks_modes=False,
+            fix_secondary_tasks_modes=True,
+        ),
+        objective_subproblem=ObjectiveSubproblem.INITIAL_OBJECTIVE,
+        constraints_extractor=constraints_extractor,
+    )
+    solver = BaseLns(
+        problem=problem,
+        subsolver=subsolver,
+        constraint_handler=constraint_handler,
+        initial_solution_provider=initial_solution_provider,
+    )
+    res = solver.solve(
+        callbacks=[
+            ReinitModelCallback(),
+            WarmStartCallback(
+                warm_start_best_solution=False, warm_start_last_solution=True
+            ),
+        ],
+        nb_iteration_lns=1000,
+        time_limit_subsolver_iter0=20,
+        time_limit_subsolver=10,
+        parameters_cp=parameters_cp,
+    )
+    sol = res.get_best_solution()
+    print(problem.satisfy(sol), problem.evaluate(sol))
+
+
+if __name__ == "__main__":
+    run_lns()

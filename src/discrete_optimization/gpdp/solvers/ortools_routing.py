@@ -868,6 +868,15 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
         time_limit: Optional[int] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        # Auto-initialize model if not already done
+        # This allows passing init_model parameters through solve() or SubBrick.kwargs
+        if not hasattr(self, "routing") or not hasattr(self, "search_parameters"):
+            logger.warning(
+                "Model not initialized. Calling init_model() automatically with provided kwargs. "
+                "Consider calling init_model() explicitly for better control."
+            )
+            self.init_model(**kwargs)
+
         callbacks_list = CallbackList(callbacks=callbacks)
         if search_parameters is None:
             search_parameters = self.search_parameters

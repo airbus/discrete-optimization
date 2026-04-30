@@ -246,11 +246,24 @@ class TransformationGraph:
         special_cases = {
             "Binpack": "BinPackProblem",
             "Salbp": "SalbpProblem",
+            "RcalbpL": "RCALBPLProblem",
             "Rcpsp": "RcpspProblem",
             "Multiskill": "MultiskillRcpspProblem",
+            "Preemptive": "PreemptiveRcpspProblem",
             "Fjsp": "FJobShopProblem",
             "Jsp": "JobShopProblem",
             "Facility": "FacilityProblem",
+            "Singlebatch": "SingleBatchProcessingProblem",
+            "Ovensched": "OvenSchedulingProblem",
+            "WorkforceAllocation": "TeamAllocationProblem",
+            "WorkforceScheduling": "AllocSchedulingProblem",
+            "Coloring": "ColoringProblem",
+            "ListColoring": "ListColoringProblem",
+            "Tsp": "TspProblem",
+            "Vrp": "VrpProblem",
+            "Vrptw": "VRPTWProblem",
+            "Gpdp": "GpdpProblem",
+            "Top": "TeamOrienteeringProblem",
         }
 
         if short_name in special_cases:
@@ -493,18 +506,38 @@ def discover_transformations(
     # Walk through all submodules
     base_path = Path(base.__file__).parent
 
-    # Look for transformation modules
-    for problem_dir in base_path.iterdir():
-        if not problem_dir.is_dir():
-            continue
+    # Helper function to recursively find all transformations directories
+    def find_transformation_modules(root_path: Path, module_prefix: str) -> list[str]:
+        """Find all transformation module paths recursively."""
+        transformation_modules = []
 
-        transformations_dir = problem_dir / "transformations"
-        if not transformations_dir.exists():
-            continue
+        for item in root_path.iterdir():
+            if (
+                not item.is_dir()
+                or item.name.startswith("_")
+                or item.name == "__pycache__"
+            ):
+                continue
 
-        # Import transformation module
-        module_path = f"{base_module}.{problem_dir.name}.transformations"
+            # Check if this directory has a transformations subdir
+            transformations_dir = item / "transformations"
+            if transformations_dir.exists():
+                module_path = f"{module_prefix}.{item.name}.transformations"
+                transformation_modules.append(module_path)
 
+            # Recursively search subdirectories (for cases like workforce/scheduling/transformations)
+            sub_modules = find_transformation_modules(
+                item, f"{module_prefix}.{item.name}"
+            )
+            transformation_modules.extend(sub_modules)
+
+        return transformation_modules
+
+    # Find all transformation modules (including nested ones)
+    transformation_module_paths = find_transformation_modules(base_path, base_module)
+
+    # Import and process each transformation module
+    for module_path in transformation_module_paths:
         try:
             transformations_module = importlib.import_module(module_path)
 

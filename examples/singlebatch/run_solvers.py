@@ -19,9 +19,13 @@ from discrete_optimization.singlebatch.utils import (
 logging.basicConfig(level=logging.INFO)
 
 
-def run_cpsat(problem: SingleBatchProcessingProblem):
+def run_cpsat(
+    problem: SingleBatchProcessingProblem,
+    modeling: ModelingBpm = ModelingBpm.SCHEDULING,
+    symmetry_breaking: bool = False,
+):
     solver = CpSatSingleBatchSolver(problem)
-    solver.init_model(modeling=ModelingBpm.BINARY)
+    solver.init_model(modeling=modeling, symmetry_breaking=symmetry_breaking)
     p = ParametersCp.default_cpsat()
     p.nb_process = 12
     res = solver.solve(
@@ -65,7 +69,7 @@ def run_optal(problem: SingleBatchProcessingProblem):
         ],
         time_limit=100,
         # workers=[lns]*4+[fds]*4,
-        preset="Large",
+        preset="Default",
     )
     return res
 
@@ -119,7 +123,7 @@ def main():
         mode=GenerationMode.POSITIVE_CORRELATION,
     )
     # res = run_optal(problem)
-    res = run_cpsat(problem)
+    res = run_cpsat(problem, ModelingBpm.BINARY, True)
     sol = res[-1][0]
     print(problem.satisfy(sol), problem.evaluate(sol))
 

@@ -143,22 +143,39 @@ class CpSatMultiskillRcpspSolver(
         objective = self.get_global_makespan_variable()
         self.minimize_variable(objective)
 
+    def get_lb_ub_start_end(self, task: Task) -> tuple[int, int, int, int]:
+        lbs, ubs, lbe, ube = 0, self.problem.horizon, 0, self.problem.horizon
+        if self.problem.special_constraints.start_times_window:
+            if task in self.problem.special_constraints.start_times_window:
+                x = self.problem.special_constraints.start_times_window[task]
+                if x[0] is not None:
+                    lbs = x[0]
+                if x[1] is not None:
+                    ubs = x[1]
+        if self.problem.special_constraints.end_times_window:
+            if task in self.problem.special_constraints.end_times_window:
+                x = self.problem.special_constraints.end_times_window[task]
+                if x[0] is not None:
+                    lbe = x[0]
+                if x[1] is not None:
+                    ube = x[1]
+        return int(lbs), int(ubs), int(lbe), int(ube)
+
     def create_base_variable(self):
         start_var = {}
         end_var = {}
         duration_var = {}
         interval_var = {}
         for task in self.problem.tasks_list:
+            lbs, ubs, lbe, ube = self.get_lb_ub_start_end(task)
             possible_duration = [
                 self.problem.mode_details[task][m]["duration"]
                 for m in self.problem.mode_details[task]
             ]
             start_var[task] = self.cp_model.NewIntVar(
-                lb=0, ub=self.problem.horizon, name=f"start_{task}"
+                lb=lbs, ub=ubs, name=f"start_{task}"
             )
-            end_var[task] = self.cp_model.NewIntVar(
-                lb=0, ub=self.problem.horizon, name=f"end_{task}"
-            )
+            end_var[task] = self.cp_model.NewIntVar(lb=lbe, ub=ube, name=f"end_{task}")
             duration_var[task] = self.cp_model.NewIntVarFromDomain(
                 domain=Domain.FromValues(possible_duration), name=f"duration_{task}"
             )

@@ -1351,7 +1351,7 @@ def get_rcpsp_problemp_preemptive(rcpsp_problem):
         source_task=rcpsp_problem.source_task,
         sink_task=rcpsp_problem.sink_task,
         preemptive_indicator={
-            rcpsp_problem.tasks_list[k]: True for k in range(rcpsp_problem.n_jobs)
+            rcpsp_problem.tasks_list[k]: False for k in range(rcpsp_problem.n_jobs)
         },
         name_task=rcpsp_problem.name_task,
     )

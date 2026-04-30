@@ -1,9 +1,9 @@
 import logging
 
+from discrete_optimization.alb.salbp.parser import get_data_available, parse_alb_file
+from discrete_optimization.alb.salbp.solvers.asp import AspSalbpSolver
+from discrete_optimization.alb.salbp.solvers.greedy import GreedySalbpSolver
 from discrete_optimization.generic_tools.callbacks.loggers import ProblemEvaluateLogger
-from discrete_optimization.salbp.parser import get_data_available, parse_alb_file
-from discrete_optimization.salbp.solvers.asp import AspSalbpSolver
-from discrete_optimization.salbp.solvers.greedy import GreedySalbpSolver
 
 logging.basicConfig(level=logging.INFO)
 

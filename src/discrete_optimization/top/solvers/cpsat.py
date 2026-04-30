@@ -191,11 +191,6 @@ class CpsatTopSolver(OrtoolsCpSatSolver, WarmstartMixin):
             route_is_finished = False
             path = []
             route_distance = 0
-            for arc in self.variables["arc_literals_per_vehicles"][vehicle]:
-                if cpsolvercb.boolean_value(
-                    self.variables["arc_literals_per_vehicles"][vehicle][arc]
-                ):
-                    logger.debug(f"Vehicle {vehicle} from {arc[0]} to {arc[1]}")
             while not route_is_finished:
                 for i in range(self.problem.customer_count):
                     if i == current_node:

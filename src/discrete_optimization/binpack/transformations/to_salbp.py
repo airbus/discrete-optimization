@@ -6,6 +6,8 @@
 
 from typing import Optional
 
+from discrete_optimization.alb.base.problem import TaskData
+from discrete_optimization.alb.salbp import SalbpProblem, SalbpSolution
 from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolution
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
@@ -17,7 +19,6 @@ from discrete_optimization.generic_tools.transformation.transformation_metadata 
     TransformationMetadata,
     lossy_transformation,
 )
-from discrete_optimization.salbp.problem import SalbpProblem, SalbpSolution
 
 
 class BinpackToSalbpTransformation(
@@ -87,23 +88,22 @@ class BinpackToSalbpTransformation(
 
         """
         # Map items to tasks with processing times = weights
-        number_of_tasks = source_problem.nb_items
         cycle_time = int(source_problem.capacity_bin)
 
-        # Build task_times dict: task_id -> processing_time
-        task_times = {
-            item.index: int(item.weight) for item in source_problem.list_items
-        }
+        # Create TaskData for each item
+        tasks_data = [
+            TaskData(task_id=item.index, processing_time=int(item.weight))
+            for item in source_problem.list_items
+        ]
 
         # No precedence constraints (bin packing has no ordering constraints)
         # Incompatibility constraints are LOST (documented in forward_metadata)
-        precedence = []
+        precedences = []
 
         return SalbpProblem(
-            number_of_tasks=number_of_tasks,
+            tasks_data=tasks_data,
             cycle_time=cycle_time,
-            task_times=task_times,
-            precedence=precedence,
+            precedences=precedences,
         )
 
     def back_transform_solution(

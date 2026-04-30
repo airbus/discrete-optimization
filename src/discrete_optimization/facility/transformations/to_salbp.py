@@ -10,6 +10,8 @@ Assumes uniform facility costs and no precedence.
 
 from typing import Optional
 
+from discrete_optimization.alb.base.problem import TaskData
+from discrete_optimization.alb.salbp import SalbpProblem, SalbpSolution
 from discrete_optimization.facility.problem import FacilityProblem, FacilitySolution
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
@@ -21,7 +23,6 @@ from discrete_optimization.generic_tools.transformation.transformation_metadata 
     TransformationMetadata,
     lossy_transformation,
 )
-from discrete_optimization.salbp.problem import SalbpProblem, SalbpSolution
 
 
 class FacilityToSalbpTransformation(
@@ -113,25 +114,22 @@ class FacilityToSalbpTransformation(
             Equivalent SALBP problem (without distances/costs)
 
         """
-        # Map customers to tasks
-        number_of_tasks = source_problem.customer_count
-
-        task_times = {
-            customer.index: int(customer.demand)
+        # Map customers to tasks with TaskData
+        tasks_data = [
+            TaskData(task_id=customer.index, processing_time=int(customer.demand))
             for customer in source_problem.customers
-        }
+        ]
 
         # Use first facility's capacity as cycle time
         cycle_time = int(source_problem.facilities[0].capacity)
 
         # No precedence constraints (Facility Location has none)
-        precedence = []
+        precedences = []
 
         return SalbpProblem(
-            number_of_tasks=number_of_tasks,
+            tasks_data=tasks_data,
             cycle_time=cycle_time,
-            task_times=task_times,
-            precedence=precedence,
+            precedences=precedences,
         )
 
     def back_transform_solution(

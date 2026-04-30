@@ -847,6 +847,160 @@ class ProxyClass:
         )
 
     @staticmethod
+    def from_top_to_gpdp(
+        top_problem: "TeamOrienteeringProblem",
+        compute_graph: bool = False,
+        reward_factor: float = 1.0,
+    ) -> GpdpProblem:
+        """
+        Converts a TOP (Team Orienteering Problem) to a GpdpProblem instance.
+
+        TOP characteristics:
+        - Multiple vehicles with max tour length constraint
+        - Nodes have rewards (maximize total reward)
+        - Optional nodes (don't need to visit all)
+        - No capacity constraints
+        - No multiple visits allowed
+
+        Mapping strategy:
+        - TOP vehicles → GPDP vehicles
+        - TOP customers → GPDP mandatory transportation nodes
+        - TOP rewards → Incorporated as negative edge costs (reward_factor)
+        - TOP max_length_tours → GPDP distance/time constraints
+        - TOP start/end depots → GPDP origin/target nodes
+
+        The reward_factor controls how much rewards reduce effective distances:
+        effective_distance = actual_distance - reward_factor * node_reward
+        Higher reward_factor makes GPDP favor visiting high-reward nodes.
+
+        Args:
+            top_problem: Team Orienteering Problem instance
+            compute_graph: Whether to compute the graph structure
+            reward_factor: Weight for reward in distance calculation (default: 1.0)
+        """
+
+        nb_vehicles = top_problem.vehicle_count
+
+        # Identify depot nodes
+        start_depots = set(top_problem.start_indexes)
+        end_depots = set(top_problem.end_indexes)
+
+        # Customer nodes (excluding depots)
+        customer_indices = [
+            i
+            for i in range(top_problem.customer_count)
+            if i not in start_depots and i not in end_depots
+        ]
+
+        # Create GPDP node indices
+        # Customers: 0 to len(customer_indices)-1
+        # Origin nodes: len(customer_indices) to len(customer_indices)+nb_vehicles-1
+        # Target nodes: len(customer_indices)+nb_vehicles to len(customer_indices)+2*nb_vehicles-1
+
+        nb_customers = len(customer_indices)
+        gpdp_customer_nodes = list(range(nb_customers))
+        gpdp_origin_nodes = list(range(nb_customers, nb_customers + nb_vehicles))
+        gpdp_target_nodes = list(
+            range(nb_customers + nb_vehicles, nb_customers + 2 * nb_vehicles)
+        )
+
+        # Mapping from GPDP nodes to TOP indices
+        gpdp_to_top_map = {}
+        for i, top_idx in enumerate(customer_indices):
+            gpdp_to_top_map[gpdp_customer_nodes[i]] = top_idx
+
+        for v in range(nb_vehicles):
+            gpdp_to_top_map[gpdp_origin_nodes[v]] = top_problem.start_indexes[v]
+            gpdp_to_top_map[gpdp_target_nodes[v]] = top_problem.end_indexes[v]
+
+        all_gpdp_nodes = gpdp_customer_nodes + gpdp_origin_nodes + gpdp_target_nodes
+
+        # Build distance and time matrices
+        # Incorporate rewards into edge costs: effective_distance = distance - reward_factor * reward
+        # This makes GPDP's distance minimization favor high-reward nodes
+        distance_delta: dict[Node, dict[Node, float]] = {n: {} for n in all_gpdp_nodes}
+        time_delta: dict[Node, dict[Node, float]] = {n: {} for n in all_gpdp_nodes}
+
+        for u in all_gpdp_nodes:
+            for v in all_gpdp_nodes:
+                if u == v:
+                    continue
+                top_u = gpdp_to_top_map[u]
+                top_v = gpdp_to_top_map[v]
+                actual_dist = top_problem.evaluate_function_indexes(top_u, top_v)
+
+                # Incorporate reward of destination node as negative cost
+                # This incentivizes visiting high-reward nodes
+                node_reward = top_problem.customers[top_v].reward
+                effective_dist = actual_dist - (reward_factor * node_reward)
+
+                # Store effective distance (can be negative for high rewards!)
+                distance_delta[u][v] = effective_dist
+
+                # For time, use actual distance (for tour length constraints)
+                time_delta[u][v] = actual_dist
+
+        # Coordinates if available (for 2D problems)
+        coordinates_2d = None
+        if hasattr(top_problem.customers[0], "x") and hasattr(
+            top_problem.customers[0], "y"
+        ):
+            coordinates_2d = {}
+            for gpdp_node, top_idx in gpdp_to_top_map.items():
+                customer = top_problem.customers[top_idx]
+                coordinates_2d[gpdp_node] = (customer.x, customer.y)
+
+        # Store rewards in node metadata (for back-transformation)
+        resources_flow_node: dict[Node, dict[str, float]] = {}
+        for gpdp_node, top_idx in gpdp_to_top_map.items():
+            customer = top_problem.customers[top_idx]
+            resources_flow_node[gpdp_node] = {"reward": customer.reward}
+
+        # Mark customer nodes as optional (key feature for TOP!)
+        mandatory_node_info = {}
+        for node in all_gpdp_nodes:
+            if node in gpdp_customer_nodes:
+                mandatory_node_info[node] = False  # Optional
+            else:
+                mandatory_node_info[node] = True  # Origin/target are mandatory
+
+        # Set up vehicle origins and targets
+        origin_vehicle = {v: gpdp_origin_nodes[v] for v in range(nb_vehicles)}
+        target_vehicle = {v: gpdp_target_nodes[v] for v in range(nb_vehicles)}
+
+        # No pickup/delivery pairs, no capacity constraints
+        empty_pickup_delivery: list[tuple[list[Node], list[Node]]] = []
+        empty_resources: set[str] = set()
+        empty_capacities = {v: {} for v in range(nb_vehicles)}
+        empty_flow_edges: dict[Edge, dict[str, float]] = {}
+
+        # Time windows based on max_length_tours
+        # We can model this as a time constraint on reaching the target node
+        time_windows_nodes = None
+        # Could set: {target_node: (0, max_length_tours)} for each vehicle
+        # But GPDP time windows are per node, not per vehicle path
+        # The tour length constraint will be validated in satisfy() method
+
+        return GpdpProblem(
+            number_vehicle=nb_vehicles,
+            nodes_transportation=set(gpdp_customer_nodes),
+            nodes_origin=set(gpdp_origin_nodes),
+            nodes_target=set(gpdp_target_nodes),
+            origin_vehicle=origin_vehicle,
+            target_vehicle=target_vehicle,
+            list_pickup_deliverable=empty_pickup_delivery,
+            resources_set=empty_resources,
+            capacities=empty_capacities,
+            resources_flow_node=resources_flow_node,
+            resources_flow_edges=empty_flow_edges,
+            distance_delta=distance_delta,
+            time_delta=time_delta,
+            coordinates_2d=coordinates_2d,
+            mandatory_node_info=mandatory_node_info,
+            compute_graph=compute_graph,
+        )
+
+    @staticmethod
     def from_vrptw_to_gpdp(
         vrptw_problem: VRPTWProblem, compute_graph: bool = False
     ) -> GpdpProblem:

@@ -4,8 +4,18 @@
 
 """Transformations from Workforce Scheduling to other problems."""
 
+from discrete_optimization.workforce.scheduling.transformations.to_fjsp import (
+    WorkforceSchedulingToFjspTransformation,
+)
+from discrete_optimization.workforce.scheduling.transformations.to_multiskill import (
+    WorkforceSchedulingToMultiskillTransformation,
+)
 from discrete_optimization.workforce.scheduling.transformations.to_rcpsp import (
     WorkforceSchedulingToRcpspTransformation,
 )
 
-__all__ = ["WorkforceSchedulingToRcpspTransformation"]
+__all__ = [
+    "WorkforceSchedulingToRcpspTransformation",
+    "WorkforceSchedulingToMultiskillTransformation",
+    "WorkforceSchedulingToFjspTransformation",
+]

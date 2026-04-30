@@ -88,4 +88,4 @@ def run_optuna():
 
 
 if __name__ == "__main__":
-    run_dp_vrp()
+    run_optuna()

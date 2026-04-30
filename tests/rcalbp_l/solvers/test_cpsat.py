@@ -4,12 +4,12 @@
 
 from pytest_cases import fixture
 
+from discrete_optimization.alb.rcalbp_l.problem import RCALBPLSolution
+from discrete_optimization.alb.rcalbp_l.solvers import CpSatRCALBPLSolver
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.rcalbp_l.problem import RCALBPLSolution
-from discrete_optimization.rcalbp_l.solvers.cpsat import CpSatRCALBPLSolver
 
 
 @fixture

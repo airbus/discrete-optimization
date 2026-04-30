@@ -4,8 +4,12 @@
 
 """Problem transformations for TSP (Traveling Salesman Problem)."""
 
+from discrete_optimization.tsp.transformations.to_gpdp import TspToGpdpTransformation
+from discrete_optimization.tsp.transformations.to_tsptw import TspToTsptwTransformation
 from discrete_optimization.tsp.transformations.to_vrp import TspToVrpTransformation
 
 __all__ = [
+    "TspToGpdpTransformation",
+    "TspToTsptwTransformation",
     "TspToVrpTransformation",
 ]

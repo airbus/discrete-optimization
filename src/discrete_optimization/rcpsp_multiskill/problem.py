@@ -2352,6 +2352,8 @@ class MultiskillRcpspProblem(
     def compute_lower_bound_nb_employees_per_task_mode(
         self, task: Task, mode: int
     ) -> int:
+        if len(self.skills_set) or len(self.employees_list) == 0:
+            return 0
         max_skill_over_worker = self.get_max_skill_over_worker()
         return max(
             int(

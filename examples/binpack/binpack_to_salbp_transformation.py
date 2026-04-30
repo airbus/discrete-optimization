@@ -10,6 +10,7 @@ This example demonstrates:
 - Back-transforming solutions to BinPack space
 """
 
+from discrete_optimization.alb.salbp.solvers.cpsat import CpSatSalbpSolver
 from discrete_optimization.binpack.parser import (
     get_data_available_bppc,
     parse_bin_packing_constraint_file,
@@ -17,7 +18,6 @@ from discrete_optimization.binpack.parser import (
 from discrete_optimization.binpack.transformations import BinpackToSalbpTransformation
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.generic_tools.transformation import TransformationSolver
-from discrete_optimization.salbp.solvers.cpsat import CpSatSalbpSolver
 
 
 def main():

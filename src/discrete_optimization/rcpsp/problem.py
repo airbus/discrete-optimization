@@ -84,13 +84,13 @@ class RcpspProblem(
         non_renewable_resources (list[str]): list of resources (specified by name) that are non-renewable
         mode_details (dict[Hashable, dict[int, dict[str, int]]]): task -> (mode number -> resource needs and duration)
             Ex:
-            # >>> mode_details = { "task1" :
-            # ...    {  # task1 details
-            # ...        1: { "duration": 2, "R1": 1, "R2": 0, "R3": 4 },  # task1, mode 1: duration = 2, resource needs: R1=1, R3=4
-            # ...        2: { "duration": 10, "R1": 0, "R2": 2, "R3": 0 },  # task1, mode 1: duration = 10, resource needs: R2=2
-            # ...    },
-            # ...    # [other tasks]
-            # ... }
+             >>> mode_details = { "task1" :
+             ...    {  # task1 details
+             ...        1: { "duration": 2, "R1": 1, "R2": 0, "R3": 4 },  # task1, mode 1: duration = 2, resource needs: R1=1, R3=4
+             ...        2: { "duration": 10, "R1": 0, "R2": 2, "R3": 0 },  # task1, mode 1: duration = 10, resource needs: R2=2
+             ...    },
+             ...    # [other tasks]
+             ... }
 
         successors (dict[Hashable, list[Hashable]]): successors in the precedence graph of each task
         horizon (int): max number of time steps allowed

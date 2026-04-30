@@ -47,7 +47,6 @@ def run_optal_vrp():
         ],
         time_limit=20,
     )
-    print(solver.status_solver)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))

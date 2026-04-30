@@ -186,14 +186,25 @@ def _problem_name_to_module(problem_type: str) -> Optional[str]:
     special_cases = {
         "BinPackProblem": "binpack",
         "SalbpProblem": "salbp",
+        "RCALBPLProblem": "rcalbp_l",
         "RcpspProblem": "rcpsp",
         "MultiskillRcpspProblem": "rcpsp_multiskill",
+        "PreemptiveRcpspProblem": "rcpsp",
         "FJobShopProblem": "fjsp",
         "JobShopProblem": "jsp",
         "FacilityProblem": "facility",
         "KnapsackProblem": "knapsack",
         "TspProblem": "tsp",
         "VrpProblem": "vrp",
+        "SingleBatchProcessingProblem": "singlebatch",
+        "OvenSchedulingProblem": "ovensched",
+        "TeamAllocationProblem": "workforce.allocation",
+        "AllocSchedulingProblem": "workforce.scheduling",
+        "ColoringProblem": "coloring",
+        "ListColoringProblem": "coloring",
+        "VRPTWProblem": "vrptw",
+        "GpdpProblem": "gpdp",
+        "TeamOrienteeringProblem": "top",
     }
 
     if problem_type in special_cases:

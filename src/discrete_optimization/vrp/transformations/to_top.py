@@ -10,8 +10,11 @@ from discrete_optimization.generic_tools.transformation.problem_transformation i
     ProblemTransformation,
 )
 from discrete_optimization.generic_tools.transformation.transformation_metadata import (
+    InformationLoss,
+    LossImpact,
+    LossType,
     TransformationMetadata,
-    exact_transformation,
+    lossy_transformation,
 )
 from discrete_optimization.top.problem import (
     CustomerTop2D,
@@ -53,22 +56,22 @@ class VrpToTopTransformation(
         self.reward_function = reward_function or (lambda customer: 1.0)
 
     def get_forward_metadata(self) -> TransformationMetadata:
-        """Metadata for forward transformation (VRP → TOP).
-
-        This is EXACT when:
-        - VRP capacity constraints are not binding (infinite capacity)
-        - VRP objective is compatible with reward maximization
-
-        In practice, this transformation is useful for:
-        - Using TOP solvers for VRP problems
-        - Exploring reward-based routing strategies
-        """
-        return exact_transformation(
+        """Metadata for forward transformation (VRP → TOP)."""
+        return lossy_transformation(
+            losses=[
+                InformationLoss(
+                    name="heterogeneous_capacity",
+                    loss_type=LossType.CONSTRAINT,
+                    description="top cant model yet varying capacity per vehicle",
+                    reason="",
+                    impact=LossImpact.MAJOR,
+                )
+            ],
             use_cases=[
                 "Use TOP solvers for VRP problems",
                 "VRP can be modeled as TOP with uniform rewards",
                 "Reframe VRP as reward maximization problem",
-            ]
+            ],
         )
 
     def transform_problem(

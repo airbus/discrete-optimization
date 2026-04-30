@@ -163,75 +163,23 @@ class ProblemTransformation(ABC, Generic[P1, S1, P2, S2]):
         """
         return self.get_forward_metadata().is_exact()
 
-    def is_backward_exact(self) -> bool:
-        """Check if backward solution transformation is exact.
-
-        Returns:
-            True if solution back-transformation preserves all information
-
-        """
-        return self.get_backward_metadata().is_exact()
-
-    def is_symmetric(self) -> bool:
-        """Check if transformation has same characteristics in both directions.
-
-        Returns:
-            True if forward and backward have same completeness level
-
-        """
-        forward = self.get_forward_metadata()
-        backward = self.get_backward_metadata()
-        return forward.completeness == backward.completeness
-
     def has_constraint_loss(self) -> bool:
-        """Check if transformation loses any constraints (in either direction).
+        """Check if transformation loses any constraints
 
         Returns:
             True if some constraints cannot be represented
 
         """
-        return (
-            self.get_forward_metadata().has_constraint_loss()
-            or self.get_backward_metadata().has_constraint_loss()
-        )
+        return self.get_forward_metadata().has_constraint_loss()
 
     def has_objective_loss(self) -> bool:
-        """Check if transformation loses any objectives (in either direction).
+        """Check if transformation loses any objectives.
 
         Returns:
             True if some objectives cannot be represented
 
         """
-        return (
-            self.get_forward_metadata().has_objective_loss()
-            or self.get_backward_metadata().has_objective_loss()
-        )
-
-    def get_max_impact(self):
-        """Get the maximum impact level of information loss (either direction).
-
-        Returns:
-            LossImpact enum indicating worst-case impact
-
-        """
-        from discrete_optimization.generic_tools.transformation.transformation_metadata import (
-            LossImpact,
-        )
-
-        forward_impact = self.get_forward_metadata().get_max_impact()
-        backward_impact = self.get_backward_metadata().get_max_impact()
-
-        impact_order = [
-            LossImpact.NONE,
-            LossImpact.MINOR,
-            LossImpact.MODERATE,
-            LossImpact.MAJOR,
-            LossImpact.CRITICAL,
-        ]
-
-        if impact_order.index(forward_impact) > impact_order.index(backward_impact):
-            return forward_impact
-        return backward_impact
+        return self.get_forward_metadata().has_objective_loss()
 
     def is_bidirectional(self, source_problem: P1) -> bool:
         """Check if transformation supports both directions.
@@ -261,32 +209,8 @@ class ProblemTransformation(ABC, Generic[P1, S1, P2, S2]):
         print("-" * 80)
         print(self.get_forward_metadata())
 
-        # Backward metadata
-        print("\nBACKWARD: Solution Transformation (target solution → source solution)")
-        print("-" * 80)
-        print(self.get_backward_metadata())
-
-        # Symmetry check
-        if self.is_symmetric():
-            print("\n✓ Symmetric transformation (same characteristics both directions)")
-        else:
-            print(
-                "\n⚠ Asymmetric transformation (different characteristics in each direction)"
-            )
-
-        print()
-
     def __repr__(self) -> str:
         """String representation of transformation."""
         forward = self.get_forward_metadata()
-        backward = self.get_backward_metadata()
-
         forward_str = "exact" if forward.is_exact() else "lossy"
-        backward_str = "exact" if backward.is_exact() else "lossy"
-
-        if forward_str == backward_str:
-            return f"{type(self).__name__}({forward_str})"
-        else:
-            return (
-                f"{type(self).__name__}(forward={forward_str}, backward={backward_str})"
-            )
+        return f"{type(self).__name__}({forward_str})"

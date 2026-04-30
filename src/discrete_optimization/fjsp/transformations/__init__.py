@@ -7,5 +7,11 @@
 from discrete_optimization.fjsp.transformations.to_rcpsp import (
     FjspToRcpspTransformation,
 )
+from discrete_optimization.fjsp.transformations.to_workforce import (
+    FjspToWorkforceSchedulingTransformation,
+)
 
-__all__ = ["FjspToRcpspTransformation"]
+__all__ = [
+    "FjspToRcpspTransformation",
+    "FjspToWorkforceSchedulingTransformation",
+]

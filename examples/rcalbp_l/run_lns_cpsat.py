@@ -1,5 +1,11 @@
 import logging
 
+from discrete_optimization.alb.rcalbp_l import get_data_available, parse_rcalbpl_json
+from discrete_optimization.alb.rcalbp_l.problem import plot_rcalbpl_dashboard
+from discrete_optimization.alb.rcalbp_l.solvers import (
+    BackwardSequentialRCALBPLSolver,
+    CpSatRCALBPLSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
     ConstraintExtractorList,
     NbChangesAllocationConstraintExtractor,
@@ -21,12 +27,6 @@ from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import (
     InitialSolutionFromSolver,
     ReinitModelCallback,
-)
-from discrete_optimization.rcalbp_l.parser import get_data_available, parse_rcalbpl_json
-from discrete_optimization.rcalbp_l.problem import plot_rcalbpl_dashboard
-from discrete_optimization.rcalbp_l.solvers.cpsat import CpSatRCALBPLSolver
-from discrete_optimization.rcalbp_l.solvers.meta_solvers import (
-    BackwardSequentialRCALBPLSolver,
 )
 
 logging.basicConfig(level=logging.INFO)
