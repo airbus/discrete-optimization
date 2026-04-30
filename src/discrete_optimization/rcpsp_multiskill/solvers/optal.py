@@ -142,7 +142,6 @@ class OptalMSRcpspSolver(
     def constraint_precedence(self):
         for t in self.problem.successors:
             for t_succ in self.problem.successors[t]:
-                self.cp
                 self.cp_model.end_before_start(
                     self.get_task_interval_variable(t),
                     self.get_task_interval_variable(t_succ),
