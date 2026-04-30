@@ -647,7 +647,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
         merged_calendars = []
         for res in self.problem.resources_list:
             cld = create_resource_consumption_from_calendar(
-                self.problem.get_resource_availability_array(res)
+                np.array(self.problem.get_resource_availability_array(res))
             )
             for t in cld:
                 t.update({res: t["value"]})

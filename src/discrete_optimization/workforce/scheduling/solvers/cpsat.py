@@ -16,8 +16,10 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation_scheduling import (
     AllocationSchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     SinglemodeCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
@@ -42,6 +44,7 @@ from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
     CumulativeResource,
+    NonRenewableResource,
     Task,
     UnaryResource,
 )
@@ -94,7 +97,9 @@ class AdditionalCPConstraints:
 
 
 class CPSatAllocSchedulingSolver(
-    AllocationSchedulingCpSatSolver[Task, UnaryResource, CumulativeResource],
+    AllocationSchedulingCpSatSolver[
+        Task, UnaryResource, CumulativeResource, NonRenewableResource
+    ],
     SinglemodeCpSatSolver[Task],
     SolverAllocScheduling,
     WarmstartMixin,
@@ -368,11 +373,7 @@ class CPSatAllocSchedulingSolver(
                 # else managed later by self.create_actually_done_variables()
 
         # Precedence constraints
-        for t in self.problem.precedence_constraints:
-            i_t = self.problem.tasks_to_index[t]
-            for t_suc in self.problem.precedence_constraints[t]:
-                i_t_suc = self.problem.tasks_to_index[t_suc]
-                self.cp_model.Add(starts_var[i_t_suc] >= ends_var[i_t])
+        self.create_precedence_constraints()
 
         # Same allocation constraints
         for l_t in self.problem.same_allocation:

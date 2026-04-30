@@ -5,10 +5,9 @@
 #  here https://github.com/erachelson/seq_dec_mak/blob/main/scheduling_newcourse/correction/nb2_jobshopsolver.py
 from __future__ import annotations
 
-from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
-from discrete_optimization.generic_tasks_tools.scheduling import (
-    SchedulingProblem,
-    SchedulingSolution,
+from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
+    PrecedenceSchedulingProblem,
+    PrecedenceSchedulingSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -23,7 +22,7 @@ Task = tuple[int, int]
 """Task representation: (job index, subjob index)."""
 
 
-class JobShopSolution(SchedulingSolution[Task]):
+class JobShopSolution(PrecedenceSchedulingSolution[Task]):
     problem: JobShopProblem
 
     def __init__(self, problem: JobShopProblem, schedule: list[list[tuple[int, int]]]):
@@ -56,7 +55,7 @@ class Subjob:
         self.processing_time = processing_time
 
 
-class JobShopProblem(SchedulingProblem[Task], PrecedenceProblem[Task]):
+class JobShopProblem(PrecedenceSchedulingProblem[Task]):
     n_jobs: int
     n_machines: int
     list_jobs: list[list[Subjob]]
@@ -110,6 +109,7 @@ class JobShopProblem(SchedulingProblem[Task], PrecedenceProblem[Task]):
         return {"makespan": variable.get_max_end_time()}
 
     def satisfy(self, variable: JobShopSolution) -> bool:
+        # no overlap of task over a same machine
         for m in self.job_per_machines:
             sorted_ = sorted(
                 [variable.schedule[x[0]][x[1]] for x in self.job_per_machines[m]],
@@ -118,10 +118,9 @@ class JobShopProblem(SchedulingProblem[Task], PrecedenceProblem[Task]):
             for i in range(1, len(sorted_)):
                 if sorted_[i][0] < sorted_[i - 1][1]:
                     return False
-        for job in range(self.n_jobs):
-            for s_j in range(1, len(variable.schedule[job])):
-                if variable.schedule[job][s_j][0] < variable.schedule[job][s_j - 1][1]:
-                    return False
+        # precedence constraints
+        if not variable.check_precedence_constraints():
+            return False
         return True
 
     def get_solution_type(self) -> type[Solution]:

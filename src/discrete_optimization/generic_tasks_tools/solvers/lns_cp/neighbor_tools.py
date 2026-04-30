@@ -17,7 +17,6 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksSolution,
 )
 from discrete_optimization.generic_tasks_tools.precedence import (
-    HashableTask,
     PrecedenceProblem,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import (
@@ -266,10 +265,10 @@ class NeighborBuilderTimeWindow(NeighborBuilder[Task]):
         return set(tasks_of_interest), set(other_tasks)
 
 
-class NeighborRandomAndNeighborGraph(NeighborBuilder[HashableTask]):
+class NeighborRandomAndNeighborGraph(NeighborBuilder[Task]):
     def __init__(
         self,
-        problem: TasksProblem[HashableTask],
+        problem: TasksProblem[Task],
         graph: Optional[Graph] = None,
         fraction_subproblem: float = 0.05,
     ):
@@ -290,9 +289,9 @@ class NeighborRandomAndNeighborGraph(NeighborBuilder[HashableTask]):
 
     def find_subtasks(
         self,
-        current_solution: TasksSolution[HashableTask],
-        subtasks: Optional[set[HashableTask]] = None,
-    ) -> tuple[set[HashableTask], set[HashableTask]]:
+        current_solution: TasksSolution[Task],
+        subtasks: Optional[set[Task]] = None,
+    ) -> tuple[set[Task], set[Task]]:
         if not isinstance(current_solution, SchedulingSolution):
             raise ValueError(
                 "This neighbor builder is applicable only to a scheduling solution."

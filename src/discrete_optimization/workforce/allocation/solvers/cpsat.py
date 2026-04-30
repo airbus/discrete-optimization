@@ -18,7 +18,7 @@ from ortools.sat.python.cp_model import (
     LinearExprT,
 )
 
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationBinaryOrIntegerModellingCpSatSolver,
     AllocationModelling,
 )

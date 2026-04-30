@@ -8,8 +8,10 @@ from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
