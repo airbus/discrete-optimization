@@ -63,6 +63,24 @@ class CpSatMultiskillRcpspSolver(
     ) -> IntervalVar:
         return self.variables["worker_variable"]["opt_intervals"][task][unary_resource]
 
+    def is_compatible_task_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> bool:
+        if len(self.problem.skills_of_task[task]) == 0:
+            # never allocate an employee to a task not needing a skill
+            return False
+        elif self._one_worker_per_task:
+            return any(
+                all(
+                    self.problem.employees[unary_resource].get_skill_level(s)
+                    >= self.problem.mode_details[task][mode].get(s, 0)
+                    for s in self.problem.skills_of_task[task]
+                )
+                for mode in self.problem.mode_details[task]
+            )
+        else:
+            return super().is_compatible_task_unary_resource(task, unary_resource)
+
     def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
         if not self.problem.is_multimode or len(self.problem.get_task_modes(task)) == 1:
             return self.variables["base_variable"]["intervals"][task]
@@ -117,6 +135,9 @@ class CpSatMultiskillRcpspSolver(
         one_skill_per_task = args.get("one_skill_per_task", False)
         redundant_skill_cumulative = args["redundant_skill_cumulative"]
         redundant_worker_cumulative = args["redundant_worker_cumulative"]
+        # store one_worker_per_task to use in `is_compatible_task_unary_resource`
+        self._one_worker_per_task = one_worker_per_task
+
         super().init_model(**args)
         self.variables = {}
         self.create_base_variable()
@@ -233,9 +254,12 @@ class CpSatMultiskillRcpspSolver(
                         )
                         for mode in self.problem.mode_details[task]
                     )
-                ) or any(
-                    worker in self.problem.employees_per_skill[s]
-                    for s in skills_of_task
+                ) or (
+                    not one_worker_per_task
+                    and any(
+                        worker in self.problem.employees_per_skill[s]
+                        for s in skills_of_task
+                    )
                 ):
                     skills_used_var[task][worker] = {}
                     is_present_var[task][worker] = self.cp_model.NewBoolVar(
