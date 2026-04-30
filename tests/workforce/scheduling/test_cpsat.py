@@ -61,32 +61,34 @@ def test_cpsat(problem):
     sol: AllocSchedulingSolution = res[-1][0]
     assert sol.check_all_renewable_resource_capacity_constraints()
     assert problem.satisfy(sol)
-    problem.evaluate(sol)
+    kpis = problem.evaluate(sol)
 
+    # test warm-start
+
+    # find a different init sol
+    solver.cp_model.add(
+        solver.get_nb_unary_resources_used_variable() > kpis["nb_teams"]
+    )
     res = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=2)],
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
         time_limit=10,
     )
-    # assert len(res) == 2  # not always 2 solutions found
-    sol = res[-1][0]
-    assert problem.satisfy(sol)
-    problem.evaluate(sol)
+    init_sol: AllocSchedulingSolution = res[-1][0]
 
-    # test warm-start
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
     )
-    solver.set_warm_start(solution=sol)
+    solver.set_warm_start(solution=init_sol)
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
         time_limit=10,
     )
     sol2 = res[0][0]
-    assert (sol.schedule == sol2.schedule).all()
-    assert (sol.allocation == sol2.allocation).all()
+    assert (init_sol.schedule == sol2.schedule).all()
+    assert (init_sol.allocation == sol2.allocation).all()
 
     # generate disruption
     d = generate_scheduling_disruption(

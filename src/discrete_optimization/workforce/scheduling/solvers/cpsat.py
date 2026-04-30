@@ -503,19 +503,19 @@ class CPSatAllocSchedulingSolver(
         for obj in objectives:
             if obj == ObjectivesEnum.NB_DONE_AC and optional_activities:
                 objs.append(self.variables["objectives"][ObjectivesEnum.NB_DONE_AC])
-                weights.append(100000.0)
+                weights.append(100000)
             elif obj == ObjectivesEnum.NB_TEAMS:
                 objs.append(self.variables["objectives"][ObjectivesEnum.NB_TEAMS])
-                weights.append(10000.0)
+                weights.append(10000)
             elif obj == ObjectivesEnum.MIN_WORKLOAD:
                 objs.append(self.variables["objectives"][ObjectivesEnum.MIN_WORKLOAD])
-                weights.append(1.0)
+                weights.append(1)
             elif obj == ObjectivesEnum.DISPERSION:
                 objs.append(self.variables["objectives"][ObjectivesEnum.DISPERSION])
-                weights.append(1.0)
+                weights.append(1)
             elif obj == ObjectivesEnum.MAKESPAN:
                 objs.append(self.variables["objectives"][ObjectivesEnum.MAKESPAN])
-                weights.append(1.0)
+                weights.append(1)
             elif obj == ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION:
                 weights_dict = {
                     "reallocated": 1000,

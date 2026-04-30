@@ -85,17 +85,23 @@ def parse_json_to_problem(json_path: str) -> AllocSchedulingProblem:
         calendar_team=d["calendar"],
         tasks_list=d["tasks"],
         tasks_data={
-            t: TasksDescription(duration_task=d["tasks_data"][t]["duration"])
+            t: TasksDescription(duration_task=int(d["tasks_data"][t]["duration"]))
             for t in d["tasks_data"]
         },
         same_allocation=[set(x) for x in d["same_allocation"]],
         precedence_constraints=d["successors"],
         available_team_for_activity=d["compatible_teams"],
-        start_window=d["start_window"],
-        end_window=d["end_window"],
-        original_start=d["original_start"],
-        original_end=d["original_end"],
-        horizon_start_shift=d["horizon_shift"],
+        start_window={
+            task: (lb if lb is None else int(lb), ub if ub is None else int(ub))
+            for task, (lb, ub) in d["start_window"].items()
+        },
+        end_window={
+            task: (lb if lb is None else int(lb), ub if ub is None else int(ub))
+            for task, (lb, ub) in d["end_window"].items()
+        },
+        original_start={task: int(t) for task, t in d["original_start"].items()},
+        original_end={task: int(t) for task, t in d["original_end"].items()},
+        horizon_start_shift=int(d["horizon_shift"]),
         resources_list=[],
         resources_capacity=None,
         horizon=horizon,

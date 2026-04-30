@@ -271,15 +271,13 @@ class AllocSchedulingProblem(
             "nb_not_done": ObjectiveDoc(
                 type=TypeObjective.PENALTY, default_weight=-100000
             ),
-            "nb_teams": ObjectiveDoc(
-                type=TypeObjective.PENALTY, default_weight=-10000.0
-            ),
-            "makespan": ObjectiveDoc(type=TypeObjective.PENALTY, default_weight=-1.0),
+            "nb_teams": ObjectiveDoc(type=TypeObjective.PENALTY, default_weight=-10000),
+            "makespan": ObjectiveDoc(type=TypeObjective.PENALTY, default_weight=-1),
             "workload_dispersion": ObjectiveDoc(
-                type=TypeObjective.PENALTY, default_weight=-1.0
+                type=TypeObjective.PENALTY, default_weight=-1
             ),
             "nb_violations": ObjectiveDoc(
-                type=TypeObjective.PENALTY, default_weight=-100.0
+                type=TypeObjective.PENALTY, default_weight=-100
             ),
         }
         return ObjectiveRegister(
@@ -380,7 +378,7 @@ def evaluate_solution(
         if team not in dur_per_team:
             dur_per_team[team] = 0
         dur_per_team[team] += problem.tasks_data[problem.index_to_task[i]].duration_task
-    makespan = max(solution.schedule[:, 1])
+    makespan = int(max(solution.schedule[:, 1]))
     sat = satisfy_detailed(problem=problem, solution=solution)
     return {
         "nb_teams": len(teams_used),
