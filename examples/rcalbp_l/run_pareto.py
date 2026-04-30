@@ -8,6 +8,8 @@ from discrete_optimization.alb.rcalbp_l import get_data_available, parse_rcalbpl
 from discrete_optimization.alb.rcalbp_l.solvers import (
     BackwardSequentialRCALBPLSolver,
     CpSatRCALBPLSolver,
+)
+from discrete_optimization.alb.rcalbp_l.solvers.pareto_postprocess import (
     DpRCALBPLPostProSolver,
     RampUpParetoSolverPostpro,
 )

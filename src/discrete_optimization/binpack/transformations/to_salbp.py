@@ -7,7 +7,7 @@
 from typing import Optional
 
 from discrete_optimization.alb.base.problem import TaskData
-from discrete_optimization.alb.salbp import SalbpProblem, SalbpSolution
+from discrete_optimization.alb.salbp.problem import SalbpProblem, SalbpSolution
 from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolution
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
