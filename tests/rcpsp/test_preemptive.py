@@ -258,6 +258,9 @@ def test_preeemptive_sgs():
     rcpsp_problem = load_psplib_preemptive_model_2("j601_5.sm")
     rcpsp_problem.duration_subtask = {t: (True, 2) for t in rcpsp_problem.tasks_list}
     rcpsp_problem.any_duration_subtask_limited = True
+    rcpsp_problem.preemptive_indicator = {
+        x: True for x in rcpsp_problem.preemptive_indicator
+    }
     rcpsp_problem.update_function()
     solution = rcpsp_problem.get_dummy_solution()
     assert solution.get_max_preempted() == 3
