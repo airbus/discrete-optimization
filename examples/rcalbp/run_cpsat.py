@@ -12,7 +12,10 @@ from discrete_optimization.alb.rcalbp.solvers.cpsat import (
     CpSatRcAlbpSolver,
     ModelingShared,
 )
-from discrete_optimization.alb.rcalbp.utils import load_rcpsp_as_albp
+from discrete_optimization.alb.rcalbp.utils import (
+    load_rcpsp_as_albp,
+    visualize_interactive_flow,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 
 
@@ -88,6 +91,7 @@ def main():
                 t for t in problem.tasks if solution.task_assignment[t] == station
             ]
             print(f"  {station}: {tasks_on_station}")
+        visualize_interactive_flow(problem, solution)
     else:
         print("No solution found")
 

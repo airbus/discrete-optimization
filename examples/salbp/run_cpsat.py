@@ -12,7 +12,7 @@ def run_cpsat():
     file = [f for f in files if "instance_n=1000_337" in f][0]
     problem = parse_alb_file(file)
     solver = CpSatSalbpSolver(problem)
-    solver.init_model(modeling=ModelingCpsatSalbp.SCHEDULING, use_lb=True)
+    solver.init_model(modeling=ModelingCpsatSalbp.BINARY, use_lb=True)
     greedy = GreedySalbpSolver(problem)
     sol = greedy.solve()[-1][0]
     solver.set_warm_start(sol)

@@ -15,17 +15,29 @@ simultaneously, which defeats the purpose of the unfolding.
 from enum import Enum
 from typing import Any
 
-from ortools.sat.python.cp_model import CpSolverSolutionCallback
+from ortools.sat.python.cp_model import (
+    CpSolverSolutionCallback,
+    IntervalVar,
+    LinearExprT,
+)
 
 from discrete_optimization.alb.rcalbp.problem import (
     RCALBPProblem,
     RCALBPSolution,
+    Resource,
+    Task,
+    UnaryResource,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
+    AllocationCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.renewable_resource import (
+    RenewableResourceCpSatSolver,
+)
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
 )
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 
 
 class ModelingShared(Enum):
@@ -33,11 +45,51 @@ class ModelingShared(Enum):
     CALENDAR = 1
 
 
-class CpSatRcAlbpSolver(OrtoolsCpSatSolver):
+class CpSatRcAlbpSolver(
+    RenewableResourceCpSatSolver[Task, Resource],
+    AllocationCpSatSolver[Task, UnaryResource],
+):
     """
     CP-SAT Solver for RC-ALBP with shared resources.
     Implements FOLDED and CALENDAR approaches.
     """
+
+    # def get_binary_allocation_variable(self, task: Task, unary_resource: UnaryResource) -> LinearExprT:
+    #    if self.modeling == ModelingShared.FOLDED:
+    #        station_to_idx = {s: i for i, s in enumerate(self.problem.stations)}
+    #        return self.variables["task_station_binary"][task, station_to_idx[unary_resource]]
+    #    raise NotImplementedError
+
+    # def get_integer_allocation_variable(self, task: Task) -> LinearExprT:
+    #    if self.modeling == ModelingShared.FOLDED:
+    #        return self.variables["task_station"][task]
+    #    raise NotImplementedError
+
+    def get_resource_consumption_intervals(
+        self, resource: Resource
+    ) -> list[tuple[IntervalVar, int]]:
+        if self.modeling == ModelingShared.FOLDED:
+            return [
+                (
+                    self.variables["intervals"][t],
+                    self.problem.get_task_demand(t, resource),
+                )
+                for t in self.problem.tasks
+            ]
+
+    def get_task_start_or_end_variable(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> LinearExprT:
+        if start_or_end == StartOrEnd.START:
+            return self.variables["starts"][task]
+        return self.variables["ends"][task]
+
+    def get_task_unary_resource_is_present_variable(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> LinearExprT:
+        if self.modeling == ModelingShared.FOLDED:
+            return self.variables["task_station_binary"][task, unary_resource]
+        raise NotImplementedError
 
     hyperparameters = [
         EnumHyperparameter(
@@ -54,7 +106,6 @@ class CpSatRcAlbpSolver(OrtoolsCpSatSolver):
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         self.modeling = kwargs["modeling"]
-
         if self.modeling == ModelingShared.FOLDED:
             self.init_model_folded(**kwargs)
         elif self.modeling == ModelingShared.CALENDAR:
@@ -65,31 +116,27 @@ class CpSatRcAlbpSolver(OrtoolsCpSatSolver):
         FOLDED model with shared resources.
         """
         super().init_model(**kwargs)
-
         horizon = sum(self.problem.task_times.values())
         station_to_idx = {s: i for i, s in enumerate(self.problem.stations)}
         idx_to_station = {i: s for s, i in station_to_idx.items()}
-
         # ------------------------------------------------------------------
         # 1. Task Assignment Variables
         # ------------------------------------------------------------------
-        task_station = {}
-        task_station_binary = {}
+        task_station_binary = self.create_allocation()
+        task_station = {
+            task: sum(
+                [
+                    station_to_idx[s] * task_station_binary[(task, s)]
+                    for s in self.problem.stations
+                ]
+            )
+            for task in self.problem.tasks
+        }
         for task in self.problem.tasks:
-            for station in self.problem.stations:
-                task_station_binary[(task, station)] = self.cp_model.NewBoolVar(
-                    name=f"task_{task}_{station}"
-                )
             self.cp_model.add_exactly_one(
                 [
                     task_station_binary[(task, station)]
                     for station in self.problem.stations
-                ]
-            )
-            task_station[task] = sum(
-                [
-                    station_to_idx[s] * task_station_binary[(task, s)]
-                    for s in self.problem.stations
                 ]
             )
 
@@ -197,9 +244,26 @@ class CpSatRcAlbpSolver(OrtoolsCpSatSolver):
         # Store variables
         self.variables["starts"] = starts
         self.variables["ends"] = ends
+        self.variables["intervals"] = intervals
+        self.variables["opt_intervals"] = optional_intervals
+        self.variables["task_station_binary"] = task_station_binary
         self.variables["task_station"] = task_station
         self.variables["idx_to_station"] = idx_to_station
         self.variables["makespan"] = makespan
+
+    def create_allocation(self):
+        tasks, unary_resources = self.get_default_tasks_n_unary_resources()
+        task_to_station = {}
+        for task in tasks:
+            for unary_resource in unary_resources:
+                if self.problem.is_compatible_task_unary_resource(
+                    task=task, unary_resource=unary_resource
+                ):
+                    boolvar = self.cp_model.new_bool_var(
+                        f"is_present_{task}_{unary_resource}"
+                    )
+                    task_to_station[(task, unary_resource)] = boolvar
+        return task_to_station
 
     def init_model_calendar(self, **kwargs):
         """
@@ -470,85 +534,3 @@ class CpSatRcAlbpSolver(OrtoolsCpSatSolver):
                 task_schedule=task_schedule,
                 cycle_time=cycle_time,
             )
-
-
-def demonstrate_shared_resources():
-    """Demonstrate solving with shared resources."""
-    print("\n" + "=" * 80)
-    print("  RC-ALBP WITH SHARED RESOURCES")
-    print("=" * 80 + "\n")
-
-    # Test on simple example
-    print("=" * 80)
-    print("TEST 1: Small Example with Shared AGV Resource")
-    print("=" * 80 + "\n")
-
-    for modeling in [ModelingShared.FOLDED, ModelingShared.CALENDAR]:
-        print(f"\n{modeling.name} Model:")
-        print("-" * 60)
-
-        solver = CpSatRcAlbpSolver(problem)
-        params_cp = ParametersCp.default_cpsat()
-
-        result_storage = solver.solve(
-            modeling=modeling,
-            parameters_cp=params_cp,
-            time_limit=30,
-            ortools_cpsat_solver_kwargs={"log_search_progress": False},
-        )
-
-        if len(result_storage) > 0:
-            solution = result_storage.get_best_solution()
-            eval_result = problem.evaluate(solution)
-
-            print(f"  Cycle Time: {solution.cycle_time}")
-            print(f"  Valid (all constraints): {problem.satisfy(solution)}")
-            print(
-                f"  Station resource penalty: {eval_result.get('penalty_resource_station', 0)}"
-            )
-            print(
-                f"  Shared resource penalty: {eval_result.get('penalty_resource_shared', 0)}"
-            )
-            print(f"  Task assignments:")
-            for station in problem.stations:
-                tasks_on_station = [
-                    t for t in problem.tasks if solution.task_assignment[t] == station
-                ]
-                print(f"    {station}: {tasks_on_station}")
-        else:
-            print("  No solution found")
-
-    # Explain why UNFOLDED doesn't work
-    print("\n" + "=" * 80)
-    print("  WHY UNFOLDED MODEL DOESN'T WORK FOR SHARED RESOURCES")
-    print("=" * 80 + "\n")
-
-    print("In the UNFOLDED model, time is partitioned by station:")
-    print("  Station 0: time ∈ [0, cycle_time)")
-    print("  Station 1: time ∈ [cycle_time, 2*cycle_time)")
-    print("  Station 2: time ∈ [2*cycle_time, 3*cycle_time)")
-    print()
-    print("For a SHARED resource constraint to work, we need to check that at")
-    print("any GLOBAL time t, the sum of demands across ALL stations ≤ capacity.")
-    print()
-    print("But in unfolded time:")
-    print("  - A task at t=5 on Station 0 exists at global time 5")
-    print("  - A task at t=5 on Station 1 exists at global time cycle_time + 5")
-    print("  - These are DIFFERENT time points!")
-    print()
-    print("The unfolding trick works for station-specific resources because")
-    print("each station's time window is independent. But shared resources")
-    print("require reasoning about ALL stations simultaneously, which breaks")
-    print("the independence assumption.")
-    print()
-    print("✓ FOLDED: Works (uses optional intervals)")
-    print("✓ CALENDAR: Works (uses global cumulative for shared resources)")
-    print("✗ UNFOLDED: Cannot model shared resources naturally")
-
-    print("\n" + "=" * 80)
-    print("  DEMONSTRATION COMPLETE")
-    print("=" * 80 + "\n")
-
-
-if __name__ == "__main__":
-    demonstrate_shared_resources()

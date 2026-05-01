@@ -52,6 +52,10 @@ from discrete_optimization.alb.base.problem import (
 from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    RenewableResourceProblem,
+    RenewableResourceSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -70,7 +74,9 @@ Station = Hashable
 Resource = Hashable
 
 
-class RCALBPSolution(BaseALBSolution[Task, Station]):
+class RCALBPSolution(
+    BaseALBSolution[Task, Station], RenewableResourceSolution[Task, Resource]
+):
     """
     Solution for RC-ALBP problem.
 
@@ -89,6 +95,9 @@ class RCALBPSolution(BaseALBSolution[Task, Station]):
     """
 
     problem: "RCALBPProblem"
+
+    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
+        return self.problem.get_task_demand(task, resource)
 
     def __init__(
         self,
@@ -408,7 +417,9 @@ class RCALBPSolution(BaseALBSolution[Task, Station]):
         )
 
 
-class RCALBPProblem(BaseALBProblem[Task, Station]):
+class RCALBPProblem(
+    BaseALBProblem[Task, Station], RenewableResourceProblem[Task, Resource]
+):
     """
     Resource-Constrained Assembly Line Balancing Problem.
 
@@ -425,6 +436,20 @@ class RCALBPProblem(BaseALBProblem[Task, Station]):
         shared_resource_capacities: Global capacity {resource: capacity}
         nb_resources: Total count (station-specific + shared)
     """
+
+    @property
+    def renewable_resources_list(self) -> list[Resource]:
+        return list(set(self.resources) | self.shared_resources)
+
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        if self.is_resource_shared(resource):
+            return [
+                (0, self.get_makespan_upper_bound(), self.get_shared_capacity(resource))
+            ]
+        else:
+            return None
 
     # Resource accessor methods (object-oriented API)
     def get_task_demand(self, task: Task, resource: Resource) -> int:
