@@ -9,9 +9,15 @@ import logging
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.multibatching.parser import get_data_available, parse_file
+from discrete_optimization.multibatching.problem import (
+    MultibatchingSolution,
+)
 from discrete_optimization.multibatching.solvers.cpsat import (
     CpsatMultibatchingSolver,
     ModelingMultiBatch,
+)
+from discrete_optimization.multibatching.solvers.milp_flow import (
+    GurobiMultibatchingSolverUnitFlow,
 )
 from discrete_optimization.multibatching.solvers.two_steps import (
     TwoStepMultibatchingSolver,
@@ -75,11 +81,11 @@ def main():
         cls=CpsatMultibatchingSolver,
         kwargs={
             "modeling": ModelingMultiBatch.FLOW,
-            "add_lb_constraint_nb_trips": True,
+            "add_lb_constraint_nb_trips": False,
             "parameters_cp": parameters_cp,
             "callbacks": ProblemEvaluateLogger(logging.INFO, logging.INFO),
             "scaling_factor": 1000,
-            "time_limit": 200,  # 5 minutes timeout
+            "time_limit": 100,  # 5 minutes timeout
             "ortools_cpsat_solver_kwargs": {
                 "log_search_progress": True,
             },
@@ -107,19 +113,33 @@ def main():
     # 4. Solve
     print("\n[4/5] Solving...")
     print("      This may take several minutes...")
-
-    solver = TwoStepMultibatchingSolver(problem)
-    result_storage = solver.solve(
-        flow_solver=flow_solver_config,
-        packing_solver=packing_solver_config,
+    two_step_config = SubBrick(
+        TwoStepMultibatchingSolver,
+        {"flow_solver": flow_solver_config, "packing_solver": packing_solver_config},
     )
+    milp_no_delta = SubBrick(
+        GurobiMultibatchingSolverUnitFlow,
+        kwargs=dict(time_limit=int(100)),
+        kwargs_from_solution={
+            "max_trips_per_link": lambda sol: sol.problem.get_max_nb_trips(sol)
+        },
+    )
+    from discrete_optimization.generic_tools.sequential_metasolver import (
+        SequentialMetasolver,
+    )
+
+    seq_solver = SequentialMetasolver(
+        problem, list_subbricks=[two_step_config, milp_no_delta]
+    )
+    result_storage = seq_solver.solve()
     # 5. Analyze results
     print("\n[5/5] Results:")
     print("=" * 80)
     if len(result_storage) == 0:
         print("No solution found within time limit.")
         return
-    solution, fitness = result_storage.get_best_solution_fit()
+    solution, fitness = result_storage[-1]
+    solution: MultibatchingSolution
     print(f"\nBest solution found:")
     print(f"  - Objective value: {fitness}")
     print(f"  - Number of flows: {len(solution.list_flows)}")
