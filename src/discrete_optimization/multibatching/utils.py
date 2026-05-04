@@ -74,17 +74,6 @@ def generate_multibatching_problem(
 
     Returns:
         A randomly generated MultibatchingProblem instance with balanced supply/demand.
-
-    Example:
-        >>> from discrete_optimization.multibatching.utils import generate_multibatching_problem
-        >>> problem = generate_multibatching_problem(
-        ...     num_locations=5,
-        ...     num_transport_types=2,
-        ...     num_products=3,
-        ...     seed=42
-        ... )
-        >>> print(f"Problem has {problem.nb_locations} locations")
-        >>> print(f"Problem has {problem.nb_transport_links} transport links")
     """
     if seed is not None:
         random.seed(seed)

@@ -255,7 +255,7 @@ class CpsatMultibatchingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             tt: sum(
                 [total_size_per_product[p] for p in transport_type_to_set_products[tt]]
             )
-            / tt.capacity
+            / max(1, tt.capacity)
             for tt in transport_type_to_set_products
         }
         valid_links_map = None

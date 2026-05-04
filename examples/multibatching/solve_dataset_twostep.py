@@ -13,16 +13,13 @@ from discrete_optimization.multibatching.solvers.cpsat import (
     CpsatMultibatchingSolver,
     ModelingMultiBatch,
 )
-from discrete_optimization.multibatching.solvers.packing_subproblem import (
-    GreedyPackingForMultibatching,
-)
 from discrete_optimization.multibatching.solvers.two_steps import (
     TwoStepMultibatchingSolver,
 )
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
@@ -68,7 +65,10 @@ def main():
 
     # Configure CP parameters for parallel solving
     parameters_cp = ParametersCp.default_cpsat()
-    parameters_cp.nb_process = 16
+    parameters_cp.nb_process = 8
+    from discrete_optimization.generic_tools.callbacks.loggers import (
+        ProblemEvaluateLogger,
+    )
 
     # Configure CPSat flow solver with longer timeout and parallel workers
     flow_solver_config = SubBrick(
@@ -76,26 +76,33 @@ def main():
         kwargs={
             "modeling": ModelingMultiBatch.FLOW,
             "parameters_cp": parameters_cp,
+            "callbacks": ProblemEvaluateLogger(logging.INFO, logging.INFO),
             "scaling_factor": 1000,
-            "time_limit": 300,  # 5 minutes timeout
+            "time_limit": 200,  # 5 minutes timeout
             "ortools_cpsat_solver_kwargs": {
                 "log_search_progress": True,
             },
         },
     )
+    from discrete_optimization.multibatching.solvers.packing_subproblem import (
+        CpsatPackingSubproblem,
+    )
 
     # Configure greedy packing solver
     packing_solver_config = SubBrick(
-        cls=GreedyPackingForMultibatching,
-        kwargs={},
+        cls=CpsatPackingSubproblem,
+        kwargs={
+            "parameters_cp": parameters_cp,
+            "time_limit": 100,  # 5 minutes timeout
+            "ortools_cpsat_solver_kwargs": {
+                "log_search_progress": True,
+            },
+        },
     )
-
     print("      Flow solver: CPSat (FLOW modeling)")
     print(f"      - Time limit: {flow_solver_config.kwargs['time_limit']}s")
     print(f"      - Workers: {parameters_cp.nb_process}")
-    print("      Packing solver: Greedy")
-    print("      Best N flow solutions to try: 3")
-
+    print("      Packing solver: Cpsat")
     # 4. Solve
     print("\n[4/5] Solving...")
     print("      This may take several minutes...")
@@ -104,29 +111,23 @@ def main():
     result_storage = solver.solve(
         flow_solver=flow_solver_config,
         packing_solver=packing_solver_config,
-        best_n_flow_solution=3,  # Try packing for the 3 best flow solutions
     )
-
     # 5. Analyze results
     print("\n[5/5] Results:")
     print("=" * 80)
-
     if len(result_storage) == 0:
         print("No solution found within time limit.")
         return
-
     solution, fitness = result_storage.get_best_solution_fit()
     print(f"\nBest solution found:")
     print(f"  - Objective value: {fitness}")
     print(f"  - Number of flows: {len(solution.list_flows)}")
-
     # Evaluate solution
     print("\nEvaluating solution...")
     evaluation = problem.evaluate(solution)
     print(evaluation)
     print(f"  - Transport cost: {evaluation.get('transport', 'N/A')}")
     print(f"  - Emission cost: {evaluation.get('emission', 'N/A')}")
-
     # Validate solution
     print("\nValidating solution...")
     is_feasible = problem.satisfy(solution)
@@ -136,7 +137,6 @@ def main():
     else:
         print("  ✗ Solution is NOT feasible")
         print("\nWARNING: Solution violates some constraints.")
-
     # Summary statistics
     print("\n" + "=" * 80)
     print(f"Total solutions explored: {len(result_storage)}")
