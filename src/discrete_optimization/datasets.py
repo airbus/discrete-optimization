@@ -106,6 +106,10 @@ BPPC_ZIP = "https://site.unibo.it/operations-research/en/research/library-of-cod
 OVENSCHED_REPO_URL = "https://github.com/iolab-uniud/osp-ls"
 OVENSCHED_REPO_URL_SHA1 = "d29ec2dfc29f357ce7b1158edca0745b812bd493"
 
+MULTIBATCHING_REPO_URL = "https://github.com/g-poveda/do-data"
+MULTIBATCHING_REPO_URL_SHA1 = "6be99ff4f739c57908237f4515826d26c5858c75"
+MULTIBATCHING_DATASET_RELATIVE_PATH = "multibatching/anonymized_parametric.json"
+
 FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
@@ -745,6 +749,56 @@ def fetch_data_from_ovensched_repo(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_multibatching(data_home: Optional[str] = None):
+    """Fetch multibatching dataset from do-data repo.
+
+    https://github.com/g-poveda/do-data
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    # get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get multibatching data directory
+    multibatching_dir = f"{data_home}/multibatching"
+    os.makedirs(multibatching_dir, exist_ok=True)
+
+    # download in a temporary file the repo data
+    url = f"{MULTIBATCHING_REPO_URL}/archive/{MULTIBATCHING_REPO_URL_SHA1}.zip"
+
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only the multibatching JSON file
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            target_file_in_zip = f"{rootdir}/{MULTIBATCHING_DATASET_RELATIVE_PATH}"
+
+            # Find and extract the target file
+            for name in namelist:
+                if name == target_file_in_zip:
+                    zipf.extract(name, path=multibatching_dir)
+                    # Move file to the multibatching directory root
+                    source_path = os.path.join(multibatching_dir, name)
+                    destination = os.path.join(
+                        multibatching_dir,
+                        os.path.basename(MULTIBATCHING_DATASET_RELATIVE_PATH),
+                    )
+                    os.replace(src=source_path, dst=destination)
+                    break
+
+            # Clean up temporary directories
+            temp_root = os.path.join(multibatching_dir, rootdir)
+            if os.path.exists(temp_root):
+                shutil.rmtree(temp_root)
+
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -769,6 +823,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_top(data_home=data_home)
     fetch_data_from_rcalb_l(data_home=data_home)
     fetch_data_from_ovensched_repo(data_home=data_home)
+    fetch_data_from_multibatching(data_home=data_home)
 
 
 if __name__ == "__main__":
