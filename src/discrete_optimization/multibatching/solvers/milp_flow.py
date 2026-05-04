@@ -651,7 +651,7 @@ class GurobiMultibatchingSolver(GurobiMilpSolver):
 
     def convert_to_variable_values(
         self, solution: MultibatchingSolution
-    ) -> Dict[gurobipy.Var, float]:
+    ) -> Dict["gurobipy.Var", float]:
         """Converts a `MultibatchingSolution` to a dictionary of Gurobi variable values for warm start."""
         variable_values = {}
 
@@ -1035,7 +1035,7 @@ class GurobiMultibatchingSolverUnitFlow(GurobiMilpSolver):
 
     def convert_to_variable_values(
         self, solution: MultibatchingSolution
-    ) -> Dict[gurobipy.Var, float]:
+    ) -> Dict["gurobipy.Var", float]:
         used_trips = self.variables["used_trips"]
         trip_contents = self.variables["trip_contents"]
         trips_per_link = defaultdict(list)
@@ -1348,7 +1348,7 @@ class GurobiLazyCallback:
         self.nb_cuts_added = 0
         self.packing_solver = PackingViaBinPacking(problem=self.do_solver.problem)
 
-    def __call__(self, model: gurobipy.Model, where: int) -> None:
+    def __call__(self, model: "gurobipy.Model", where: int) -> None:
         if where == gurobipy.GRB.Callback.MIPSOL:
             try:
                 # 1. Retrieve the candidate solution from the MILP
@@ -1496,7 +1496,7 @@ class GurobiLC:
         self.nb_cuts_added = 0
         self.packing_solver = PackingViaBinPacking(problem=self.do_solver.problem)
 
-    def __call__(self, model: gurobipy.Model, where: int) -> None:
+    def __call__(self, model: "gurobipy.Model", where: int) -> None:
         if where == gurobipy.GRB.Callback.MIPSOL:
             try:
                 if model.cbGet(gurobipy.GRB.Callback.MIPSOL_OBJ) >= 2.8 * 10**12:
@@ -1793,7 +1793,7 @@ class GurobiLC_BinaryExpansion:
         self.nb_cuts_added = 0
         self.packing_solver = PackingViaBinPacking(problem=self.do_solver.problem)
 
-    def __call__(self, model: gurobipy.Model, where: int) -> None:
+    def __call__(self, model: "gurobipy.Model", where: int) -> None:
         if where == gurobipy.GRB.Callback.MIPSOL:
             # 1. Retrieve candidate solution
             if model.cbGet(gurobipy.GRB.Callback.MIPSOL_OBJ) >= 2.8 * 10**12:
