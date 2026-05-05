@@ -90,24 +90,29 @@ class FjspToWorkforceSchedulingTransformation(
         task_id = 0
         job_task_mapping = {}  # job_id -> list of task_ids
 
-        for job_id, job_data in source_problem.jobs_data.items():
+        for job in source_problem.list_jobs:
+            job_id = job.job_id
             job_tasks = []
 
-            for op_idx, (eligible_machines, duration) in enumerate(
-                job_data["operations"]
-            ):
+            for op_idx, sub_job_options in enumerate(job.sub_jobs):
                 task_name = f"job_{job_id}_op_{op_idx}"
                 tasks_list.append(task_name)
+
+                # Eligible teams (machines) from sub-job options
+                eligible_machines = {option.machine_id for option in sub_job_options}
+                eligible_teams = {team_names[m_id] for m_id in eligible_machines}
+                available_team_for_activity[task_name] = eligible_teams
+
+                # Duration: use minimum duration across all machine options
+                # Note: In FJSP, duration depends on machine choice, but AllocSchedulingProblem
+                # requires a fixed duration per task. We use min duration as a representative value.
+                duration = min(option.processing_time for option in sub_job_options)
 
                 # Task description
                 tasks_data[task_name] = TasksDescription(
                     duration_task=duration,
                     resource_consumption={},
                 )
-
-                # Eligible teams (machines)
-                eligible_teams = {team_names[m_id] for m_id in eligible_machines}
-                available_team_for_activity[task_name] = eligible_teams
 
                 # Precedence within job (operation sequence)
                 if op_idx > 0:
@@ -143,6 +148,8 @@ class FjspToWorkforceSchedulingTransformation(
             end_window=end_window,
             original_start=original_start,
             original_end=original_end,
+            resources_list=[],  # No cumulative resources in FJSP
+            resources_capacity={},  # No cumulative resources in FJSP
         )
 
     def back_transform_solution(
@@ -159,8 +166,9 @@ class FjspToWorkforceSchedulingTransformation(
         Returns:
             Equivalent FJobShopSolution
         """
-        # Build FJSP schedule
-        schedule = {}
+        # Build FJSP schedule as list[list[tuple[int, int, int, int]]]
+        # For each job and sub-job: (start, end, machine_id, option)
+        schedule = [[] for _ in range(source_problem.n_jobs)]
 
         # Parse task names to extract job and operation indices
         for task_idx, task in enumerate(solution.problem.tasks_list):
@@ -177,14 +185,21 @@ class FjspToWorkforceSchedulingTransformation(
                 # Machine ID from team index
                 machine_id = team_idx
 
-                if job_id not in schedule:
-                    schedule[job_id] = {}
+                # Find the option (mode) index that corresponds to this machine
+                # Look up in the job's sub_jobs to find which option uses this machine
+                job = source_problem.list_jobs[job_id]
+                sub_job_options = job.sub_jobs[op_idx]
+                option_idx = 0
+                for opt_idx, option in enumerate(sub_job_options):
+                    if option.machine_id == machine_id:
+                        option_idx = opt_idx
+                        break
 
-                schedule[job_id][op_idx] = {
-                    "start": start,
-                    "end": end,
-                    "machine": machine_id,
-                }
+                # Ensure schedule has enough space
+                while len(schedule[job_id]) <= op_idx:
+                    schedule[job_id].append((0, 0, 0, 0))
+
+                schedule[job_id][op_idx] = (start, end, machine_id, option_idx)
 
         return FJobShopSolution(
             problem=source_problem,
@@ -220,16 +235,19 @@ class FjspToWorkforceSchedulingTransformation(
                 op_idx = int(parts[3])
 
                 # Get from FJSP solution
-                if hasattr(solution, "schedule") and job_id in solution.schedule:
-                    if op_idx in solution.schedule[job_id]:
-                        op_data = solution.schedule[job_id][op_idx]
-                        start = op_data.get("start", 0)
-                        end = op_data.get("end", 0)
-                        machine_id = op_data.get("machine", 0)
+                # Schedule is list[list[tuple[int, int, int, int]]]
+                if (
+                    hasattr(solution, "schedule")
+                    and job_id < len(solution.schedule)
+                    and op_idx < len(solution.schedule[job_id])
+                ):
+                    start, end, machine_id, option_idx = solution.schedule[job_id][
+                        op_idx
+                    ]
 
-                        schedule_arr[task_idx, 0] = start
-                        schedule_arr[task_idx, 1] = end
-                        allocation_arr[task_idx] = machine_id
+                    schedule_arr[task_idx, 0] = start
+                    schedule_arr[task_idx, 1] = end
+                    allocation_arr[task_idx] = machine_id
 
         return AllocSchedulingSolution(
             problem=target_problem,
