@@ -107,7 +107,7 @@ class SalbpToFacilityTransformation(
 
         # Create facilities (one per possible station)
         # Maximum stations = number of tasks (worst case)
-        max_facilities = source_problem.number_of_tasks
+        max_facilities = source_problem.nb_tasks
         facilities = [
             Facility(
                 index=i,

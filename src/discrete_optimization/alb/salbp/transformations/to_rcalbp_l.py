@@ -78,14 +78,14 @@ class SalbpToRcalbpLTransformation(
 
         """
         # Parameters
-        nb_tasks = source_problem.number_of_tasks
+        nb_tasks = source_problem.nb_tasks
         nb_stations = (
             self.nb_stations_upper_bound
             if self.nb_stations_upper_bound is not None
             else nb_tasks
         )
         nb_periods = 1  # Single period (no learning)
-        nb_resources = 0  # No resources
+        nb_resources = 1  # No resources
         nb_zones = 0  # No zones
 
         # Cycle time constraints
@@ -97,20 +97,24 @@ class SalbpToRcalbpLTransformation(
         # RCALBP_L precedence: list of ((pred, period), (succ, period)) pairs
         # Since we have single period, all tasks are in period 0
         precedences = [
-            ((pred, 0), (succ, 0)) for pred, succ in source_problem.precedence
+            (source_problem.tasks_to_index[pred], source_problem.tasks_to_index[succ])
+            for pred, succ in source_problem.precedence
         ]
 
         # Durations: RCALBP_L uses durations[task][experience_level]
         # For SALBP, no learning effect, so duration is constant
         # durations[t][0] = task time for task t (no experience)
-        durations = [[source_problem.task_times[task]] for task in source_problem.tasks]
+        durations = [
+            [source_problem.task_times[task]] * nb_stations
+            for task in source_problem.tasks
+        ]
 
         # Empty resource/zone arrays
-        capa_resources = []
-        cons_resources = []
+        capa_resources = [1]
+        cons_resources = [[1 for i in range(nb_tasks)]]
         capa_zones = []
         cons_zones = []
-        neutr_zones = []
+        neutr_zones = [[] for i in range(nb_tasks)]
 
         return RCALBPLProblem(
             c_target=c_target,
@@ -127,8 +131,8 @@ class SalbpToRcalbpLTransformation(
             capa_zones=capa_zones,
             cons_zones=cons_zones,
             neutr_zones=neutr_zones,
-            p_start=0,
-            p_end=1,  # Single period [0, 1)
+            p_start=nb_stations - 1,
+            p_end=nb_stations,  # Single period [0, 1)
         )
 
     def back_transform_solution(
@@ -149,7 +153,10 @@ class SalbpToRcalbpLTransformation(
         # SALBP: allocation_to_station[task_index] = station
 
         # Map task IDs to indices
-        allocation_to_station = [solution.wks[task] for task in source_problem.tasks]
+        allocation_to_station = [
+            solution.wks[source_problem.tasks_to_index[task]]
+            for task in source_problem.tasks
+        ]
 
         return SalbpSolution(
             problem=source_problem,

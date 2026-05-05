@@ -129,7 +129,6 @@ class TransformationSolver(SolverDO, WarmstartMixin):
             self.target_problem = self.transformation.transform_problem(
                 self.source_problem
             )
-
         # Instantiate solver for target problem
         self.solver_brick = solver_brick
         self.wrapped_solver = solver_brick.cls(

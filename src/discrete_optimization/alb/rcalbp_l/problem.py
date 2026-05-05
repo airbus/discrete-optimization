@@ -164,7 +164,7 @@ class RCALBPLProblem(SchedulingProblem[Task], AllocationProblem[Task, WorkStatio
         nb_stations: int,
         nb_periods: int,
         nb_tasks: int,
-        precedences: List[Tuple[Task, Task]],
+        precedences: List[Tuple[TaskUnit, TaskUnit]],
         durations: List[List[int]],
         nb_resources: int,
         capa_resources: List[int],

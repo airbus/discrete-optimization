@@ -1,15 +1,12 @@
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
 """
 CP-SAT Solvers for RC-ALBP with Shared Resources
 
 This module shows how each modeling approach handles shared resources:
 - FOLDED: Works naturally ✓
 - CALENDAR: Works naturally ✓
-- UNFOLDED: BREAKS! The time-unfolding trick doesn't work for shared resources ✗
-
-WHY UNFOLDED BREAKS:
-In unfolded time, tasks on different stations exist in different time windows.
-A shared resource constraint needs to consider tasks across ALL time windows
-simultaneously, which defeats the purpose of the unfolding.
 """
 
 from enum import Enum
