@@ -11,7 +11,7 @@ Assumes uniform facility costs and no precedence.
 from typing import Optional
 
 from discrete_optimization.alb.base.problem import TaskData
-from discrete_optimization.alb.salbp import SalbpProblem, SalbpSolution
+from discrete_optimization.alb.salbp.problem import SalbpProblem, SalbpSolution
 from discrete_optimization.facility.problem import FacilityProblem, FacilitySolution
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
