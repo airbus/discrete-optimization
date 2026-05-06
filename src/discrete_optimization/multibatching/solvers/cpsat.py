@@ -71,6 +71,7 @@ class CpsatMultibatchingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             name="shortest_path_tolerance",
             low=0.0,
             high=30,
+            default=1.0,
             depends_on=[("restrict_to_shortest_paths", True)],
         ),
         CategoricalHyperparameter(
