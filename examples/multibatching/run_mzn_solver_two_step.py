@@ -1,25 +1,29 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
+
+from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
+from discrete_optimization.multibatching.solvers.cp_mzn import CpMultibatchingSolver
+from discrete_optimization.multibatching.solvers.packing_subproblem import (
+    GreedyPackingForMultibatching,
+)
+from discrete_optimization.multibatching.solvers.two_steps import (
+    TwoStepMultibatchingSolver,
+)
 from discrete_optimization.multibatching.utils import generate_multibatching_problem
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    from discrete_optimization.multibatching.solvers.milp_flow import (
-        GurobiMultibatchingSolver,
-        gurobi_available,
-    )
-
-    if not gurobi_available:
-        print("Gurobi is not available. Please install gurobipy to run this example.")
-        return None, False
-
     # Generate a random problem instance
     print("Generating random multibatching problem...")
     problem = generate_multibatching_problem(
-        num_locations=4,
-        num_transport_types=2,
-        num_products=2,
+        num_locations=10,
+        num_transport_types=5,
+        num_products=10,
         seed=42,
     )
 
@@ -29,18 +33,35 @@ def main():
     print(f"  - {problem.nb_products} products")
     print(f"  - {problem.nb_transport_links} transport links")
 
-    # Initialize and solve with Gurobi
-    print("\nSolving with Gurobi MILP (Flow modeling)...")
-    solver = GurobiMultibatchingSolver(problem)
-    solver.init_model(single_batching=False)
+    # Initialize two-step solver
+    print("\nSolving with Two-Step approach...")
+    print("  Step 1: Minizinc flow solver")
+    print("  Step 2: Greedy packing solver")
 
-    # Solve with time limit
-    from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+    solver = TwoStepMultibatchingSolver(problem)
+    params_cp = ParametersCp.default_cpsat()
+    params_cp.free_search = True
+    # Configure the two steps
+    flow_solver_config = SubBrick(
+        cls=CpMultibatchingSolver,
+        kwargs={
+            "parameters_cp": params_cp,
+            "time_limit": 30,
+            "cp_solver_name": CpSolverName.GECODE,
+        },
+    )
 
-    params = ParametersMilp.default()
-    params.time_limit = 30
+    packing_solver_config = SubBrick(
+        cls=GreedyPackingForMultibatching,
+        kwargs={},
+    )
 
-    result_storage = solver.solve(parameters_milp=params)
+    # Solve
+    result_storage = solver.solve(
+        flow_solver=flow_solver_config,
+        packing_solver=packing_solver_config,
+        best_n_flow_solution=3,  # Try packing the best 3 flow solutions
+    )
 
     # Get best solution
     if len(result_storage) > 0:

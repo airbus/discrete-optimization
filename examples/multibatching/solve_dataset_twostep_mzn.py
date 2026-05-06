@@ -9,14 +9,9 @@ import logging
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.multibatching.parser import get_data_available, parse_file
-from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
-    ModelingMultiBatch,
-)
-from discrete_optimization.multibatching.solvers.lp import (
-    GurobiMultibatchingSolver,
-    MathOptMultibatchingSolver,
-    mathopt,
+from discrete_optimization.multibatching.solvers.cp_mzn import (
+    CpMultibatchingSolver,
+    CpSolverName,
 )
 from discrete_optimization.multibatching.solvers.two_steps import (
     TwoStepMultibatchingSolver,
@@ -31,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def main(first_step: str = "cp"):
     print("=" * 80)
-    print("Multibatching Two-Step Solver Example (CPSat Flow + Greedy Packing)")
+    print("Multibatching Two-Step Solver Example")
     print("=" * 80)
 
     # 1. Load dataset
@@ -71,41 +66,16 @@ def main(first_step: str = "cp"):
     # Configure CP parameters for parallel solving
     parameters_cp = ParametersCp.default_cpsat()
     parameters_cp.nb_process = 8
-    from discrete_optimization.generic_tools.callbacks.loggers import (
-        ProblemEvaluateLogger,
-    )
 
     # Configure CPSat flow solver with longer timeout and parallel workers
-    if first_step == "cpsat":
-        flow_solver_config = SubBrick(
-            cls=CpsatMultibatchingSolver,
-            kwargs={
-                "modeling": ModelingMultiBatch.FLOW,
-                "add_lb_constraint_nb_trips": True,
-                "parameters_cp": parameters_cp,
-                "callbacks": ProblemEvaluateLogger(logging.INFO, logging.INFO),
-                "scaling_factor": 1000,
-                "time_limit": 200,  # 5 minutes timeout
-                "ortools_cpsat_solver_kwargs": {
-                    "log_search_progress": True,
-                },
-            },
-        )
-    if first_step == "lp-gurobi":
-        flow_solver_config = SubBrick(
-            cls=GurobiMultibatchingSolver,
-            kwargs={"time_limit": 200},
-        )
-    if first_step == "lp-mathopt":
-        flow_solver_config = SubBrick(
-            cls=MathOptMultibatchingSolver,
-            kwargs={
-                "mathopt_enable_output": True,
-                "mathopt_solver_type": mathopt.SolverType.GSCIP,
-                "mathopt_additional_solve_parameters": mathopt.SolveParameters(),
-                "time_limit": 200,
-            },
-        )
+    flow_solver_config = SubBrick(
+        cls=CpMultibatchingSolver,
+        kwargs={
+            "parameters_cp": parameters_cp,
+            "cp_solver_name": CpSolverName.GECODE,
+            "time_limit": 200,
+        },
+    )
     from discrete_optimization.multibatching.solvers.packing_subproblem import (
         CpsatPackingSubproblem,
     )
