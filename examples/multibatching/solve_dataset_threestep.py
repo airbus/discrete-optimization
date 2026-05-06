@@ -82,6 +82,8 @@ def main():
         kwargs={
             "modeling": ModelingMultiBatch.FLOW,
             "add_lb_constraint_nb_trips": False,
+            "restrict_to_shortest_paths": True,
+            "shortest_path_tolerance": 1.0,
             "parameters_cp": parameters_cp,
             "callbacks": ProblemEvaluateLogger(logging.INFO, logging.INFO),
             "scaling_factor": 1000,
