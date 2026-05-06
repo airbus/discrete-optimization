@@ -9,6 +9,7 @@ from discrete_optimization.binpack.solvers.cpsat import (
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
+from discrete_optimization.generic_tools.lp_tools import mathopt
 from discrete_optimization.generic_tools.sequential_metasolver import (
     SequentialMetasolver,
 )
@@ -20,6 +21,8 @@ from discrete_optimization.multibatching.solvers.cpsat import (
 from discrete_optimization.multibatching.solvers.lp import (
     GurobiMultibatchingSolver,
     GurobiMultibatchingSolverUnitFlow,
+    MathOptMultibatchingSolver,
+    MathOptMultibatchingSolverUnitFlow,
 )
 from discrete_optimization.multibatching.solvers.netx import NetxMultibatchingSolver
 from discrete_optimization.multibatching.solvers.packing_subproblem import (
@@ -69,6 +72,13 @@ def subbricks_packing(timeout, add_asp: bool = True):
 def subbricks_flow(timeout):
     c = dict(
         networkx=SubBrick(cls=NetxMultibatchingSolver, kwargs={}),
+        networkx_short=SubBrick(
+            cls=NetxMultibatchingSolver,
+            kwargs={
+                "restrict_to_shortest_paths": True,
+                "shortest_path_tolerance": 1.2,
+            },
+        ),
         cp=SubBrick(
             cls=CpsatMultibatchingSolver,
             kwargs={
@@ -76,9 +86,6 @@ def subbricks_flow(timeout):
                 "time_limit": int(timeout),
                 "parameters_cp": p,
             },
-        ),
-        milp=SubBrick(
-            cls=GurobiMultibatchingSolver, kwargs={"time_limit": int(timeout)}
         ),
         cp_short=SubBrick(
             cls=CpsatMultibatchingSolver,
@@ -90,10 +97,29 @@ def subbricks_flow(timeout):
                 "parameters_cp": p,
             },
         ),
+        milp=SubBrick(
+            cls=GurobiMultibatchingSolver, kwargs={"time_limit": int(timeout)}
+        ),
         milp_short=SubBrick(
             cls=GurobiMultibatchingSolver,
             kwargs={
                 "time_limit": int(timeout),
+                "restrict_to_shortest_paths": True,
+                "shortest_path_tolerance": 1.2,
+            },
+        ),
+        mathopt=SubBrick(
+            cls=MathOptMultibatchingSolver,
+            kwargs={
+                "time_limit": int(timeout),
+                "mathopt_solver_type": mathopt.SolverType.GSCIP,
+            },
+        ),
+        mathopt_short=SubBrick(
+            cls=MathOptMultibatchingSolver,
+            kwargs={
+                "time_limit": int(timeout),
+                "mathopt_solver_type": mathopt.SolverType.GSCIP,
                 "restrict_to_shortest_paths": True,
                 "shortest_path_tolerance": 1.2,
             },
@@ -137,6 +163,24 @@ def subbricks_third_step(timeout, verbose: bool = False):
         milp_delta=SubBrick(
             GurobiMultibatchingSolverUnitFlow,
             dict(time_limit=int(timeout), delta_to_solution=2),
+            kwargs_from_solution={"solution": lambda sol: sol},
+        ),
+        mathopt_no_delta=SubBrick(
+            MathOptMultibatchingSolverUnitFlow,
+            kwargs=dict(
+                time_limit=int(timeout), mathopt_solver_type=mathopt.SolverType.GSCIP
+            ),
+            kwargs_from_solution={
+                "max_trips_per_link": lambda sol: sol.problem.get_max_nb_trips(sol)
+            },
+        ),
+        mathopt_delta=SubBrick(
+            MathOptMultibatchingSolverUnitFlow,
+            dict(
+                time_limit=int(timeout),
+                mathopt_solver_type=mathopt.SolverType.GSCIP,
+                delta_to_solution=2,
+            ),
             kwargs_from_solution={"solution": lambda sol: sol},
         ),
     )

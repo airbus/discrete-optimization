@@ -39,12 +39,6 @@ def precompute_valid_links(
     Returns:
         Dictionary mapping product IDs to sets of valid transport link indices.
         Format: {product.id: {link_index_1, link_index_2, ...}}
-
-    Example:
-        >>> valid_links = precompute_valid_links(problem, tolerance=0.2)
-        >>> # Check if link 5 is valid for product with id "P1"
-        >>> if 5 in valid_links.get("P1", set()):
-        >>>     print("Link 5 can be used for product P1")
     """
     import networkx as nx
 
