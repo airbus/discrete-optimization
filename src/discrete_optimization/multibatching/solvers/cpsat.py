@@ -710,28 +710,7 @@ class CpsatMultibatchingSolver(OrtoolsCpSatSolver, WarmstartMixin):
                 for nb_trip in used_trips_variables[index_tl]
             ]
         )
-        compound_cost = []
-        for index_tl in range(self.problem.nb_transport_links):
-            tl = transport_links[index_tl]
-            time = tl.distance / tl.transport_type.speed
-            for i in trips_variables[index_tl]:
-                value = sum(
-                    [
-                        trips_variables[index_tl][i][index_p]
-                        * self.problem.products[index_p].value
-                        for index_p in trips_variables[index_tl][i]
-                    ]
-                )
-                compound_cost.append(
-                    value
-                    * int(
-                        self.scaling_factor
-                        * ((1 + self.problem.capital_factor) ** time - 1)
-                    )
-                )
-        self.variables["total_obj"] = (
-            transport_cost + emission_cost + sum(compound_cost)
-        )
+        self.variables["total_obj"] = transport_cost + emission_cost
         model.Minimize(self.variables["total_obj"])
         self.cp_model = model
         self.variables["flows"] = flows_variables
