@@ -65,11 +65,12 @@ class TspToVrpTransformation(
             Equivalent VRP problem with 1 vehicle
 
         """
-        # Create customers from TSP nodes (excluding start/end if they're the same as depot)
-        # TSP nodes that need to be visited (permutation indices)
+        # In VRP, we need ALL nodes including the depot
+        # VRP uses indices 0..node_count-1
+        # We create customers for ALL TSP nodes (including depot)
         customers = [
-            BasicCustomer(name=node, demand=0.0)  # Zero demand = infinite capacity
-            for node in source_problem.ind_in_permutation
+            BasicCustomer(name=i, demand=0.0)  # Zero demand = infinite capacity
+            for i in range(source_problem.node_count)
         ]
 
         # Create concrete VRP problem class
@@ -84,13 +85,17 @@ class TspToVrpTransformation(
                 if not var_vrp.list_paths or len(var_vrp.list_paths[0]) == 0:
                     return [[]], [0.0], float("inf"), [0.0]
 
-                # Extract the single route
-                route = var_vrp.list_paths[0]
+                # Extract the single route - VRP node indices = TSP node indices
+                vrp_route = var_vrp.list_paths[0]
 
-                # Build TSP permutation from route
+                # VRP route contains node indices that directly correspond to TSP nodes
+                # Just use them as the permutation
+                tsp_permutation = vrp_route
+
+                # Build TSP solution
                 tsp_solution = TspSolution(
                     problem=self.tsp_problem,
-                    permutation=route,
+                    permutation=tsp_permutation,
                     start_index=var_vrp.list_start_index[0],
                     end_index=var_vrp.list_end_index[0],
                 )
@@ -99,9 +104,10 @@ class TspToVrpTransformation(
                 self.tsp_problem.evaluate(tsp_solution)
 
                 # Return in VRP format
-                lengths = [tsp_solution.lengths if tsp_solution.lengths else []]
+                # lengths should be list[list[float]] - one list per vehicle
+                lengths = [tsp_solution.lengths] if tsp_solution.lengths else [[]]
                 obj = tsp_solution.length if tsp_solution.length else 0.0
-                return [lengths], [obj], obj, [0.0]  # Zero capacity used
+                return lengths, [obj], obj, [0.0]  # Zero capacity used
 
             def evaluate_function_indexes(self, index_1: int, index_2: int) -> float:
                 return self.tsp_problem.evaluate_function_indexes(index_1, index_2)
@@ -111,7 +117,7 @@ class TspToVrpTransformation(
             customers=customers,
             vehicle_count=1,
             vehicle_capacities=[float("inf")],  # Infinite capacity
-            customer_count=len(customers),
+            customer_count=source_problem.node_count,  # ALL nodes including depot
             start_indexes=[source_problem.start_index],
             end_indexes=[source_problem.end_index],
         )
@@ -134,6 +140,8 @@ class TspToVrpTransformation(
             # Empty solution
             permutation = list(source_problem.ind_in_permutation)
         else:
+            # VRP node indices directly correspond to TSP node indices
+            # Just use them as the permutation
             permutation = solution.list_paths[0]
 
         return TspSolution(
@@ -156,6 +164,8 @@ class TspToVrpTransformation(
             Equivalent VRP solution with single vehicle route
 
         """
+        # VRP node indices directly correspond to TSP node indices
+        # Just use the TSP permutation as the VRP route
         return VrpSolution(
             problem=target_problem,
             list_start_index=[solution.start_index],

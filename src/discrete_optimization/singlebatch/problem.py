@@ -160,6 +160,7 @@ class SingleBatchProcessingProblem(SchedulingProblem[Task]):
             )
             if batch_sizes[batch_id] > self.capacity:
                 return False
+        sorted_batches = sorted(batch_sizes)
         for i in range(len(variable.schedule_batch)):
             if i >= 1:
                 if not (
@@ -169,7 +170,7 @@ class SingleBatchProcessingProblem(SchedulingProblem[Task]):
                     return False
             if (
                 variable.schedule_batch[i][1] - variable.schedule_batch[i][0]
-                < batch_duration[i]
+                < batch_duration[sorted_batches[i]]
             ):
                 logger.info(f"Duration of batch {i} lower than needed")
                 return False
