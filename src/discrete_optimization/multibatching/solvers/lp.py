@@ -533,7 +533,7 @@ class GurobiMultibatchingSolver(GurobiMilpSolver, _BaseLpMultibatchingSolver):
 
     def convert_to_variable_values(
         self, solution: Solution
-    ) -> dict[gurobipy.Var, float]:
+    ) -> dict["gurobipy.Var", float]:
         return _BaseLpMultibatchingSolver.convert_to_variable_values(self, solution)
 
     def init_model(self, single_batching: bool = False, **kwargs: Any) -> None:
@@ -551,7 +551,7 @@ class MathOptMultibatchingSolver(OrtoolsMathOptMilpSolver, _BaseLpMultibatchingS
 
     def convert_to_variable_values(
         self, solution: Solution
-    ) -> dict[gurobipy.Var, float]:
+    ) -> dict["gurobipy.Var", float]:
         return _BaseLpMultibatchingSolver.convert_to_variable_values(self, solution)
 
 
