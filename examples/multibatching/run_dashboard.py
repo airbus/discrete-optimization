@@ -30,3 +30,7 @@ def run():
         app.run()
     else:
         print("No results with fitness data to display!")
+
+
+if __name__ == "__main__":
+    run()
