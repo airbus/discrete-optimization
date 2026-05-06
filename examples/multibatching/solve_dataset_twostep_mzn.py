@@ -72,8 +72,9 @@ def main(first_step: str = "cp"):
         cls=CpMultibatchingSolver,
         kwargs={
             "parameters_cp": parameters_cp,
+            "restrict_to_shortest_paths": True,
             "cp_solver_name": CpSolverName.GECODE,
-            "time_limit": 200,
+            "time_limit": 500,
         },
     )
     from discrete_optimization.multibatching.solvers.packing_subproblem import (

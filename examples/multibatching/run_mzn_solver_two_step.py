@@ -21,9 +21,9 @@ def main():
     # Generate a random problem instance
     print("Generating random multibatching problem...")
     problem = generate_multibatching_problem(
-        num_locations=10,
+        num_locations=20,
         num_transport_types=5,
-        num_products=10,
+        num_products=5,
         seed=42,
     )
 
@@ -46,6 +46,7 @@ def main():
         cls=CpMultibatchingSolver,
         kwargs={
             "parameters_cp": params_cp,
+            "restrict_to_shortest_paths": True,
             "time_limit": 30,
             "cp_solver_name": CpSolverName.GECODE,
         },

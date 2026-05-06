@@ -22,6 +22,9 @@ from discrete_optimization.multibatching.problem import (
     Product,
     TransportLink,
 )
+from discrete_optimization.multibatching.solvers.solver_utils import (
+    precompute_valid_links,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -122,8 +125,8 @@ class NetxMultibatchingSolver(SolverDO):
         sp_tolerance = kwargs["shortest_path_tolerance"]
         self.use_shortest_path = use_shortest_path
         if use_shortest_path:
-            self.valid_links = self.problem.precompute_valid_links(
-                tolerance=sp_tolerance
+            self.valid_links = precompute_valid_links(
+                self.problem, tolerance=sp_tolerance
             )
         supply_per_product = {
             p: self.problem.get_total_supply(p) for p in self.problem.products
