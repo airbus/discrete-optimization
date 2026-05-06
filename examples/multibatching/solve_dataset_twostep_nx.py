@@ -9,10 +9,7 @@ import logging
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.multibatching.parser import get_data_available, parse_file
-from discrete_optimization.multibatching.solvers.cp_mzn import (
-    CpMultibatchingSolver,
-    CpSolverName,
-)
+from discrete_optimization.multibatching.solvers.netx import NetxMultibatchingSolver
 from discrete_optimization.multibatching.solvers.two_steps import (
     TwoStepMultibatchingSolver,
 )
@@ -69,12 +66,9 @@ def main():
 
     # Configure CPSat flow solver with longer timeout and parallel workers
     flow_solver_config = SubBrick(
-        cls=CpMultibatchingSolver,
+        cls=NetxMultibatchingSolver,
         kwargs={
-            "parameters_cp": parameters_cp,
             "restrict_to_shortest_paths": True,
-            "cp_solver_name": CpSolverName.GECODE,
-            "time_limit": 500,
         },
     )
     from discrete_optimization.multibatching.solvers.packing_subproblem import (
@@ -86,20 +80,18 @@ def main():
         cls=CpsatPackingSubproblem,
         kwargs={
             "parameters_cp": parameters_cp,
-            "time_limit": 100,  # 5 minutes timeout
+            "time_limit": 100,
             "ortools_cpsat_solver_kwargs": {
                 "log_search_progress": True,
             },
         },
     )
+
     solver = TwoStepMultibatchingSolver(problem)
     result_storage = solver.solve(
         flow_solver=flow_solver_config,
         packing_solver=packing_solver_config,
     )
-    # 5. Analyze results
-    print("\n[5/5] Results:")
-    print("=" * 80)
     if len(result_storage) == 0:
         print("No solution found within time limit.")
         return
