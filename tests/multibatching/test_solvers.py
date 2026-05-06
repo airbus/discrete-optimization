@@ -95,6 +95,26 @@ class TestNetworkXSolver:
         # Note: NetworkX solution may not satisfy packing constraints
         # as it only solves the flow problem
 
+    def test_networkx_solver_with_shortest_path_heuristic(self, small_problem):
+        """Test NetworkX solver with shortest path heuristic enabled."""
+        solver = NetxMultibatchingSolver(small_problem)
+        solver.init_model()
+        result_storage = solver.solve(
+            restrict_to_shortest_paths=True, shortest_path_tolerance=0.2
+        )
+
+        # Should find at least one solution
+        assert len(result_storage) > 0
+
+        solution, fitness = result_storage.get_best_solution_fit()
+        assert solution is not None
+        assert fitness < float("inf")
+
+        # Evaluate the solution
+        evaluation = small_problem.evaluate(solution)
+        assert evaluation["transport"] >= 0
+        assert evaluation["emission"] >= 0
+
 
 class TestCPSatSolver:
     """Test the CP-SAT solver."""
@@ -125,6 +145,26 @@ class TestCPSatSolver:
             "UNIT_FLOW model requires additional problem attributes (capital_factor)"
         )
 
+    def test_cpsat_flow_with_shortest_path_heuristic(self, small_problem):
+        """Test CPSat with FLOW modeling and shortest path heuristic."""
+        solver = CpsatMultibatchingSolver(small_problem)
+        solver.init_model(
+            modeling=ModelingMultiBatch.FLOW,
+            restrict_to_shortest_paths=True,
+            shortest_path_tolerance=0.2,
+        )
+        result_storage = solver.solve(time_limit=30)
+
+        # May or may not find a solution in time
+        if len(result_storage) > 0:
+            solution, fitness = result_storage.get_best_solution_fit()
+            assert solution is not None
+
+            # Evaluate
+            evaluation = small_problem.evaluate(solution)
+            assert evaluation["transport"] >= 0
+            assert evaluation["emission"] >= 0
+
 
 @pytest.mark.skipif(not gurobi_available, reason="Gurobi not available")
 class TestGurobiSolver:
@@ -137,6 +177,33 @@ class TestGurobiSolver:
         with gurobipy.Env() as env:
             solver = GurobiMultibatchingSolver(small_problem)
             solver.init_model(single_batching=False)
+
+            params = ParametersMilp.default()
+            params.time_limit = 30
+
+            result_storage = solver.solve(parameters_milp=params)
+
+            # May or may not find a solution in time
+            if len(result_storage) > 0:
+                solution, fitness = result_storage.get_best_solution_fit()
+                assert solution is not None
+
+                # Evaluate
+                evaluation = small_problem.evaluate(solution)
+                assert evaluation["transport"] >= 0
+                assert evaluation["emission"] >= 0
+
+    def test_gurobi_flow_solver_with_shortest_path_heuristic(self, small_problem):
+        """Test Gurobi with flow modeling and shortest path heuristic."""
+        from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+
+        with gurobipy.Env() as env:
+            solver = GurobiMultibatchingSolver(small_problem)
+            solver.init_model(
+                single_batching=False,
+                restrict_to_shortest_paths=True,
+                shortest_path_tolerance=0.2,
+            )
 
             params = ParametersMilp.default()
             params.time_limit = 30
@@ -293,6 +360,31 @@ class TestMinizincSolver:
 
         # Note: Flow formulation produces average packings,
         # which may not satisfy exact packing constraints
+
+    def test_minizinc_solver_with_shortest_path_heuristic(self, small_problem):
+        """Test MiniZinc solver with shortest path heuristic enabled."""
+        from discrete_optimization.multibatching.solvers.cp_mzn import (
+            CpMultibatchingSolver,
+        )
+
+        solver = CpMultibatchingSolver(small_problem)
+        solver.init_model(restrict_to_shortest_paths=True, shortest_path_tolerance=0.2)
+        result_storage = solver.solve(time_limit=30)
+
+        # Should find at least one solution even with link restrictions
+        assert len(result_storage) > 0
+
+        solution, fitness = result_storage.get_best_solution_fit()
+        assert solution is not None
+        assert fitness < float("inf")
+
+        # Evaluate the solution
+        evaluation = small_problem.evaluate(solution)
+        assert evaluation["transport"] >= 0
+        assert evaluation["emission"] >= 0
+
+        # Solution should still be valid despite using fewer links
+        # (though may not satisfy exact packing constraints)
 
 
 class TestSolutionValidation:
