@@ -11,7 +11,9 @@ from minizinc import Instance, Model, Solver
 from discrete_optimization.generic_tools.cp_tools import CpSolverName
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
     EnumHyperparameter,
+    FloatHyperparameter,
 )
 from discrete_optimization.generic_tools.mzn_tools import (
     MinizincCpSolver,
@@ -23,6 +25,9 @@ from discrete_optimization.multibatching.problem import (
     PackingTransport,
 )
 from discrete_optimization.multibatching.solvers import MultibatchingSolver
+from discrete_optimization.multibatching.solvers.solver_utils import (
+    precompute_valid_links,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +53,17 @@ class CpMultibatchingSolver(MinizincCpSolver, MultibatchingSolver):
     hyperparameters = [
         EnumHyperparameter(
             name="cp_solver_name", enum=CpSolverName, default=CpSolverName.CHUFFED
-        )
+        ),
+        CategoricalHyperparameter(
+            name="restrict_to_shortest_paths", choices=[True, False], default=False
+        ),
+        FloatHyperparameter(
+            name="shortest_path_tolerance",
+            depends_on=[("restrict_to_shortest_paths", [True])],
+            default=0.1,
+            low=0,
+            high=5,
+        ),
     ]
 
     problem: MultibatchingProblem
@@ -125,20 +140,34 @@ class CpMultibatchingSolver(MinizincCpSolver, MultibatchingSolver):
             net_supply.append(net_supply_row)
         instance["net_supply"] = net_supply
 
+        # Apply shortest path heuristic if enabled
+        use_shortest_path = kwargs["restrict_to_shortest_paths"]
+        if use_shortest_path:
+            sp_tolerance = kwargs["shortest_path_tolerance"]
+            valid_links_map = precompute_valid_links(
+                self.problem, tolerance=sp_tolerance
+            )
+            logger.info(
+                f"Shortest path heuristic enabled with tolerance={sp_tolerance}"
+            )
+        else:
+            valid_links_map = None
+
         # Set product compatibility with transport links
         product_can_use_link = []
-        for tl in self.problem.transport_links:
+        for link_idx, tl in enumerate(self.problem.transport_links):
             compatibility_row = []
             for p in self.problem.products:
+                # Check basic compatibility
                 can_use = (
-                    1
-                    if (
-                        tl.transport_type in p.valid_transports
-                        and tl.transport_type.capacity >= p.size
-                    )
-                    else 0
+                    tl.transport_type in p.valid_transports
+                    and tl.transport_type.capacity >= p.size
                 )
-                compatibility_row.append(can_use)
+                # Apply shortest path filter if enabled
+                if can_use and valid_links_map is not None:
+                    can_use = link_idx in valid_links_map.get(p.id, set())
+
+                compatibility_row.append(1 if can_use else 0)
             product_can_use_link.append(compatibility_row)
         instance["product_can_use_link"] = product_can_use_link
 
@@ -189,5 +218,5 @@ class CpMultibatchingSolver(MinizincCpSolver, MultibatchingSolver):
                             nb_packing=int(nb_trips[i]),
                         )
                     )
-        logger.info(f"Minizinc found solution...{_output_item}")
+        logger.info(f"Minizinc found solution...{kwargs['objective']}")
         return MultibatchingSolution(problem=self.problem, list_flows=list_flows)
