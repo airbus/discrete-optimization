@@ -8,6 +8,7 @@ import logging
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
+from discrete_optimization.generic_tools.lp_tools import mathopt
 from discrete_optimization.multibatching.parser import get_data_available, parse_file
 from discrete_optimization.multibatching.solvers.cpsat import (
     CpsatMultibatchingSolver,
@@ -16,7 +17,6 @@ from discrete_optimization.multibatching.solvers.cpsat import (
 from discrete_optimization.multibatching.solvers.lp import (
     GurobiMultibatchingSolver,
     MathOptMultibatchingSolver,
-    mathopt,
 )
 from discrete_optimization.multibatching.solvers.two_steps import (
     TwoStepMultibatchingSolver,
