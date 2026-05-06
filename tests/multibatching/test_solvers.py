@@ -34,7 +34,7 @@ except ImportError:
     gurobi_available = False
 
 try:
-    from discrete_optimization.multibatching.solvers.milp_flow import (
+    from discrete_optimization.multibatching.solvers.lp import (
         GurobiMultibatchingSolver,
     )
 except ImportError:
@@ -264,6 +264,35 @@ class TestTwoStepSolver:
                 pytest.skip(
                     "Gurobi did not find a solution in time limit (acceptable for test)"
                 )
+
+
+class TestMinizincSolver:
+    """Test the MiniZinc CP solver."""
+
+    def test_minizinc_solver(self, small_problem):
+        """Test MiniZinc CP solver can find a solution."""
+        from discrete_optimization.multibatching.solvers.cp_mzn import (
+            CpMultibatchingSolver,
+        )
+
+        solver = CpMultibatchingSolver(small_problem)
+        solver.init_model()
+        result_storage = solver.solve(time_limit=30)
+
+        # Should find at least one solution
+        assert len(result_storage) > 0
+
+        solution, fitness = result_storage.get_best_solution_fit()
+        assert solution is not None
+        assert fitness < float("inf")
+
+        # Evaluate the solution
+        evaluation = small_problem.evaluate(solution)
+        assert evaluation["transport"] >= 0
+        assert evaluation["emission"] >= 0
+
+        # Note: Flow formulation produces average packings,
+        # which may not satisfy exact packing constraints
 
 
 class TestSolutionValidation:

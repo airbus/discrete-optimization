@@ -14,9 +14,9 @@ from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.multibatching.parser import get_data_available, parse_file
 from discrete_optimization.multibatching.problem import MultibatchingSolution
-from discrete_optimization.multibatching.solvers.milp_flow import (
+from discrete_optimization.multibatching.solvers.lp import (
     GurobiMultibatchingSolver,
-    GurobiMultibatchingSolverUnitFlow,
+    MathOptMultibatchingSolverUnitFlow,
 )
 from discrete_optimization.multibatching.solvers.packing_subproblem import (
     PackingViaBinPacking,
@@ -114,7 +114,7 @@ def main():
         {"flow_solver": flow_solver_config, "packing_solver": packing_solver_config},
     )
     milp_no_delta = SubBrick(
-        GurobiMultibatchingSolverUnitFlow,
+        MathOptMultibatchingSolverUnitFlow,
         kwargs=dict(time_limit=int(100)),
         kwargs_from_solution={
             "max_trips_per_link": lambda sol: sol.problem.get_max_nb_trips(sol)

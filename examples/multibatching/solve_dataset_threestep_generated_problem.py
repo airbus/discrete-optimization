@@ -8,19 +8,20 @@ import logging
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
-from discrete_optimization.multibatching.parser import get_data_available, parse_file
+from discrete_optimization.multibatching.problem import (
+    MultibatchingSolution,
+)
 from discrete_optimization.multibatching.solvers.cpsat import (
     CpsatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.lp import (
-    GurobiMultibatchingSolver,
-    MathOptMultibatchingSolver,
-    mathopt,
+    GurobiMultibatchingSolverUnitFlow,
 )
 from discrete_optimization.multibatching.solvers.two_steps import (
     TwoStepMultibatchingSolver,
 )
+from discrete_optimization.multibatching.utils import generate_multibatching_problem
 
 # Configure logging
 logging.basicConfig(
@@ -29,35 +30,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main(first_step: str = "cp"):
-    print("=" * 80)
-    print("Multibatching Two-Step Solver Example (CPSat Flow + Greedy Packing)")
-    print("=" * 80)
-
-    # 1. Load dataset
-    print("\n[1/5] Loading dataset...")
-    try:
-        datasets = get_data_available()
-        if not datasets:
-            print("No datasets found. Please run:")
-            print(
-                ">>> from discrete_optimization.datasets import fetch_data_from_multibatching"
-            )
-            print(">>> fetch_data_from_multibatching()")
-            return
-        dataset_path = datasets[0]
-        print(f"      Using dataset: {dataset_path}")
-    except FileNotFoundError as e:
-        print(f"Error: {e}")
-        return
-
+def main():
     # 2. Parse the problem
-    print("\n[2/5] Parsing problem...")
-    problem = parse_file(
-        dataset_path,
-        scale_capacity=1.0 / 10**4,  # Scale down capacities
-        scale_size=1.0 / 10**4,  # Scale down product sizes
-        scale_co2=1.0 / 10**6,
+    problem = generate_multibatching_problem(
+        num_locations=10,
+        num_transport_types=10,
+        num_products=10,
+        seed=42,
     )
     print(f"      Problem loaded:")
     print(f"      - {problem.nb_locations} locations")
@@ -66,7 +45,6 @@ def main(first_step: str = "cp"):
     print(f"      - {problem.nb_transport_links} transport links")
 
     # 3. Configure solvers
-    print("\n[3/5] Configuring two-step solver...")
 
     # Configure CP parameters for parallel solving
     parameters_cp = ParametersCp.default_cpsat()
@@ -76,36 +54,20 @@ def main(first_step: str = "cp"):
     )
 
     # Configure CPSat flow solver with longer timeout and parallel workers
-    if first_step == "cpsat":
-        flow_solver_config = SubBrick(
-            cls=CpsatMultibatchingSolver,
-            kwargs={
-                "modeling": ModelingMultiBatch.FLOW,
-                "add_lb_constraint_nb_trips": True,
-                "parameters_cp": parameters_cp,
-                "callbacks": ProblemEvaluateLogger(logging.INFO, logging.INFO),
-                "scaling_factor": 1000,
-                "time_limit": 200,  # 5 minutes timeout
-                "ortools_cpsat_solver_kwargs": {
-                    "log_search_progress": True,
-                },
+    flow_solver_config = SubBrick(
+        cls=CpsatMultibatchingSolver,
+        kwargs={
+            "modeling": ModelingMultiBatch.FLOW,
+            "add_lb_constraint_nb_trips": False,
+            "parameters_cp": parameters_cp,
+            "callbacks": ProblemEvaluateLogger(logging.INFO, logging.INFO),
+            "scaling_factor": 1000,
+            "time_limit": 100,  # 5 minutes timeout
+            "ortools_cpsat_solver_kwargs": {
+                "log_search_progress": True,
             },
-        )
-    if first_step == "lp-gurobi":
-        flow_solver_config = SubBrick(
-            cls=GurobiMultibatchingSolver,
-            kwargs={"time_limit": 200},
-        )
-    if first_step == "lp-mathopt":
-        flow_solver_config = SubBrick(
-            cls=MathOptMultibatchingSolver,
-            kwargs={
-                "mathopt_enable_output": True,
-                "mathopt_solver_type": mathopt.SolverType.GSCIP,
-                "mathopt_additional_solve_parameters": mathopt.SolveParameters(),
-                "time_limit": 200,
-            },
-        )
+        },
+    )
     from discrete_optimization.multibatching.solvers.packing_subproblem import (
         CpsatPackingSubproblem,
     )
@@ -121,26 +83,33 @@ def main(first_step: str = "cp"):
             },
         },
     )
-    print("      Flow solver: CPSat (FLOW modeling)")
-    print(f"      - Time limit: {flow_solver_config.kwargs['time_limit']}s")
-    print(f"      - Workers: {parameters_cp.nb_process}")
-    print("      Packing solver: Cpsat")
-    # 4. Solve
-    print("\n[4/5] Solving...")
-    print("      This may take several minutes...")
-
-    solver = TwoStepMultibatchingSolver(problem)
-    result_storage = solver.solve(
-        flow_solver=flow_solver_config,
-        packing_solver=packing_solver_config,
+    two_step_config = SubBrick(
+        TwoStepMultibatchingSolver,
+        {"flow_solver": flow_solver_config, "packing_solver": packing_solver_config},
     )
+    milp_no_delta = SubBrick(
+        GurobiMultibatchingSolverUnitFlow,
+        kwargs=dict(time_limit=int(100)),
+        kwargs_from_solution={
+            "max_trips_per_link": lambda sol: sol.problem.get_max_nb_trips(sol)
+        },
+    )
+    from discrete_optimization.generic_tools.sequential_metasolver import (
+        SequentialMetasolver,
+    )
+
+    seq_solver = SequentialMetasolver(
+        problem, list_subbricks=[two_step_config, milp_no_delta]
+    )
+    result_storage = seq_solver.solve()
     # 5. Analyze results
     print("\n[5/5] Results:")
     print("=" * 80)
     if len(result_storage) == 0:
         print("No solution found within time limit.")
         return
-    solution, fitness = result_storage.get_best_solution_fit()
+    solution, fitness = result_storage[-1]
+    solution: MultibatchingSolution
     print(f"\nBest solution found:")
     print(f"  - Objective value: {fitness}")
     print(f"  - Number of flows: {len(solution.list_flows)}")
@@ -168,4 +137,4 @@ def main(first_step: str = "cp"):
 
 
 if __name__ == "__main__":
-    main(first_step="lp-mathopt")
+    main()

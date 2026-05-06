@@ -16,7 +16,7 @@ from discrete_optimization.multibatching.solvers.cpsat import (
     CpsatMultibatchingSolver,
     ModelingMultiBatch,
 )
-from discrete_optimization.multibatching.solvers.milp_flow import (
+from discrete_optimization.multibatching.solvers.lp import (
     GurobiMultibatchingSolverUnitFlow,
 )
 from discrete_optimization.multibatching.solvers.two_steps import (
