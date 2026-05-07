@@ -251,6 +251,29 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         )
 
 
+NoRenewableResource = None
+
+
+class WithoutRenewableResourceProblem(
+    RenewableResourceProblem[Task, NoRenewableResource], Generic[Task]
+):
+    @property
+    def renewable_resources_list(self) -> list[Resource]:
+        return []
+
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        return []
+
+
+class WithoutRenewableResourceSolution(
+    RenewableResourceSolution[Task, NoRenewableResource], Generic[Task]
+):
+    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
+        raise ValueError(f"{resource} is not a renewable resource of the problem.")
+
+
 def convert_calendar_to_availability_intervals(
     calendar: Union[int, list[int]], horizon: int
 ) -> list[tuple[int, int, int]]:

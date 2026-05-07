@@ -273,3 +273,23 @@ def get_default_tasks_n_unary_resources(
     if unary_resources is None:
         unary_resources = problem.unary_resources_list
     return tasks, unary_resources
+
+
+NoUnaryResource = None
+
+
+class WithoutAllocationProblem(AllocationProblem[Task, NoUnaryResource], Generic[Task]):
+    """Mixin to simplify deriving from GenericSchedulingProblem when no allocation is needed."""
+
+    @property
+    def unary_resources_list(self) -> list[NoUnaryResource]:
+        return []
+
+
+class WithoutAllocationSolution(
+    AllocationSolution[Task, NoUnaryResource], Generic[Task]
+):
+    """Mixin to simplify deriving from GenericSchedulingSolution when no allocation is needed."""
+
+    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        return False

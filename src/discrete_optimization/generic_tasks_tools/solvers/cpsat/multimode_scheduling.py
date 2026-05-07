@@ -10,9 +10,11 @@ from ortools.sat.python.cp_model import IntervalVar
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingProblem,
+    SinglemodeSchedulingProblem,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     MultimodeCpSatSolver,
+    SinglemodeCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
@@ -22,17 +24,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
 class MultimodeSchedulingCpSatSolver(
     SchedulingCpSatSolver[Task], MultimodeCpSatSolver[Task], Generic[Task]
 ):
-    """Base class for cpsat solvers dealing with scheduling problems whose tasks durations depend only on mode.
-
-    Automatically managed creation of some variables
-    - start
-    - end
-    - task-mode choice + only one to chosen constraint
-    - duration
-    - task intervals (constraint duration = end - start)
-    - task-mode opt intervals
-
-    """
+    """Base class for cpsat solvers dealing with scheduling problems whose tasks durations depend only on mode."""
 
     problem: MultimodeSchedulingProblem[Task]
 
@@ -40,3 +32,19 @@ class MultimodeSchedulingCpSatSolver(
     def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
         """Get the interval variable corresponding to given task and mode."""
         ...
+
+
+class SinglemodeSchedulingCpSatSolver(
+    MultimodeSchedulingCpSatSolver[Task], SinglemodeCpSatSolver[Task]
+):
+    """Base class for cpsat solvers dealing with single mode scheduling problems with fixed tasks durations."""
+
+    problem: SinglemodeSchedulingProblem[Task]
+
+    @abstractmethod
+    def get_task_interval(self, task: Task) -> IntervalVar:
+        """Get the interval variable corresponding to given task."""
+        ...
+
+    def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
+        return self.get_task_interval(task=task)
