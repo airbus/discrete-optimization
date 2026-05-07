@@ -30,6 +30,13 @@ class AllocationCpSatSolver(
 
     """
 
+    at_most_one_unary_resource_per_task = False
+    """Flag telling if the problem accept at most one unary_resource per task.
+
+    Default to False, ie several resources allowed per task.
+
+    """
+
     allocation_changes_variables_created = False
     """Flag telling whether 'allocation changes variables' have been created"""
     allocation_changes_variables: dict[tuple[Task, UnaryResource], IntVar]
@@ -42,13 +49,8 @@ class AllocationCpSatSolver(
     """Flag telling whether 'done variables' have been created"""
     done_variables: dict[Task, IntVar]
     """Variables tracking whether a task has at least one unary resource allocated."""
-
-    at_most_one_unary_resource_per_task = False
-    """Flag telling if the problem accept at most one unary_resource per task.
-
-    Default to False, ie several resources allowed per task.
-
-    """
+    at_most_one_unary_resource_per_task_constraints_added = False
+    """Flag telling whether constraints ensuring at most one unary resource per task have been created"""
 
     @property
     def subset_tasks_of_interest(self) -> Iterable[Task]:
@@ -88,6 +90,7 @@ class AllocationCpSatSolver(
         self.used_variables = {}
         self.done_variables_created = False
         self.done_variables_created = {}
+        self.at_most_one_unary_resource_per_task_constraints_added = False
 
     @abstractmethod
     def get_task_unary_resource_is_present_variable(
@@ -252,7 +255,8 @@ class AllocationCpSatSolver(
                 ]
                 if len(list_is_present_variables) > 0:
                     if self.at_most_one_unary_resource_per_task:
-                        self.cp_model.add_at_most_one(list_is_present_variables)
+                        if not self.at_most_one_unary_resource_per_task_constraints_added:
+                            self.cp_model.add_at_most_one(list_is_present_variables)
                         nb_teams_allocated_to_task = sum(list_is_present_variables)
                         self.cp_model.add(
                             nb_teams_allocated_to_task == 1
@@ -265,6 +269,37 @@ class AllocationCpSatSolver(
                 else:
                     self.cp_model.add(done == 0)
             self.done_variables_created = True
+            if self.at_most_one_unary_resource_per_task:
+                self.at_most_one_unary_resource_per_task_constraints_added = True
+
+    def add_at_most_one_unary_resource_per_task_constraints(self):
+        """Add constraints to cp model so that no more than one unary resource is allocated per task.
+
+        Calling method avoid recreating the constraint if already done (e.g. when calling `create_done_variables()`)
+
+        """
+        if (
+            self.at_most_one_unary_resource_per_task
+            and not self.at_most_one_unary_resource_per_task_constraints_added
+        ):
+            for task in self.subset_tasks_of_interest:
+                list_is_present_variables = [
+                    is_present
+                    for unary_resource in self.subset_unaryresources_allowed
+                    # filter out trivial 0's corresponding to incompatible (task, resource)
+                    if not (
+                        is_a_trivial_zero(
+                            is_present
+                            := self.get_task_unary_resource_is_present_variable(
+                                task, unary_resource
+                            )
+                        )
+                    )
+                ]
+                if len(list_is_present_variables) > 0:
+                    self.cp_model.add_at_most_one(list_is_present_variables)
+
+            self.at_most_one_unary_resource_per_task_constraints_added = True
 
     def get_nb_tasks_done_variable(self) -> Any:
         self.create_done_variables()
