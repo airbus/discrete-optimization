@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Generic
+from typing import Generic, Hashable, TypeVar, Union
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
@@ -14,14 +14,17 @@ from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     RenewableResourceProblem,
     RenewableResourceSolution,
-    Resource,
 )
+
+CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
+OtherRenewableResource = TypeVar("OtherRenewableResource", bound=Hashable)
+Resource = Union[CumulativeResource, OtherRenewableResource]
 
 
 class CumulativeResourceProblem(
     RenewableResourceProblem[Task, Resource],
     MultimodeSchedulingProblem[Task],
-    Generic[Task, Resource],
+    Generic[Task, CumulativeResource, OtherRenewableResource],
 ):
     """Scheduling problem with cumulative resources consumed by task.
 
@@ -33,9 +36,9 @@ class CumulativeResourceProblem(
 
     @abstractmethod
     def get_renewable_resource_consumption(
-        self, resource: Resource, task: Task, mode: int
+        self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
-        """Get resource consumption of the task in the given mode
+        """Get cumulative resource consumption of the task in the given mode
 
         Args:
             resource: *renewable* resource
@@ -45,13 +48,13 @@ class CumulativeResourceProblem(
         Returns:
             the consumption for cumulative resources.
 
-        Raises:
-            ValueError: if resource consumption is depending on other variables than mode
-
         """
         ...
 
+    @property
     @abstractmethod
+    def cumulative_resources_list(self) -> list[CumulativeResource]: ...
+
     def is_cumulative_resource(self, resource: Resource) -> bool:
         """Check if given resource is a cumulative resource whose consumption depends only on task mode.
 
@@ -61,17 +64,17 @@ class CumulativeResourceProblem(
         Returns:
 
         """
-        ...
+        return resource in self.cumulative_resources_list
 
 
 class CumulativeResourceSolution(
     RenewableResourceSolution[Task, Resource],
     MultimodeSchedulingSolution[Task],
-    Generic[Task, Resource],
+    Generic[Task, CumulativeResource, OtherRenewableResource],
 ):
     """Solution type associated to CumulativeResourceProblem."""
 
-    problem: CumulativeResourceProblem[Task, Resource]
+    problem: CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource]
 
     def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
         """Get resource consumption by given task.

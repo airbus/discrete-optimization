@@ -14,11 +14,15 @@ from discrete_optimization.generic_tasks_tools.renewable_resource import (
 from discrete_optimization.generic_tools.do_problem import ObjectiveRegister, Solution
 from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 
-Resource = str
+CumulativeResource = str
+OtherRenewableResource = CumulativeResource
+Resource = CumulativeResource
 Task = str
 
 
-class MyCumulativeResourceProblem(CumulativeResourceProblem[Task, Resource]):
+class MyCumulativeResourceProblem(
+    CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource]
+):
     resource_availabilities = dict(
         R1=[
             (5, 7, 4),
@@ -51,8 +55,9 @@ class MyCumulativeResourceProblem(CumulativeResourceProblem[Task, Resource]):
         },
     }
 
-    def is_cumulative_resource(self, resource: Resource) -> bool:
-        return True
+    @property
+    def cumulative_resources_list(self) -> list[CumulativeResource]:
+        return self.renewable_resources_list
 
     def get_task_mode_duration(self, task: Task, mode: int) -> int:
         return self.mode_details[task][mode]["duration"]
@@ -74,7 +79,7 @@ class MyCumulativeResourceProblem(CumulativeResourceProblem[Task, Resource]):
         return list(self.mode_details)
 
     def get_renewable_resource_consumption(
-        self, resource: Resource, task: Task, mode: int
+        self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         try:
             return self.mode_details[task][mode][resource]
@@ -110,7 +115,9 @@ class MyKOCumulativeResourceProblem(MyCumulativeResourceProblem):
     resource_availabilities = dict(R4=[(5, 7, 4), (2, 3, 1), (0, 3, 0)])
 
 
-class MyCumulativeResourceSolution(CumulativeResourceSolution[Task, Resource]):
+class MyCumulativeResourceSolution(
+    CumulativeResourceSolution[Task, CumulativeResource, OtherRenewableResource]
+):
     problem: MyCumulativeResourceProblem
 
     def __init__(

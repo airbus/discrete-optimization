@@ -1,9 +1,7 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from abc import abstractmethod
-from collections.abc import Hashable
-from typing import Generic, TypeVar, Union
+from typing import Generic, Union
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
@@ -12,6 +10,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    CumulativeResource,
     CumulativeResourceProblem,
     CumulativeResourceSolution,
 )
@@ -25,12 +24,11 @@ from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
     PrecedenceSchedulingSolution,
 )
 
-CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
 Resource = Union[CumulativeResource, UnaryResource]
 
 
 class GenericSchedulingProblem(
-    CumulativeResourceProblem[Task, Resource],
+    CumulativeResourceProblem[Task, CumulativeResource, UnaryResource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     AllocationProblem[Task, UnaryResource],
     PrecedenceSchedulingProblem[Task],
@@ -63,10 +61,6 @@ class GenericSchedulingProblem(
     """
 
     @property
-    @abstractmethod
-    def cumulative_resources_list(self) -> list[CumulativeResource]: ...
-
-    @property
     def renewable_resources_list(self) -> list[Resource]:
         return self.unary_resources_list + self.cumulative_resources_list
 
@@ -91,17 +85,13 @@ class GenericSchedulingProblem(
         super().update_resource_availabilities()
         self.check_renewable_resources_list()
 
-    def is_cumulative_resource(self, resource: Resource) -> bool:
-        """Check if given resource is a cumulative resource."""
-        return resource in self.cumulative_resources_list
-
     def is_unary_resource(self, resource: Resource) -> bool:
         """Check if given resource is a unary resource."""
         return resource in self.unary_resources_list
 
 
 class GenericSchedulingSolution(
-    CumulativeResourceSolution[Task, Resource],
+    CumulativeResourceSolution[Task, CumulativeResource, UnaryResource],
     NonRenewableResourceSolution[Task, NonRenewableResource],
     PrecedenceSchedulingSolution[Task],
     AllocationSolution[Task, UnaryResource],

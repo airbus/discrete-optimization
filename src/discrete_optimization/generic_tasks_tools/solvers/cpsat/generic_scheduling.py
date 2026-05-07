@@ -32,7 +32,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduli
 
 
 class GenericSchedulingCpSatSolver(
-    CumulativeResourceSchedulingCpSatSolver[Task, Resource],
+    CumulativeResourceSchedulingCpSatSolver[Task, CumulativeResource, UnaryResource],
     NonRenewableCpSatSolver[Task, NonRenewableResource],
     AllocationCpSatSolver[Task, UnaryResource],
     PrecedenceSchedulingCpSatSolver[Task],
