@@ -29,22 +29,23 @@ CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
 Resource = Union[CumulativeResource, UnaryResource]
 
 
-class AllocationSchedulingProblem(
+class GenericSchedulingProblem(
     CumulativeResourceProblem[Task, Resource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     AllocationProblem[Task, UnaryResource],
     PrecedenceSchedulingProblem[Task],
     Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
-    """Scheduling problem with unary resource allocation.
+    """Scheduling problem with all optional features
 
     This class derives from other mixins to provide utilities that require that mix:
-    - renewable: the unary resources have their own calendar that will be used for constraining allocations
+    - scheduling: tasks need to be scheduled
+    - renewable: the renewable resources have their own calendar that will be used for constraining allocations
     - multimode: the tasks have several mode on which the duration depends
     - cumulative: the tasks consume cumulative resources according to the chosen mode
-    - allocation
+    - allocation: the tasks can have unary resources allocated to them
     - non-renewable: the tasks consume non-renewable resources according to the chosen mode
-    - precedence
+    - precedence: precedence constraints between tasks
 
     Even though this class is generic but encompasses also more specific cases:
     - singlemode: actually only one mode per task
@@ -57,8 +58,7 @@ class AllocationSchedulingProblem(
     - either cumulative ones
     - or unary resources
 
-    This generic class is to be used to construct generic solvers (e.g. cpsat)
-    that will require no methods implementation to work.
+    This generic class is to be used to construct generic automatic solvers (e.g. ).
 
     """
 
@@ -100,16 +100,16 @@ class AllocationSchedulingProblem(
         return resource in self.unary_resources_list
 
 
-class AllocationSchedulingSolution(
+class GenericSchedulingSolution(
     CumulativeResourceSolution[Task, Resource],
     NonRenewableResourceSolution[Task, NonRenewableResource],
     PrecedenceSchedulingSolution[Task],
     AllocationSolution[Task, UnaryResource],
     Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
 ):
-    """Solution type associated to AllocationSchedulingProblem."""
+    """Solution type associated to GenericSchedulingProblem."""
 
-    problem: AllocationSchedulingProblem[
+    problem: GenericSchedulingProblem[
         Task, UnaryResource, CumulativeResource, NonRenewableResource
     ]
 

@@ -71,7 +71,7 @@ class PrecedenceSolution(TasksSolution[Task]):
 class WithoutPrecedenceProblem(PrecedenceProblem[Task]):
     """Utility mixin for problem w/o precedence constraints.
 
-    To be used has an additional mixin with generic `AllocationSchedulingProblem`.
+    To be used has an additional mixin with generic `GenericSchedulingProblem`.
 
     """
 
