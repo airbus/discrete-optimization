@@ -4,29 +4,23 @@
 import logging
 import time
 from collections.abc import Iterable
-from functools import reduce
 from typing import Any, Optional, Union
 
 import numpy as np
 from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
-    IntervalVar,
     IntVar,
-    LinearExprT,
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
-    GenericSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+    Objective,
+    SinglemodeGenericSchedulingAutoCpSatSolver,
+    TemporarySolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
-    SinglemodeSchedulingCpSatSolver,
-)
-from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
@@ -98,13 +92,11 @@ class AdditionalCPConstraints:
         self.adding_margin_on_sequence = adding_margin_on_sequence
 
 
-class CPSatAllocSchedulingSolver(
-    GenericSchedulingCpSatSolver[
+class CPSatAutoAllocSchedulingSolver(
+    SinglemodeGenericSchedulingAutoCpSatSolver[
         Task, UnaryResource, CumulativeResource, NoNonRenewableResource
     ],
-    SinglemodeSchedulingCpSatSolver[Task],
     SolverAllocScheduling,
-    WarmstartMixin,
 ):
     hyperparameters = [
         CategoricalHyperparameter(
@@ -143,32 +135,7 @@ class CPSatAllocSchedulingSolver(
     variables: dict[str, dict[Any, Any]]
 
     at_most_one_unary_resource_per_task = True
-
-    def get_task_start_or_end_variable(
-        self, task: Task, start_or_end: StartOrEnd
-    ) -> LinearExprT:
-        i_task = self.problem.tasks_to_index[task]
-        if start_or_end == StartOrEnd.START:
-            key = "starts_var"
-        else:
-            key = "ends_var"
-        return self.variables[key][i_task]
-
-    def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
-    ) -> LinearExprT:
-        """Return a 0-1 variable/expression telling if the unary_resource is used for the task.
-
-        NB: sometimes the given resource is never to be used by a task and the variable has not been created.
-        The convention is to return 0 in that case.
-
-        """
-        i_task = self.problem.tasks_to_index[task]
-        i_team = self.problem.teams_to_index[unary_resource]
-        try:
-            return self.variables["is_present_var"][i_task][i_team]
-        except KeyError:
-            return 0
+    objective = Objective.NB_UNARY_RESOURCES_USED
 
     @staticmethod
     def implements_lexico_api() -> bool:
@@ -182,13 +149,13 @@ class CPSatAllocSchedulingSolver(
 
     def set_lexico_objective(self, obj: Union[str, ObjectivesEnum]) -> None:
         obj = _get_variables_obj_key(obj)
-        self.cp_model.Minimize(self.variables["objectives"][obj])
+        self.cp_model.minimize(self.variables["objectives"][obj])
 
     def add_lexico_constraint(
         self, obj: Union[str, ObjectivesEnum], value: float
     ) -> Iterable[Any]:
         obj = _get_variables_obj_key(obj)
-        return [self.cp_model.Add(self.variables["objectives"][obj] <= value)]
+        return [self.cp_model.add(self.variables["objectives"][obj] <= value)]
 
     def get_lexico_objective_value(
         self, obj: Union[str, ObjectivesEnum], res: ResultStorage
@@ -200,7 +167,7 @@ class CPSatAllocSchedulingSolver(
     def set_model_obj_aggregated(
         self, objs_weights: list[tuple[Union[str, ObjectivesEnum], float]]
     ):
-        self.cp_model.Minimize(
+        self.cp_model.minimize(
             sum(
                 [
                     x[1] * self.variables["objectives"][_get_variables_obj_key(x[0])]
@@ -209,206 +176,148 @@ class CPSatAllocSchedulingSolver(
             )
         )
 
-    def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
+    def convert_task_variables_to_solution(
+        self, temp_sol: TemporarySolution[Task, UnaryResource]
+    ) -> AllocSchedulingSolution:
         schedule = np.zeros((self.problem.number_tasks, 2), dtype=int)
         allocation = -np.ones(self.problem.number_tasks, dtype=int)
-        logger.info(f"Objs = {[cpsolvercb.Value(x) for x in self.variables['objs']]}")
+        for i_task in range(self.problem.number_tasks):
+            task = self.problem.index_to_task[i_task]
+            task_variable = temp_sol.task_variables[task]
+            schedule[i_task, 0] = task_variable.start
+            schedule[i_task, 1] = task_variable.end
+            for team in task_variable.allocated:
+                allocation[i_task] = self.problem.teams_to_index[team]
+        sol = AllocSchedulingSolution(
+            problem=self.problem, schedule=schedule, allocation=allocation
+        )
+        sol._intern_obj = temp_sol.metadata
+        return sol
+
+    def retrieve_tasks_variables(
+        self, cpsolvercb: CpSolverSolutionCallback
+    ) -> TemporarySolution[Task, UnaryResource]:
+        """Create solution at temporary format from cpsat variables.
+
+        Override it to
+        - add logs
+        - store objective variables values in metadata
+
+        """
+        # retrieve main tasks variables
+        temp_sol = super().retrieve_tasks_variables(cpsolvercb)
+        # log objectives
+        logger.info(f"Objs = {[cpsolvercb.value(x) for x in self.variables['objs']]}")
         logger.info(
-            f"Obj = {cpsolvercb.ObjectiveValue()}, Bound={cpsolvercb.BestObjectiveBound()}"
+            f"Obj = {cpsolvercb.objective_value}, Bound={cpsolvercb.best_objective_bound}"
         )
         if "resched_objs" in self.variables:
             for obj in self.variables["resched_objs"]:
                 logger.info(f"Obj :{obj}")
                 logger.info(
-                    f"Value : {cpsolvercb.Value(self.variables['resched_objs'][obj])}"
+                    f"Value : {cpsolvercb.value(self.variables['resched_objs'][obj])}"
                 )
-        for t in range(self.problem.number_tasks):
-            start = int(cpsolvercb.Value(self.variables["starts_var"][t]))
-            end = int(cpsolvercb.Value(self.variables["ends_var"][t]))
-            schedule[t, 0] = start
-            schedule[t, 1] = end
-            for index_team in self.variables["is_present_var"][t]:
-                if cpsolvercb.Value(self.variables["is_present_var"][t][index_team]):
-                    allocation[t] = index_team
-        sol = AllocSchedulingSolution(
-            problem=self.problem, schedule=schedule, allocation=allocation
-        )
-        sol._intern_obj = {}
+        # store objectives
         for obj in self.variables["objectives"]:
-            sol._intern_obj[obj] = cpsolvercb.Value(self.variables["objectives"][obj])
-        return sol
+            temp_sol.metadata[obj] = cpsolvercb.value(self.variables["objectives"][obj])
+        return temp_sol
 
-    def set_warm_start(self, solution: AllocSchedulingSolution) -> None:
-        if solution is not None:
-            self.cp_model.ClearHints()
-            for t in range(self.problem.number_tasks):
-                self.cp_model.AddHint(
-                    self.variables["starts_var"][t], int(solution.schedule[t, 0])
-                )
-                self.cp_model.AddHint(
-                    self.variables["ends_var"][t], int(solution.schedule[t, 1])
-                )
-                if "actually_done" in self.variables:
-                    self.cp_model.AddHint(self.variables["actually_done"][t], 1)
-
-                for index_team in self.variables["is_present_var"][t]:
-                    if solution.allocation[t] == index_team:
-                        self.cp_model.AddHint(
-                            self.variables["is_present_var"][t][index_team], 1
-                        )
-                    else:
-                        self.cp_model.AddHint(
-                            self.variables["is_present_var"][t][index_team], 0
-                        )
-            team_used = set(solution.allocation)
-            for team in range(self.problem.number_teams):
-                if team in team_used:
-                    self.cp_model.AddHint(self.variables["used"][team], 1)
-                else:
-                    self.cp_model.AddHint(self.variables["used"][team], 0)
-            if "reallocation" in self.variables:
-                for x in self.variables["reallocation"]:
-                    self.cp_model.AddHint(x, 0)
-            if "is_shifted" in self.variables:
-                for x in self.variables["is_shifted"]:
-                    self.cp_model.AddHint(x, 0)
-            if "delta_starts_abs" in self.variables:
-                for x in self.variables["delta_starts_abs"]:
-                    self.cp_model.AddHint(x, 0)
-            if "max_delta_start" in self.variables:
-                self.cp_model.AddHint(self.variables["max_delta_start"], 0)
-            if "objectives" in self.variables:
-                if ObjectivesEnum.MAKESPAN in self.variables["objectives"]:
-                    self.cp_model.AddHint(
-                        self.variables["objectives"][ObjectivesEnum.MAKESPAN],
-                        int(np.max(solution.schedule[:, 1])),
-                    )
-
-    def get_task_unary_resource_interval(
+    def is_compatible_task_unary_resource(
         self, task: Task, unary_resource: UnaryResource
-    ) -> IntervalVar:
-        return self.variables["interval_task_team"][self.problem.tasks_to_index[task]][
-            self.problem.teams_to_index[unary_resource]
-        ]
-
-    def get_task_interval(self, task: Task) -> IntervalVar:
-        return self.variables["interval_task"][self.problem.tasks_to_index[task]]
+    ) -> bool:
+        return unary_resource in self.compatible_teams[task]
 
     def init_model(
-        self, objectives: Optional[list[ObjectivesEnum]] = None, **args: Any
+        self, objectives: Optional[list[ObjectivesEnum]] = None, **kwargs: Any
     ) -> None:
-        additional_constraints: AdditionalCPConstraints = args.get(
+        # optional parameters
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        additional_constraints: AdditionalCPConstraints = kwargs.get(
             "additional_constraints", None
         )
+        # store forced allocation for is_compatible_task_unary_resource
+        self.compatible_teams: dict[Task, set[UnaryResource]] = dict(
+            self.problem.compatible_teams_per_activity
+        )
+        if additional_constraints is not None:
+            self.compatible_teams.update(
+                {
+                    self.problem.index_to_task[i_task]: {
+                        self.problem.index_to_team[i_team]
+                    }
+                    for i_task, i_team in additional_constraints.forced_allocation.items()
+                }
+            )
+        self.compatible_tasks: dict[UnaryResource, set[Task]] = {
+            team: {
+                task
+                for task in self.problem.tasks_list
+                if team in self.compatible_teams
+            }
+            for team in self.problem.unary_resources_list
+        }
+
+        add_lower_bound = kwargs["add_lower_bound"]
+        optional_activities = kwargs["optional_activities"]
+        adding_redundant_cumulative = kwargs["adding_redundant_cumulative"]
+
+        self.exactly_one_unary_resource_per_task = not optional_activities
+
+        super().init_model(**kwargs)
+
         if objectives is None:
             objectives = [ObjectivesEnum.NB_TEAMS]
-        args = self.complete_with_default_hyperparameters(args)
-        add_lower_bound = args["add_lower_bound"]
-        optional_activities = args["optional_activities"]
-        adding_redundant_cumulative = args["adding_redundant_cumulative"]
-        super().init_model(**args)
-        starts_var = {}
-        ends_var = {}
-        is_present_var = {}
-        interval_var = {}
-        opt_interval_var = {}
-        st_lb = [
-            (
-                int(self.problem.get_lb_start_window(t)),
-                int(self.problem.get_ub_start_window(t)),
-                int(self.problem.get_lb_end_window(t)),
-                int(self.problem.get_ub_end_window(t)),
-            )
-            for t in self.problem.tasks_list
-        ]
-        dur = [
-            self.problem.tasks_data[t].duration_task for t in self.problem.tasks_list
-        ]
-        key_per_team = {j: [] for j in self.problem.index_to_team}
-        compatible_teams: dict[int, set[int]] = (
-            self.problem.compatible_teams_index_all_activity()
-        )
-        self.variables = {
-            "starts_var": starts_var,
-            "ends_var": ends_var,
-            "is_present_var": is_present_var,
-            "objectives": {},
-            "key_per_team": key_per_team,
-            "interval_task_team": opt_interval_var,
-            "interval_task": interval_var,
-        }
-        if additional_constraints is not None:
-            forced_alloc = additional_constraints.forced_allocation
-            if forced_alloc is not None:
-                for i in forced_alloc:
-                    if forced_alloc[i] is not None:
-                        compatible_teams[i] = {forced_alloc[i]}
-        for i, task in enumerate(self.problem.tasks_list):
-            starts_var[i] = self.cp_model.NewIntVar(
-                lb=st_lb[i][0], ub=st_lb[i][1], name=f"start_{i}"
-            )
-            ends_var[i] = self.cp_model.NewIntVar(
-                lb=st_lb[i][2], ub=st_lb[i][3], name=f"end_{i}"
-            )
-            interval_var[i] = self.cp_model.NewIntervalVar(
-                start=starts_var[i], end=ends_var[i], size=dur[i], name=f"interval_{i}"
-            )
-            is_present_var[i] = {}
-            opt_interval_var[i] = {}
-            for index_team in compatible_teams[i]:
-                # same as "allocation_binary" variable in the allocation problem
-                is_present_var[i][index_team] = self.cp_model.NewBoolVar(
-                    name=f"alloc_{i}_{index_team}"
-                )
-                opt_interval_var[i][index_team] = self.cp_model.NewOptionalIntervalVar(
-                    start=starts_var[i],
-                    end=ends_var[i],
-                    size=dur[i],
-                    is_present=is_present_var[i][index_team],
-                    name=f"interval_{i}_{index_team}",
-                )
-                key_per_team[index_team].append((i, index_team))
-            if not optional_activities:
-                self.cp_model.AddExactlyOne(
-                    [is_present_var[i][x] for x in is_present_var[i]]
-                )
-                # else managed later by self.create_actually_done_variables()
 
-        # Precedence constraints
-        self.create_precedence_constraints()
+        self.variables = {}
+        self.variables["objectives"] = {}
 
         # Same allocation constraints
-        for l_t in self.problem.same_allocation:
-            indexes = [self.problem.tasks_to_index[tt] for tt in l_t]
-            common_teams = reduce(
-                lambda x, y: x.intersection(set(is_present_var[y].keys())),
-                indexes,
-                set(self.problem.index_to_team),
-            )
-            for c in common_teams:
-                self.cp_model.AddAllowedAssignments(
-                    [is_present_var[ind][c] for ind in indexes],
+        for common_tasks in self.problem.same_allocation:
+            common_teams = [
+                team
+                for team in self.problem.unary_resources_list
+                if all(
+                    self.is_compatible_task_unary_resource(
+                        task=task, unary_resource=team
+                    )
+                    for task in common_tasks
+                )
+            ]
+
+            for team in common_teams:
+                self.cp_model.add_allowed_assignments(
                     [
-                        tuple([1] * len(indexes)),
-                        tuple([0] * len(indexes)),
+                        self.get_task_unary_resource_is_present_variable(
+                            task=task, unary_resource=team
+                        )
+                        for task in common_tasks
+                    ],
+                    [
+                        tuple([1] * len(common_tasks)),
+                        tuple([0] * len(common_tasks)),
                     ],
                 )
             # Redundant
-            for c in common_teams:
-                for i in range(len(indexes) - 1):
-                    self.cp_model.Add(
-                        is_present_var[indexes[i]][c]
-                        == is_present_var[indexes[i + 1]][c]
+            list_common_tasks = list(common_tasks)
+            for team in common_teams:
+                for i_task in range(len(list_common_tasks) - 1):
+                    self.cp_model.add(
+                        self.get_task_unary_resource_is_present_variable(
+                            task=list_common_tasks[i_task], unary_resource=team
+                        )
+                        == self.get_task_unary_resource_is_present_variable(
+                            task=list_common_tasks[i_task + 1], unary_resource=team
+                        )
                     )
 
         # Overlap constraints
-        for index_team in key_per_team:
-            self.create_renewable_resources_constraint(
-                self.problem.index_to_team[index_team]
-            )
-            if additional_constraints is not None:
+        if additional_constraints is not None:
+            for team in self.problem.unary_resources_list:
                 tasks_team = [
-                    opt_interval_var[x[0]][x[1]] for x in key_per_team[index_team]
+                    self.get_task_unary_resource_interval(
+                        task=task, unary_resource=team
+                    )
+                    for task in self.compatible_tasks[team]
                 ]
                 if len(tasks_team) > 0:
                     if (
@@ -418,29 +327,29 @@ class CPSatAllocSchedulingSolver(
                         margin = additional_constraints.adding_margin_on_sequence[1]
                         # create just additional interval for the "routing" constraint.
                         intervals = [
-                            self.cp_model.NewOptionalFixedSizeIntervalVar(
-                                start=starts_var[x[0]],
-                                size=dur[x[0]] + margin,
-                                is_present=is_present_var[x[0]][x[1]],
-                                name=f"dummy_longer_task_{x[0], x[1]}",
+                            self.cp_model.new_optional_fixed_size_interval_var(
+                                start=self.get_task_start_or_end_variable(
+                                    task=task, start_or_end=StartOrEnd.START
+                                ),
+                                size=self.problem.tasks_data[task].duration_task
+                                + margin,
+                                is_present=self.get_task_unary_resource_is_present_variable(
+                                    task=task, unary_resource=team
+                                ),
+                                name=f"dummy_longer_task_{task, team}",
                             )
-                            for x in key_per_team[index_team]
+                            for task in self.compatible_tasks[team]
                         ]
-                        self.cp_model.AddCumulative(
+                        self.cp_model.add_cumulative(
                             intervals=intervals,
                             demands=[1] * len(intervals),
                             capacity=1,
                         )
 
-        # Resource constraints
-        for resource in self.problem.resources_list:
-            self.create_renewable_resources_constraint(resource)
-        if optional_activities:
-            self.variables["actually_done"] = self.create_actually_done_variables()
         # Objectives definitions
         if ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION in objectives:
-            assert "base_solution" in args
-            sol: AllocSchedulingSolution = args["base_solution"]
+            assert "base_solution" in kwargs
+            sol: AllocSchedulingSolution = kwargs["base_solution"]
             problem = sol.problem
             self.create_delta_objectives(
                 base_solution=sol,
@@ -457,36 +366,39 @@ class CPSatAllocSchedulingSolver(
             ] = -self.get_nb_tasks_done_variable()
         used = self.create_used_variables_dict()
         self.variables["used"] = used
-        if args["symmbreak_on_used"]:
+        if kwargs["symmbreak_on_used"]:
             equivalent_ = compute_equivalent_teams_scheduling_problem(self.problem)
             for group in equivalent_:
                 for ind1, ind2 in zip(group[:-1], group[1:]):
-                    self.cp_model.AddImplication(used[ind2], used[ind1])
-                    self.cp_model.Add(used[ind1] >= used[ind2])
+                    self.cp_model.add_implication(used[ind2], used[ind1])
+                    self.cp_model.add(used[ind1] >= used[ind2])
         nb_teams_var = self.get_nb_unary_resources_used_variable()
         self.variables["objectives"][ObjectivesEnum.NB_TEAMS] = nb_teams_var
         if adding_redundant_cumulative:
             # we need to introduce this new variable with positive lower bound
             # if we instead directly addCumulative with nb_teams_var, the solver
             # does not find a solution anymore (oddly)
-            capacity = self.cp_model.NewIntVar(
+            capacity = self.cp_model.new_int_var(
                 lb=1, ub=self.problem.number_teams, name="capacity"
             )
-            self.cp_model.Add(capacity == nb_teams_var)
-            self.cp_model.AddCumulative(
-                intervals=[interval_var[x] for x in interval_var],
-                demands=[1 for x in interval_var],
+            self.cp_model.add(capacity == nb_teams_var)
+            self.cp_model.add_cumulative(
+                intervals=[
+                    self.get_task_interval(task=task)
+                    for task in self.problem.tasks_list
+                ],
+                demands=[1 for _ in range(self.problem.number_tasks)],
                 capacity=capacity,
             )
         if add_lower_bound:
-            lprovider: SubBrick = args["lower_bound_method"]
+            lprovider: SubBrick = kwargs["lower_bound_method"]
             t_deb = time.perf_counter()
             lbound_provider: BaseAllocSchedulingLowerBoundProvider = lprovider.cls(
                 self.problem
             )
             bound = lbound_provider.get_lb_nb_teams(**lprovider.kwargs)
             t_end = time.perf_counter()
-            self.cp_model.Add(nb_teams_var >= bound)
+            self.cp_model.add(nb_teams_var >= bound)
             self.time_bounds = t_end - t_deb
             self.bound_teams = bound
             self.status_bound = lbound_provider.status
@@ -495,7 +407,7 @@ class CPSatAllocSchedulingSolver(
             self.time_bounds = 0
             self.status_bound = None
 
-        self.add_objective_functions_on_cumul(objectives=objectives, **args)
+        self.add_objective_functions_on_cumul(objectives=objectives, **kwargs)
         if additional_constraints is not None:
             self.set_additional_constraints(
                 additional_constraint=additional_constraints
@@ -538,7 +450,7 @@ class CPSatAllocSchedulingSolver(
                     ]
                 )
         self.variables["objs"] = objs
-        self.cp_model.Minimize(sum(weights[i] * objs[i] for i in range(len(objs))))
+        self.cp_model.minimize(sum(weights[i] * objs[i] for i in range(len(objs))))
 
     def add_objective_functions_on_cumul(
         self, objectives: Optional[list[ObjectivesEnum]] = None, **args
@@ -553,8 +465,7 @@ class CPSatAllocSchedulingSolver(
             dict_fairness = model_fairness(
                 used_team=self.variables["used"],
                 allocation_variables=[
-                    self.variables["is_present_var"][i]
-                    for i in range(self.problem.number_tasks)
+                    self.allocation_is_present[task] for task in self.problem.tasks_list
                 ],
                 value_per_task=dur,
                 modelisation_dispersion=modelisation_dispersion,
@@ -574,19 +485,18 @@ class CPSatAllocSchedulingSolver(
             variables = cumulate_value_per_teams_version_2(
                 used_team=self.variables["used"],
                 allocation_variables=[
-                    self.variables["is_present_var"][i]
-                    for i in range(self.problem.number_tasks)
+                    self.allocation_is_present[task] for task in self.problem.tasks_list
                 ],
                 value_per_task=dur,
                 cp_model=self.cp_model,
                 number_teams=self.problem.number_teams,
                 name_value="workload_",
             )
-            min_value = self.cp_model.NewIntVar(
+            min_value = self.cp_model.new_int_var(
                 lb=0, ub=sum(dur), name="min_value_workload"
             )
 
-            self.cp_model.AddMinEquality(min_value, variables["workload_per_team_nz"])
+            self.cp_model.add_min_equality(min_value, variables["workload_per_team_nz"])
             self.variables["objectives"][ObjectivesEnum.MIN_WORKLOAD] = min_value
 
     def set_additional_constraints(
@@ -603,18 +513,18 @@ class CPSatAllocSchedulingSolver(
                 and additional_constraint.nb_teams_bounds[1]
                 == additional_constraint.nb_teams_bounds[0]
             ):
-                self.cp_model.Add(
+                self.cp_model.add(
                     sum([used[x] for x in used])
                     == additional_constraint.nb_teams_bounds[0]
                 )
             else:
                 if additional_constraint.nb_teams_bounds[0] is not None:
-                    self.cp_model.Add(
+                    self.cp_model.add(
                         sum([used[x] for x in used])
                         >= additional_constraint.nb_teams_bounds[0]
                     )
                 if additional_constraint.nb_teams_bounds[1] is not None:
-                    self.cp_model.Add(
+                    self.cp_model.add(
                         sum([used[x] for x in used])
                         <= additional_constraint.nb_teams_bounds[1]
                     )
@@ -626,9 +536,9 @@ class CPSatAllocSchedulingSolver(
                 if additional_constraint.team_used_constraint[team_index] is not None:
                     # don't care for the syntax warning, i want that it only works with booleans
                     if additional_constraint.team_used_constraint[team_index] == True:
-                        self.cp_model.Add(used[team_index] == 1)
+                        self.cp_model.add(used[team_index] == 1)
                     if additional_constraint.team_used_constraint[team_index] == False:
-                        self.cp_model.Add(used[team_index] == 0)
+                        self.cp_model.add(used[team_index] == 0)
 
     def create_delta_objectives(
         self,
@@ -641,7 +551,7 @@ class CPSatAllocSchedulingSolver(
         )
         len_common_tasks = len(common_tasks)
         reallocation_bool = [
-            self.cp_model.NewBoolVar(name=f"realloc_{self.problem.tasks_to_index[t]}")
+            self.cp_model.new_bool_var(name=f"realloc_{self.problem.tasks_to_index[t]}")
             for t in common_tasks
         ]
         self.variables["reallocation"] = reallocation_bool
@@ -649,7 +559,7 @@ class CPSatAllocSchedulingSolver(
         delta_starts = []
         delta_starts_abs = []
         is_shifted = [
-            self.cp_model.NewBoolVar(name=f"shifted_{self.problem.tasks_to_index[t]}")
+            self.cp_model.new_bool_var(name=f"shifted_{self.problem.tasks_to_index[t]}")
             for t in common_tasks
         ]
         self.variables["is_shifted"] = is_shifted
@@ -677,50 +587,44 @@ class CPSatAllocSchedulingSolver(
                 ]
 
             if team_of_base_solution is not None:
-                index_team = self.problem.teams_to_index[team_of_base_solution]
                 if not ignore_reallocation:
-                    if (
-                        index_team
-                        not in self.variables["is_present_var"][index_in_problem]
-                    ):
-                        logger.debug("Problem")
-                    else:
-                        self.cp_model.Add(
-                            self.variables["is_present_var"][index_in_problem][
-                                index_team
-                            ]
-                            == 1
-                        ).OnlyEnforceIf(reallocation_bool[i].Not())
-                        self.cp_model.Add(
-                            self.variables["is_present_var"][index_in_problem][
-                                index_team
-                            ]
-                            == 0
-                        ).OnlyEnforceIf(reallocation_bool[i])
+                    is_present = self.get_task_unary_resource_is_present_variable(
+                        task=tt, unary_resource=team_of_base_solution
+                    )
+                    self.cp_model.add(is_present == 1).only_enforce_if(
+                        reallocation_bool[i].Not()
+                    )
+                    self.cp_model.add(is_present == 0).only_enforce_if(
+                        reallocation_bool[i]
+                    )
                 else:
-                    self.cp_model.Add(reallocation_bool[i] == 0)
+                    self.cp_model.add(reallocation_bool[i] == 0)
 
             delta_starts.append(
                 -int(base_solution.schedule[index_in_base_problem, 0])
-                + self.variables["starts_var"][index_in_problem]
+                + self.get_task_start_or_end_variable(
+                    task=tt, start_or_end=StartOrEnd.START
+                )
             )
-            self.cp_model.Add(delta_starts[-1] != 0).OnlyEnforceIf(is_shifted[i])
-            self.cp_model.Add(delta_starts[-1] == 0).OnlyEnforceIf(is_shifted[i].Not())
+            self.cp_model.add(delta_starts[-1] != 0).only_enforce_if(is_shifted[i])
+            self.cp_model.add(delta_starts[-1] == 0).only_enforce_if(
+                is_shifted[i].Not()
+            )
             delta_starts_abs.append(
-                self.cp_model.NewIntVar(
+                self.cp_model.new_int_var(
                     lb=0,
                     ub=self.problem.horizon,
                     name=f"delta_abs_starts_{index_in_problem}",
                 )
             )
-            self.cp_model.AddAbsEquality(delta_starts_abs[-1], delta_starts[-1])
+            self.cp_model.add_abs_equality(delta_starts_abs[-1], delta_starts[-1])
         self.variables["delta_starts_abs"] = delta_starts_abs
         self.variables["delta_starts"] = delta_starts
-        max_delta_start = self.cp_model.NewIntVar(
+        max_delta_start = self.cp_model.new_int_var(
             lb=0, ub=self.problem.horizon, name=f"max_delta_starts"
         )
         self.variables["max_delta_start"] = max_delta_start
-        self.cp_model.AddMaxEquality(max_delta_start, delta_starts_abs)
+        self.cp_model.add_max_equality(max_delta_start, delta_starts_abs)
         objs = [
             sum(reallocation_bool)
         ]  # count the number of changes of team/task allocation
@@ -746,13 +650,6 @@ class CPSatAllocSchedulingSolver(
             for team, used_var in self.used_variables.items()
         }
         return used
-
-    def create_actually_done_variables(self) -> dict[int, IntVar]:
-        self.create_done_variables()
-        return {
-            self.problem.tasks_to_index[task]: done_var
-            for task, done_var in self.done_variables.items()
-        }
 
 
 def _get_variables_obj_key(

@@ -112,6 +112,7 @@ UnaryResource = Hashable
 CumulativeResource = str
 Resource = Union[CumulativeResource, UnaryResource]
 NonRenewableResource = str
+Skill = str
 
 
 class MultiskillRcpspSolution(
@@ -2372,6 +2373,7 @@ class MultiskillRcpspProblem(
             for s in self.skills_set
         }
         self.compatibility_task_employee: dict[Task, dict[UnaryResource, bool]] = {}
+        self.skills_of_task: dict[Task, set[Skill]] = {}
         for task in self.tasks_list:
             self.compatibility_task_employee[task] = {}
             skills_of_task = set()
@@ -2384,6 +2386,7 @@ class MultiskillRcpspProblem(
                     self.compatibility_task_employee[task][employee] = True
                 else:
                     self.compatibility_task_employee[task][employee] = False
+            self.skills_of_task[task] = skills_of_task
 
     def get_precedence_constraints(self) -> dict[Task, list[Task]]:
         return self.successors

@@ -17,17 +17,13 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
     PermutationRcpsp,
 )
-from discrete_optimization.generic_tasks_tools.cumulative_resource import (
-    CumulativeResourceProblem,
+from discrete_optimization.generic_tasks_tools.allocation import (
+    NoUnaryResource,
+    WithoutAllocationProblem,
 )
-from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
-    MultimodeSchedulingProblem,
-)
-from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
-    NonRenewableResourceProblem,
-)
-from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
-    PrecedenceSchedulingProblem,
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
 )
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     convert_calendar_to_availability_intervals,
@@ -49,6 +45,7 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
 from discrete_optimization.rcpsp.solution import (
+    CumulativeResource,
     NonRenewableResource,
     RcpspSolution,
     Resource,
@@ -58,7 +55,11 @@ from discrete_optimization.rcpsp.special_constraints import (
     PairModeConstraint,
     SpecialConstraintsDescription,
 )
-from discrete_optimization.rcpsp.utils import intersect
+from discrete_optimization.rcpsp.utils import (
+    get_end_bounds_from_additional_constraint,
+    get_start_bounds_from_additional_constraint,
+    intersect,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +70,10 @@ class ScheduleGenerationScheme(Enum):
 
 
 class RcpspProblem(
-    PrecedenceSchedulingProblem[Task],
-    CumulativeResourceProblem[Task, Resource],
-    NonRenewableResourceProblem[Task, NonRenewableResource],
-    MultimodeSchedulingProblem[Task],
+    GenericSchedulingProblem[
+        Task, NoUnaryResource, CumulativeResource, NonRenewableResource
+    ],
+    WithoutAllocationProblem[Task],
 ):
     """Main class for RCPSP problem.
 
@@ -364,6 +365,14 @@ class RcpspProblem(
     def non_renewable_resources_list(self) -> list[NonRenewableResource]:
         return self.non_renewable_resources
 
+    @property
+    def cumulative_resources_list(self) -> list[CumulativeResource]:
+        return [
+            resource
+            for resource in self.resources_list
+            if resource not in self.non_renewable_resources
+        ]
+
     def get_non_renewable_resource_capacity(
         self, resource: NonRenewableResource
     ) -> int:
@@ -378,14 +387,6 @@ class RcpspProblem(
     ) -> int:
         mode_detail = self.mode_details[task][mode]
         return mode_detail.get(resource, 0)
-
-    @property
-    def renewable_resources_list(self) -> list[Resource]:
-        return [
-            res
-            for res in self.resources_list
-            if res not in self.non_renewable_resources
-        ]
 
     @cache
     def get_resource_availabilities(
@@ -404,9 +405,6 @@ class RcpspProblem(
             mode_detail = self.mode_details[task][mode]
             return mode_detail.get(resource, 0)
 
-    def is_cumulative_resource(self, resource: Resource) -> bool:
-        return resource in self.resources_list
-
     def get_task_mode_duration(self, task: Task, mode: int) -> int:
         return self.mode_details[task][mode]["duration"]
 
@@ -421,6 +419,34 @@ class RcpspProblem(
 
     def get_makespan_upper_bound(self) -> int:
         return self.horizon
+
+    def get_task_start_or_end_lower_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        match start_or_end:
+            case StartOrEnd.START:
+                lb, ub = get_start_bounds_from_additional_constraint(
+                    rcpsp_problem=self, activity=task
+                )
+            case _:
+                lb, ub = get_end_bounds_from_additional_constraint(
+                    rcpsp_problem=self, activity=task
+                )
+        return lb
+
+    def get_task_start_or_end_upper_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        match start_or_end:
+            case StartOrEnd.START:
+                lb, ub = get_start_bounds_from_additional_constraint(
+                    rcpsp_problem=self, activity=task
+                )
+            case _:
+                lb, ub = get_end_bounds_from_additional_constraint(
+                    rcpsp_problem=self, activity=task
+                )
+        return ub
 
     def update_functions(self) -> None:
         (

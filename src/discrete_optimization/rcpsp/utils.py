@@ -587,23 +587,23 @@ def get_start_bounds_from_additional_constraint(
                 if ubs is not None:
                     ub = ubs
             if activity in rcpsp_problem.special_constraints.end_times_window:
-                lbs, ubs = rcpsp_problem.special_constraints.end_times_window[activity]
-                if lbs is not None:
+                lbe, ube = rcpsp_problem.special_constraints.end_times_window[activity]
+                if lbe is not None:
                     max_duration = max(
                         [
                             rcpsp_problem.mode_details[activity][m]["duration"]
                             for m in rcpsp_problem.mode_details[activity]
                         ]
                     )
-                    lb = max(lb, lbs - max_duration)
-                if ubs is not None:
+                    lb = max(lb, lbe - max_duration)
+                if ube is not None:
                     min_duration = min(
                         [
                             rcpsp_problem.mode_details[activity][m]["duration"]
                             for m in rcpsp_problem.mode_details[activity]
                         ]
                     )
-                    ub = min(ub, ubs - min_duration)
+                    ub = min(ub, ube - min_duration)
     if ub < 0:
         logger.debug(f"ub<0, {ub}")
     return int(lb), int(ub)
@@ -624,11 +624,11 @@ def get_end_bounds_from_additional_constraint(
             lb = ub = rcpsp_problem.special_constraints.end_times[activity]
         else:
             if activity in rcpsp_problem.special_constraints.end_times_window:
-                lbs, ubs = rcpsp_problem.special_constraints.end_times_window[activity]
-                if lbs is not None:
-                    lb = lbs
-                if ubs is not None:
-                    ub = ubs
+                lbe, ube = rcpsp_problem.special_constraints.end_times_window[activity]
+                if lbe is not None:
+                    lb = lbe
+                if ube is not None:
+                    ub = ube
             if activity in rcpsp_problem.special_constraints.start_times_window:
                 lbs, ubs = rcpsp_problem.special_constraints.start_times_window[
                     activity
