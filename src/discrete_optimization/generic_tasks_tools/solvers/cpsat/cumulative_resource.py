@@ -8,9 +8,11 @@ from ortools.sat.python.cp_model import IntervalVar
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    CumulativeResource,
     CumulativeResourceProblem,
+    OtherRenewableResource,
+    Resource,
 )
-from discrete_optimization.generic_tasks_tools.renewable_resource import Resource
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     MultimodeSchedulingCpSatSolver,
 )
@@ -22,11 +24,11 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.renewable_resource 
 class CumulativeResourceSchedulingCpSatSolver(
     RenewableResourceCpSatSolver[Task, Resource],
     MultimodeSchedulingCpSatSolver[Task],
-    Generic[Task, Resource],
+    Generic[Task, CumulativeResource, OtherRenewableResource],
 ):
     """Base class for cpsat solvers dealing with scheduling problems handling cumulative resources."""
 
-    problem: CumulativeResourceProblem[Task, Resource]
+    problem: CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource]
 
     def get_resource_consumption_intervals(
         self, resource: Resource

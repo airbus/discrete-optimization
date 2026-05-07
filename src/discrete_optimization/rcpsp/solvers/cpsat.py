@@ -19,6 +19,7 @@ from ortools.sat.python.cp_model import (
     ObjLinearExprT,
 )
 
+from discrete_optimization.generic_tasks_tools.allocation import NoUnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
     CumulativeResourceSchedulingCpSatSolver,
@@ -40,10 +41,12 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.problem import (
     RcpspProblem,
     RcpspSolution,
-    Resource,
     Task,
 )
-from discrete_optimization.rcpsp.solution import NonRenewableResource
+from discrete_optimization.rcpsp.solution import (
+    CumulativeResource,
+    NonRenewableResource,
+)
 from discrete_optimization.rcpsp.solvers import RcpspSolver
 from discrete_optimization.rcpsp.special_constraints import PairModeConstraint
 from discrete_optimization.rcpsp.utils import (
@@ -56,7 +59,7 @@ logger = logging.getLogger(__name__)
 
 class CpSatRcpspSolver(
     PrecedenceSchedulingCpSatSolver[Task],
-    CumulativeResourceSchedulingCpSatSolver[Task, Resource],
+    CumulativeResourceSchedulingCpSatSolver[Task, CumulativeResource, NoUnaryResource],
     NonRenewableCpSatSolver[Task, NonRenewableResource],
     RcpspSolver,
     WarmstartMixin,
