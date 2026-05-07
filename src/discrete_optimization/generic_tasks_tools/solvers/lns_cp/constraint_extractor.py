@@ -10,6 +10,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationCpSolver,
     AllocationProblem,
     AllocationSolution,
+    WithoutAllocationProblem,
 )
 from discrete_optimization.generic_tasks_tools.base import (
     Task,
@@ -733,7 +734,9 @@ def build_default_constraint_extractor(
                 fix_secondary_tasks_modes=params_constraint_extractor.fix_secondary_tasks_allocation,
             )
         )
-    if isinstance(problem, AllocationProblem):
+    if isinstance(problem, AllocationProblem) and not isinstance(
+        problem, WithoutAllocationProblem
+    ):
         if params_constraint_extractor.allocation_subtasks:
             extractors.append(
                 SubtasksAllocationConstraintExtractor(

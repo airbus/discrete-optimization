@@ -18,6 +18,7 @@ from discrete_optimization.generic_tasks_tools.base import (
 )
 from discrete_optimization.generic_tasks_tools.precedence import (
     PrecedenceProblem,
+    WithoutPrecedenceProblem,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
@@ -333,8 +334,10 @@ class NeighborRandomAndNeighborGraph(NeighborBuilder[Task]):
 def build_default_neighbor_builder(
     problem: TasksProblem[Task],
 ) -> NeighborBuilder[Task]:
-    if isinstance(problem, PrecedenceProblem) and isinstance(
-        problem, SchedulingProblem
+    if (
+        isinstance(problem, PrecedenceProblem)
+        and not isinstance(problem, WithoutPrecedenceProblem)
+        and isinstance(problem, SchedulingProblem)
     ):
         return NeighborBuilderMix(
             list_neighbor=[

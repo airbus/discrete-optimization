@@ -9,6 +9,8 @@ from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.multimode import (
     MultimodeProblem,
     MultimodeSolution,
+    SinglemodeProblem,
+    SinglemodeSolution,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
@@ -45,6 +47,32 @@ class MultimodeSchedulingProblem(
         ...
 
 
+class SinglemodeSchedulingProblem(
+    SinglemodeProblem[Task],
+    MultimodeSchedulingProblem[Task],
+):
+    """Single mode scheduling problems with fixed task durations.
+
+    Utility class simplifying MultimodeSchedulingProblem when single mode only.
+
+    """
+
+    @abstractmethod
+    def get_task_duration(self, task: Task) -> int:
+        """Get task duration according to mode.
+
+        Args:
+            task:
+
+        Returns:
+
+        """
+        ...
+
+    def get_task_mode_duration(self, task: Task, mode: int) -> int:
+        return self.get_task_duration(task=task)
+
+
 class MultimodeSchedulingSolution(
     SchedulingSolution[Task],
     MultimodeSolution[Task],
@@ -72,3 +100,15 @@ class MultimodeSchedulingSolution(
                     )
                     break
         return check
+
+
+class SinglemodeSchedulingSolution(
+    SinglemodeSolution[Task],
+    MultimodeSchedulingSolution[Task],
+):
+    """Solution for single mode scheduling problem with fixed task durations.
+
+    Utility class useful when needing to derive from GenericSchedulingSolution without multi mode
+    to be able to use cpsat auto solver.
+
+    """

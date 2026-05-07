@@ -8,6 +8,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationCpSolver,
     AllocationProblem,
     AllocationSolution,
+    WithoutAllocationProblem,
 )
 from discrete_optimization.generic_tasks_tools.base import (
     Task,
@@ -104,8 +105,9 @@ class TasksConstraintHandler(ConstraintHandler, Generic[Task]):
             raise ValueError(
                 f"{self.objective_subproblem} objective possible only for a scheduling problem."
             )
-        if self.objective_subproblem in ALLOCATION_OBJECTIVES and not isinstance(
-            problem, AllocationProblem
+        if self.objective_subproblem in ALLOCATION_OBJECTIVES and (
+            not isinstance(problem, AllocationProblem)
+            or isinstance(problem, WithoutAllocationProblem)
         ):
             raise ValueError(
                 f"{self.objective_subproblem} objective possible only for an allocation problem."

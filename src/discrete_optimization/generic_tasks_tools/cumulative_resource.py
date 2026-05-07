@@ -96,3 +96,39 @@ class CumulativeResourceSolution(
             raise NotImplementedError(
                 f"{resource} is not a cumulative resource whose consumption depends only on task mode."
             )
+
+
+NoCumulativeResource = None
+
+
+class WithoutCumulativeResourceProblem(
+    CumulativeResourceProblem[Task, NoCumulativeResource, OtherRenewableResource],
+    Generic[Task, OtherRenewableResource],
+):
+    """Mixin for problem without non-renewable resources.
+
+    To be used has an additional mixin with generic `GenericSchedulingProblem`.
+
+    """
+
+    @property
+    def cumulative_resources_list(self) -> list[CumulativeResource]:
+        return []
+
+    def get_renewable_resource_consumption(
+        self, resource: CumulativeResource, task: Task, mode: int
+    ) -> int:
+        raise ValueError(f"{resource} is not a cumulative resource of the problem.")
+
+
+class WithoutCumulativeResourceSolution(
+    CumulativeResourceSolution[Task, NoCumulativeResource, OtherRenewableResource],
+    Generic[Task, OtherRenewableResource],
+):
+    """Mixin for solution without cumulative resources.
+
+    To be used has an additional mixin with generic `GenericSchedulingSolution`.
+
+    """
+
+    ...

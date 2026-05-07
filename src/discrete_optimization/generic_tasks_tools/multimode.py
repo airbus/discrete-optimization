@@ -68,7 +68,7 @@ class SinglemodeProblem(MultimodeProblem[Task]):
 
     @property
     def is_multimode(self) -> bool:
-        return True
+        return False
 
     @property
     def max_number_of_mode(self) -> int:

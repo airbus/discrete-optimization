@@ -130,12 +130,15 @@ class NonRenewableResourceSolution(
         )
 
 
+NoNonRenewableResource = None
+
+
 class WithoutNonRenewableResourceProblem(
-    NonRenewableResourceProblem[Task, NonRenewableResource]
+    NonRenewableResourceProblem[Task, NoNonRenewableResource], Generic[Task]
 ):
     """Mixin for problem without non-renewable resources.
 
-    To be used has an additional mixin with generic `AllocationSchedulingProblem`.
+    To be used has an additional mixin with generic `GenericSchedulingProblem`.
 
     """
 
@@ -152,3 +155,15 @@ class WithoutNonRenewableResourceProblem(
         self, resource: NonRenewableResource, task: Task, mode: int
     ) -> int:
         raise RuntimeError("This problem has no non-renewable resource.")
+
+
+class WithoutNonRenewableResourceSolution(
+    NonRenewableResourceSolution[Task, NoNonRenewableResource], Generic[Task]
+):
+    """Mixin for solution without non-renewable resources.
+
+    To be used has an additional mixin with generic `GenericSchedulingSolution`.
+
+    """
+
+    ...
