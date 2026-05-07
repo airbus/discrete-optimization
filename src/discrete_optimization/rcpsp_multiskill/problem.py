@@ -20,9 +20,9 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
     PermutationRcpsp,
 )
-from discrete_optimization.generic_tasks_tools.allocation_scheduling import (
-    AllocationSchedulingProblem,
-    AllocationSchedulingSolution,
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
+    GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     convert_calendar_to_availability_intervals,
@@ -115,7 +115,7 @@ NonRenewableResource = str
 
 
 class MultiskillRcpspSolution(
-    AllocationSchedulingSolution[
+    GenericSchedulingSolution[
         Task, UnaryResource, CumulativeResource, NonRenewableResource
     ],
 ):
@@ -1983,7 +1983,7 @@ def intersect(i1, i2):
 
 
 class MultiskillRcpspProblem(
-    AllocationSchedulingProblem[
+    GenericSchedulingProblem[
         Task, UnaryResource, CumulativeResource, NonRenewableResource
     ],
 ):

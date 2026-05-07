@@ -14,8 +14,8 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation_scheduling import (
-    AllocationSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
+    GenericSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatMultiskillRcpspSolver(
-    AllocationSchedulingCpSatSolver[
+    GenericSchedulingCpSatSolver[
         Task, UnaryResource, CumulativeResource, NonRenewableResource
     ],
 ):

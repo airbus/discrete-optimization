@@ -12,9 +12,9 @@ from typing import Optional, Union
 import networkx as nx
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.allocation_scheduling import (
-    AllocationSchedulingProblem,
-    AllocationSchedulingSolution,
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
+    GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import (
     SinglemodeProblem,
@@ -53,7 +53,7 @@ NonRenewableResource = str
 
 
 class AllocSchedulingSolution(
-    AllocationSchedulingSolution[
+    GenericSchedulingSolution[
         Task, UnaryResource, CumulativeResource, NonRenewableResource
     ],
     SinglemodeSolution[Task],
@@ -104,7 +104,7 @@ class TasksDescription:
 
 
 class AllocSchedulingProblem(
-    AllocationSchedulingProblem[
+    GenericSchedulingProblem[
         Task, UnaryResource, CumulativeResource, NonRenewableResource
     ],
     WithoutNonRenewableResourceProblem[Task, NonRenewableResource],
