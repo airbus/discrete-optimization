@@ -7,13 +7,28 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
-    MultimodeSchedulingProblem,
-    MultimodeSchedulingSolution,
+from discrete_optimization.generic_tasks_tools.allocation import (
+    NoUnaryResource,
+    WithoutAllocationProblem,
+    WithoutAllocationSolution,
 )
-from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
-    PrecedenceSchedulingProblem,
-    PrecedenceSchedulingSolution,
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    NoCumulativeResource,
+    WithoutCumulativeResourceProblem,
+    WithoutCumulativeResourceSolution,
+)
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
+    GenericSchedulingSolution,
+)
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NoNonRenewableResource,
+    WithoutNonRenewableResourceProblem,
+    WithoutNonRenewableResourceSolution,
+)
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    WithoutRenewableResourceProblem,
+    WithoutRenewableResourceSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -29,7 +44,13 @@ logger = logging.getLogger(__name__)
 
 
 class FJobShopSolution(
-    PrecedenceSchedulingSolution[Task], MultimodeSchedulingSolution[Task]
+    GenericSchedulingSolution[
+        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+    ],
+    WithoutCumulativeResourceSolution[Task, NoUnaryResource],
+    WithoutNonRenewableResourceSolution[Task],
+    WithoutAllocationSolution[Task],
+    WithoutRenewableResourceSolution[Task],
 ):
     problem: FJobShopProblem
 
@@ -71,7 +92,13 @@ class Job:
 
 
 class FJobShopProblem(
-    PrecedenceSchedulingProblem[Task], MultimodeSchedulingProblem[Task]
+    GenericSchedulingProblem[
+        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+    ],
+    WithoutCumulativeResourceProblem[Task, NoUnaryResource],
+    WithoutNonRenewableResourceProblem[Task],
+    WithoutAllocationProblem[Task],
+    WithoutRenewableResourceProblem[Task],
 ):
     n_jobs: int
     n_machines: int

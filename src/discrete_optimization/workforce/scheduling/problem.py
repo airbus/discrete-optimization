@@ -12,18 +12,22 @@ from typing import Optional, Union
 import networkx as nx
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import (
-    SinglemodeProblem,
     SinglemodeSolution,
 )
-from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
-    WithoutNonRenewableResourceProblem,
+from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+    SinglemodeSchedulingProblem,
 )
-from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NoNonRenewableResource,
+    WithoutNonRenewableResourceProblem,
+    WithoutNonRenewableResourceSolution,
+)
 from discrete_optimization.generic_tasks_tools.renewable_resource import (
     convert_calendar_to_availability_intervals,
 )
@@ -49,13 +53,13 @@ Task = Hashable
 UnaryResource = Hashable
 CumulativeResource = str
 Resource = Union[UnaryResource, CumulativeResource]
-NonRenewableResource = str
 
 
 class AllocSchedulingSolution(
     GenericSchedulingSolution[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, CumulativeResource, NoNonRenewableResource
     ],
+    WithoutNonRenewableResourceSolution[Task],
     SinglemodeSolution[Task],
 ):
     problem: AllocSchedulingProblem
@@ -105,11 +109,10 @@ class TasksDescription:
 
 class AllocSchedulingProblem(
     GenericSchedulingProblem[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, CumulativeResource, NoNonRenewableResource
     ],
-    WithoutNonRenewableResourceProblem[Task, NonRenewableResource],
-    SinglemodeProblem[Task],
-    PrecedenceProblem[Task],
+    WithoutNonRenewableResourceProblem[Task],
+    SinglemodeSchedulingProblem[Task],
 ):
     def __init__(
         self,
@@ -195,8 +198,26 @@ class AllocSchedulingProblem(
                 f"{resource} is neither an actual cumulative resource nor a team."
             )
 
-    def get_task_mode_duration(self, task: Task, mode: int) -> int:
+    def get_task_duration(self, task: Task) -> int:
         return self.tasks_data[task].duration_task
+
+    def get_task_start_or_end_lower_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        match start_or_end:
+            case StartOrEnd.START:
+                return self.get_lb_start_window(task=task)
+            case _:
+                return self.get_lb_end_window(task=task)
+
+    def get_task_start_or_end_upper_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        match start_or_end:
+            case StartOrEnd.START:
+                return self.get_ub_start_window(task=task)
+            case _:
+                return self.get_ub_end_window(task=task)
 
     @property
     def tasks_list(self) -> list[Task]:

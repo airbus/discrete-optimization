@@ -5,9 +5,32 @@
 #  here https://github.com/erachelson/seq_dec_mak/blob/main/scheduling_newcourse/correction/nb2_jobshopsolver.py
 from __future__ import annotations
 
-from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
-    PrecedenceSchedulingProblem,
-    PrecedenceSchedulingSolution,
+from discrete_optimization.generic_tasks_tools.allocation import (
+    NoUnaryResource,
+    WithoutAllocationProblem,
+    WithoutAllocationSolution,
+)
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    NoCumulativeResource,
+    WithoutCumulativeResourceProblem,
+    WithoutCumulativeResourceSolution,
+)
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
+    GenericSchedulingSolution,
+)
+from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+    SinglemodeSchedulingProblem,
+    SinglemodeSchedulingSolution,
+)
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NoNonRenewableResource,
+    WithoutNonRenewableResourceProblem,
+    WithoutNonRenewableResourceSolution,
+)
+from discrete_optimization.generic_tasks_tools.renewable_resource import (
+    WithoutRenewableResourceProblem,
+    WithoutRenewableResourceSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -22,7 +45,16 @@ Task = tuple[int, int]
 """Task representation: (job index, subjob index)."""
 
 
-class JobShopSolution(PrecedenceSchedulingSolution[Task]):
+class JobShopSolution(
+    GenericSchedulingSolution[
+        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+    ],
+    WithoutCumulativeResourceSolution[Task, NoUnaryResource],
+    WithoutNonRenewableResourceSolution[Task],
+    WithoutAllocationSolution[Task],
+    WithoutRenewableResourceSolution[Task],
+    SinglemodeSchedulingSolution[Task],
+):
     problem: JobShopProblem
 
     def __init__(self, problem: JobShopProblem, schedule: list[list[tuple[int, int]]]):
@@ -55,7 +87,16 @@ class Subjob:
         self.processing_time = processing_time
 
 
-class JobShopProblem(PrecedenceSchedulingProblem[Task]):
+class JobShopProblem(
+    GenericSchedulingProblem[
+        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+    ],
+    WithoutCumulativeResourceProblem[Task, NoUnaryResource],
+    WithoutNonRenewableResourceProblem[Task],
+    WithoutAllocationProblem[Task],
+    WithoutRenewableResourceProblem[Task],
+    SinglemodeSchedulingProblem[Task],
+):
     n_jobs: int
     n_machines: int
     list_jobs: list[list[Subjob]]
@@ -91,6 +132,10 @@ class JobShopProblem(PrecedenceSchedulingProblem[Task]):
     @property
     def tasks_list(self) -> list[Task]:
         return [(j, k) for j, job in enumerate(self.list_jobs) for k in range(len(job))]
+
+    def get_task_duration(self, task: Task) -> int:
+        j, k = task
+        return self.list_jobs[j][k].processing_time
 
     def get_precedence_constraints(self) -> dict[Task, list[Task]]:
         return {
