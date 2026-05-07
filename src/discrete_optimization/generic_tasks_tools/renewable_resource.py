@@ -190,9 +190,9 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             if t < makespan
         )
 
-    def _check_renewable_resource_capacity_constraint_np(
+    def _compute_renewable_resource_consumption_np(
         self, resources: Iterable[Resource]
-    ) -> bool:
+    ) -> dict[Resource, np.ndarray]:
         makespan = self.get_max_end_time()
         resources_consumption = {
             resource: np.zeros(makespan, dtype=int) for resource in resources
@@ -206,11 +206,20 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
                         resource=resource, task=task
                     )
                 )
+        return resources_consumption
 
+    def _check_renewable_resource_capacity_constraint_np(
+        self, resources: Iterable[Resource]
+    ) -> bool:
+        resources_consumption = self._compute_renewable_resource_consumption_np(
+            resources=resources
+        )
         resources_capa_violation = {
             resource: conso
             > np.array(
-                self.problem.get_resource_calendar(resource=resource, horizon=makespan)
+                self.problem.get_resource_calendar(
+                    resource=resource, horizon=len(conso)
+                )
             )
             for resource, conso in resources_consumption.items()
         }
@@ -248,6 +257,50 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         """Check capacity constraint on all renewable resources."""
         return self.check_renewable_resource_capacity_constraints(
             resources=self.problem.renewable_resources_list
+        )
+
+    def compute_renewable_resources_consumptions(self) -> dict[Resource, int]:
+        """Compute total consumption of each renewable resource by the solution."""
+        return {
+            resource: int(timed_conso.max())
+            for resource, timed_conso in self._compute_renewable_resource_consumption_np(
+                resources=self.problem.renewable_resources_list
+            ).items()
+        }
+
+    def compute_aggregated_renewable_resources_consumptions(
+        self, weights: Optional[dict[Resource, int]] = None
+    ):
+        """Compute aggregated consumption of each renewable resource by the solution.
+
+        Args:
+            weights: optional weights to apply to each resource in the sum. Default to 1.
+
+        """
+        if weights is None:
+            weights = {}
+        return sum(
+            conso * weights.get(resource, 1)
+            for resource, conso in self.compute_renewable_resources_consumptions().items()
+        )
+
+    def compute_nb_renewable_resources_used(
+        self, weights: Optional[dict[Resource, int]] = None
+    ) -> int:
+        """Compute number of renewable resources used by at least one task.
+
+        Args:
+            weights: optional weights to apply to each resource in the sum. Default to 1.
+
+
+        Returns:
+
+        """
+        if weights is None:
+            weights = {}
+        return sum(
+            (conso > 0) * weights.get(resource, 1)
+            for resource, conso in self.compute_renewable_resources_consumptions().items()
         )
 
 

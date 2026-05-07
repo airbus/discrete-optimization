@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from abc import abstractmethod
 from collections.abc import Hashable, Iterable
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.multimode import (
@@ -127,6 +127,55 @@ class NonRenewableResourceSolution(
         """Check capacity constraint on all renewable resources."""
         return self.check_non_renewable_resource_capacity_constraints(
             resources=self.problem.non_renewable_resources_list
+        )
+
+    def compute_non_renewable_resources_consumptions(
+        self,
+    ) -> dict[NonRenewableResource, int]:
+        """Compute total consumption of each non-renewable resource by the solution."""
+        return {
+            resource: sum(
+                self.get_non_renewable_resource_consumption(
+                    resource=resource, task=task
+                )
+                for task in self.problem.tasks_list
+            )
+            for resource in self.problem.non_renewable_resources_list
+        }
+
+    def compute_aggregated_non_renewable_resources_consumptions(
+        self, weights: Optional[dict[NonRenewableResource, int]] = None
+    ):
+        """Compute aggregated consumption of each non-renewable resource by the solution.
+
+        Args:
+            weights: optional weights to apply to each resource in the sum. Default to 1.
+
+        """
+        if weights is None:
+            weights = {}
+        return sum(
+            conso * weights.get(resource, 1)
+            for resource, conso in self.compute_non_renewable_resources_consumptions().items()
+        )
+
+    def compute_nb_non_renewable_resources_used(
+        self, weights: Optional[dict[NonRenewableResource, int]] = None
+    ) -> int:
+        """Compute number of non-renewable resources used by at least one task.
+
+        Args:
+            weights: optional weights to apply to each resource in the sum. Default to 1.
+
+
+        Returns:
+
+        """
+        if weights is None:
+            weights = {}
+        return sum(
+            (conso > 0) * weights.get(resource, 1)
+            for resource, conso in self.compute_non_renewable_resources_consumptions().items()
         )
 
 
