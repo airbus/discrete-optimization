@@ -22,17 +22,18 @@ logger = logging.getLogger(__name__)
 Resource = TypeVar("Resource", bound=Hashable)
 
 
-class RenewableResourceProblem(SchedulingProblem[Task], Generic[Task, Resource]):
+class CalendarResourceProblem(SchedulingProblem[Task], Generic[Task, Resource]):
     """Base class for scheduling problems dealing with renewable resources whose availability depend on a calendar."""
 
     @property
     @abstractmethod
-    def renewable_resources_list(self) -> list[Resource]:
-        """Renewable resources used by the tasks.
+    def calendar_resources_list(self) -> list[Resource]:
+        """Renewable resources with an availability calendar used by the tasks.
 
         Notes:
             - renewable = the resource replenishes as soon as a task using it ends;
             - it can be a mix of unary resources (e.g. employees) and cumulative resources (e.g. tool types).
+            - calendar can be constant
 
         """
         ...
@@ -154,11 +155,11 @@ class RenewableResourceProblem(SchedulingProblem[Task], Generic[Task, Resource])
         ]
 
 
-class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]):
-    problem: RenewableResourceProblem[Task, Resource]
+class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]):
+    problem: CalendarResourceProblem[Task, Resource]
 
     @abstractmethod
-    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
+    def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:
         """Get resource consumption by given task.
 
         Args:
@@ -170,17 +171,17 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         """
         ...
 
-    def check_renewable_resource_capacity_constraint(self, resource: Resource) -> bool:
-        """Check capacity constraint on given renewable resource."""
-        return self.check_renewable_resource_capacity_constraints(resources=(resource,))
+    def check_calendar_resource_capacity_constraint(self, resource: Resource) -> bool:
+        """Check capacity constraint on given resource."""
+        return self.check_calendar_resource_capacity_constraints(resources=(resource,))
 
-    def _check_renewable_resource_capacity_constraint_naive(
+    def _check_calendar_resource_capacity_constraint_naive(
         self, resource: Resource
     ) -> bool:
         makespan = self.get_max_end_time()
         return all(
             sum(
-                self.get_renewable_resource_consumption(resource=resource, task=task)
+                self.get_calendar_resource_consumption(resource=resource, task=task)
                 for task in self.get_running_tasks(time=t)
             )
             <= value
@@ -190,7 +191,7 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             if t < makespan
         )
 
-    def _compute_renewable_resource_consumption_np(
+    def _compute_calendar_resource_consumption_np(
         self, resources: Iterable[Resource]
     ) -> dict[Resource, np.ndarray]:
         makespan = self.get_max_end_time()
@@ -202,16 +203,14 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             end = self.get_end_time(task)
             for resource in resources:
                 resources_consumption[resource][start:end] += (
-                    self.get_renewable_resource_consumption(
-                        resource=resource, task=task
-                    )
+                    self.get_calendar_resource_consumption(resource=resource, task=task)
                 )
         return resources_consumption
 
-    def _check_renewable_resource_capacity_constraint_np(
+    def _check_calendar_resource_capacity_constraint_np(
         self, resources: Iterable[Resource]
     ) -> bool:
-        resources_consumption = self._compute_renewable_resource_consumption_np(
+        resources_consumption = self._compute_calendar_resource_consumption_np(
             resources=resources
         )
         resources_capa_violation = {
@@ -227,7 +226,7 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             resource_cap_violation.any()
             for resource_cap_violation in resources_capa_violation.values()
         ):
-            logger.debug("Violations on renewable resource capacities:")
+            logger.debug("Violations on calendar resource capacities:")
             violations = {
                 resource: violation_timesteps
                 for resource, resource_cap_violation in resources_capa_violation.items()
@@ -241,7 +240,7 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         else:
             return True
 
-    def check_renewable_resource_capacity_constraints(
+    def check_calendar_resource_capacity_constraints(
         self, resources: Iterable[Resource]
     ) -> bool:
         """Check capacity constraint respected on given resources.
@@ -249,29 +248,27 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
         Do it simultaneously on all resources to optimize computation time.
 
         """
-        return self._check_renewable_resource_capacity_constraint_np(
-            resources=resources
+        return self._check_calendar_resource_capacity_constraint_np(resources=resources)
+
+    def check_all_calendar_resource_capacity_constraints(self) -> bool:
+        """Check capacity constraint on all calendar resources."""
+        return self.check_calendar_resource_capacity_constraints(
+            resources=self.problem.calendar_resources_list
         )
 
-    def check_all_renewable_resource_capacity_constraints(self) -> bool:
-        """Check capacity constraint on all renewable resources."""
-        return self.check_renewable_resource_capacity_constraints(
-            resources=self.problem.renewable_resources_list
-        )
-
-    def compute_renewable_resources_consumptions(self) -> dict[Resource, int]:
-        """Compute total consumption of each renewable resource by the solution."""
+    def compute_calendar_resources_consumptions(self) -> dict[Resource, int]:
+        """Compute total consumption of each calendar resource by the solution."""
         return {
             resource: int(timed_conso.max())
-            for resource, timed_conso in self._compute_renewable_resource_consumption_np(
-                resources=self.problem.renewable_resources_list
+            for resource, timed_conso in self._compute_calendar_resource_consumption_np(
+                resources=self.problem.calendar_resources_list
             ).items()
         }
 
-    def compute_aggregated_renewable_resources_consumptions(
+    def compute_aggregated_calendar_resources_consumptions(
         self, weights: Optional[dict[Resource, int]] = None
     ):
-        """Compute aggregated consumption of each renewable resource by the solution.
+        """Compute aggregated consumption of each calendar resource by the solution.
 
         Args:
             weights: optional weights to apply to each resource in the sum. Default to 1.
@@ -281,13 +278,13 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             weights = {}
         return sum(
             conso * weights.get(resource, 1)
-            for resource, conso in self.compute_renewable_resources_consumptions().items()
+            for resource, conso in self.compute_calendar_resources_consumptions().items()
         )
 
-    def compute_nb_renewable_resources_used(
+    def compute_nb_calendar_resources_used(
         self, weights: Optional[dict[Resource, int]] = None
     ) -> int:
-        """Compute number of renewable resources used by at least one task.
+        """Compute number of calendar resources used by at least one task.
 
         Args:
             weights: optional weights to apply to each resource in the sum. Default to 1.
@@ -300,18 +297,18 @@ class RenewableResourceSolution(SchedulingSolution[Task], Generic[Task, Resource
             weights = {}
         return sum(
             (conso > 0) * weights.get(resource, 1)
-            for resource, conso in self.compute_renewable_resources_consumptions().items()
+            for resource, conso in self.compute_calendar_resources_consumptions().items()
         )
 
 
-NoRenewableResource = None
+NoCalendarResource = None
 
 
-class WithoutRenewableResourceProblem(
-    RenewableResourceProblem[Task, NoRenewableResource], Generic[Task]
+class WithoutCalendarResourceProblem(
+    CalendarResourceProblem[Task, NoCalendarResource], Generic[Task]
 ):
     @property
-    def renewable_resources_list(self) -> list[Resource]:
+    def calendar_resources_list(self) -> list[Resource]:
         return []
 
     def get_resource_availabilities(
@@ -320,11 +317,11 @@ class WithoutRenewableResourceProblem(
         return []
 
 
-class WithoutRenewableResourceSolution(
-    RenewableResourceSolution[Task, NoRenewableResource], Generic[Task]
+class WithoutCalendarResourceSolution(
+    CalendarResourceSolution[Task, NoCalendarResource], Generic[Task]
 ):
-    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
-        raise ValueError(f"{resource} is not a renewable resource of the problem.")
+    def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:
+        raise ValueError(f"{resource} is not a calendar resource of the problem.")
 
 
 def convert_calendar_to_availability_intervals(

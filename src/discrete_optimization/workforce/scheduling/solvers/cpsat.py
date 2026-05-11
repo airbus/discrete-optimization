@@ -403,7 +403,7 @@ class CPSatAllocSchedulingSolver(
 
         # Overlap constraints
         for index_team in key_per_team:
-            self.create_renewable_resources_constraint(
+            self.create_calendar_resources_constraint(
                 self.problem.index_to_team[index_team]
             )
             if additional_constraints is not None:
@@ -434,7 +434,7 @@ class CPSatAllocSchedulingSolver(
 
         # Resource constraints
         for resource in self.problem.resources_list:
-            self.create_renewable_resources_constraint(resource)
+            self.create_calendar_resources_constraint(resource)
         if optional_activities:
             self.variables["actually_done"] = self.create_actually_done_variables()
         # Objectives definitions

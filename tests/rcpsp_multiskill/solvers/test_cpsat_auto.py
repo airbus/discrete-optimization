@@ -135,7 +135,7 @@ def test_imopse_cpsat_with_calendar(caplog):
     with caplog.at_level(logging.DEBUG):
         assert not model.satisfy(solution)
 
-    assert "Violations on renewable resource capacities" in caplog.text
+    assert "Violations on calendar resource capacities" in caplog.text
     assert f"resource '{employee}'" in caplog.text
     assert f"at time {start}" in caplog.text
 

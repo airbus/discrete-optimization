@@ -12,6 +12,10 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     WithoutAllocationProblem,
     WithoutAllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    WithoutCalendarResourceProblem,
+    WithoutCalendarResourceSolution,
+)
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     NoCumulativeResource,
     WithoutCumulativeResourceProblem,
@@ -25,10 +29,6 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
-)
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    WithoutRenewableResourceProblem,
-    WithoutRenewableResourceSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -50,7 +50,7 @@ class FJobShopSolution(
     WithoutCumulativeResourceSolution[Task, NoUnaryResource],
     WithoutNonRenewableResourceSolution[Task],
     WithoutAllocationSolution[Task],
-    WithoutRenewableResourceSolution[Task],
+    WithoutCalendarResourceSolution[Task],
 ):
     problem: FJobShopProblem
 
@@ -98,7 +98,7 @@ class FJobShopProblem(
     WithoutCumulativeResourceProblem[Task, NoUnaryResource],
     WithoutNonRenewableResourceProblem[Task],
     WithoutAllocationProblem[Task],
-    WithoutRenewableResourceProblem[Task],
+    WithoutCalendarResourceProblem[Task],
 ):
     n_jobs: int
     n_machines: int

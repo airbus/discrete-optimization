@@ -104,7 +104,7 @@ class MyProblem(
     def cumulative_resources_list(self) -> list[CumulativeResource]:
         return self.cumulative_resources
 
-    def get_renewable_resource_consumption(
+    def get_cumulative_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         return self.mode_details[task][mode].get(resource, 0)
@@ -153,9 +153,9 @@ class MyProblem(
         return dict(
             makespan=variable.get_max_end_time(),
             nb_allocated=variable.compute_nb_unary_resources_used(),
-            nb_resources_used=variable.compute_nb_renewable_resources_used()
+            nb_resources_used=variable.compute_nb_calendar_resources_used()
             + variable.compute_nb_non_renewable_resources_used(),
-            resources_consumptions=variable.compute_aggregated_renewable_resources_consumptions()
+            resources_consumptions=variable.compute_aggregated_calendar_resources_consumptions()
             + variable.compute_aggregated_non_renewable_resources_consumptions(),
             nb_tasks_done=variable.compute_nb_tasks_done(),
         )
@@ -165,7 +165,7 @@ class MyProblem(
         return (
             variable.check_precedence_constraints()
             and variable.check_all_non_renewable_resource_capacity_constraints()
-            and variable.check_all_renewable_resource_capacity_constraints()
+            and variable.check_all_calendar_resource_capacity_constraints()
             and variable.check_duration_constraints()
         )
 

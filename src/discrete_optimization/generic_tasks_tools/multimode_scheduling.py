@@ -25,13 +25,7 @@ class MultimodeSchedulingProblem(
     MultimodeProblem[Task],
     Generic[Task],
 ):
-    """Scheduling problem whose tasks durations depend only on mode.
-
-    This derives from problem with renewable resources, some of them are cumulative, some are not (e.g. unary resource
-    if it is moreover an allocation problem).
-    The task consumption of these cumulative resources is supposed to be determined entirely determined by the task mode.
-
-    """
+    """Scheduling problem whose tasks durations depend only on mode."""
 
     @abstractmethod
     def get_task_mode_duration(self, task: Task, mode: int) -> int:

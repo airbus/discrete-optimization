@@ -504,18 +504,18 @@ class CpSatMultiskillRcpspSolver(
             if r in self.problem.non_renewable_resources:
                 self.create_non_renewable_resources_constraint(r)
             else:
-                self.create_renewable_resources_constraint(r)
+                self.create_calendar_resources_constraint(r)
 
     def create_disjunctive_worker(self):
         for worker in self.problem.employees:
-            self.create_renewable_resources_constraint(worker)
+            self.create_calendar_resources_constraint(worker)
 
     def constraint_redundant_cumulative_skills(self):
         for skill in self.problem.skills_set:
-            self.create_renewable_resources_constraint(skill)
+            self.create_calendar_resources_constraint(skill)
 
     def constraint_redundant_cumulative_worker(self):
-        self.create_renewable_resources_constraint(NB_EMPLOYEES_LB)
+        self.create_calendar_resources_constraint(NB_EMPLOYEES_LB)
 
     def constraint_mode(self):
         for task in self.variables["mode_variable"]["is_present"]:

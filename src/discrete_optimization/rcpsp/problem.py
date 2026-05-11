@@ -21,12 +21,12 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
     WithoutAllocationProblem,
 )
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    convert_calendar_to_availability_intervals,
+)
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
-)
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    convert_calendar_to_availability_intervals,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -396,7 +396,7 @@ class RcpspProblem(
             calendar=self.resources[resource], horizon=self.horizon
         )
 
-    def get_renewable_resource_consumption(
+    def get_cumulative_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         if not self.is_cumulative_resource(resource):
@@ -583,7 +583,7 @@ class RcpspProblem(
                 return False
 
         # Check for cumumative resource violation
-        if not variable.check_all_renewable_resource_capacity_constraints():
+        if not variable.check_all_calendar_resource_capacity_constraints():
             return False
 
         # Check for non-renewable resource violation
