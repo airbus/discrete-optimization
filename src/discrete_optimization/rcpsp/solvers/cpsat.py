@@ -151,7 +151,7 @@ class CpSatRcpspSolver(
         if resource in self.problem.non_renewable_resources:
             self.create_non_renewable_resources_constraint(resource=resource)
         else:
-            self.create_renewable_resources_constraint(resource=resource)
+            self.create_calendar_resources_constraint(resource=resource)
 
     def create_mode_pair_constraint(
         self,
@@ -385,10 +385,10 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
                     resource=resource, task=task, mode=mode
                 )
         else:
-            self.create_renewable_resources_constraint(resource=resource)
+            self.create_calendar_resources_constraint(resource=resource)
 
             def get_resource_consumption(task: Task, mode: int) -> int:
-                return self.problem.get_renewable_resource_consumption(
+                return self.problem.get_cumulative_resource_consumption(
                     resource=resource, task=task, mode=mode
                 )
 
@@ -566,7 +566,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                     <= resource_capacity_var[resource]
                 )
         else:
-            self.create_renewable_resources_constraint(resource=resource)
+            self.create_calendar_resources_constraint(resource=resource)
             if len(task_modes_consuming) == 0:
                 # when empty, the constraints don't work !
                 return

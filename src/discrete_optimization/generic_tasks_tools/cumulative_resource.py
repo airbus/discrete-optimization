@@ -7,41 +7,41 @@ from abc import abstractmethod
 from typing import Generic, Hashable, TypeVar, Union
 
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    CalendarResourceProblem,
+    CalendarResourceSolution,
+)
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingProblem,
     MultimodeSchedulingSolution,
 )
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    RenewableResourceProblem,
-    RenewableResourceSolution,
-)
 
 CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
-OtherRenewableResource = TypeVar("OtherRenewableResource", bound=Hashable)
-Resource = Union[CumulativeResource, OtherRenewableResource]
+OtherCalendarResource = TypeVar("OtherCalendarResource", bound=Hashable)
+Resource = Union[CumulativeResource, OtherCalendarResource]
 
 
 class CumulativeResourceProblem(
-    RenewableResourceProblem[Task, Resource],
+    CalendarResourceProblem[Task, Resource],
     MultimodeSchedulingProblem[Task],
-    Generic[Task, CumulativeResource, OtherRenewableResource],
+    Generic[Task, CumulativeResource, OtherCalendarResource],
 ):
     """Scheduling problem with cumulative resources consumed by task.
 
-    This derives from problem with renewable resources, some of them are cumulative, some are not (e.g. unary resource
+    This derives from problem with renewable calendar resources, some of them are cumulative, some are not (e.g. unary resource
     if it is moreover an allocation problem).
     The task consumption of these cumulative resources is supposed to be determined entirely determined by the task mode.
 
     """
 
     @abstractmethod
-    def get_renewable_resource_consumption(
+    def get_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         """Get cumulative resource consumption of the task in the given mode
 
         Args:
-            resource: *renewable* resource
+            resource: cumulative resource
             task:
             mode: not used for single mode problems
 
@@ -68,15 +68,15 @@ class CumulativeResourceProblem(
 
 
 class CumulativeResourceSolution(
-    RenewableResourceSolution[Task, Resource],
+    CalendarResourceSolution[Task, Resource],
     MultimodeSchedulingSolution[Task],
-    Generic[Task, CumulativeResource, OtherRenewableResource],
+    Generic[Task, CumulativeResource, OtherCalendarResource],
 ):
     """Solution type associated to CumulativeResourceProblem."""
 
-    problem: CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource]
+    problem: CumulativeResourceProblem[Task, CumulativeResource, OtherCalendarResource]
 
-    def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
+    def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:
         """Get resource consumption by given task.
 
         Default implementation works only for cumulative resources whose consumptions depend only on task mode.
@@ -89,7 +89,7 @@ class CumulativeResourceSolution(
 
         """
         if self.problem.is_cumulative_resource(resource):
-            return self.problem.get_renewable_resource_consumption(
+            return self.problem.get_cumulative_resource_consumption(
                 resource=resource, task=task, mode=self.get_mode(task)
             )
         else:
@@ -102,10 +102,10 @@ NoCumulativeResource = None
 
 
 class WithoutCumulativeResourceProblem(
-    CumulativeResourceProblem[Task, NoCumulativeResource, OtherRenewableResource],
-    Generic[Task, OtherRenewableResource],
+    CumulativeResourceProblem[Task, NoCumulativeResource, OtherCalendarResource],
+    Generic[Task, OtherCalendarResource],
 ):
-    """Mixin for problem without non-renewable resources.
+    """Mixin for problem without cumulative resources.
 
     To be used has an additional mixin with generic `GenericSchedulingProblem`.
 
@@ -115,15 +115,15 @@ class WithoutCumulativeResourceProblem(
     def cumulative_resources_list(self) -> list[CumulativeResource]:
         return []
 
-    def get_renewable_resource_consumption(
+    def get_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         raise ValueError(f"{resource} is not a cumulative resource of the problem.")
 
 
 class WithoutCumulativeResourceSolution(
-    CumulativeResourceSolution[Task, NoCumulativeResource, OtherRenewableResource],
-    Generic[Task, OtherRenewableResource],
+    CumulativeResourceSolution[Task, NoCumulativeResource, OtherCalendarResource],
+    Generic[Task, OtherCalendarResource],
 ):
     """Mixin for solution without cumulative resources.
 

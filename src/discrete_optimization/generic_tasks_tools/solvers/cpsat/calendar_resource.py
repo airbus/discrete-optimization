@@ -8,8 +8,8 @@ from typing import Generic
 from ortools.sat.python.cp_model import IntervalVar
 
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    RenewableResourceProblem,
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    CalendarResourceProblem,
     Resource,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
@@ -17,13 +17,11 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
 )
 
 
-class RenewableResourceCpSatSolver(
-    SchedulingCpSatSolver[Task], Generic[Task, Resource]
-):
-    problem: RenewableResourceProblem[Task, Resource]
+class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Resource]):
+    problem: CalendarResourceProblem[Task, Resource]
 
-    def create_renewable_resources_constraint(self, resource: Resource):
-        """Add the constraint for renewable resources to the cpsat model.
+    def create_calendar_resources_constraint(self, resource: Resource):
+        """Add the constraint for renewable resources with an availability calendar to the cpsat model.
 
         Constraint ensuring that the total demand on the given resource stay below its capacity.
 

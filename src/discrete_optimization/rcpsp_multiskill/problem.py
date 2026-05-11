@@ -20,13 +20,13 @@ from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
     PermutationRcpsp,
 )
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    convert_calendar_to_availability_intervals,
+    merge_resources_calendars,
+)
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
-)
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    convert_calendar_to_availability_intervals,
-    merge_resources_calendars,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -2263,7 +2263,7 @@ class MultiskillRcpspProblem(
             + [NB_EMPLOYEES_LB]
         )
 
-    def get_renewable_resource_consumption(
+    def get_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         """Get resource consumption of the task in the given mode
@@ -2574,7 +2574,7 @@ class MultiskillRcpspProblem(
 
         # Check for renewable resources capacity violations
         # include employees and cumulative resources
-        if not rcpsp_sol.check_all_renewable_resource_capacity_constraints():
+        if not rcpsp_sol.check_all_calendar_resource_capacity_constraints():
             return False
 
         # Check for non-renewable resource violation

@@ -10,25 +10,25 @@ from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResource,
     CumulativeResourceProblem,
-    OtherRenewableResource,
+    OtherCalendarResource,
     Resource,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_resource import (
+    CalendarResourceCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     MultimodeSchedulingCpSatSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.renewable_resource import (
-    RenewableResourceCpSatSolver,
-)
 
 
 class CumulativeResourceSchedulingCpSatSolver(
-    RenewableResourceCpSatSolver[Task, Resource],
+    CalendarResourceCpSatSolver[Task, Resource],
     MultimodeSchedulingCpSatSolver[Task],
-    Generic[Task, CumulativeResource, OtherRenewableResource],
+    Generic[Task, CumulativeResource, OtherCalendarResource],
 ):
     """Base class for cpsat solvers dealing with scheduling problems handling cumulative resources."""
 
-    problem: CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource]
+    problem: CumulativeResourceProblem[Task, CumulativeResource, OtherCalendarResource]
 
     def get_resource_consumption_intervals(
         self, resource: Resource
@@ -37,7 +37,7 @@ class CumulativeResourceSchedulingCpSatSolver(
             return [
                 (
                     self.get_task_mode_interval(task=task, mode=mode),
-                    self.problem.get_renewable_resource_consumption(
+                    self.problem.get_cumulative_resource_consumption(
                         resource=resource, task=task, mode=mode
                     ),
                 )

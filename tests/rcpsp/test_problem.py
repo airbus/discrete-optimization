@@ -278,7 +278,7 @@ def test_update_problem(small_problem):
     assert len(problem.get_resource_availabilities("R1")) == 9
 
 
-def test_satisfy_renewable_nok(small_problem, caplog):
+def test_satisfy_calendar_nok(small_problem, caplog):
     problem = small_problem
     solution = RcpspSolution(
         problem=problem,

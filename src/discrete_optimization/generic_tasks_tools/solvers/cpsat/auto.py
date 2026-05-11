@@ -428,7 +428,7 @@ class GenericSchedulingAutoCpSatSolver(
             for resource in self.problem.cumulative_resources_list:
 
                 def conso_fn(task: Task, mode: int) -> int:
-                    return self.problem.get_renewable_resource_consumption(
+                    return self.problem.get_cumulative_resource_consumption(
                         resource=resource, task=task, mode=mode
                     )
 
@@ -497,7 +497,7 @@ class GenericSchedulingAutoCpSatSolver(
                         for task in self.problem.tasks_list
                         for mode in self.problem.get_task_modes(task=task)
                         if (
-                            conso := self.problem.get_renewable_resource_consumption(
+                            conso := self.problem.get_cumulative_resource_consumption(
                                 resource=resource, task=task, mode=mode
                             )
                         )
@@ -527,12 +527,12 @@ class GenericSchedulingAutoCpSatSolver(
                         conso_var = 0
                 else:
                     # disjunctive resource, no need to use the interval variables
-                    # (no overlap constraint already handled by `create_renewable_resources_constraint()`
+                    # (no overlap constraint already handled by `create_calendar_resources_constraint()`
                     list_is_present_variables = [
                         self.get_task_mode_is_present_variable(task=task, mode=mode)
                         for task in self.problem.tasks_list
                         for mode in self.problem.get_task_modes(task=task)
-                        if self.problem.get_renewable_resource_consumption(
+                        if self.problem.get_cumulative_resource_consumption(
                             resource=resource, task=task, mode=mode
                         )
                         > 0
@@ -563,12 +563,12 @@ class GenericSchedulingAutoCpSatSolver(
 
     def check_resources_lists(self):
         resources_list = (
-            self.problem.renewable_resources_list
+            self.problem.calendar_resources_list
             + self.problem.non_renewable_resources_list
         )
         assert len(resources_list) == len(set(resources_list)), (
             "There are duplicates in resources list, "
-            "potentially because renewable and non-renewable resources intersect."
+            "potentially because calendar and non-renewable resources intersect."
         )
 
     def get_nb_resources_used_variable(self) -> Any:
@@ -602,11 +602,11 @@ class GenericSchedulingAutoCpSatSolver(
         for resource in self.problem.non_renewable_resources_list:
             self.create_non_renewable_resources_constraint(resource=resource)
         # cumulative + unary resources calendar
-        for resource in self.problem.renewable_resources_list:
+        for resource in self.problem.calendar_resources_list:
             if not self.problem.is_cumulative_resource(
                 resource
             ) or self.include_constraint_on_cumulative_resource(resource=resource):
-                self.create_renewable_resources_constraint(resource=resource)
+                self.create_calendar_resources_constraint(resource=resource)
         # precedence
         self.create_precedence_constraints()
         # at most or exactly one resource allocated per task?

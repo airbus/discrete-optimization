@@ -169,7 +169,7 @@ class CpSatAutoMultiskillRcpspSolver(
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
-        # redundant renewable resources to consider
+        # redundant cumulative resources to consider
         self._redundant_skill_cumulative = kwargs["redundant_skill_cumulative"]
         self._redundant_worker_cumulative = kwargs["redundant_worker_cumulative"]
 

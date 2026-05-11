@@ -4,12 +4,12 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    convert_calendar_to_availability_intervals,
+)
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResourceProblem,
     CumulativeResourceSolution,
-)
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    convert_calendar_to_availability_intervals,
 )
 from discrete_optimization.generic_tools.do_problem import ObjectiveRegister, Solution
 from discrete_optimization.generic_tools.encoding_register import EncodingRegister
@@ -57,7 +57,7 @@ class MyCumulativeResourceProblem(
 
     @property
     def cumulative_resources_list(self) -> list[CumulativeResource]:
-        return self.renewable_resources_list
+        return self.calendar_resources_list
 
     def get_task_mode_duration(self, task: Task, mode: int) -> int:
         return self.mode_details[task][mode]["duration"]
@@ -71,14 +71,14 @@ class MyCumulativeResourceProblem(
         return self.resource_availabilities[resource]
 
     @property
-    def renewable_resources_list(self) -> list[Resource]:
+    def calendar_resources_list(self) -> list[Resource]:
         return list(self.resource_availabilities)
 
     @property
     def tasks_list(self) -> list[Task]:
         return list(self.mode_details)
 
-    def get_renewable_resource_consumption(
+    def get_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         try:
@@ -148,7 +148,7 @@ class MyCumulativeResourceSolution(
 
 def test_cumulative_resource_problem():
     pb = MyCumulativeResourceProblem()
-    for resource in pb.renewable_resources_list:
+    for resource in pb.calendar_resources_list:
         assert pb.get_resource_max_capacity(resource) == pb.max_capacities[resource]
         expected_result = pb.consolidated_availabilities[resource]
         assert pb.get_resource_consolidated_availabilities(resource) == expected_result
@@ -158,7 +158,7 @@ def test_cumulative_resource_problem():
 
 def test_cumulative_resource_problem_ko():
     pb = MyKOCumulativeResourceProblem()
-    for resource in pb.renewable_resources_list:
+    for resource in pb.calendar_resources_list:
         with pytest.raises(ValueError):
             pb.get_resource_consolidated_availabilities(resource)
         with pytest.raises(ValueError):
@@ -174,34 +174,34 @@ def test_cumulative_resource_solution():
         modes={"task-1": 0, "task-2": 0},
         starts={"task-1": 0, "task-2": 0},
     )
-    assert solution.check_renewable_resource_capacity_constraint("R1")
-    assert not solution.check_renewable_resource_capacity_constraint("R5")
-    assert not solution.check_all_renewable_resource_capacity_constraints()
+    assert solution.check_calendar_resource_capacity_constraint("R1")
+    assert not solution.check_calendar_resource_capacity_constraint("R5")
+    assert not solution.check_all_calendar_resource_capacity_constraints()
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 1, "task-2": 0},
         starts={"task-1": 2, "task-2": 3},
     )
-    assert not solution.check_all_renewable_resource_capacity_constraints()
+    assert not solution.check_all_calendar_resource_capacity_constraints()
     # ok
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 0, "task-2": 0},
         starts={"task-1": 1, "task-2": 2},
     )
-    assert solution.check_all_renewable_resource_capacity_constraints()
+    assert solution.check_all_calendar_resource_capacity_constraints()
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 1, "task-2": 0},
         starts={"task-1": 1, "task-2": 1},
     )
-    assert solution.check_all_renewable_resource_capacity_constraints()
+    assert solution.check_all_calendar_resource_capacity_constraints()
     solution = MyCumulativeResourceSolution(
         problem=pb,
         modes={"task-1": 1, "task-2": 0},
         starts={"task-1": 1, "task-2": 3},
     )
-    assert solution.check_all_renewable_resource_capacity_constraints()
+    assert solution.check_all_calendar_resource_capacity_constraints()
 
 
 def test_convert_calendar_to_availability_intervals():

@@ -12,6 +12,9 @@ from typing import Optional, Union
 import networkx as nx
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    convert_calendar_to_availability_intervals,
+)
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
@@ -27,9 +30,6 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
-)
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    convert_calendar_to_availability_intervals,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -176,7 +176,7 @@ class AllocSchedulingProblem(
     def cumulative_resources_list(self) -> list[CumulativeResource]:
         return self.resources_list
 
-    def get_renewable_resource_consumption(
+    def get_cumulative_resource_consumption(
         self, resource: Resource, task: Task, mode: int
     ) -> int:
         if self.is_cumulative_resource(resource):
@@ -566,12 +566,12 @@ def interval_inside(
     return False
 
 
-def satisfy_renewable_resources(
+def satisfy_calendar_resources(
     problem: AllocSchedulingProblem,
     solution: AllocSchedulingSolution,
     partial_solution: bool = False,
 ):
-    """Check constraints related to renewable resources (teams + cumulative resources)
+    """Check constraints related to renewable calendar resources (teams + cumulative resources)
 
     It checks:
     - team availability when allocated to a task
@@ -586,7 +586,7 @@ def satisfy_renewable_resources(
     Returns:
 
     """
-    return solution.check_all_renewable_resource_capacity_constraints()
+    return solution.check_all_calendar_resource_capacity_constraints()
 
 
 def satisfy_calendars(
@@ -649,7 +649,7 @@ def full_satisfy(
         satisfy_available_team,
         satisfy_same_allocation,
         satisfy_time_window,
-        satisfy_renewable_resources,
+        satisfy_calendar_resources,
         # satisfy_calendars,
         # satisfy_overlap_teams,
     ]:
