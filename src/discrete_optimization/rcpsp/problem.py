@@ -875,6 +875,21 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start-to-start", t1, t2, time1, time2, abs(time1 + off - time2))
             ]
+    for t1, t2, off in constraints.start_to_start_max_time_lag:
+        time1 = solution.get_start_time(t1)
+        time2 = solution.get_start_time(t2)
+        b = (time2 - time1 - off) <= 0
+        if not b:
+            list_constraints_not_respected += [
+                (
+                    "start-to-start-max-time-lag",
+                    t1,
+                    t2,
+                    time1,
+                    time2,
+                    abs(time2 - time1 - off),
+                )
+            ]
     for t1, t2 in start_together:
         time1 = solution.get_start_time(t1)
         time2 = solution.get_start_time(t2)
