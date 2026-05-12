@@ -10,9 +10,6 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
     UnaryResource,
 )
-from discrete_optimization.generic_tasks_tools.cumulative_resource import (
-    NoCumulativeResource,
-)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
 )
@@ -20,14 +17,19 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     SinglemodeGenericSchedulingAutoCpSatSolver,
     TemporarySolution,
 )
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution, Task
+from discrete_optimization.jsp.problem import (
+    CumulativeResource,
+    JobShopProblem,
+    JobShopSolution,
+    Task,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class CpSatAutoJspSolver(
     SinglemodeGenericSchedulingAutoCpSatSolver[
-        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
     ],
 ):
     problem: JobShopProblem
@@ -36,7 +38,6 @@ class CpSatAutoJspSolver(
         return self._max_time
 
     def init_model(self, **kwargs: Any) -> None:
-        # dummy value, todo : compute a better bound
         max_time = kwargs.get(
             "max_time",
             self.problem.get_makespan_upper_bound(),
@@ -44,12 +45,6 @@ class CpSatAutoJspSolver(
         self._max_time = max_time  # will be used by the makespan variable
 
         super().init_model(**kwargs)
-
-        # No overlap task on the same machine.
-        for machine, tasks in self.problem.job_per_machines.items():
-            self.cp_model.add_no_overlap(
-                self.get_task_interval(task=task) for task in tasks
-            )
 
     def convert_task_variables_to_solution(
         self, temp_sol: TemporarySolution[Task, UnaryResource]

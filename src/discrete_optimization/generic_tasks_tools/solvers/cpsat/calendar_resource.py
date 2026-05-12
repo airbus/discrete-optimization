@@ -20,6 +20,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
 class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Resource]):
     problem: CalendarResourceProblem[Task, Resource]
 
+    add_no_overlap_and_cumulative: bool = False
+    """Flag to add cumulative constraint on top of no_ovelap constraint when resource capacity is 1."""
+
     def create_calendar_resources_constraint(self, resource: Resource):
         """Add the constraint for renewable resources with an availability calendar to the cpsat model.
 
@@ -55,6 +58,12 @@ class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Res
         if len(intervals) > 0:
             if capacity == 1 and all(value == 1 for value in demands):
                 self.cp_model.add_no_overlap(intervals)
+                if self.add_no_overlap_and_cumulative:
+                    self.cp_model.add_cumulative(
+                        intervals=intervals,
+                        demands=demands,
+                        capacity=capacity,
+                    )
             else:
                 self.cp_model.add_cumulative(
                     intervals=intervals,
