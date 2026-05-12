@@ -12,15 +12,6 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     WithoutAllocationProblem,
     WithoutAllocationSolution,
 )
-from discrete_optimization.generic_tasks_tools.calendar_resource import (
-    WithoutCalendarResourceProblem,
-    WithoutCalendarResourceSolution,
-)
-from discrete_optimization.generic_tasks_tools.cumulative_resource import (
-    NoCumulativeResource,
-    WithoutCumulativeResourceProblem,
-    WithoutCumulativeResourceSolution,
-)
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -43,14 +34,16 @@ from discrete_optimization.jsp.problem import Subjob, Task
 logger = logging.getLogger(__name__)
 
 
+CumulativeResource = int  # machine id
+Resource = CumulativeResource  # no other resource
+
+
 class FJobShopSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
     ],
-    WithoutCumulativeResourceSolution[Task, NoUnaryResource],
     WithoutNonRenewableResourceSolution[Task],
     WithoutAllocationSolution[Task],
-    WithoutCalendarResourceSolution[Task],
 ):
     problem: FJobShopProblem
 
@@ -93,12 +86,10 @@ class Job:
 
 class FJobShopProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
     ],
-    WithoutCumulativeResourceProblem[Task, NoUnaryResource],
     WithoutNonRenewableResourceProblem[Task],
     WithoutAllocationProblem[Task],
-    WithoutCalendarResourceProblem[Task],
 ):
     n_jobs: int
     n_machines: int
@@ -173,6 +164,27 @@ class FJobShopProblem(
             for j, job in enumerate(self.list_jobs)
             for k, sub_job_options in enumerate(job.sub_jobs)
         }
+
+    def get_cumulative_resource_consumption(
+        self, resource: CumulativeResource, task: Task, mode: int
+    ) -> int:
+        machine_id = self.mode2machine[task][mode]
+        if machine_id == resource:
+            # the machine "resource" is used
+            return 1
+        else:
+            # the machine "resource" is not used
+            return 0
+
+    @property
+    def cumulative_resources_list(self) -> list[CumulativeResource]:
+        return list(range(self.n_machines))
+
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        # machine always available
+        return [(0, self.horizon, 1)]
 
     def get_makespan_upper_bound(self) -> int:
         return self.horizon

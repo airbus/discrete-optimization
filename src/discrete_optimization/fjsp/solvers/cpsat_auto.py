@@ -5,13 +5,15 @@
 import logging
 from typing import Any
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution, Task
+from discrete_optimization.fjsp.problem import (
+    CumulativeResource,
+    FJobShopProblem,
+    FJobShopSolution,
+    Task,
+)
 from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
     UnaryResource,
-)
-from discrete_optimization.generic_tasks_tools.cumulative_resource import (
-    NoCumulativeResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
@@ -30,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 class CpSatAutoFjspSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, NoUnaryResource, NoCumulativeResource, NoNonRenewableResource
+        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
     ],
 ):
     hyperparameters = [
@@ -52,9 +54,9 @@ class CpSatAutoFjspSolver(
         self.duplicate_start_var_per_mode = kwargs["duplicate_temporal_var"]
         # compute start/end of task lower bounds by forward propagation
         self.compute_start_and_end_lower_bound()
-
+        # whether to add cumulative constraint on top of no_overlap constraint
+        self.add_no_overlap_and_cumulative = bool(kwargs["add_cumulative_constraint"])
         super().init_model(**kwargs)
-        self.create_disjunctive_constraints(**kwargs)
 
     def get_makespan_upper_bound(self) -> int:
         return self._max_time
@@ -99,18 +101,3 @@ class CpSatAutoFjspSolver(
             for j, job in enumerate(self.problem.list_jobs)
         ]
         return FJobShopSolution(problem=self.problem, schedule=schedule)
-
-    def create_disjunctive_constraints(self, **kwargs):
-        add_cumulative_constraint = kwargs["add_cumulative_constraint"]
-        for machine_tasks in self.problem.job_per_machines.values():
-            machine_intervals = [
-                self.get_task_mode_interval(task=(j, k), mode=i_opt)
-                for j, k, i_opt in machine_tasks
-            ]
-            self.cp_model.add_no_overlap(machine_intervals)
-            if add_cumulative_constraint:
-                self.cp_model.add_cumulative(
-                    intervals=machine_intervals,
-                    demands=[1 for _ in range(len(machine_tasks))],
-                    capacity=1,
-                )
