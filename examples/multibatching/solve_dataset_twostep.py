@@ -101,6 +101,8 @@ def main(first_step: str = "cp"):
             cls=MathOptMultibatchingSolver,
             kwargs={
                 "mathopt_enable_output": True,
+                "restrict_to_shortest_paths": True,
+                "shortest_path_tolerance": 0.8,
                 "mathopt_solver_type": mathopt.SolverType.GSCIP,
                 "mathopt_additional_solve_parameters": mathopt.SolveParameters(),
                 "time_limit": 200,
