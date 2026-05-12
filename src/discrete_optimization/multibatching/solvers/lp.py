@@ -64,7 +64,17 @@ class _BaseLpMultibatchingSolver(MilpSolver, MultibatchingSolver):
     hyperparameters = [
         CategoricalHyperparameter(
             name="add_lb_constraint_nb_trips", choices=[True, False], default=False
-        )
+        ),
+        CategoricalHyperparameter(
+            name="restrict_to_shortest_paths", choices=[True, False], default=False
+        ),
+        FloatHyperparameter(
+            name="shortest_path_tolerance",
+            low=0,
+            high=30,
+            default=0.2,
+            depends_on=[("restrict_to_shortest_paths", True)],
+        ),
     ]
 
     def __init__(self, problem: MultibatchingProblem, **kwargs: Any):
@@ -90,7 +100,7 @@ class _BaseLpMultibatchingSolver(MilpSolver, MultibatchingSolver):
         print(kwargs)
         use_shortest_path = kwargs.get("restrict_to_shortest_paths", False)
         sp_tolerance = kwargs.get(
-            "shortest_path_tolerance", 0.0
+            "shortest_path_tolerance", 0.2
         )  # 0.0 = Strict, 0.2 = +20% length allowed
 
         # Option B: No incoming flow at producers

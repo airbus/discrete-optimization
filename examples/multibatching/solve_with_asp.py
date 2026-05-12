@@ -1,65 +1,136 @@
-from multibatching.solvers.asp import ClingconMultibatchingSolver
-from multibatching.solvers.cpsat import CpsatMultibatchingSolver
-from multibatching.utils import generate_multibatching_problem
 import logging
-logging.basicConfig(level=logging.INFO)
-import os
-import json
-from multibatching.parse_config_data import parse_json_to_problem
-from multibatching.solvers.two_steps import (TwoStepMultibatchingSolver, NetxMultibatchingSolver,
-                                             PackingViaBinPacking, GreedyPackingForMultibatching)
-import time
-def parse_problem(fix_problem: bool = False,
-                   harbor_constraint: bool = False,
-                  filter_transport_types:bool = False,
-                  scale_co2: float = 1):
-    this_folder = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.join(this_folder,
-                               "../../multibatching/datalocal/config-local.json")
-    d = json.load(open(config_file, "r"))
-    problem = parse_json_to_problem(d, harbor_constraint=harbor_constraint,
-                                    scale_co2=scale_co2)
 
-    return problem
+from discrete_optimization.binpack.solvers.asp import AspBinPackingSolver
+from discrete_optimization.binpack.solvers.cpsat import (
+    CpSatBinPackSolver,
+    ModelingBinPack,
+)
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
+from discrete_optimization.multibatching.parser import get_data_available, parse_file
+from discrete_optimization.multibatching.solvers.asp import ClingconMultibatchingSolver
+from discrete_optimization.multibatching.solvers.packing_subproblem import (
+    CpsatPackingSubproblem,
+)
+
+logging.basicConfig(level=logging.INFO)
+
+from discrete_optimization.generic_tools.callbacks.loggers import ProblemEvaluateLogger
+from discrete_optimization.multibatching.solvers.two_steps import (
+    GreedyPackingForMultibatching,
+    PackingViaBinPacking,
+)
+
 
 def script():
     # 1. Generate the problem instance
-    from discrete_optimization.generic_tools.callbacks.stats_retrievers import BasicStatsCallback
-    problem = generate_multibatching_problem(num_locations=20,
-                                             num_transport_types=5,
-                                             num_products=3,
-                                             min_dist=1,
-                                             max_dist=5, 
-                                             seed=51)
+    print("=" * 80)
+    print("Multibatching Two-Step Solver Example")
+    print("=" * 80)
 
-    problem = parse_problem(harbor_constraint=False,
-                            filter_transport_types=True, scale_co2=1/1000000)
+    # 1. Load dataset
+    print("\n[1/5] Loading dataset...")
+    try:
+        datasets = get_data_available()
+        if not datasets:
+            print("No datasets found. Please run:")
+            print(
+                ">>> from discrete_optimization.datasets import fetch_data_from_multibatching"
+            )
+            print(">>> fetch_data_from_multibatching()")
+            return
+        dataset_path = datasets[0]
+        print(f"      Using dataset: {dataset_path}")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return
+
+    # 2. Parse the problem
+    print("\n[2/5] Parsing problem...")
+    problem = parse_file(
+        dataset_path,
+        scale_capacity=1.0 / 10**4,  # Scale down capacities
+        scale_size=1.0 / 10**4,  # Scale down product sizes
+        scale_co2=1.0 / 10**6,
+    )
     solver = ClingconMultibatchingSolver(problem)
-
-    use_shortest_path_heuristic = True 
-    sp_tolerance = 0.2  
-
-    solver.init_model(restrict_to_shortest_paths=use_shortest_path_heuristic,
-                     shortest_path_tolerance=sp_tolerance) 
-    time_limit=100
+    use_shortest_path_heuristic = True
+    sp_tolerance = 0.8
+    solver.init_model(
+        restrict_to_shortest_paths=use_shortest_path_heuristic,
+        shortest_path_tolerance=sp_tolerance,
+    )
+    time_limit = 200
     print(f"Starting solve with {time_limit}s timeout...")
-    result_storage = solver.solve(callbacks=[BasicStatsCallback()],
-                                  time_limit=time_limit)
+    result_storage = solver.solve(
+        callbacks=[ProblemEvaluateLogger(logging.INFO, logging.INFO)],
+        time_limit=time_limit,
+    )
     # 4. Retrieve and display results
     solution, fitness = result_storage.get_best_solution_fit()
     if solution == None:
-        print("UNSAT") 
+        print("UNSAT")
     else:
-        pass
-        fit = solver.aggreg_from_sol(solution)
- 
-        pack = GreedyPackingForMultibatching(problem)
-        pack.init_from_solution(solution)
-        res = pack.solve(time_limit_per_link=2)
-        sol_ = res.get_best_solution()
+        solution = result_storage[-1][0]
+        best_sol_for_postpro = None
+        best_sol_ = None
+        best_val = float("inf")
+        for i in range(len(result_storage)):
+            pack = GreedyPackingForMultibatching(problem)
+            pack.init_from_solution(result_storage[i][0])
+            res = pack.solve()
+            sol_ = res.get_best_solution()
+            value = sum(problem.evaluate(sol_).values())
+            if value < best_val:
+                best_val = value
+                best_sol_ = sol_
+                best_sol_for_postpro = result_storage[i][0]
+        print("total costs Greedy : ", best_val, f"({best_val:.2e})")
+        # 2691259.5968169933(2.69e+06)
+        # 2685243.3591831937(2.69e+06)
+        # 2685243.3591831937(2.69e+06)
 
+        # 2671101.9480577074 (2.67e+06)
+        # 2664817.789103617 (2.66e+06)
+        # 2664817.789103617 (2.66e+06)
+        print(problem.satisfy(best_sol_))
+
+        pack = PackingViaBinPacking(problem)
+        pack.init_from_solution(best_sol_for_postpro)
+        p = ParametersCp.default_cpsat()
+        p.nb_process = 8
+        res = pack.solve(
+            bin_packing_solver=SubBrick(AspBinPackingSolver, {}), time_limit_per_link=2
+        )
+        sol_ = res.get_best_solution()
         value = sum(problem.evaluate(sol_).values())
-        print("total costs:", value, f"({value:.2e})")
+        print("total costs ASP : ", value, f"({value:.2e})")
+        print(problem.satisfy(sol_))
+
+        pack = PackingViaBinPacking(problem)
+        pack.init_from_solution(best_sol_for_postpro)
+        p = ParametersCp.default_cpsat()
+        p.nb_process = 8
+        res = pack.solve(
+            bin_packing_solver=SubBrick(
+                CpSatBinPackSolver,
+                {"parameters_cp": p, "modeling": ModelingBinPack.SCHEDULING},
+            ),
+            time_limit_per_link=2,
+        )
+        sol_ = res.get_best_solution()
+        value = sum(problem.evaluate(sol_).values())
+        print("total costs CP RbR : ", value, f"({value:.2e})")
+        print(problem.satisfy(sol_))
+
+        pack = CpsatPackingSubproblem(problem)
+        pack.init_from_solution(best_sol_for_postpro)
+        res = pack.solve(parameters_cp=p, time_limit=100)
+        sol_ = res.get_best_solution()
+        value = sum(problem.evaluate(sol_).values())
+        print("total costs GLOBAL CP : ", value, f"({value:.2e})")
+        print(problem.satisfy(sol_))
+
 
 if __name__ == "__main__":
     script()
