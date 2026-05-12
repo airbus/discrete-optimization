@@ -200,7 +200,12 @@ class GenericSchedulingAutoCpSatSolver(
     ) -> int:
         """Get a lower bound on start or end of a given task.
 
-        Default implementation: calls self.problem.get_task_start_or_end_lower_bound()
+        Default implementation:
+         - start: takes
+            - self.problem.get_task_start_or_end_upper_bound()
+        - end: best of
+            - self.problem.get_task_start_or_end_upper_bound()
+            - start_lower_bound + min(possible_durations)
 
         Args:
             task:
@@ -209,18 +214,40 @@ class GenericSchedulingAutoCpSatSolver(
         Returns:
 
         """
-        return self.problem.get_task_start_or_end_lower_bound(
-            task=task, start_or_end=start_or_end
-        )
+        match start_or_end:
+            case StartOrEnd.START:
+                # default to problem start lower bound
+                return self.problem.get_task_start_or_end_lower_bound(
+                    task=task, start_or_end=start_or_end
+                )
+            case _:
+                # deduce a bound from start lower bound and possible task durations
+                possible_durations = [
+                    self.problem.get_task_mode_duration(task=task, mode=mode)
+                    for mode in self.problem.get_task_modes(task=task)
+                ]
+                start_lower_bound = self.get_task_start_or_end_lower_bound(
+                    task=task, start_or_end=StartOrEnd.START
+                )
+                return max(
+                    self.problem.get_task_start_or_end_lower_bound(
+                        task=task, start_or_end=start_or_end
+                    ),
+                    start_lower_bound + min(possible_durations),
+                )
 
     def get_task_start_or_end_upper_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:
         """Get an upper bound on start or end of a given task.
 
-        Default implementation: takes best of
-        - self.problem.get_task_start_or_end_upper_bound()
-        - self.get_makespan_upper_bound()
+        Default implementation:
+        - end: takes best of
+            - self.problem.get_task_start_or_end_upper_bound()
+            - self.get_makespan_upper_bound()
+        - start: best of
+            - self.problem.get_task_start_or_end_upper_bound()
+            - end_upper_bound - min(possible_durations)
 
         Args:
             task:
@@ -229,12 +256,30 @@ class GenericSchedulingAutoCpSatSolver(
         Returns:
 
         """
-        return min(
-            self.problem.get_task_start_or_end_upper_bound(
-                task=task, start_or_end=start_or_end
-            ),
-            self.get_makespan_upper_bound(),
-        )
+        match start_or_end:
+            case StartOrEnd.END:
+                # take into account the "new" horizon given by makespan upper bound
+                return min(
+                    self.problem.get_task_start_or_end_upper_bound(
+                        task=task, start_or_end=start_or_end
+                    ),
+                    self.get_makespan_upper_bound(),
+                )
+            case _:
+                # deduce a bound from upper bound on end and possible task durations
+                possible_durations = [
+                    self.problem.get_task_mode_duration(task=task, mode=mode)
+                    for mode in self.problem.get_task_modes(task=task)
+                ]
+                end_upper_bound = self.get_task_start_or_end_upper_bound(
+                    task=task, start_or_end=StartOrEnd.END
+                )
+                return min(
+                    self.problem.get_task_start_or_end_upper_bound(
+                        task=task, start_or_end=start_or_end
+                    ),
+                    end_upper_bound - min(possible_durations),
+                )
 
     def init_model(self, **kwargs: Any) -> None:
         """Init cp model and reset stored variables if any."""
