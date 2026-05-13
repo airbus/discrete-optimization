@@ -1,3 +1,6 @@
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
 import logging
 from enum import Enum
 from typing import Any, Optional
@@ -58,6 +61,8 @@ class CpSatSingleBatchSolver(OrtoolsCpSatSolver, WarmstartMixin):
         self.symmetry_breaking = False
         self.job_order = None
         self.job_order_inv = None
+        self.modeling: ModelingBpm = None
+        self.max_batches: int = None
 
     def init_model(self, **args: Any) -> None:
         self.cp_model = CpModel()
@@ -65,7 +70,6 @@ class CpSatSingleBatchSolver(OrtoolsCpSatSolver, WarmstartMixin):
         self.modeling = args["modeling"]
         self.symmetry_breaking = args.get("symmetry_breaking", False)
         self.max_batches = self.problem.nb_jobs
-
         if self.modeling == ModelingBpm.BINARY:
             self.init_model_binary(**args)
         elif self.modeling == ModelingBpm.SCHEDULING:
@@ -73,11 +77,12 @@ class CpSatSingleBatchSolver(OrtoolsCpSatSolver, WarmstartMixin):
 
     def init_model_binary(self, **args: Any) -> None:
         if self.symmetry_breaking:
-            self._init_model_binary_symmetry_breaking(**args)
+            # Implementation of Trindade
+            self.init_model_binary_symmetry_breaking(**args)
         else:
-            self._init_model_binary_naive(**args)
+            self.init_model_binary_naive(**args)
 
-    def _init_model_binary_symmetry_breaking(self, **args: Any) -> None:
+    def init_model_binary_symmetry_breaking(self, **args: Any) -> None:
         """Symmetry breaking formulation from Trindade et al. (2018).
 
         Jobs are ordered by processing time and variables x_jk only exist for j <= k.
@@ -158,7 +163,7 @@ class CpSatSingleBatchSolver(OrtoolsCpSatSolver, WarmstartMixin):
         self.variables["batch_p"] = None
         self.cp_model.Minimize(makespan)
 
-    def _init_model_binary_naive(self, **args: Any) -> None:
+    def init_model_binary_naive(self, **args: Any) -> None:
         """Standard formulation with separate batch and allocation variables."""
         problem = self.problem
         nb_jobs = problem.nb_jobs
@@ -206,6 +211,10 @@ class CpSatSingleBatchSolver(OrtoolsCpSatSolver, WarmstartMixin):
                 self.cp_model.AddImplication(
                     self.variables["x"][j, b], self.variables["y"][b]
                 )
+            self.cp_model.add_max_equality(
+                self.variables["y"][b],
+                [self.variables["x"][j, b] for j in range(nb_jobs)],
+            )
 
         # 4. Symmetry Breaking
         for b in range(max_batches - 1):
@@ -327,6 +336,7 @@ class CpSatSingleBatchSolver(OrtoolsCpSatSolver, WarmstartMixin):
                 for (j_orig, k_sorted), var in self.variables["x"].items():
                     if cpsolvercb.Value(var):
                         job_to_batch[j_orig] = k_sorted
+
             else:
                 # Naive formulation
                 for j in range(nb_jobs):
@@ -334,9 +344,26 @@ class CpSatSingleBatchSolver(OrtoolsCpSatSolver, WarmstartMixin):
                         if cpsolvercb.Value(self.variables["x"][j, b]):
                             job_to_batch[j] = b
                             break
+            return BatchProcessingSolution(problem=problem, job_to_batch=job_to_batch)
 
         elif self.modeling == ModelingBpm.SCHEDULING:
             for j in range(nb_jobs):
                 job_to_batch[j] = cpsolvercb.Value(self.variables["batch_idx"][j])
-
-        return BatchProcessingSolution(problem=problem, job_to_batch=job_to_batch)
+            duration_batch = {}
+            for b in range(self.max_batches):
+                duration_batch[b] = cpsolvercb.Value(self.variables["batch_p"][b])
+            all_batches = sorted(set(job_to_batch))
+            original_batch_to_shift = {
+                all_batches[i]: i for i in range(len(all_batches))
+            }
+            durations_ordered = [duration_batch[b] for b in all_batches]
+            schedule = []
+            cur_time = 0
+            for i in range(len(durations_ordered)):
+                schedule.append((cur_time, cur_time + durations_ordered[i]))
+                cur_time = schedule[-1][1]
+            for j in range(nb_jobs):
+                job_to_batch[j] = original_batch_to_shift[job_to_batch[j]]
+            return BatchProcessingSolution(
+                problem=problem, job_to_batch=job_to_batch, schedule_batch=schedule
+            )
