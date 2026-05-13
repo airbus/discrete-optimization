@@ -61,21 +61,16 @@ class CpSatVRPTWSolver(SchedulingCpSatSolver[Task], WarmstartMixin):
         self.variables: Dict[str, Any] = {}
         self.scaling_factor = None  # Scale distances and times to use integers
 
-    def init_model(self, scaling: int, cost_per_vehicle: int, **kwargs: Any) -> None:
+    def init_model(
+        self, scaling: int = 1, cost_per_vehicle: int = 1000, **kwargs: Any
+    ) -> None:
         """Initialise the CP-SAT model."""
         super().init_model(**kwargs)
         self.scaling_factor = scaling
-        if self.cp_model is None:
-            raise RuntimeError(
-                "self.cp_model must not be None after super().init_model()."
-            )
-
         n = self.problem.nb_nodes
         k = self.problem.nb_vehicles
         depot = self.problem.depot_node
-
         # --- Create variables ---
-
         # x_arc[i, j]: BoolVar, true if arc (i, j) is used by any vehicle
         x_arc = {
             (i, j): self.cp_model.NewBoolVar(f"x_{i},{j}")
@@ -102,6 +97,8 @@ class CpSatVRPTWSolver(SchedulingCpSatSolver[Task], WarmstartMixin):
                 ub=int(self.problem.vehicle_capacity),
                 name=f"load_{i}",
             )
+            if self.problem.non_dummy_capacity()
+            else None
             for i in range(n)
         ]
 
@@ -169,26 +166,27 @@ class CpSatVRPTWSolver(SchedulingCpSatSolver[Task], WarmstartMixin):
                 ).OnlyEnforceIf(x_arc[i, j])
 
         # 4. Load dimension constraints
-        self.cp_model.Add(load[depot] == 0)
+        if self.problem.non_dummy_capacity():
+            self.cp_model.Add(load[depot] == 0)
 
-        for i in range(n):
-            for j in self.problem.customers:  # Customers only
-                if i == j:
-                    continue
+            for i in range(n):
+                for j in self.problem.customers:  # Customers only
+                    if i == j:
+                        continue
 
-                demand_j = int(self.problem.demands[j])
+                    demand_j = int(self.problem.demands[j])
 
-                # If arc (i,j) is taken, load at j = load at i + demand at j
-                # (load[i] is load *after* service at i)
-                self.cp_model.Add(load[j] == load[i] + demand_j).OnlyEnforceIf(
-                    x_arc[i, j]
-                )
-
-                # Special case: arc from depot (i=depot)
-                if i == depot:
-                    self.cp_model.Add(load[j] == demand_j).OnlyEnforceIf(
-                        x_arc[depot, j]
+                    # If arc (i,j) is taken, load at j = load at i + demand at j
+                    # (load[i] is load *after* service at i)
+                    self.cp_model.Add(load[j] == load[i] + demand_j).OnlyEnforceIf(
+                        x_arc[i, j]
                     )
+
+                    # Special case: arc from depot (i=depot)
+                    if i == depot:
+                        self.cp_model.Add(load[j] == demand_j).OnlyEnforceIf(
+                            x_arc[depot, j]
+                        )
         scaled_distances = {
             (i, j): int(self.scaling_factor * self.problem.distance_matrix[i, j])
             for i in range(n)
