@@ -258,10 +258,13 @@ class CpSatVrpSolver(OrtoolsCpSatSolver, VrpSolver, WarmstartMixin):
             dist_path_per_vehicle[vehicle] = sum(
                 obj_vars[i] * obj_coeffs[i] for i in range(len(obj_vars))
             )
-            model.Add(
-                sum(obj_vars[i] * demand_coeffs[i] for i in range(len(obj_vars)))
-                <= self.problem.vehicle_capacities[vehicle]
-            )
+            if self.problem.vehicle_capacities[
+                vehicle
+            ] is not None and self.problem.vehicle_capacities[vehicle] != float("inf"):
+                model.Add(
+                    sum(obj_vars[i] * demand_coeffs[i] for i in range(len(obj_vars)))
+                    <= self.problem.vehicle_capacities[vehicle]
+                )
         for j in ingoing_arc_per_node:
             if args["optional_node"]:
                 model.AddAtMostOne(ingoing_arc_per_node[j])

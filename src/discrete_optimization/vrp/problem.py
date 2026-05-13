@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 from abc import abstractmethod
 from collections.abc import Callable, Sequence
@@ -27,6 +28,8 @@ from discrete_optimization.generic_tools.encoding_register import (
     AttributeType,
     EncodingRegister,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class VrpSolution(Solution):
@@ -141,6 +144,8 @@ class VrpProblem(Problem):
         total_length_per_vehicle = [
             sum(variable.lengths[i]) for i in range(len(variable.lengths))
         ]
+        if violation > 0:
+            logger.debug(f"Capacity of vehicle not respected, {violation}")
         return {
             "nb_vehicles": sum([len(p) > 0 for p in variable.list_paths]),
             "max_length": max(total_length_per_vehicle),
