@@ -53,7 +53,7 @@ def test_via_multiskill(model):
     solution: RcpspSolution
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_renewable_resource_capacity_constraints()
+    assert solution.check_all_calendar_resource_capacity_constraints()
 
 
 @pytest.mark.parametrize(
