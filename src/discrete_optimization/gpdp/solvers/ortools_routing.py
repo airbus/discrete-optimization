@@ -221,6 +221,7 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
         self.dimension_names: list[str] = []
         self.factor_multiplier_distance = factor_multiplier_distance  # 10**3
         self.factor_multiplier_time = factor_multiplier_time  # 10**3
+        self.routing = None
 
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -868,6 +869,8 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
         time_limit: Optional[int] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        if self.routing is None:
+            self.init_model(**kwargs)
         callbacks_list = CallbackList(callbacks=callbacks)
         if search_parameters is None:
             search_parameters = self.search_parameters
