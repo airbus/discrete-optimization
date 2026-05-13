@@ -3,16 +3,15 @@
 #  LICENSE file in the root directory of this source tree.
 import math
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
-from discrete_optimization.generic_tasks_tools.allocation import (
-    AllocationProblem,
-    AllocationSolution,
-    UnaryResource,
+from discrete_optimization.alb.base.problem import (
+    BaseALBProblem,
+    BaseALBSolution,
+    TaskData,
 )
-from discrete_optimization.generic_tasks_tools.scheduling import (
-    SchedulingProblem,
-    SchedulingSolution,
+from discrete_optimization.generic_tasks_tools.allocation import (
+    UnaryResource,
 )
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
@@ -31,9 +30,85 @@ Task = int
 Resource = int
 
 
-class SalbpSolution(SchedulingSolution[Task], AllocationSolution[Task, Resource]):
-    # We can see this as both a scheduling and allocation solution
+class SalbpSolution(BaseALBSolution[Task, Resource]):
+    """
+    Solution for SALBP problem.
+
+    SALBP only assigns tasks to stations without explicit scheduling.
+    Scheduling is computed on-demand using greedy sequential scheduling.
+    """
+
     problem: "SalbpProblem"
+
+    def __init__(self, problem: "SalbpProblem", allocation_to_station: list[int]):
+        super().__init__(problem)
+        self.task_alloc = []
+        self.allocation_to_station = allocation_to_station
+        self._nb_stations = len(set(self.allocation_to_station))
+        self._cached_schedule = None  # Cache for greedy schedule
+
+    # BaseALBSolution interface implementation
+    def get_station_index(self, task: Task) -> int:
+        """Get the index of the station where task is assigned."""
+        return self.allocation_to_station[self.problem.tasks_to_index[task]]
+
+    def get_start_time_in_cycle(self, task: Task) -> int:
+        """
+        Get start time within cycle using greedy scheduling.
+
+        Since SALBP doesn't have explicit scheduling, we compute it on-demand
+        and cache the result.
+        """
+        if self._cached_schedule is None:
+            self._cached_schedule = self._compute_greedy_schedule()
+        return self._cached_schedule.get(task, 0)
+
+    def _get_task_station(self, task: Task) -> Resource:
+        """Get station assignment for a task."""
+        return self.allocation_to_station[self.problem.tasks_to_index[task]]
+
+    def _compute_greedy_schedule(
+        self, tasks_per_station: Optional[Dict[int, List[Task]]] = None
+    ) -> Dict[Task, int]:
+        """
+        Compute greedy schedule for SALBP.
+
+        SALBP-specific: Tasks at the same station run SEQUENTIALLY (no parallelism).
+        This is different from RC-ALBP where tasks can overlap if resources allow.
+
+        The base class implementation allows parallelism by considering predecessor
+        end times. For SALBP, we want strictly sequential execution: each task
+        starts immediately when the previous task ends.
+
+        Args:
+            tasks_per_station: Optional pre-computed station grouping
+
+        Returns:
+            Dict mapping task -> start_time_in_cycle
+        """
+        if tasks_per_station is None:
+            # Group tasks by station
+            tasks_per_station = {}
+            for i, station in enumerate(self.allocation_to_station):
+                if station not in tasks_per_station:
+                    tasks_per_station[station] = []
+                tasks_per_station[station].append(self.problem.tasks[i])
+
+        schedule = {}
+        topo_sort = self.problem._topological_sort_station_tasks()
+        for station, tasks in tasks_per_station.items():
+            if not tasks:
+                continue
+            # Topological sort of tasks at this station
+            sorted_tasks = sorted(tasks, key=lambda x: topo_sort.index(x))
+            # SEQUENTIAL scheduling: each task starts when previous ends
+            # No parallelism allowed in SALBP!
+            current_time = 0
+            for task in sorted_tasks:
+                schedule[task] = current_time
+                current_time += self.problem.task_times[task]
+
+        return schedule
 
     def get_end_time(self, task: Task) -> int:
         return self.allocation_to_station[self.problem.tasks_to_index[task]] + 1
@@ -47,12 +122,6 @@ class SalbpSolution(SchedulingSolution[Task], AllocationSolution[Task, Resource]
             == unary_resource
         )
 
-    def __init__(self, problem: "SalbpProblem", allocation_to_station: list[int]):
-        super().__init__(problem)
-        self.task_alloc = []
-        self.allocation_to_station = allocation_to_station
-        self._nb_stations = len(set(self.allocation_to_station))
-
     def copy(self) -> "SalbpSolution":
         return SalbpSolution(self.problem, deepcopy(self.allocation_to_station))
 
@@ -63,95 +132,107 @@ class SalbpSolution(SchedulingSolution[Task], AllocationSolution[Task, Resource]
         return f"SalbpSolution(nb_stations={self._nb_stations})"
 
     def __hash__(self):
-        # Hash based on the sorted tuple of items to ensure determinism
         return hash(tuple(self.allocation_to_station))
 
     def __eq__(self, other):
         return self.allocation_to_station == other.allocation_to_station
 
 
-class SalbpProblem(SchedulingProblem[Task], AllocationProblem[Task, Resource]):
-    def get_makespan_upper_bound(self) -> int:
-        # Max number of station, can be better.
-        return self.number_of_tasks
+class SalbpProblem(BaseALBProblem[int, int]):
+    """
+    Simple Assembly Line Balancing Problem.
 
-    @property
-    def unary_resources_list(self) -> list[UnaryResource]:
-        return list(range(self.number_of_tasks))
+    Extends BaseALBProblem with cycle time constraints.
+    Uses PrecedenceProblem mixin for precedence graph handling.
 
-    @property
-    def tasks_list(self) -> list[Task]:
-        return self.tasks
-
-    def get_last_tasks(self) -> list[Task]:
-        return [t for t in self.tasks_list if len(self.adj[t]) == 0]
+    Attributes:
+        cycle_time: Maximum allowed time per station
+        number_of_tasks: Total number of tasks (for compatibility)
+        tasks_to_index: Mapping from task_id to index
+    """
 
     def __init__(
         self,
-        number_of_tasks: int,
+        tasks_data: List[TaskData],
         cycle_time: int,
-        task_times: Dict[int, int],
-        precedence: List[Tuple[int, int]],
+        precedences: List[Tuple[int, int]],
+        number_of_stations: int = None,
     ):
-        self.number_of_tasks = number_of_tasks
+        """
+        Initialize SALBP problem.
+
+        Args:
+            tasks_data: List of TaskData objects for each task
+            cycle_time: Maximum allowed time per station
+            precedences: List of (predecessor, successor) pairs
+            number_of_stations: Number of available stations (default: nb_tasks)
+        """
+        # Determine number of stations (upper bound = number of tasks)
+        if number_of_stations is None:
+            number_of_stations = len(tasks_data)
+
+        # Create stations list
+        stations = list(range(number_of_stations))
+
+        # Initialize base class
+        super().__init__(
+            tasks_data=tasks_data,
+            precedences=precedences,
+            stations=stations,
+        )
+
+        # SALBP-specific attributes
         self.cycle_time = cycle_time
-        self.task_times = task_times
-        self.precedence = precedence
 
-        # Build adjacency for easier graph traversal
-        self.adj = {i: [] for i in task_times.keys()}
-        self.predecessors = {i: [] for i in task_times.keys()}
-        for p, s in precedence:
-            if p in self.adj:
-                self.adj[p].append(s)
-            if s in self.predecessors:
-                self.predecessors[s].append(p)
+        # Backward compatibility: keep adj and predecessors as aliases
+        self.adj = self.get_successors()
+        self.predecessors = self.get_predecessors()
+        self.precedence = precedences  # For backward compat
 
-        # Standard ordering of task IDs (assuming 1 to N usually, but we use keys)
-        self.tasks = sorted(list(task_times.keys()))
+        # Task index mapping for list-based solution encoding
         self.tasks_to_index = {self.tasks[i]: i for i in range(len(self.tasks))}
 
     def evaluate(self, variable: SalbpSolution) -> Dict[str, float]:
         """
         Evaluate the solution.
+
         Objective: Minimize the number of stations.
-        Constraint Penalties: Over-cycle time, Precedence violations.
+        Constraints:
+        - Cycle time: Each station's workload must not exceed cycle_time
+        - Precedence: Handled by base class using absolute times
+
+        Returns:
+            Dictionary with:
+            - nb_stations: Number of used stations (objective)
+            - penalty_overtime: Sum of time exceeding cycle_time per station
+            - penalty_undertime: Sum of idle time per station
+            - penalty_precedence: Number of precedence violations (from base)
         """
+        # Get base penalties (precedence + unscheduled)
+        base_eval = self.evaluate_base_constraints(variable)
+
+        # SALBP-specific: Group by station and check cycle time
         stations_time_cumul = {}
-        penalty_overtime = 0
-        penalty_undertime = 0
-        penalty_precedence = 0
-        # 1. Group by station and check Cycle Time
-        for i in range(self.number_of_tasks):
+        for i in range(self.nb_tasks):
             station_task_i = variable.allocation_to_station[i]
             if station_task_i not in stations_time_cumul:
                 stations_time_cumul[station_task_i] = 0
             stations_time_cumul[station_task_i] += self.task_times[self.tasks_list[i]]
 
+        penalty_overtime = 0.0
+        penalty_undertime = 0.0
         for s_id, total_time in stations_time_cumul.items():
             penalty_overtime += max(0, total_time - self.cycle_time)
             penalty_undertime += max(0, self.cycle_time - total_time)
 
-        # 2. Check Precedence: Pred station <= Succ station
-        for p, s in self.precedence:
-            station_p = variable.get_start_time(task=p)
-            station_s = variable.get_end_time(task=s)
-
-            # If tasks are missing from solution, that's a structural issue,
-            # usually assumed complete in a valid solution object.
-            if station_p is not None and station_s is not None:
-                if station_p > station_s:
-                    penalty_precedence += 1
-
         nb_stations = len(stations_time_cumul)
-        # Total cost logic (Soft constraints handling)
-        # We assume standard objective is just nb_stations,
-        # but for solvers we often add penalties.
+
+        # Combine base and SALBP-specific results
         return {
             "nb_stations": nb_stations,
             "penalty_overtime": penalty_overtime,
             "penalty_undertime": penalty_undertime,
-            "penalty_precedence": penalty_precedence,
+            **base_eval,  # Add penalty_precedence and penalty_unscheduled
         }
 
     def get_solution_type(self) -> type[Solution]:
@@ -173,7 +254,7 @@ class SalbpProblem(SchedulingProblem[Task], AllocationProblem[Task, Resource]):
         # A safe upper bound is the number of tasks (1 task per station).
         encoding = dict()
         encoding[f"allocation_to_station"] = ListInteger(
-            length=self.number_of_tasks, lows=0, ups=self.number_of_tasks - 1
+            length=self.nb_tasks, lows=0, ups=self.nb_tasks - 1
         )
         return EncodingRegister(encoding)
 
@@ -202,13 +283,15 @@ class SalbpProblem(SchedulingProblem[Task], AllocationProblem[Task, Resource]):
 
     def get_solution_type_member(self) -> SalbpSolution:
         # don't satisfy the constraints ;)
-        return SalbpSolution(self, allocation_to_station=[0] * self.number_of_tasks)
+        return SalbpSolution(self, allocation_to_station=[0] * self.nb_tasks)
 
     def get_graph_precedence(self) -> Graph:
-        nodes = [(t, {}) for t in self.tasks_list]
-        edges = [(t, succ, {}) for t in self.adj for succ in self.adj[t]]
-        graph = Graph(nodes, edges, undirected=False, compute_predecessors=True)
-        return graph
+        """
+        Get precedence graph.
+
+        Uses the PrecedenceProblem mixin's get_precedence_graph() method.
+        """
+        return self.get_precedence_graph()
 
 
 def calculate_salbp_lower_bounds(problem: SalbpProblem) -> int:
@@ -250,27 +333,41 @@ def calculate_salbp_lower_bounds(problem: SalbpProblem) -> int:
 
 
 class SalbpProblem_1_2(SalbpProblem):
-    # Generalisation of SALBP-(1,2) problem,
-    # where you can vary both cycle time and number of station
+    """
+    Generalisation of SALBP-(1,2) problem.
+
+    In this variant, both cycle time and number of stations can be optimized.
+    """
+
     @staticmethod
-    def from_salbp1(problem: SalbpProblem):
+    def from_salbp1(problem: SalbpProblem) -> "SalbpProblem_1_2":
+        """Create SALBP-1,2 problem from SALBP-1 problem."""
         return SalbpProblem_1_2(
-            number_of_tasks=problem.number_of_tasks,
-            task_times=problem.task_times,
-            precedence=problem.precedence,
+            tasks_data=problem.tasks_data,
+            precedences=problem.precedence,
+            number_of_stations=problem.nb_stations,
         )
 
     def __init__(
         self,
-        number_of_tasks: int,
-        task_times: Dict[int, int],
-        precedence: List[Tuple[int, int]],
+        tasks_data: List[TaskData],
+        precedences: List[Tuple[int, int]],
+        number_of_stations: int = None,
     ):
+        """
+        Initialize SALBP-1,2 problem (no fixed cycle time).
+
+        Args:
+            tasks_data: List of TaskData objects for each task
+            precedences: List of (predecessor, successor) pairs
+            number_of_stations: Number of available stations (default: nb_tasks)
+        """
+        # Call parent with cycle_time=None (will be optimized)
         super().__init__(
-            number_of_tasks,
+            tasks_data=tasks_data,
             cycle_time=None,
-            task_times=task_times,
-            precedence=precedence,
+            precedences=precedences,
+            number_of_stations=number_of_stations,
         )
 
     def evaluate(self, variable: SalbpSolution) -> Dict[str, float]:
@@ -280,7 +377,7 @@ class SalbpProblem_1_2(SalbpProblem):
         """
         stations_time_cumul = {}
         penalty_precedence = 0
-        for i in range(self.number_of_tasks):
+        for i in range(self.nb_tasks):
             station_task_i = variable.allocation_to_station[i]
             if station_task_i not in stations_time_cumul:
                 stations_time_cumul[station_task_i] = 0

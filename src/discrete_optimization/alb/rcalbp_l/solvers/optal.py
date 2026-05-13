@@ -5,17 +5,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from discrete_optimization.alb.rcalbp_l.problem import (
+    RCALBPLProblem,
+    RCALBPLSolution,
+    Task,
+    WorkStation,
+)
 from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
     AllocationOptalSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
     SchedulingOptalSolver,
-)
-from discrete_optimization.rcalbp_l.problem import (
-    RCALBPLProblem,
-    RCALBPLSolution,
-    Task,
-    WorkStation,
 )
 
 try:

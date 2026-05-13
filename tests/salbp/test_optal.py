@@ -1,17 +1,17 @@
 import pytest
 
+from discrete_optimization.alb.salbp.parser import get_data_available, parse_alb_file
+from discrete_optimization.alb.salbp.solvers.optal import (
+    OptalSalbp12Solver,
+    OptalSalbpSolver,
+    SalbpProblem_1_2,
+    optalcp_available,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
-)
-from discrete_optimization.salbp.parser import get_data_available, parse_alb_file
-from discrete_optimization.salbp.solvers.optal import (
-    OptalSalbp12Solver,
-    OptalSalbpSolver,
-    SalbpProblem_1_2,
-    optalcp_available,
 )
 
 

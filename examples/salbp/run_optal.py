@@ -1,5 +1,11 @@
 import logging
 
+from discrete_optimization.alb.salbp.parser import get_data_available, parse_alb_file
+from discrete_optimization.alb.salbp.solvers.optal import (
+    OptalSalbp12Solver,
+    OptalSalbpSolver,
+    SalbpProblem_1_2,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import ProblemEvaluateLogger
 from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
 from discrete_optimization.generic_tools.do_problem import (
@@ -8,12 +14,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
 )
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
-from discrete_optimization.salbp.parser import get_data_available, parse_alb_file
-from discrete_optimization.salbp.solvers.optal import (
-    OptalSalbp12Solver,
-    OptalSalbpSolver,
-    SalbpProblem_1_2,
-)
 
 logging.basicConfig(level=logging.INFO)
 

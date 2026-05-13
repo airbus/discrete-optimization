@@ -5,12 +5,12 @@
 import logging
 from typing import Any, Optional
 
+from discrete_optimization.alb.rcalbp_l.problem import RCALBPLProblem, RCALBPLSolution
+from discrete_optimization.alb.rcalbp_l.solvers.cpsat import CpSatRCALBPLSolver
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcalbp_l.problem import RCALBPLProblem, RCALBPLSolution
-from discrete_optimization.rcalbp_l.solvers.cpsat import CpSatRCALBPLSolver
 
 logger = logging.getLogger(__name__)
 

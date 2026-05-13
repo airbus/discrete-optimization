@@ -5,8 +5,8 @@ import json
 import os
 from typing import Optional
 
+from discrete_optimization.alb.rcalbp_l.problem import RCALBPLProblem
 from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
-from discrete_optimization.rcalbp_l.problem import RCALBPLProblem
 
 
 def get_data_available(

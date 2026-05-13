@@ -21,16 +21,16 @@ except ImportError:
     optalcp_available = False
 else:
     optalcp_available = True
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-)
-from discrete_optimization.salbp.problem import (
+from discrete_optimization.alb.salbp.problem import (
     SalbpProblem,
     SalbpProblem_1_2,
     SalbpSolution,
     Task,
     calculate_salbp_lower_bounds,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
 )
 
 

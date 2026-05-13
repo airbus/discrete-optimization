@@ -6,10 +6,10 @@ from typing import Any, Optional
 
 import clingo
 
+from discrete_optimization.alb.salbp.problem import SalbpProblem, SalbpSolution
 from discrete_optimization.generic_tools.asp_tools import AspClingoSolver
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
-from discrete_optimization.salbp.problem import SalbpProblem, SalbpSolution
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class AspSalbpSolver(AspClingoSolver, WarmstartMixin):
 
     def init_model(self, **kwargs: Any) -> None:
         # A safe upper bound for stations is the number of tasks
-        self.upper_bound = kwargs.get("upper_bound", self.problem.number_of_tasks)
+        self.upper_bound = kwargs.get("upper_bound", self.problem.nb_tasks)
 
         # 1. Define the ASP program for SALBP
         self.basic_model = """
@@ -90,7 +90,7 @@ class AspSalbpSolver(AspClingoSolver, WarmstartMixin):
 
         # Constants
         facts.append(f"#const max_cycle_time={self.problem.cycle_time}.")
-        facts.append(f"#const nb_tasks={self.problem.number_of_tasks}.")
+        facts.append(f"#const nb_tasks={self.problem.nb_tasks}.")
         facts.append(f"#const nb_stations={self.upper_bound}.")
 
         # Task facts: task(TaskID, Duration)

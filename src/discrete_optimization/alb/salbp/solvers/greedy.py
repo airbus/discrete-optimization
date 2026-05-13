@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from collections import defaultdict
 
+from discrete_optimization.alb.salbp.problem import SalbpProblem, SalbpSolution
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
@@ -11,7 +12,6 @@ from discrete_optimization.generic_tools.do_solver import (
     ParamsObjectiveFunction,
     SolverDO,
 )
-from discrete_optimization.salbp.problem import SalbpProblem, SalbpSolution
 
 
 class GreedySalbpSolver(SolverDO):
@@ -33,7 +33,7 @@ class GreedySalbpSolver(SolverDO):
         allocation_dict = {}
         scheduled = set()
         workload_per_station = defaultdict(lambda: 0)
-        while len(scheduled) < self.problem.number_of_tasks:
+        while len(scheduled) < self.problem.nb_tasks:
             next_one = next(
                 (
                     p
@@ -52,7 +52,7 @@ class GreedySalbpSolver(SolverDO):
             task_time = self.problem.task_times[next_one]
             next_time = next(
                 j
-                for j in range(minimal_start, self.problem.number_of_tasks)
+                for j in range(minimal_start, self.problem.nb_tasks)
                 if workload_per_station[j] + task_time <= self.problem.cycle_time
             )
             allocation_dict[next_one] = next_time
