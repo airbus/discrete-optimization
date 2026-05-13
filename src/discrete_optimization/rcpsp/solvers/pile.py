@@ -91,7 +91,7 @@ class PileRcpspSolver(RcpspSolver):
             one_mode_setting = result_storage[0]
             self.modes_dict = {}
             for i in range(len(one_mode_setting)):
-                self.modes_dict[i + 1] = one_mode_setting[i]
+                self.modes_dict[self.problem.tasks_list[i]] = one_mode_setting[i]
         else:
             self.modes_dict = {t: 1 for t in self.mode_details}
 
