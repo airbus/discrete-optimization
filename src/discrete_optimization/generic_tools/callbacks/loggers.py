@@ -109,12 +109,13 @@ class ProblemEvaluateLogger(Callback):
         self.current_res_len = 0
 
     def on_solve_end(self, res: ResultStorage, solver: SolverDO):
-        logger.log(
-            msg=f"Solve finished after {self.nb_iteration} iterations,"
-            f"last sol evaluate={solver.problem.evaluate(res[-1][0])}, "
-            f" Satisfy={solver.problem.satisfy(res[-1][0])}",
-            level=self.end_verbosity_level,
-        )
+        if len(res) > 0:
+            logger.log(
+                msg=f"Solve finished after {self.nb_iteration} iterations,"
+                f"last sol evaluate={solver.problem.evaluate(res[-1][0])}, "
+                f" Satisfy={solver.problem.satisfy(res[-1][0])}",
+                level=self.end_verbosity_level,
+            )
 
     def on_step_end(
         self, step: int, res: ResultStorage, solver: SolverDO
