@@ -1,11 +1,11 @@
 from matplotlib import pyplot as plt
 
-from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
-from discrete_optimization.salbp.parser import get_data_available, parse_alb_file
-from discrete_optimization.salbp.solvers.cpsat import (
+from discrete_optimization.alb.salbp.parser import get_data_available, parse_alb_file
+from discrete_optimization.alb.salbp.solvers.cpsat import (
     CpSatSalbp12Solver,
     SalbpProblem_1_2,
 )
+from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
 
 
 def run_cpsat():

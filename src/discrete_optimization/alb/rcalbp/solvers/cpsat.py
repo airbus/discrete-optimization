@@ -12,9 +12,6 @@ This module shows how each modeling approach handles shared resources:
 from enum import Enum
 from typing import Any
 
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.renewable_resource import (
-    RenewableResourceCpSatSolver,
-)
 from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
     IntervalVar,
@@ -43,7 +40,6 @@ class ModelingShared(Enum):
 
 
 class CpSatRcAlbpSolver(
-    RenewableResourceCpSatSolver[Task, Resource],
     AllocationCpSatSolver[Task, UnaryResource],
 ):
     """
