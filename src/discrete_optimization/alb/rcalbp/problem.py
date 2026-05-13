@@ -46,11 +46,17 @@ from copy import deepcopy
 from typing import Dict, Hashable, List, Optional, Set, Tuple
 
 import numpy as np
-from discrete_optimization.generic_tasks_tools.renewable_resource import (
-    RenewableResourceProblem,
-    RenewableResourceSolution,
-)
 
+# TODO: goto new api.
+# from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+#     CumulativeResourceProblem,
+#     CumulativeResourceSolution,
+#     OtherCalendarResource
+# )
+# from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+#      SinglemodeSchedulingProblem,
+#      SinglemodeSchedulingSolution
+# )
 from discrete_optimization.alb.base.problem import (
     BaseALBProblem,
     BaseALBSolution,
@@ -78,7 +84,9 @@ Resource = Hashable
 
 
 class RCALBPSolution(
-    BaseALBSolution[Task, Station], RenewableResourceSolution[Task, Resource]
+    BaseALBSolution[Task, Station],
+    # SinglemodeSchedulingSolution[Task],
+    # CumulativeResourceSolution[Task, Resource, OtherCalendarResource]
 ):
     """
     Solution for RC-ALBP problem.
@@ -421,7 +429,9 @@ class RCALBPSolution(
 
 
 class RCALBPProblem(
-    BaseALBProblem[Task, Station], RenewableResourceProblem[Task, Resource]
+    BaseALBProblem[Task, Station],
+    # SinglemodeSchedulingProblem[Task],
+    # CumulativeResourceProblem[Task, Resource, OtherCalendarResource]
 ):
     """
     Resource-Constrained Assembly Line Balancing Problem.
