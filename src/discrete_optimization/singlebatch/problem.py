@@ -1,6 +1,7 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 from dataclasses import dataclass
 
 from discrete_optimization.generic_tasks_tools.scheduling import (
@@ -18,6 +19,7 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.encoding_register import ListInteger
 
+logger = logging.getLogger(__name__)
 Task = int
 
 
@@ -149,11 +151,28 @@ class SingleBatchProcessingProblem(SchedulingProblem[Task]):
     def satisfy(self, variable: BatchProcessingSolution) -> bool:
         """Check if all capacity constraints are respected."""
         batch_sizes: dict[int, int] = {}
-
+        batch_duration: dict[int, int] = {}
         for job_idx, batch_id in enumerate(variable.job_to_batch):
             job = self.jobs[job_idx]
             batch_sizes[batch_id] = batch_sizes.get(batch_id, 0) + job.size
+            batch_duration[batch_id] = max(
+                batch_duration.get(batch_id, 0), job.processing_time
+            )
             if batch_sizes[batch_id] > self.capacity:
+                return False
+        sorted_batches = sorted(batch_sizes)
+        for i in range(len(variable.schedule_batch)):
+            if i >= 1:
+                if not (
+                    variable.schedule_batch[i][0] >= variable.schedule_batch[i - 1][1]
+                ):
+                    logger.info(f"Precedence between batches {i - 1}/{i} not respected")
+                    return False
+            if (
+                variable.schedule_batch[i][1] - variable.schedule_batch[i][0]
+                < batch_duration[sorted_batches[i]]
+            ):
+                logger.info(f"Duration of batch {i} lower than needed")
                 return False
         return True
 
