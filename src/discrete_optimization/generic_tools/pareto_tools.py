@@ -95,7 +95,6 @@ class CpsatParetoSolver(SolverDO):
                 break
             # Get candidate solution
             sol_candidate = res.get_best_solution()
-            print(status, sol_candidate)
             vals_candidate = [
                 self.dict_function[obj](sol_candidate) for obj in self.objective_names
             ]
