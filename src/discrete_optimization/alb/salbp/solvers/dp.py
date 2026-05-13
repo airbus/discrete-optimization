@@ -3,13 +3,13 @@
 #  LICENSE file in the root directory of this source tree.
 import math
 
+from discrete_optimization.alb.salbp.problem import SalbpProblem, SalbpSolution
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, dp
-from discrete_optimization.salbp.problem import SalbpProblem, SalbpSolution
 
 
 class DpSalbpSolver(DpSolver, WarmstartMixin):
@@ -32,12 +32,11 @@ class DpSalbpSolver(DpSolver, WarmstartMixin):
         c = self.problem.cycle_time
         # The weight in the first term of the second bound.
         weight_2_1 = [
-            1 if times[i] > c / 2 else 0 for i in range(self.problem.number_of_tasks)
+            1 if times[i] > c / 2 else 0 for i in range(self.problem.nb_tasks)
         ]
         # The weight in the second term of the second bound.
         weight_2_2 = [
-            1 / 2 if times[i] == c / 2 else 0
-            for i in range(self.problem.number_of_tasks)
+            1 / 2 if times[i] == c / 2 else 0 for i in range(self.problem.nb_tasks)
         ]
         # The weight in the third bound (truncated to three decimal points).
         weight_3 = [
@@ -50,10 +49,10 @@ class DpSalbpSolver(DpSolver, WarmstartMixin):
             else 1 / 3 // 0.001 * 1000
             if times[i] == c / 3
             else 0.0
-            for i in range(self.problem.number_of_tasks)
+            for i in range(self.problem.nb_tasks)
         ]
         self.model = dp.Model()
-        n_tasks = self.problem.number_of_tasks
+        n_tasks = self.problem.nb_tasks
         task = self.model.add_object_type(number=n_tasks)
         unscheduled = self.model.add_set_var(
             object_type=task, target=list(range(n_tasks))
@@ -160,7 +159,7 @@ class DpSalbpSolver(DpSolver, WarmstartMixin):
         print(tags)
 
     def retrieve_solution(self, sol: dp.Solution) -> Solution:
-        allocation = [0 for _ in range(self.problem.number_of_tasks)]
+        allocation = [0 for _ in range(self.problem.nb_tasks)]
         current_station = 0
         for i, t in enumerate(sol.transitions):
             transition = self.transition_dict[t.name]

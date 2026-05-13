@@ -6,6 +6,14 @@ from typing import Any
 
 from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExprT
 
+from discrete_optimization.alb.salbp.problem import (
+    Resource,
+    SalbpProblem,
+    SalbpProblem_1_2,
+    SalbpSolution,
+    Task,
+    calculate_salbp_lower_bounds,
+)
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
@@ -22,14 +30,6 @@ from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
-)
-from discrete_optimization.salbp.problem import (
-    Resource,
-    SalbpProblem,
-    SalbpProblem_1_2,
-    SalbpSolution,
-    Task,
-    calculate_salbp_lower_bounds,
 )
 
 

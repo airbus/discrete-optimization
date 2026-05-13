@@ -1,8 +1,12 @@
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
 import os
 from typing import Optional
 
+from discrete_optimization.alb.base.problem import TaskData
+from discrete_optimization.alb.salbp.problem import SalbpProblem
 from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
-from discrete_optimization.salbp.problem import SalbpProblem
 
 
 def get_data_available(
@@ -28,7 +32,6 @@ def get_data_available(
             if os.path.isdir(os.path.join(data_folder, f))
         ]
         files = []
-        print(subfolders)
         for subfolder in subfolders:
             sf = os.path.join(data_folder, subfolder)
             files.extend([os.path.join(sf, f) for f in os.listdir(sf) if "alb" in f])
@@ -133,9 +136,15 @@ def parse_alb_file(file_path: str) -> SalbpProblem:
     except StopIteration:
         pass
 
+    # Create TaskData objects from parsed data
+    tasks_data = [
+        TaskData(task_id=tid, processing_time=time)
+        for tid, time in data["task_times"].items()
+    ]
+
     return SalbpProblem(
-        data["number_of_tasks"],
-        data["cycle_time"],
-        data["task_times"],
-        data["precedence"],
+        tasks_data=tasks_data,
+        cycle_time=data["cycle_time"],
+        precedences=data["precedence"],
+        number_of_stations=data["number_of_tasks"],
     )

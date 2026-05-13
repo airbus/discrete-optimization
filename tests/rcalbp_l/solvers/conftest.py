@@ -4,8 +4,8 @@
 
 from pytest_cases import fixture
 
-from discrete_optimization.rcalbp_l.parser import get_data_available, parse_rcalbpl_json
-from discrete_optimization.rcalbp_l.problem import RCALBPLProblem
+from discrete_optimization.alb.rcalbp_l import get_data_available, parse_rcalbpl_json
+from discrete_optimization.alb.rcalbp_l.problem import RCALBPLProblem
 
 
 @fixture

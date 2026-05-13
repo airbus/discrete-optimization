@@ -2,14 +2,14 @@ import logging
 
 from matplotlib import pyplot as plt
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.rcalbp_l.parser import get_data_available, parse_rcalbpl_json
-from discrete_optimization.rcalbp_l.problem import (
+from discrete_optimization.alb.rcalbp_l import get_data_available, parse_rcalbpl_json
+from discrete_optimization.alb.rcalbp_l.problem import (
     RCALBPLProblem,
     RCALBPLSolution,
     plot_rcalbpl_dashboard,
 )
-from discrete_optimization.rcalbp_l.solvers.cpsat import CpSatRCALBPLSolver
+from discrete_optimization.alb.rcalbp_l.solvers import CpSatRCALBPLSolver
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,12 +36,12 @@ def main():
 def main_sequential():
     file = [f for f in get_data_available() if "187_2_26_2880.json" in f][0]
     problem = parse_rcalbpl_json(file)
+    from discrete_optimization.alb.rcalbp_l.solvers import (
+        BackwardSequentialRCALBPLSolverSGS,
+    )
     from discrete_optimization.generic_tools.sequential_metasolver import (
         SequentialMetasolver,
         SubBrick,
-    )
-    from discrete_optimization.rcalbp_l.solvers.meta_solvers import (
-        BackwardSequentialRCALBPLSolverSGS,
     )
 
     p = ParametersCp.default_cpsat()

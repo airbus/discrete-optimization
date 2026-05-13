@@ -12,6 +12,12 @@ from ortools.sat.python.cp_model import (
     LinearExprT,
 )
 
+from discrete_optimization.alb.rcalbp_l.problem import (
+    RCALBPLProblem,
+    RCALBPLSolution,
+    Task,
+    WorkStation,
+)
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationCpSatSolver,
@@ -20,12 +26,6 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
-from discrete_optimization.rcalbp_l.problem import (
-    RCALBPLProblem,
-    RCALBPLSolution,
-    Task,
-    WorkStation,
-)
 
 logger = logging.getLogger(__name__)
 

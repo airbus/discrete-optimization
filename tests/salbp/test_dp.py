@@ -1,8 +1,8 @@
+from discrete_optimization.alb.salbp.parser import get_data_available, parse_alb_file
+from discrete_optimization.alb.salbp.solvers.dp import DpSalbpSolver, dp
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.salbp.parser import get_data_available, parse_alb_file
-from discrete_optimization.salbp.solvers.dp import DpSalbpSolver, dp
 
 
 def test_dp():

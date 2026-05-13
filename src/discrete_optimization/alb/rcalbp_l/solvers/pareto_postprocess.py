@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
+from discrete_optimization.alb.rcalbp_l.problem import RCALBPLProblem, RCALBPLSolution
 from discrete_optimization.generic_tools.do_solver import (
     ParamsObjectiveFunction,
 )
@@ -13,7 +14,6 @@ from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSat
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcalbp_l.problem import RCALBPLProblem, RCALBPLSolution
 
 
 class RampUpParetoSolverPostpro(OrtoolsCpSatSolver):
