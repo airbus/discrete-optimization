@@ -7,8 +7,14 @@ from typing import Any, Dict, List, Optional
 import clingo
 import networkx as nx
 import pandas as pd
-from clingcon import ClingconTheory
 from clingo.ast import ProgramBuilder, parse_string
+
+try:
+    from clingcon import ClingconTheory
+except:
+    clingcon_available = False
+finally:
+    clingcon_available = True
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
