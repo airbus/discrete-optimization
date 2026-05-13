@@ -185,6 +185,11 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
         )
         self.nb_customers = len(self.customers)
 
+    def non_dummy_capacity(self) -> bool:
+        if self.vehicle_capacity is not None and self.vehicle_capacity != float("inf"):
+            return True
+        return False
+
     @property
     def unary_resources_list(self) -> list[UnaryResource]:
         return list(range(self.nb_vehicles))
