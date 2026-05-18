@@ -229,7 +229,8 @@ def fetch_data_from_psplib(data_home: Optional[str] = None):
     try:
         # download each datasets
         for dataset, prefix in PSPLIB_DATASETS.items():
-            url = f"{PSPLIB_FILES_BASE_URL}/{dataset}.zip"
+            name, mode = dataset.split(".")
+            url = f"https://www.om-db.wi.tum.de/psplib/download_dataset.php?set={name}&mode={mode}&format=zip"
             local_file_path, _ = urlretrieve(url)
             with zipfile.ZipFile(local_file_path) as zipf:
                 namelist = zipf.namelist()
