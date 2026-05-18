@@ -30,13 +30,16 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
 from discrete_optimization.generic_tasks_tools.scheduling import (
     Task,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpm import Cpm
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
     GenericSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     SinglemodeSchedulingCpSatSolver,
 )
-from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_problem import (
+    Solution,
+)
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 
 logger = logging.getLogger(__name__)
@@ -158,6 +161,8 @@ class GenericSchedulingAutoCpSatSolver(
     """Variables tracking total consumption of each (unary, cumulative, or non-renewable) resource."""
     resource_consumption_variables_created = False
     """Flag telling whether 'resource_consumption_variables' have been created"""
+    use_cpm_for_task_bounds = False
+    """Flag telling whether cpm should be used to refine task bounds."""
 
     @property
     def needs_duration_variables(self) -> bool:
@@ -195,17 +200,62 @@ class GenericSchedulingAutoCpSatSolver(
         """
         return True
 
+    def compute_task_bounds(self) -> None:
+        """Compute tighter bounds for tasks.
+
+        - if `use_cpm_for_task_bounds`, propagate bounds forward and backward in the precedence by
+        using the min possible duration for the task.
+        - else only use min possible duration with 0, new_horizon (set by the solver in `self.get_makespan_upper_bound()`)
+
+        """
+        if self.use_cpm_for_task_bounds:
+            cpm = Cpm(problem=self.problem, horizon=self.get_makespan_upper_bound())
+            cpm.compute_task_bounds()
+            self.tasks_bounds = cpm.get_task_bounds()
+        else:
+            self.tasks_bounds = {}
+            for task in self.problem.tasks_list:
+                start_lower_bound = self.problem.get_task_start_or_end_lower_bound(
+                    task=task, start_or_end=StartOrEnd.START
+                )
+                end_upper_bound = min(
+                    # use current bound + new "horizon"
+                    self.problem.get_task_start_or_end_upper_bound(
+                        task=task, start_or_end=StartOrEnd.END
+                    ),
+                    self.get_makespan_upper_bound(),
+                )
+                min_duration = min(
+                    self.problem.get_task_mode_duration(task=task, mode=mode)
+                    for mode in self.problem.get_task_modes(task=task)
+                )
+                end_lower_bound = max(
+                    # use start_lower bound + min_durations
+                    self.problem.get_task_start_or_end_lower_bound(
+                        task=task, start_or_end=StartOrEnd.END
+                    ),
+                    start_lower_bound + min_duration,
+                )
+                start_upper_bound = min(
+                    # use end_upper_bound - min_durations
+                    self.problem.get_task_start_or_end_upper_bound(
+                        task=task, start_or_end=StartOrEnd.START
+                    ),
+                    end_upper_bound - min_duration,
+                )
+                self.tasks_bounds[task] = (
+                    start_lower_bound,
+                    end_lower_bound,
+                    start_upper_bound,
+                    end_upper_bound,
+                )
+
     def get_task_start_or_end_lower_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:
         """Get a lower bound on start or end of a given task.
 
-        Default implementation:
-         - start: takes
-            - self.problem.get_task_start_or_end_upper_bound()
-        - end: best of
-            - self.problem.get_task_start_or_end_upper_bound()
-            - start_lower_bound + min(possible_durations)
+        Use either the bounds given in `__init__()` or computed via `compute_tasks_bounds()`.
 
         Args:
             task:
@@ -214,40 +264,21 @@ class GenericSchedulingAutoCpSatSolver(
         Returns:
 
         """
+        start_lower_bound, end_lower_bound, start_upper_bound, end_upper_bound = (
+            self.tasks_bounds[task]
+        )
         match start_or_end:
             case StartOrEnd.START:
-                # default to problem start lower bound
-                return self.problem.get_task_start_or_end_lower_bound(
-                    task=task, start_or_end=start_or_end
-                )
+                return start_lower_bound
             case _:
-                # deduce a bound from start lower bound and possible task durations
-                possible_durations = [
-                    self.problem.get_task_mode_duration(task=task, mode=mode)
-                    for mode in self.problem.get_task_modes(task=task)
-                ]
-                start_lower_bound = self.get_task_start_or_end_lower_bound(
-                    task=task, start_or_end=StartOrEnd.START
-                )
-                return max(
-                    self.problem.get_task_start_or_end_lower_bound(
-                        task=task, start_or_end=start_or_end
-                    ),
-                    start_lower_bound + min(possible_durations),
-                )
+                return end_lower_bound
 
     def get_task_start_or_end_upper_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:
         """Get an upper bound on start or end of a given task.
 
-        Default implementation:
-        - end: takes best of
-            - self.problem.get_task_start_or_end_upper_bound()
-            - self.get_makespan_upper_bound()
-        - start: best of
-            - self.problem.get_task_start_or_end_upper_bound()
-            - end_upper_bound - min(possible_durations)
+        Use either the bounds given in `__init__()` or computed via `compute_tasks_bounds()`.
 
         Args:
             task:
@@ -256,34 +287,28 @@ class GenericSchedulingAutoCpSatSolver(
         Returns:
 
         """
+        start_lower_bound, end_lower_bound, start_upper_bound, end_upper_bound = (
+            self.tasks_bounds[task]
+        )
         match start_or_end:
-            case StartOrEnd.END:
-                # take into account the "new" horizon given by makespan upper bound
-                return min(
-                    self.problem.get_task_start_or_end_upper_bound(
-                        task=task, start_or_end=start_or_end
-                    ),
-                    self.get_makespan_upper_bound(),
-                )
+            case StartOrEnd.START:
+                return start_upper_bound
             case _:
-                # deduce a bound from upper bound on end and possible task durations
-                possible_durations = [
-                    self.problem.get_task_mode_duration(task=task, mode=mode)
-                    for mode in self.problem.get_task_modes(task=task)
-                ]
-                end_upper_bound = self.get_task_start_or_end_upper_bound(
-                    task=task, start_or_end=StartOrEnd.END
-                )
-                return min(
-                    self.problem.get_task_start_or_end_upper_bound(
-                        task=task, start_or_end=start_or_end
-                    ),
-                    end_upper_bound - min(possible_durations),
-                )
+                return end_upper_bound
 
-    def init_model(self, **kwargs: Any) -> None:
+    def init_model(
+        self,
+        tasks_bounds: Optional[dict[Task, tuple[int, int, int, int]]] = None,
+        **kwargs: Any,
+    ) -> None:
         """Init cp model and reset stored variables if any."""
         super().init_model(**kwargs)
+
+        # pre-compute tasks start/end bounds ?
+        if tasks_bounds is None:
+            self.compute_task_bounds()
+        else:
+            self.tasks_bounds = tasks_bounds
 
         self._reset_variables()
         self._create_variables()
