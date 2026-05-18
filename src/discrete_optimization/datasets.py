@@ -52,6 +52,9 @@ JSPLIB_REPO_URL_SHA1 = "eea2b60dd7e2f5c907ff7302662c61812eb7efdf"
 MSLIB_DATASET_URL = "http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip"
 MSLIB_DATASET_RELATIVE_PATH = "MSLIB.zip"
 
+MMLIB_DATASET_URL = "https://www.projectmanagement.ugent.be/sites/default/files/datasets/MMRCPSP/MMLIB.zip"
+MMLIB_DATASET_RELATIVE_PATH = "MMLIB.zip"
+
 SALBP_OTTO_DATASET_URL = (
     "https://assembly-line-balancing.de/wp-content/uploads/2017/01/SALBP_benchmark.zip"
 )
@@ -313,14 +316,41 @@ def fetch_data_from_mspsplib_repo(data_home: Optional[str] = None):
             dataset_dir = f"{data_home}/MSPSP_Instances"
             os.makedirs(dataset_dir, exist_ok=True)
             dataset_prefix_in_zip = f"{rootdir}/instances/"
+
+            # Track files to move
+            filename_to_move = []
             for name in namelist:
                 if name.startswith(dataset_prefix_in_zip):
                     zipf.extract(name, path=dataset_dir)
-            for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
-                os.replace(
-                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
-                )
-            os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+                    filename_to_move.append(name)
+
+            # Move files while preserving directory structure
+            for datafile in filename_to_move:
+                # Skip directories
+                if os.path.isdir(os.path.join(dataset_dir, datafile)):
+                    continue
+                # Skip empty names
+                if len(os.path.basename(datafile)) == 0:
+                    continue
+
+                # Compute destination preserving subdirectory structure
+                relative_path = datafile.replace(dataset_prefix_in_zip, "")
+                destination = os.path.join(dataset_dir, relative_path)
+
+                # Create subdirectories if needed
+                dest_dir = os.path.dirname(destination)
+                if dest_dir and not os.path.exists(dest_dir):
+                    os.makedirs(dest_dir, exist_ok=True)
+
+                # Move file
+                source_path = os.path.join(dataset_dir, datafile)
+                if os.path.exists(source_path):
+                    os.replace(src=source_path, dst=destination)
+
+            # Clean up temporary extraction directory
+            temp_root = os.path.join(dataset_dir, rootdir)
+            if os.path.exists(temp_root):
+                shutil.rmtree(temp_root)
     finally:
         urlcleanup()
 
@@ -346,6 +376,32 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
             # extract only data
             with zipfile.ZipFile(local_file_path) as zipf:
                 zipf.extractall(path=rcpsp_multiskill_dir)
+    finally:
+        # remove temporary files
+        urlcleanup()
+
+
+def fetch_data_from_mmlib(data_home: Optional[str] = None):
+    """Fetch data from MMLIB for multi-mode rcpsp examples.
+    cf https://www.projectmanagement.ugent.be/research/project_scheduling/MRCPSP/datasets
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get mmlib data directory
+    mmlib_dir = f"{data_home}/mmlib"
+    os.makedirs(mmlib_dir, exist_ok=True)
+
+    try:
+        # download dataset
+        local_file_path, headers = urlretrieve(MMLIB_DATASET_URL)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # extract only data
+            with zipfile.ZipFile(local_file_path) as zipf:
+                zipf.extractall(path=mmlib_dir)
     finally:
         # remove temporary files
         urlcleanup()
@@ -822,6 +878,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_weighted_tardiness_single_machine(data_home=data_home)
     fetch_data_tsptw(data_home=data_home)
     fetch_data_from_mslib(data_home=data_home)
+    fetch_data_from_mmlib(data_home=data_home)
     fetch_data_from_mspsplib_repo(data_home=data_home)
     fetch_data_from_alb(data_home=data_home)
     fetch_data_from_top(data_home=data_home)
