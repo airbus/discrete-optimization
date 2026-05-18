@@ -20,7 +20,7 @@ from discrete_optimization.generic_tools.study import (
     Hdf5Database,
     SolverConfig,
 )
-from discrete_optimization.rcpsp.parser import parse_file
+from discrete_optimization.rcpsp.parser import parse_mmlib
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp.solvers.optal import OptalRcpspSolver
 
@@ -75,7 +75,7 @@ def run_study():
             logging.info(f"###### Instance {instance}, config {config_name} ######\n\n")
             try:
                 # init problem
-                problem = parse_file(instance)
+                problem = parse_mmlib(instance)
                 # init solver
                 stats_cb = StatsWithBoundsCallback()
                 solver = solver_config.cls(problem, **solver_config.kwargs)

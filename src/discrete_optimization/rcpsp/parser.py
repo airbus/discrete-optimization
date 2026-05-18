@@ -390,8 +390,6 @@ def parse_file(file_path: str) -> RcpspProblem:
         input_data = input_data_file.read()
         if file_path.endswith(".rcp"):
             rcpsp_problem = parse_patterson(input_data)
-        elif file_path.endswith(".mm"):
-            rcpsp_problem = parse_mmlib(input_data)
         else:
             rcpsp_problem = parse_psplib(input_data)
         return rcpsp_problem
