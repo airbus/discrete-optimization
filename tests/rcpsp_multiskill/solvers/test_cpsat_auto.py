@@ -225,16 +225,14 @@ def test_constraint_nb_allocation_changes(problem):
     for sol, _ in res:
         print(sol.compute_nb_allocation_changes(ref))
     sol, _ = res[0]
-    nb_changes_max = 4
+    nb_changes_max = 1
     assert sol.compute_nb_allocation_changes(ref) > nb_changes_max
     sol = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
     assert sol.compute_nb_allocation_changes(ref) > nb_changes_max
     solver.add_constraint_on_nb_allocation_changes(ref=ref, nb_changes=nb_changes_max)
-    sol = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)]
-    ).get_best_solution()
+    sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[0]
     assert sol.compute_nb_allocation_changes(ref) <= nb_changes_max
 
 
@@ -248,7 +246,7 @@ def test_constraint_same_allocation_as_ref(problem):
     sol: MultiskillRcpspSolution
     for sol, _ in res:
         print(sol.compute_nb_allocation_changes(ref))
-    nb_changes_max = 4
+    nb_changes_max = 1
     sol = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
