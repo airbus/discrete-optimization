@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import copy
 import logging
+import re
 from copy import deepcopy
-from typing import Iterable, Union
+from typing import Any, Iterable, Optional, Union
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -29,6 +31,8 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
+    ParamsObjectiveFunction,
+    Problem,
     Solution,
     TypeObjective,
 )
@@ -213,6 +217,22 @@ class MyAutoCpsatSolver(
     ) -> MySolution:
         return MySolution(problem=self.problem, temp_sol=temp_sol)
 
+    def __init__(
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        new_horizon: Optional[int] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(problem, params_objective_function, **kwargs)
+        self.new_horizon = new_horizon
+
+    def get_makespan_upper_bound(self) -> int:
+        if self.new_horizon is None:
+            return super().get_makespan_upper_bound()
+        else:
+            return self.new_horizon
+
 
 def test_problem(caplog):
     problem = MyProblem()
@@ -393,3 +413,61 @@ def test_auto(objective):
     )
     sol, fit = res[0]
     assert sol.temp_sol.task_variables == bad_sol.temp_sol.task_variables
+
+
+def test_task_bounds_user():
+    problem = MyProblem()
+    solver = MyAutoCpsatSolver(problem=problem)
+    task_bounds = {"task-1": (2, 1, 3, 9), "task-2": (0, 7, 4, 10)}
+    solver.init_model(tasks_bounds=task_bounds)
+    assert solver.tasks_bounds == task_bounds
+    for task, (slb, elb, sub, eub) in task_bounds.items():
+        # start bounds
+        var = solver.start_or_end_variables[task, StartOrEnd.START]
+        m = re.match(r".*\(([0-9]*)..([0-9]*)\)", repr(var))
+        lb, ub = int(m[1]), int(m[2])
+        assert (lb, ub) == (slb, sub)
+        # end bounds
+        var = solver.start_or_end_variables[task, StartOrEnd.END]
+        m = re.match(r".*\(([0-9]*)..([0-9]*)\)", repr(var))
+        lb, ub = int(m[1]), int(m[2])
+        assert (lb, ub) == (elb, eub)
+
+
+def test_task_bounds_simple():
+    problem = MyProblem()
+    solver = MyAutoCpsatSolver(problem=problem, new_horizon=8)
+    solver.use_cpm_for_task_bounds = False
+    solver.init_model()
+    assert solver.tasks_bounds == {"task-1": (0, 1, 7, 8), "task-2": (0, 4, 4, 8)}
+
+    var = solver.start_or_end_variables["task-1", StartOrEnd.START]
+    m = re.match(r".*\(([0-9]*)..([0-9]*)\)", repr(var))
+    lb, ub = int(m[1]), int(m[2])
+    assert (lb, ub) == (0, 7)
+
+    var = solver.start_or_end_variables["task-1", StartOrEnd.END]
+    m = re.match(r".*\(([0-9]*)..([0-9]*)\)", repr(var))
+    lb, ub = int(m[1]), int(m[2])
+    assert (lb, ub) == (1, 8)
+
+
+def test_task_bounds_cpm():
+    problem = MyProblem()
+    solver = MyAutoCpsatSolver(problem=problem, new_horizon=8)
+    solver.use_cpm_for_task_bounds = True
+    solver.init_model()
+
+    task_bounds = {"task-1": (0, 1, 3, 4), "task-2": (1, 5, 4, 8)}
+    assert solver.tasks_bounds == task_bounds
+    for task, (slb, elb, sub, eub) in task_bounds.items():
+        # start bounds
+        var = solver.start_or_end_variables[task, StartOrEnd.START]
+        m = re.match(r".*\(([0-9]*)..([0-9]*)\)", repr(var))
+        lb, ub = int(m[1]), int(m[2])
+        assert (lb, ub) == (slb, sub)
+        # end bounds
+        var = solver.start_or_end_variables[task, StartOrEnd.END]
+        m = re.match(r".*\(([0-9]*)..([0-9]*)\)", repr(var))
+        lb, ub = int(m[1]), int(m[2])
+        assert (lb, ub) == (elb, eub)

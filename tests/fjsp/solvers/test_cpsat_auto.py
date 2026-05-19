@@ -26,7 +26,7 @@ from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSat
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.jsp.problem import JobShopProblem
+from discrete_optimization.jsp.problem import JobShopProblem, Subjob
 
 logging.basicConfig(level=logging.INFO)
 
@@ -358,3 +358,44 @@ def test_cpsat_retrieve_stats_via_clb():
     # assert res.stats[-1]["bound"] == solver.solver.BestObjectiveBound()
     sol, _ = res.get_best_solution_fit()
     assert problem.satisfy(sol)
+
+
+def test_task_bounds():
+    problem = FJobShopProblem(
+        list_jobs=[
+            Job(
+                job_id=0,
+                sub_jobs=[
+                    [
+                        Subjob(machine_id=0, processing_time=1),
+                        Subjob(machine_id=1, processing_time=2),
+                    ],
+                    [
+                        Subjob(machine_id=0, processing_time=2),
+                        Subjob(machine_id=1, processing_time=1),
+                    ],
+                ],
+            ),
+            Job(
+                job_id=1,
+                sub_jobs=[
+                    [
+                        Subjob(machine_id=0, processing_time=1),
+                        Subjob(machine_id=1, processing_time=2),
+                    ],
+                    [
+                        Subjob(machine_id=0, processing_time=2),
+                        Subjob(machine_id=1, processing_time=3),
+                    ],
+                ],
+            ),
+        ]
+    )
+    solver = CpSatAutoFjspSolver(problem=problem)
+    solver.init_model()
+    assert (solver.tasks_bounds) == {
+        (0, 0): (0, 1, 7, 8),
+        (0, 1): (1, 2, 8, 9),
+        (1, 0): (0, 1, 6, 7),
+        (1, 1): (1, 3, 7, 9),
+    }
