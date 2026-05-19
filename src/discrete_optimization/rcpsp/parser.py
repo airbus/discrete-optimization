@@ -385,6 +385,12 @@ def parse_mmlib(input_data: str) -> RcpspProblem:
     )
 
 
+def parse_file_mmlib(file_path: str) -> RcpspProblem:
+    with open(file_path, "r", encoding="utf-8") as input_data_file:
+        input_data = input_data_file.read()
+        return parse_mmlib(input_data)
+
+
 def parse_file(file_path: str) -> RcpspProblem:
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
