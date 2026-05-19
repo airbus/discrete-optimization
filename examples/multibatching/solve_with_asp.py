@@ -55,15 +55,15 @@ def script():
     )
     solver = ClingconMultibatchingSolver(problem)
     use_shortest_path_heuristic = True
-    sp_tolerance = 0.8
+    sp_tolerance = 0.2
     solver.init_model(
         restrict_to_shortest_paths=use_shortest_path_heuristic,
         shortest_path_tolerance=sp_tolerance,
     )
-    time_limit = 200
+    time_limit = 100
     print(f"Starting solve with {time_limit}s timeout...")
     result_storage = solver.solve(
-        callbacks=[ProblemEvaluateLogger(logging.INFO, logging.INFO)],
+        callbacks=[],
         time_limit=time_limit,
     )
     # 4. Retrieve and display results
@@ -86,22 +86,18 @@ def script():
                 best_sol_ = sol_
                 best_sol_for_postpro = result_storage[i][0]
         print("total costs Greedy : ", best_val, f"({best_val:.2e})")
-        # 2691259.5968169933(2.69e+06)
-        # 2685243.3591831937(2.69e+06)
-        # 2685243.3591831937(2.69e+06)
 
-        # 2671101.9480577074 (2.67e+06)
-        # 2664817.789103617 (2.66e+06)
-        # 2664817.789103617 (2.66e+06)
-        print(problem.satisfy(best_sol_))
+        time_limit_per_link = 5
 
         pack = PackingViaBinPacking(problem)
         pack.init_from_solution(best_sol_for_postpro)
         p = ParametersCp.default_cpsat()
         p.nb_process = 8
         res = pack.solve(
-            bin_packing_solver=SubBrick(AspBinPackingSolver, {}), time_limit_per_link=2
+            bin_packing_solver=SubBrick(AspBinPackingSolver, {}), time_limit_per_link=time_limit_per_link
         )
+        if len(res) == 0:
+            logger.info("Bin packing found no solution")
         sol_ = res.get_best_solution()
         value = sum(problem.evaluate(sol_).values())
         print("total costs ASP : ", value, f"({value:.2e})")
@@ -116,8 +112,10 @@ def script():
                 CpSatBinPackSolver,
                 {"parameters_cp": p, "modeling": ModelingBinPack.SCHEDULING},
             ),
-            time_limit_per_link=2,
+            time_limit_per_link=time_limit_per_link,
         )
+        if len(res) == 0:
+            logger.info("Bin packing found no solution")
         sol_ = res.get_best_solution()
         value = sum(problem.evaluate(sol_).values())
         print("total costs CP RbR : ", value, f"({value:.2e})")
@@ -130,7 +128,6 @@ def script():
         value = sum(problem.evaluate(sol_).values())
         print("total costs GLOBAL CP : ", value, f"({value:.2e})")
         print(problem.satisfy(sol_))
-
 
 if __name__ == "__main__":
     script()
