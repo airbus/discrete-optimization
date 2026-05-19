@@ -1,7 +1,7 @@
-#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-"""CPM toc ompute lower/uppe bound on start/end of tasks"""
+"""CPM to compute lower/uppe bound on start/end of tasks"""
 
 import logging
 from dataclasses import dataclass
@@ -90,22 +90,30 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
             node: nx.algorithms.ancestors(self.graph_nx, node)
             for node in self.graph_nx.nodes()
         }
+        self.successors = {
+            node: nx.algorithms.descendants(self.graph_nx, node)
+            for node in self.graph_nx.nodes()
+        }
+        self._computed = False
 
     def compute_task_bounds(self) -> None:
+        """Compute task bounds by forxard/backward propagation through precedence graph
+
+        Returns:
+
+        """
         # Forward pass for lower bounds
         # starting nodes: without ancestors, start lower bound = 0
         queue = [
             (0, self.node_to_index[node])
-            for node in self.graph_nx.nodes()
-            if len(nx.algorithms.ancestors(self.graph_nx, node)) == 0
+            for node, preds in self.predecessors.items()
+            if len(preds) == 0
         ]
         self._propagate_forward_bounds_through_graph(queue)
 
         # Check if horizon is sufficient for earliest finish date found
         last_tasks = [
-            node
-            for node in self.graph_nx.nodes()
-            if len(nx.algorithms.descendants(self.graph_nx, node)) == 0
+            node for node, succs in self.successors.items() if len(succs) == 0
         ]
         # optimal makespan if there were no constraints apart from precedence
         self.makespan_cpm = max(
@@ -121,6 +129,8 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
         queue = [(-self.horizon, self.node_to_index[node]) for node in last_tasks]
         self._propagate_backward_bounds_through_graph(queue)
 
+        self._computed = True
+
     def get_task_bounds(self) -> dict[Task, tuple[int, int, int, int]]:
         """Return computed bounds on task start and end.
 
@@ -128,6 +138,8 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
             start_lower_bound, end_lower_bound, start_upper_bound, end_upper_bound
 
         """
+        if not self._computed:
+            self.compute_task_bounds()
         return {
             task: (
                 bounds.start_lower_bound,
@@ -139,10 +151,18 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
         }
 
     def get_a_critical_path(self) -> list[Task]:
+        """Compute a critical path.
+
+        It takes into account no other constraints that precedence constraints.
+        It starts from a task without predecessor to a task without successor.
+
+        Returns:
+
+        """
+        if not self._computed:
+            self.compute_task_bounds()
         last_tasks = [
-            node
-            for node in self.graph_nx.nodes()
-            if len(nx.algorithms.descendants(self.graph_nx, node)) == 0
+            node for node, succs in self.successors.items() if len(succs) == 0
         ]
         critical_path = []
         preds = []
@@ -170,6 +190,45 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
                     break
             preds = new_preds
         return critical_path[::-1]
+
+    def get_critical_subgraph(self) -> nx.DiGraph:
+        """Compute critical subgraph.
+
+        It includes all critical nodes.
+
+        Returns:
+            a subgraph *view* of precedence graph `self.graph_nx`
+            (so beware that attributes are shared with original graph)
+
+        """
+        if not self._computed:
+            self.compute_task_bounds()
+        last_tasks = [
+            node for node, succs in self.successors.items() if len(succs) == 0
+        ]
+        critical_nodes = set()
+        critical_nodes_to_review = []
+        # Init: critical nodes among last tasks
+        for node in last_tasks:
+            if self.map_node[node].end_lower_bound == self.makespan_cpm:
+                # critical last task
+                critical_nodes_to_review.append(node)
+        # Go backward from there
+        while len(critical_nodes_to_review) > 0:
+            critical_node = critical_nodes_to_review.pop()
+            critical_nodes.add(critical_node)
+            for node in self.immediate_predecessors[critical_node]:
+                if (
+                    self.map_node[node].start_lower_bound
+                    == self.map_node[node].start_upper_bound
+                    - self.horizon
+                    + self.makespan_cpm
+                    and self.map_node[node].end_lower_bound
+                    == self.map_node[critical_node].start_lower_bound
+                ):
+                    critical_nodes_to_review.append(node)
+
+        return self.graph_nx.subgraph(critical_nodes)
 
     def _propagate_forward_bounds_through_graph(self, queue):
         done = set()
