@@ -48,7 +48,7 @@ offer(P, L, 0)   :- product(P), location(L), not hasOffer(P, L).
 requiredNet(P, L, Net) :- demand(P,L,D), offer(P,L,O), Net = D - O.
 requiredNet(P, L, 0) :- not demand(P,L,_), not offer(P,L,_), location(L), product(P).
 
-flow(From, To, TR, P) :- possibleFlow(From, To, TR, P), productTR(P,TR).
+flow(From, To, TR, P) :- possibleFlow(From, To, TR, P).
 
 tRCapSmall(TR,Cap) :- transportCapacity(TR,CapB), Cap=CapB/cap_size_divide.
 productSizeSmall(P,S) :- productSize(P,SB), S = SB/cap_size_divide.
