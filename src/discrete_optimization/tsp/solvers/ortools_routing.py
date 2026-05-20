@@ -13,6 +13,10 @@ from typing import Any, Optional
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.tsp.problem import TspProblem, TspSolution
@@ -91,8 +95,15 @@ class ORtoolsTspSolver(TspSolver):
         self.routing = routing
         self.search_parameters = search_parameters
 
-    def solve(self, time_limit: Optional[int] = 100, **kwargs: Any) -> ResultStorage:
+    def solve(
+        self,
+        callbacks: Optional[list[Callback]] = None,
+        time_limit: Optional[int] = 100,
+        **kwargs: Any,
+    ) -> ResultStorage:
         """Prints solution on console."""
+        cb = CallbackList(callbacks)
+        cb.on_solve_start(self)
         if self.routing is None:
             self.init_model(**kwargs)
         self.search_parameters.time_limit.seconds = int(time_limit)
@@ -119,6 +130,9 @@ class ORtoolsTspSolver(TspSolver):
             length=None,
         )
         fitness = self.aggreg_from_sol(variableTsp)
-        return self.create_result_storage(
+        result = self.create_result_storage(
             [(variableTsp, fitness)],
         )
+        cb.on_step_end(0, result, self)
+        cb.on_solve_end(result, self)
+        return result
