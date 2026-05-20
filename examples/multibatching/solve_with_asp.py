@@ -43,12 +43,12 @@ def script():
     )
     solver = ClingconMultibatchingSolver(problem)
     use_shortest_path_heuristic = True
-    sp_tolerance = 0.2
+    sp_tolerance = 0.4
     solver.init_model(
         restrict_to_shortest_paths=use_shortest_path_heuristic,
         shortest_path_tolerance=sp_tolerance,
     )
-    time_limit = 20
+    time_limit = 100
     print(f"Starting solve with {time_limit}s timeout...")
     result_storage = solver.solve(
         callbacks=[],

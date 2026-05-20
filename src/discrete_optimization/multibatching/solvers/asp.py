@@ -7,7 +7,14 @@ from typing import Any, Dict, List, Optional
 import clingo
 import networkx as nx
 import pandas as pd
-from clingcon import ClingconTheory
+
+clingcon_available = False
+try:
+    from clingcon import ClingconTheory
+except:
+    clingcon_available = False
+finally:
+    clingcon_available = True
 from clingo.ast import ProgramBuilder, parse_string
 
 from discrete_optimization.generic_tools.callbacks.callback import (
@@ -209,7 +216,7 @@ class ClingconMultibatchingSolver(SolverDO):
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.ctl: Optional[clingo.Control] = None
-        self.theory: Optional[ClingconTheory] = None
+        self.theory: Optional["ClingconTheory"] = None
         self.name_to_location: Dict[str, Any] = {}
         self.name_to_transport_type: Dict[str, Any] = {}
         self.name_to_product: Dict[str, Any] = {}
