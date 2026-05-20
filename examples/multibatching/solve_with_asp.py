@@ -59,28 +59,13 @@ def script():
     if solution == None:
         print("UNSAT")
     else:
-        # solution = result_storage[-1][0]
-        # best_sol_for_postpro = None
-        # best_sol_ = None
-        # best_val = float("inf")
-        # for i in range(len(result_storage)):
-        #    pack = GreedyPackingForMultibatching(problem)
-        #    pack.init_from_solution(result_storage[i][0])
-        #    res = pack.solve()
-        #    sol_ = res.get_best_solution()
-        #    value = sum(problem.evaluate(sol_).values())
-        #    if value < best_val:
-        #        best_val = value
-        #        best_sol_ = sol_
-        #        best_sol_for_postpro = result_storage[i][0]
-        # print("total costs Greedy : ", best_val, f"({best_val:.2e})")
         time_limit_per_link = 5
         pack = PackingViaBinPacking(problem)
         pack.init_from_solution(solution)
         res = pack.solve(time_limit_per_link=time_limit_per_link)
         sol_ = res.get_best_solution()
         value = sum(problem.evaluate(sol_).values())
-        print("total costs:", value, f"({value:.2e})")
+        print("total costs CP RbR : ", value, f"({value:.2e})")
         print(problem.satisfy(sol_))
 
 
