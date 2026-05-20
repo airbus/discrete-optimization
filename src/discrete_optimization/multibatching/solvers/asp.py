@@ -7,9 +7,8 @@ from typing import Any, Dict, List, Optional
 import clingo
 import networkx as nx
 import pandas as pd
-from clingo.ast import ProgramBuilder, parse_string
-
 from clingcon import ClingconTheory
+from clingo.ast import ProgramBuilder, parse_string
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -68,7 +67,7 @@ freq(1..max_freq).
 &sum{S*load(F, T, TR, P) : flow(F, T, TR, P),productSizeSmall(P,S)} <= TotalCap :-
 routeFreq(F, T, TR, Freq, TotalCap).
 % lower bound
-:- &sum{S*load(F, T, TR, P) :flow(F, T, TR, P),productSizeSmall(P,S)} <= Minus1 , 
+:- &sum{S*load(F, T, TR, P) :flow(F, T, TR, P),productSizeSmall(P,S)} <= Minus1 ,
 routeFreq(F, T, TR, Freq, TotalCap), tRCapSmall(TR,C), Minus1=TotalCap-C, Freq>1.
 
 :- &sum{flow_in(P,L)}>0, demandOffer(P,L,N), N>0.
@@ -91,34 +90,116 @@ class ClingconMultibatchingSolver(SolverDO):
     modelIndex = 0
     start_solving = 0
 
-
     modelAtomTemplates = [
-                {'name':'totalSupply', 'filter':lambda s: s.name=='totalSupply', 'columns':['product' ,'amount']},
-                {'name':'route', 'filter':lambda s: s.name=='route', 'columns':['idx','from' ,'to', 'transportresource', 'distance','cost']},
-                {'name':'routeCostTotal', 'filter':lambda s: s.name=='routeCostTotal', 'columns':['from' ,'to', 'transportresource', 'cost']},
-                {'name':'routeFreq','filter':lambda s: s.name=='routeFreq', 'columns':['from', 'to', 'transportresource','freq','maxcapacity']},
-                {'name':'activeFlow','filter':lambda s: s.name=='activeFlow', 'columns':['from', 'to', 'transportresource',"product"]},
-                {'name':'demandOffer','filter':lambda s: s.name=='demandOffer', 'columns':['product', 'location', 'amount']},
-                {'name':'requiredNet','filter':lambda s: s.name=='requiredNet', 'columns':['product', 'location', 'amount']},
-                {'name':'productTR','filter':lambda s: s.name=='productTR', 'columns':['product', 'transportresource']},
-                {'name':'productSize','filter':lambda s: s.name=='productSize', 'columns':['product', 'size']},
-                {'name':'possibleFlow','filter':lambda s: s.name=='possibleFlow', 'columns':['from', 'to', 'transportresource','product']},
-                {'name':'transportCapacity','filter':lambda s: s.name=='transportCapacity', 'columns':['transportresource', 'capacity']},
-                {'name':'transportCost','filter':lambda s: s.name=='transportCost', 'columns':['transportresource', 'transportationCost']},
-                {'name':'transportCO2','filter':lambda s: s.name=='transportCO2', 'columns':['transportresource', 'CO2']},
-                {'name':'productOnFlow','filter':lambda s: s.name=='productOnFlow', 'columns':['from', 'to', 'transportresource','product','amount']}
-            ]
+        {
+            "name": "totalSupply",
+            "filter": lambda s: s.name == "totalSupply",
+            "columns": ["product", "amount"],
+        },
+        {
+            "name": "route",
+            "filter": lambda s: s.name == "route",
+            "columns": ["idx", "from", "to", "transportresource", "distance", "cost"],
+        },
+        {
+            "name": "routeCostTotal",
+            "filter": lambda s: s.name == "routeCostTotal",
+            "columns": ["from", "to", "transportresource", "cost"],
+        },
+        {
+            "name": "routeFreq",
+            "filter": lambda s: s.name == "routeFreq",
+            "columns": ["from", "to", "transportresource", "freq", "maxcapacity"],
+        },
+        {
+            "name": "activeFlow",
+            "filter": lambda s: s.name == "activeFlow",
+            "columns": ["from", "to", "transportresource", "product"],
+        },
+        {
+            "name": "demandOffer",
+            "filter": lambda s: s.name == "demandOffer",
+            "columns": ["product", "location", "amount"],
+        },
+        {
+            "name": "requiredNet",
+            "filter": lambda s: s.name == "requiredNet",
+            "columns": ["product", "location", "amount"],
+        },
+        {
+            "name": "productTR",
+            "filter": lambda s: s.name == "productTR",
+            "columns": ["product", "transportresource"],
+        },
+        {
+            "name": "productSize",
+            "filter": lambda s: s.name == "productSize",
+            "columns": ["product", "size"],
+        },
+        {
+            "name": "possibleFlow",
+            "filter": lambda s: s.name == "possibleFlow",
+            "columns": ["from", "to", "transportresource", "product"],
+        },
+        {
+            "name": "transportCapacity",
+            "filter": lambda s: s.name == "transportCapacity",
+            "columns": ["transportresource", "capacity"],
+        },
+        {
+            "name": "transportCost",
+            "filter": lambda s: s.name == "transportCost",
+            "columns": ["transportresource", "transportationCost"],
+        },
+        {
+            "name": "transportCO2",
+            "filter": lambda s: s.name == "transportCO2",
+            "columns": ["transportresource", "CO2"],
+        },
+        {
+            "name": "productOnFlow",
+            "filter": lambda s: s.name == "productOnFlow",
+            "columns": ["from", "to", "transportresource", "product", "amount"],
+        },
+    ]
 
-    modelAggregateTemplates = [ 
-                            {'name':'route_freq_cap','filter':lambda s: s.name=='route_freq_cap', 'columns':['from', 'to', 'transportresource','freq', 'total']},
-                             {'name':'flow_out', 'filter':lambda s: s.name=='flow_out', 'columns':['product' ,'location', 'amount']},
-                            {'name':'flow_in', 'filter':lambda s: s.name=='flow_in', 'columns':['product' ,'location', 'amount']},
-                            {'name':'req', 'filter':lambda s: s.name=='req', 'columns':['product' ,'location', 'amount']},
-                            {'name':'route_cost_total', 'filter':lambda s: s.name=='route_cost_total', 'columns':['from' ,'to', 'transportresource', 'cost']},
-                            {'name':'load', 'filter':lambda s: s.name=='load', 'columns':['from' ,'to', 'transportresource', 'product', 'amount']},
-                            {'name':'active_flow', 'filter':lambda s: s.name=='active_flow', 'columns':['from' ,'to', 'transportresource','val']}
-                            ]
-
+    modelAggregateTemplates = [
+        {
+            "name": "route_freq_cap",
+            "filter": lambda s: s.name == "route_freq_cap",
+            "columns": ["from", "to", "transportresource", "freq", "total"],
+        },
+        {
+            "name": "flow_out",
+            "filter": lambda s: s.name == "flow_out",
+            "columns": ["product", "location", "amount"],
+        },
+        {
+            "name": "flow_in",
+            "filter": lambda s: s.name == "flow_in",
+            "columns": ["product", "location", "amount"],
+        },
+        {
+            "name": "req",
+            "filter": lambda s: s.name == "req",
+            "columns": ["product", "location", "amount"],
+        },
+        {
+            "name": "route_cost_total",
+            "filter": lambda s: s.name == "route_cost_total",
+            "columns": ["from", "to", "transportresource", "cost"],
+        },
+        {
+            "name": "load",
+            "filter": lambda s: s.name == "load",
+            "columns": ["from", "to", "transportresource", "product", "amount"],
+        },
+        {
+            "name": "active_flow",
+            "filter": lambda s: s.name == "active_flow",
+            "columns": ["from", "to", "transportresource", "val"],
+        },
+    ]
 
     def __init__(
         self,
@@ -142,7 +223,7 @@ class ClingconMultibatchingSolver(SolverDO):
         """Ensures input is a valid integer for Clingcon constraints."""
         try:
             return int(float(val))  # float handles "10.0" strings better than int()
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
             logger.debug(f"Error sanitizing value {val}: {e}")
 
     def precompute_valid_links(self, tolerance: float = 0.0) -> Dict[int, set]:
@@ -337,13 +418,13 @@ class ClingconMultibatchingSolver(SolverDO):
         def on_model_wrapper(model: clingo.Model):
             try:
                 self.modelIndex += 1
-                logger.info(
-                    f"Model [{self.modelIndex}] found."
-                )
+                logger.info(f"Model [{self.modelIndex}] found.")
                 sol = self.retrieve_solution(model)
                 fit = self.aggreg_from_sol(sol)
                 res.append((sol, fit))
-                stopping = callbacks_list.on_step_end(step=len(res), res=res, solver=self)
+                stopping = callbacks_list.on_step_end(
+                    step=len(res), res=res, solver=self
+                )
                 return not stopping
             except Exception as e:
                 logger.error(f"Error in on_model_wrapper: {e}", exc_info=True)
@@ -373,19 +454,6 @@ class ClingconMultibatchingSolver(SolverDO):
     def retrieve_solution(self, model: clingo.Model) -> MultibatchingSolution:
         assignment = list(self.theory.assignment(model.thread_id))
         flows_aggregation = defaultdict(lambda: defaultdict(int))
-
-        # Extract routeFreq atoms from the ASP model
-        route_freq_map = {}
-        for symbol in model.symbols(atoms=True):
-            if symbol.name == "routeFreq":
-                args = symbol.arguments
-                from_loc = str(args[0])
-                to_loc = str(args[1])
-                tr = str(args[2])
-                freq = args[3].number if hasattr(args[3], "number") else int(args[3])
-                route_freq_map[(from_loc, to_loc, tr)] = freq
-
-        logger.debug(f"Extracted {len(route_freq_map)} route frequencies from model")
 
         for template in self.modelAggregateTemplates:
             df = pd.DataFrame(data={}, columns=template["columns"])
@@ -462,28 +530,16 @@ class ClingconMultibatchingSolver(SolverDO):
         list_flows = []
 
         for link, product_quantities in flows_aggregation.items():
-            from_loc = self.sanitize(link.location_l1.name)
-            to_loc = self.sanitize(link.location_l2.name)
-            mode = self.sanitize(link.transport_type.name)
-
-            # Get the actual frequency from the ASP model
-            route_key = (from_loc, to_loc, mode)
-            freq = route_freq_map.get(route_key, 1)
-
-            # Convert total quantities to per-trip quantities
-            # In ASP: load(F,T,TR,P) = total quantity across all trips
-            # In Python: product_packing should be integer per-trip quantities
-            # NOTE: Using round() to get closest integer. This preserves total flow
-            # while satisfying integer constraint. Minor rounding may cause small
-            # capacity violations, but these will be fixed in post-processing step.
+            # Store the total quantities directly with frequency=1
+            # This preserves exact flow balance from the ASP model
+            # The post-processing step (PackingViaBinPacking or GreedyPackingForMultibatching)
+            # will handle splitting into feasible trips
             packing = {}
             for p, total_quantity in product_quantities.items():
                 if total_quantity > 0:
-                    # Round to nearest integer to satisfy validation
-                    per_trip_quantity = round(total_quantity / freq)
-                    packing[p] = per_trip_quantity
+                    packing[p] = int(total_quantity)
 
-            list_flows.append(PackingTransport(link, packing, freq))
+            list_flows.append(PackingTransport(link, packing, nb_packing=1))
 
         sol = MultibatchingSolution(problem=self.problem, list_flows=list_flows)
         return sol
