@@ -5,6 +5,10 @@
 from collections.abc import Callable
 from typing import Any, Optional
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.knapsack.problem import (
     Item,
@@ -73,16 +77,26 @@ def best_of_greedy(knapsack_problem: KnapsackProblem) -> KnapsackSolution:
 
 
 class GreedyBestKnapsackSolver(KnapsackSolver):
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        cb = CallbackList(callbacks)
+        cb.on_solve_start(self)
         res = best_of_greedy(self.problem)
         fit = self.aggreg_from_sol(res)
-        return self.create_result_storage(
+        result = self.create_result_storage(
             [(res, fit)],
         )
+        cb.on_solve_end(result, self)
+        return result
 
 
 class GreedyDummyKnapsackSolver(KnapsackSolver):
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        cb = CallbackList(callbacks)
+        cb.on_solve_start(self)
         sol = KnapsackSolution(
             problem=self.problem,
             value=0,
@@ -90,6 +104,8 @@ class GreedyDummyKnapsackSolver(KnapsackSolver):
             list_taken=[0] * self.problem.nb_items,
         )
         fit = self.aggreg_from_sol(sol)
-        return self.create_result_storage(
+        result = self.create_result_storage(
             [(sol, fit)],
         )
+        cb.on_solve_end(result, self)
+        return result
