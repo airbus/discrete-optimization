@@ -11,6 +11,10 @@ from typing import Optional
 import networkx as nx
 import numpy as np
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.cp_tools import CpSolverName
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -95,8 +99,12 @@ class PileRcpspSolver(RcpspSolver):
         else:
             self.modes_dict = {t: 1 for t in self.mode_details}
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[list[Callback]] = None, **kwargs
+    ) -> ResultStorage:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
+        cb = CallbackList(callbacks)
+        cb.on_solve_start(self)
         greedy_choice: GreedyChoice = kwargs["greedy_choice"]
         current_succ = {
             k: {
@@ -242,6 +250,8 @@ class PileRcpspSolver(RcpspSolver):
         result_storage = self.create_result_storage(
             [(sol, self.aggreg_from_sol(sol))],
         )
+        cb.on_step_end(0, result_storage, self)
+        cb.on_solve_end(result_storage, self)
         return result_storage
 
 
@@ -299,8 +309,12 @@ class PileCalendarRcpspSolver(RcpspSolver):
             self.modes_dict = {t: 1 for t in self.mode_details}
         self.with_calendar = problem.is_varying_resource()
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[list[Callback]] = None, **kwargs
+    ) -> ResultStorage:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
+        cb = CallbackList(callbacks)
+        cb.on_solve_start(self)
         greedy_choice = kwargs["greedy_choice"]
         current_succ = {
             k: {
@@ -472,6 +486,9 @@ class PileCalendarRcpspSolver(RcpspSolver):
         result_storage = self.create_result_storage(
             [(sol, self.aggreg_from_sol(sol))],
         )
+
+        cb.on_step_end(0, result_storage, self)
+        cb.on_solve_end(result_storage, self)
         return result_storage
 
 
