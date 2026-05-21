@@ -104,10 +104,10 @@ class JobShopProblem(
         self.list_jobs = list_jobs
         if self.n_jobs is None:
             self.n_jobs = len(list_jobs)
+        machine_ids = {y.machine_id for x in self.list_jobs for y in x}
         if self.n_machines is None:
-            self.n_machines = len(
-                set([y.machine_id for x in self.list_jobs for y in x])
-            )
+            self.n_machines = len(machine_ids)
+        assert machine_ids == set(range(self.n_machines))
         self.n_all_jobs = sum(len(subjob) for subjob in self.list_jobs)
         # Store for each machine the list of sub-job given as (index_job, index_sub-job)
         self.job_per_machines = {i: [] for i in range(self.n_machines)}

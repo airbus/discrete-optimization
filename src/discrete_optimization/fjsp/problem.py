@@ -108,17 +108,15 @@ class FJobShopProblem(
         self.list_jobs = list_jobs
         if self.n_jobs is None:
             self.n_jobs = len(list_jobs)
+        machine_ids = {
+            option.machine_id
+            for job in self.list_jobs
+            for options in job.sub_jobs
+            for option in options
+        }
         if self.n_machines is None:
-            self.n_machines = len(
-                set(
-                    [
-                        option.machine_id
-                        for job in self.list_jobs
-                        for options in job.sub_jobs
-                        for option in options
-                    ]
-                )
-            )
+            self.n_machines = len(machine_ids)
+        assert machine_ids == set(range(self.n_machines))
         self.n_all_jobs = sum(len(subjob.sub_jobs) for subjob in self.list_jobs)
         self.job_per_machines = {i: [] for i in range(self.n_machines)}
         for k in range(self.n_jobs):
