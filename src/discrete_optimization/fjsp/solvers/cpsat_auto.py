@@ -52,7 +52,7 @@ class CpSatAutoFjspSolver(
         )  # update the upper bound for makespan
         self.duplicate_start_var_per_mode = kwargs["duplicate_temporal_var"]
         # whether to add cumulative constraint on top of no_overlap constraint
-        self.add_no_overlap_and_cumulative = bool(kwargs["add_cumulative_constraint"])
+        self.use_cumulative_for_capa_1 = bool(kwargs["add_cumulative_constraint"])
         # use cpm to compute start/end bounds
         self.use_cpm_for_task_bounds = True
         super().init_model(**kwargs)
