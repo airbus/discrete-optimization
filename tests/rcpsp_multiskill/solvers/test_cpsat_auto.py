@@ -39,7 +39,8 @@ def test_imopse_cpsat():
     assert model.satisfy(solution)
 
 
-def test_imopse_cpsat_w_non_renewable_n_cumulative_resource():
+@pytest.mark.parametrize("use_energy_constraints", [False, True])
+def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(use_energy_constraints):
     file = [f for f in get_data_available() if "100_5_64_9.def" in f][0]
     model, _ = parse_file(file, max_horizon=1000)
 
@@ -47,7 +48,7 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource():
         problem=model,
     )
     cp_model.init_model(
-        one_worker_per_task=True,
+        one_worker_per_task=True, use_energy_constraints=use_energy_constraints
     )
     p = ParametersCp.default_cpsat()
     res = cp_model.solve(

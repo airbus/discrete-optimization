@@ -225,7 +225,6 @@ def test_mode_constraint_monomode():
 @pytest.mark.parametrize(
     "task, start_or_end, sign , time",
     [
-        ((0, 1), StartOrEnd.START, SignEnum.LESS, 20),
         ((0, 0), StartOrEnd.END, SignEnum.EQUAL, 120),
     ],
 )

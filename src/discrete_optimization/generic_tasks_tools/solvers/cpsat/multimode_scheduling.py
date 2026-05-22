@@ -30,7 +30,12 @@ class MultimodeSchedulingCpSatSolver(
 
     @abstractmethod
     def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
-        """Get the interval variable corresponding to given task and mode."""
+        """Get the interval variable corresponding to given task and mode.
+
+        Needs to be created if avoid_interval_optional is False.
+        Not necessary else.
+
+        """
         ...
 
 

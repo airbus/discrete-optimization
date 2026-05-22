@@ -2223,6 +2223,7 @@ class MultiskillRcpspProblem(
             for employee in self.employees
         }
         self.update_resource_availabilities()
+        self.update_tasks_list()
 
     def update_resource_availabilities(self) -> None:
         super().update_resource_availabilities()

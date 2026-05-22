@@ -352,6 +352,7 @@ class RcpspProblem(
                     for r, calendar in self.resources.items()
                 }
         self.update_resource_availabilities()
+        self.update_tasks_list()
 
     def update_resource_availabilities(self) -> None:
         super().update_resource_availabilities()

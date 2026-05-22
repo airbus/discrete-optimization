@@ -349,7 +349,22 @@ def test_problem(caplog):
 
 
 @pytest.mark.parametrize("objective", Objective)
-def test_auto(objective):
+@pytest.mark.parametrize(
+    "avoid_interval_optional, duplicate_start_var_per_mode",
+    [(True, False), (False, False), (False, True)],
+)
+@pytest.mark.parametrize(
+    "use_energy_constraints, keep_only_most_nested_energy_constraints",
+    [(False, False), (True, False), (True, True)],
+)
+def test_auto(
+    objective,
+    avoid_interval_optional,
+    duplicate_start_var_per_mode,
+    use_energy_constraints,
+    keep_only_most_nested_energy_constraints,
+    caplog,
+):
     problem = MyProblem()
 
     # prepare solver
@@ -361,12 +376,20 @@ def test_auto(objective):
         Objective.RESOURCES_CONSUMPTION,
     ]:
         solver.exactly_one_unary_resource_per_task = True
-    solver.init_model()
-    if objective == Objective.CUSTOM:
-        objective_var = (
-            solver.get_global_makespan_variable() - solver.get_nb_tasks_done_variable()
+    with caplog.at_level(logging.WARNING):
+        solver.init_model(
+            avoid_interval_optional=avoid_interval_optional,
+            duplicate_start_var_per_mode=duplicate_start_var_per_mode,
+            use_energy_constraints=use_energy_constraints,
+            keep_only_most_nested_energy_constraints=keep_only_most_nested_energy_constraints,
         )
-        solver.cp_model.minimize(objective_var)
+        if objective == Objective.CUSTOM:
+            objective_var = (
+                solver.get_global_makespan_variable()
+                - solver.get_nb_tasks_done_variable()
+            )
+            solver.cp_model.minimize(objective_var)
+    assert "even though `self.avoid_interval_optional` is True." not in caplog.text
 
     # solve
     res = solver.solve()

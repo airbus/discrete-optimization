@@ -5,7 +5,7 @@
 from abc import abstractmethod
 from typing import Generic
 
-from ortools.sat.python.cp_model import IntervalVar
+from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
@@ -51,14 +51,18 @@ class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Res
         intervals = [
             interval
             for interval, value in all_tasks_intervals_n_consumptions
-            if value > 0
+            if not isinstance(value, int) or value > 0
         ]
         demands = [
-            value for interval, value in all_tasks_intervals_n_consumptions if value > 0
+            value
+            for interval, value in all_tasks_intervals_n_consumptions
+            if not isinstance(value, int) or value > 0
         ]
         capacity = self.problem.get_resource_max_capacity(resource)
         if len(intervals) > 0:
-            if capacity == 1 and all(value == 1 for value in demands):
+            if capacity == 1 and all(
+                isinstance(value, int) and value == 1 for value in demands
+            ):
                 if self.use_no_overlap_for_capa_1 or not self.use_cumulative_for_capa_1:
                     self.cp_model.add_no_overlap(intervals)
                 if self.use_cumulative_for_capa_1:
@@ -77,7 +81,7 @@ class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Res
     @abstractmethod
     def get_resource_consumption_intervals(
         self, resource: Resource
-    ) -> list[tuple[IntervalVar, int]]:
+    ) -> list[tuple[IntervalVar, LinearExprT]]:
         """Get all intervals where a given resource is consumed by a task, and related consumption value.
 
         Args:

@@ -5,7 +5,7 @@
 from abc import abstractmethod
 from typing import Generic
 
-from ortools.sat.python.cp_model import IntervalVar
+from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
@@ -56,21 +56,36 @@ class GenericSchedulingCpSatSolver(
 
     def get_resource_consumption_intervals(
         self, resource: Resource
-    ) -> list[tuple[IntervalVar, int]]:
+    ) -> list[tuple[IntervalVar, LinearExprT]]:
         if self.problem.is_unary_resource(resource=resource):
-            tasks = self.problem.tasks_list
-            return [
-                (
-                    self.get_task_unary_resource_interval(
+            if self.avoid_interval_optional:
+                # no optional interval, use rather demand variables
+                return [
+                    (self.get_task_interval(task=task), conso)
+                    for task in self.problem.tasks_list
+                    if not isinstance(
+                        (
+                            conso := self.get_task_unary_resource_is_present_variable(
+                                task=task, unary_resource=resource
+                            )
+                        ),
+                        int,
+                    )
+                    or conso > 0
+                ]
+            else:
+                return [
+                    (
+                        self.get_task_unary_resource_interval(
+                            task=task, unary_resource=resource
+                        ),
+                        1,
+                    )
+                    for task in self.problem.tasks_list
+                    if self.is_compatible_task_unary_resource(
                         task=task, unary_resource=resource
-                    ),
-                    1,
-                )
-                for task in tasks
-                if self.is_compatible_task_unary_resource(
-                    task=task, unary_resource=resource
-                )
-            ]
+                    )
+                ]
         else:
             return super().get_resource_consumption_intervals(resource=resource)
 
