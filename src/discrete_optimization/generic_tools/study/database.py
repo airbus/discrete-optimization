@@ -91,10 +91,10 @@ METADATA = "metadata"
 
 COL_STR_MAXSIZE = {
     REASON: 512,
-    INSTANCE: 32,
+    INSTANCE: 64,
     STATUS: max(len(s.value) for s in StatusSolver),
-    CONFIG_PREFIX + SOLVER: 52,
-    CONFIG_PREFIX + NAME: 32,
+    CONFIG_PREFIX + SOLVER: 64,
+    CONFIG_PREFIX + NAME: 64,
     CONFIG_PREFIX + PARAMETERS: 1024,
 }
 
