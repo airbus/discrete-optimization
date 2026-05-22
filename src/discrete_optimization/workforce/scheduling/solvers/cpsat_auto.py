@@ -313,13 +313,7 @@ class CPSatAutoAllocSchedulingSolver(
         # Overlap constraints
         if additional_constraints is not None:
             for team in self.problem.unary_resources_list:
-                tasks_team = [
-                    self.get_task_unary_resource_interval(
-                        task=task, unary_resource=team
-                    )
-                    for task in self.compatible_tasks[team]
-                ]
-                if len(tasks_team) > 0:
+                if len(self.compatible_tasks[team]) > 0:
                     if (
                         additional_constraints.adding_margin_on_sequence[0]
                         and additional_constraints.adding_margin_on_sequence[1] > 0

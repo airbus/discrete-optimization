@@ -87,12 +87,13 @@ def test_ortools(model):
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
-def test_objectives(model):
+@pytest.mark.parametrize("avoid_interval_optional", [False, True])
+def test_objectives(model, avoid_interval_optional):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CpSatAutoRcpspSolver(problem=rcpsp_problem)
-    solver.init_model()
+    solver.init_model(avoid_interval_optional=avoid_interval_optional)
 
     subtasks = {1, 4}
     # max end time subtasks
@@ -242,7 +243,8 @@ def test_chaining_constraints():
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
-def test_ortools_with_calendar_resource(model):
+@pytest.mark.parametrize("avoid_interval_optional", [False, True])
+def test_ortools_with_calendar_resource(model, avoid_interval_optional):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
@@ -254,15 +256,18 @@ def test_ortools_with_calendar_resource(model):
     rcpsp_problem.update_problem()
     assert rcpsp_problem.is_calendar
     solver = CpSatAutoRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=100)
+    result_storage = solver.solve(
+        time_limit=100, avoid_interval_optional=avoid_interval_optional
+    )
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RcpspSolution(
         problem=rcpsp_problem,
         rcpsp_permutation=solution.rcpsp_permutation,
         rcpsp_modes=solution.rcpsp_modes,
     )
-    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
+    eval_dict = rcpsp_problem.evaluate(solution_rebuilt)
+    print(eval_dict)
+    assert fit == -eval_dict["makespan"]
     assert rcpsp_problem.satisfy(solution)
     assert solution.check_all_calendar_resource_capacity_constraints()
 

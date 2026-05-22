@@ -64,7 +64,7 @@ def test_cpsat(problem):
 
     # find a different init sol
     solver.cp_model.add(
-        solver.get_nb_unary_resources_used_variable() > 2 * kpis["nb_teams"]
+        solver.get_nb_unary_resources_used_variable() > kpis["nb_teams"]
     )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],

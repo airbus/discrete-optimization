@@ -259,6 +259,7 @@ class AllocSchedulingProblem(
             add_window_time_constraint=True,
             add_additional_constraint=True,
         )
+        self.update_tasks_list()
         self.update_resource_availabilities()
         self.compatible_teams_per_activity = self.compatible_teams_all_activity()
 
