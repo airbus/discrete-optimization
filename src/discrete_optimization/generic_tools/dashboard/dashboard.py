@@ -6,7 +6,6 @@ from typing import Any, Optional, Union
 
 import pandas as pd
 
-from discrete_optimization.generic_tools.dashboard.config import ConfigStore
 from discrete_optimization.generic_tools.dashboard.plots import (
     create_graph_from_series_dict,
     create_solvers_competition_graph,
@@ -47,6 +46,7 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     map_stat_key2func_df,
     normalize_results,
 )
+from discrete_optimization.generic_tools.study.config import ConfigStore
 
 try:
     from dash import Dash, Input, Output, dash_table, dcc, html

@@ -1,19 +1,23 @@
 from collections import defaultdict
 from collections.abc import Container, Iterable
 from copy import copy
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 from pandas.core.groupby import SeriesGroupBy
 
-from discrete_optimization.generic_tools.dashboard.config import ConfigStore
 from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.study.config import ConfigStore
 from discrete_optimization.generic_tools.study.experiment import (
     CONFIG,
     INSTANCE,
     REASON,
     STATUS,
+)
+from discrete_optimization.generic_tools.study.study import (
+    I_RUN_LABEL,
+    normalize_metadata,
 )
 
 # data columns
@@ -51,7 +55,6 @@ map_stat_key2func_sergroupby = {
 }
 
 # new metadata keys for empty xps
-I_RUN_LABEL = "attempt"
 
 TIMEOUT_REASON = "Probably due to a timeout."
 
@@ -83,22 +86,26 @@ def normalize_results(results: list[pd.DataFrame], config_store: ConfigStore) ->
             )
 
     # normalize each result one by one
+    n_runs_by_config_instance = defaultdict(lambda: 0)  # to compute attempt number
     for df in results:
-        normalize_df(df=df, config_store=config_store)
-
-    # compute an attempt number
-    n_runs_by_config_instance = defaultdict(lambda: 0)
-    for df in results:
-        attrs = df.attrs
-        key = attrs[CONFIG], attrs[INSTANCE]
-        attrs[I_RUN_LABEL] = n_runs_by_config_instance[key]
-        n_runs_by_config_instance[key] += 1
+        normalize_df(
+            df=df,
+            config_store=config_store,
+            n_runs_by_config_instance=n_runs_by_config_instance,
+        )
 
 
 def normalize_df(
-    df: pd.DataFrame, config_store: ConfigStore, timedelta_unit="s"
+    df: pd.DataFrame,
+    config_store: ConfigStore,
+    n_runs_by_config_instance: dict[tuple[str, str], int],
+    timedelta_unit="s",
 ) -> None:
-    normalize_metadata(df.attrs, config_store=config_store)
+    normalize_metadata(
+        df.attrs,
+        config_store=config_store,
+        n_runs_by_config_instance=n_runs_by_config_instance,
+    )
     df.sort_index(inplace=True)
     # -> timedeltaindex
     if isinstance(df.index, pd.DatetimeIndex):
@@ -113,27 +120,6 @@ def normalize_df(
     # no more columns => on vide la dataframe
     if len(df.columns) == 0:
         df.drop(df.index, inplace=True)
-
-
-def normalize_metadata(metadata: dict[str, Any], config_store: ConfigStore) -> None:
-    # status
-    if STATUS not in metadata:
-        metadata[STATUS] = StatusSolver.UNKNOWN
-    else:
-        if not isinstance(metadata[STATUS], StatusSolver):
-            metadata[STATUS] = StatusSolver(metadata[STATUS].upper())
-    # config -> config name
-    config = metadata[CONFIG]
-    if isinstance(config, dict):
-        config_name = config_store.get_name(config)
-    elif isinstance(config, str):
-        config_name = config
-    else:
-        raise ValueError(
-            "For each result df, df.attrs['config'] must be either a dictionary "
-            "or a string representing its name."
-        )
-    metadata[CONFIG] = config_name
 
 
 def compute_extra_metrics(results: list[pd.DataFrame]) -> None:

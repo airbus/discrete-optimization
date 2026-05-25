@@ -18,6 +18,7 @@ from discrete_optimization.generic_tools.study.experiment import (
     REASON,
     SOLVER,
     STATUS,
+    ConfigDict,
     Experiment,
     SolverJsonableConfig,
 )
@@ -26,6 +27,8 @@ if TYPE_CHECKING:
     from pandas._typing import Self
 
 logger = logging.getLogger(__name__)
+
+IS_EMPTY = "is_empty"
 
 
 class Database(ABC):
@@ -68,6 +71,16 @@ class Database(ABC):
     def load_results(self) -> list[pd.DataFrame]:
         """Load all experiments as time-indexes dataframes with metadata in `attrs` attribute."""
         return [xp.to_df() for xp in self.load()]
+
+    def load_metadata(self) -> list[ConfigDict]:
+        """Load all experiments metadata with added field 'metrics_length'."""
+        return [
+            {
+                **xp.get_metadata_as_nested_dict(),
+                IS_EMPTY: is_empty_metrics(xp.metrics),
+            }
+            for xp in self.load()
+        ]
 
     def close(self) -> None:
         """Close the database."""
@@ -162,3 +175,34 @@ class Hdf5Database(Database):
                 )
             )
         return xps
+
+    def load_metadata(self) -> list[ConfigDict]:
+        df_metadata: pd.DataFrame = self.hdfstore[METADATA]
+        metadatas = []
+        for row in df_metadata.itertuples(index=False):
+            record = row._asdict()
+            xp_id = record[ID]
+            config = SolverJsonableConfig.from_xp_metadata_record(record)
+            try:
+                df = self.hdfstore[_get_metrics_key(xp_id)]
+                is_empty_df = is_empty_metrics(df)
+            except KeyError:
+                is_empty_df = True
+
+            xp = Experiment(
+                xp_id=xp_id,
+                instance=record[INSTANCE],
+                status=record[STATUS],
+                metrics=pd.DataFrame,
+                config=config,
+                reason=record[REASON],
+            )
+            metadata = xp.get_metadata_as_nested_dict()
+            metadata[IS_EMPTY] = is_empty_df
+            metadatas.append(metadata)
+        return metadatas
+
+
+def is_empty_metrics(df: pd.DataFrame) -> bool:
+    """Return True is a dataframe has no data or only NaN's."""
+    return len(df) == 0 or df.isnull().values.all()
