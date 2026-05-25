@@ -142,13 +142,6 @@ class Experiment:
         )
 
 
-@dataclass
-class Study:
-    name: str
-    instances: list[str]
-    solver_configs: list[SolverConfig]
-
-
 class DoJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if hasattr(o, "to_json"):
