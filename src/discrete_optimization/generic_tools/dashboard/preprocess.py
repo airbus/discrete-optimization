@@ -340,7 +340,7 @@ def compute_stat_from_df_config(
 def extract_optimal_fit_by_instance(results: list[pd.DataFrame]) -> dict[str, float]:
     optimal_fit_by_instance = {}
     for df in results:
-        if df.attrs[STATUS] == StatusSolver.OPTIMAL:
+        if df.attrs[STATUS] == StatusSolver.OPTIMAL and FIT in df:
             optimal_fit_by_instance[df.attrs[INSTANCE]] = float(df[FIT].iloc[-1])
     return optimal_fit_by_instance
 
