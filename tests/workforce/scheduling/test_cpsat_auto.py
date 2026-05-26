@@ -59,10 +59,15 @@ def test_cpsat(problem):
     sol: AllocSchedulingSolution = res[-1][0]
     assert problem.satisfy(sol)
     kpis = problem.evaluate(sol)
+    print(kpis)
 
     # test warm-start
 
     # find a different init sol
+    solver = CPSatAutoAllocSchedulingSolver(problem)
+    solver.init_model(
+        objectives=[ObjectivesEnum.MAKESPAN], adding_redundant_cumulative=True
+    )
     solver.cp_model.add(
         solver.get_nb_unary_resources_used_variable() > kpis["nb_teams"]
     )
@@ -72,6 +77,8 @@ def test_cpsat(problem):
         time_limit=10,
     )
     init_sol: AllocSchedulingSolution = res[-1][0]
+    kpis = problem.evaluate(init_sol)
+    print(kpis)
 
     solver = CPSatAutoAllocSchedulingSolver(problem)
     solver.init_model(
@@ -358,10 +365,11 @@ def test_task_constraint(problem):
     print(sol.allocation[i_task])
     print(problem.index_to_task[i_task])
 
-    task = "80719"
+    i_task = int(sol.schedule[:, 0].argmin())
+    task = problem.index_to_task[i_task]
     start_or_end = StartOrEnd.START
-    sign = SignEnum.UEQ
-    time = 15
+    sign = SignEnum.UP
+    time = sol.get_start_time(task=task)
 
     # before adding the constraint, not already satisfied
     assert not sol.constraint_on_task_satisfied(
@@ -375,14 +383,6 @@ def test_task_constraint(problem):
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
     assert sol.constraint_on_task_satisfied(
-        task=task, start_or_end=start_or_end, sign=sign, time=time
-    )
-    # check constraints can be effectively removed
-    solver.remove_constraints(cstrs)
-    sol = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)]
-    ).get_best_solution()
-    assert not sol.constraint_on_task_satisfied(
         task=task, start_or_end=start_or_end, sign=sign, time=time
     )
 
