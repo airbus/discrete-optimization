@@ -65,17 +65,16 @@ def test_cpsat(problem):
 
     # find a different init sol
     solver = CPSatAutoAllocSchedulingSolver(problem)
-    solver.init_model(
-        objectives=[ObjectivesEnum.MAKESPAN], adding_redundant_cumulative=True
+    solver.init_model()
+    i_task = int(sol.schedule[:, 0].argmin())
+    task = problem.index_to_task[i_task]
+    start_or_end = StartOrEnd.START
+    sign = SignEnum.UP
+    time = sol.get_start_time(task=task)
+    solver.add_constraint_on_task(
+        task=task, start_or_end=start_or_end, sign=sign, time=time
     )
-    solver.cp_model.add(
-        solver.get_nb_unary_resources_used_variable() > kpis["nb_teams"]
-    )
-    res = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        parameters_cp=parameters_cp,
-        time_limit=10,
-    )
+    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     init_sol: AllocSchedulingSolution = res[-1][0]
     kpis = problem.evaluate(init_sol)
     print(kpis)
