@@ -49,8 +49,7 @@ MSPSPLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
 JSPLIB_REPO_URL = "https://github.com/tamy0612/JSPLIB"
 JSPLIB_REPO_URL_SHA1 = "eea2b60dd7e2f5c907ff7302662c61812eb7efdf"
 
-MSLIB_DATASET_URL = "http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip"
-MSLIB_DATASET_RELATIVE_PATH = "MSLIB.zip"
+MSLIB_DATASET_URL = "https://github.com/MarioVanhoucke/MSLIB-Multi-Skilled-Resource-Constrained-Project-Library/releases/download/v2.1/MSLIB_v2_1.zip"
 
 SALBP_OTTO_DATASET_URL = (
     "https://assembly-line-balancing.de/wp-content/uploads/2017/01/SALBP_benchmark.zip"
@@ -116,6 +115,7 @@ MULTIBATCHING_DATASET_RELATIVE_PATHS = [
 FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
+
 
 ERROR_MSG_MISSING_DATASETS = (
     "\nYou probably have not downloaded the needed dataset.\n"
@@ -343,12 +343,21 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
         # download dataset
         local_file_path, headers = urlretrieve(MSLIB_DATASET_URL)
         with tempfile.TemporaryDirectory() as tmpdir:
-            # extract only data
             with zipfile.ZipFile(local_file_path) as zipf:
                 zipf.extractall(path=rcpsp_multiskill_dir)
     finally:
         # remove temporary files
         urlcleanup()
+
+    # unzip subfolders
+    for file in glob.glob(f"{rcpsp_multiskill_dir}/*.zip"):
+        with zipfile.ZipFile(file) as zipf:
+            zipf.extractall(path=rcpsp_multiskill_dir)
+        os.remove(file)
+
+    # remove unwanted files
+    for folder in glob.glob(f"{rcpsp_multiskill_dir}/__MACOSX"):
+        shutil.rmtree(folder)
 
 
 def fetch_data_from_alb(data_home: Optional[str] = None):

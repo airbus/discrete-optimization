@@ -1,6 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import glob
 import logging
 import os
 from typing import Optional
@@ -33,26 +34,24 @@ def get_data_available(
         data_home = get_data_home(data_home=data_home)
         data_folder = f"{data_home}/rcpsp_multiskill_mslib"
     mslib_folder = data_folder
-    subfolders = [
-        os.path.join(mslib_folder, "MSLIB1/Instances1"),
-        os.path.join(mslib_folder, "MSLIB2/Instances2"),
-        os.path.join(mslib_folder, "MSLIB3/Instances3"),
-        os.path.join(mslib_folder, "MSLIB4/Instances4"),
-    ]
-    tags = ["MSLIB1", "MSLIB2", "MSLIB3", "MSLIB4"]
+    subfolders = glob.glob(f"{mslib_folder}/MSLIB?")
+    tags = [os.path.basename(folder) for folder in subfolders]
     try:
-        return {
+        data = {
             tags[i]: sorted(
                 [
                     os.path.abspath(os.path.join(subfolders[i], f))
                     for f in os.listdir(subfolders[i])
-                    if f[-5:] == "msrcp"
+                    if f.endswith(".msrcp")
                 ]
             )
             for i in range(len(tags))
         }
     except FileNotFoundError as e:
         raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
+    if len(data) == 0:
+        raise FileNotFoundError(ERROR_MSG_MISSING_DATASETS)
+    return data
 
 
 def parse_file(file_path, skill_level_version: bool = True):
