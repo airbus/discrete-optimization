@@ -216,3 +216,31 @@ class WithoutNonRenewableResourceSolution(
     """
 
     ...
+
+    def check_non_renewable_resource_capacity_constraint(
+        self, resource: NonRenewableResource
+    ) -> bool:
+        return True
+
+    def check_non_renewable_resource_capacity_constraints(
+        self, resources: Iterable[NonRenewableResource]
+    ):
+        return True
+
+    def check_all_non_renewable_resource_capacity_constraints(self) -> bool:
+        return True
+
+    def compute_non_renewable_resources_consumptions(
+        self,
+    ) -> dict[NonRenewableResource, int]:
+        return {}
+
+    def compute_aggregated_non_renewable_resources_consumptions(
+        self, weights: Optional[dict[NonRenewableResource, int]] = None
+    ):
+        return 0
+
+    def compute_nb_non_renewable_resources_used(
+        self, weights: Optional[dict[NonRenewableResource, int]] = None
+    ) -> int:
+        return 0

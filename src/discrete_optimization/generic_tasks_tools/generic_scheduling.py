@@ -1,19 +1,12 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from typing import Generic, Union
+from typing import Generic
 
 from discrete_optimization.generic_tasks_tools.allocation import (
-    AllocationProblem,
-    AllocationSolution,
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.cumulative_resource import (
-    CumulativeResource,
-    CumulativeResourceProblem,
-    CumulativeResourceSolution,
-)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
     NonRenewableResourceProblem,
@@ -23,16 +16,24 @@ from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
     PrecedenceSchedulingProblem,
     PrecedenceSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.skill import (
+    NonSkillCumulativeResource,
+    Skill,
+    SkillProblem,
+    SkillSolution,
+)
 
-Resource = Union[CumulativeResource, UnaryResource]
+CumulativeResource = Skill | NonSkillCumulativeResource
+Resource = CumulativeResource | UnaryResource
 
 
 class GenericSchedulingProblem(
-    CumulativeResourceProblem[Task, CumulativeResource, UnaryResource],
+    SkillProblem[Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
-    AllocationProblem[Task, UnaryResource],
     PrecedenceSchedulingProblem[Task],
-    Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
+    Generic[
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+    ],
 ):
     """Scheduling problem with all optional features
 
@@ -42,11 +43,14 @@ class GenericSchedulingProblem(
     - multimode: the tasks have several mode on which the duration depends
     - cumulative: the tasks consume cumulative resources according to the chosen mode
     - allocation: the tasks can have unary resources allocated to them
+    - skill: some cumulative resource are skills that are brought to tasks by allocated unary resources
     - non-renewable: the tasks consume non-renewable resources according to the chosen mode
     - precedence: precedence constraints between tasks
 
     Even though this class is generic but encompasses also more specific cases:
     - singlemode: actually only one mode per task
+    - no skills: if skills_list is empty
+    - no allocation: unary_resources is empty
     - no cumulative ressources: if resources_list list only unary resources
     - no calendar: resource capacity can be given as a constant on [0, horizon)
     - no non-renewable ressources: if non_renewable_resources_list empty
@@ -91,16 +95,19 @@ class GenericSchedulingProblem(
 
 
 class GenericSchedulingSolution(
-    CumulativeResourceSolution[Task, CumulativeResource, UnaryResource],
+    SkillSolution[
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
+    ],
     NonRenewableResourceSolution[Task, NonRenewableResource],
     PrecedenceSchedulingSolution[Task],
-    AllocationSolution[Task, UnaryResource],
-    Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
+    Generic[
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+    ],
 ):
     """Solution type associated to GenericSchedulingProblem."""
 
     problem: GenericSchedulingProblem[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ]
 
     def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:

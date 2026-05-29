@@ -23,6 +23,11 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.skill import (
+    NoSkill,
+    WithoutSkillProblem,
+    WithoutSkillSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -36,13 +41,21 @@ Task = tuple[int, int]
 """Task representation: (job index, subjob index)."""
 
 
-CumulativeResource = int  # machine id
-Resource = CumulativeResource  # no other resource
+NonSkillCumulativeResource = int  # machine id
+CumulativeResource = NonSkillCumulativeResource  # no skill
+Resource = NonSkillCumulativeResource  # no other resource
 
 
 class JobShopSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NoNonRenewableResource,
+    ],
+    WithoutSkillSolution[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutNonRenewableResourceSolution[Task],
     WithoutAllocationSolution[Task],
@@ -82,7 +95,14 @@ class Subjob:
 
 class JobShopProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NoNonRenewableResource,
+    ],
+    WithoutSkillProblem[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutNonRenewableResourceProblem[Task],
     WithoutAllocationProblem[Task],
@@ -133,7 +153,7 @@ class JobShopProblem(
             return 0
 
     @property
-    def cumulative_resources_list(self) -> list[CumulativeResource]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         return list(range(self.n_machines))
 
     def get_resource_availabilities(

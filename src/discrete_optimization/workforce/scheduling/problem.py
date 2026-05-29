@@ -7,7 +7,7 @@ import itertools
 import logging
 from collections.abc import Hashable
 from functools import reduce
-from typing import Optional, Union
+from typing import Optional
 
 import networkx as nx
 import numpy as np
@@ -31,6 +31,11 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.skill import (
+    NoSkill,
+    WithoutSkillProblem,
+    WithoutSkillSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -51,13 +56,17 @@ logger = logging.getLogger(__name__)
 
 Task = Hashable
 UnaryResource = Hashable
-CumulativeResource = str
-Resource = Union[UnaryResource, CumulativeResource]
+NonSkillCumulativeResource = str
+CumulativeResource = NonSkillCumulativeResource
+Resource = UnaryResource | CumulativeResource
 
 
 class AllocSchedulingSolution(
     GenericSchedulingSolution[
-        Task, UnaryResource, CumulativeResource, NoNonRenewableResource
+        Task, UnaryResource, NoSkill, NonSkillCumulativeResource, NoNonRenewableResource
+    ],
+    WithoutSkillSolution[
+        Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
     ],
     WithoutNonRenewableResourceSolution[Task],
     SinglemodeSolution[Task],
@@ -109,8 +118,9 @@ class TasksDescription:
 
 class AllocSchedulingProblem(
     GenericSchedulingProblem[
-        Task, UnaryResource, CumulativeResource, NoNonRenewableResource
+        Task, UnaryResource, NoSkill, NonSkillCumulativeResource, NoNonRenewableResource
     ],
+    WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
     WithoutNonRenewableResourceProblem[Task],
     SinglemodeSchedulingProblem[Task],
 ):
@@ -173,7 +183,7 @@ class AllocSchedulingProblem(
         self.update_problem()
 
     @property
-    def cumulative_resources_list(self) -> list[CumulativeResource]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         return self.resources_list
 
     def get_cumulative_resource_consumption(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from abc import abstractmethod
 from collections.abc import Hashable, Iterable
 from typing import Any, Generic, Optional, TypeVar
@@ -11,6 +12,8 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksSolution,
 )
 from discrete_optimization.generic_tools.cp_tools import SignEnum
+
+logger = logging.getLogger(__name__)
 
 UnaryResource = TypeVar("UnaryResource", bound=Hashable)
 
@@ -111,6 +114,21 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
             for task in tasks
             for unary_resource in unary_resources
         )
+
+    def check_allocation_consistency(self) -> bool:
+        for task in self.problem.tasks_list:
+            for unary_resource in self.problem.unary_resources_list:
+                if self.is_allocated(
+                    task=task, unary_resource=unary_resource
+                ) and not self.problem.is_compatible_task_unary_resource(
+                    task=task, unary_resource=unary_resource
+                ):
+                    logger.debug(
+                        f"Unary resource {unary_resource} is allocated to task {task} "
+                        "but it is not compatible with it."
+                    )
+                    return False
+        return True
 
 
 class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
@@ -308,3 +326,6 @@ class WithoutAllocationSolution(
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         return False
+
+    def check_allocation_consistency(self) -> bool:
+        return True

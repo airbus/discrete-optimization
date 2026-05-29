@@ -16,6 +16,7 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
 )
+from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     Objective,
     SinglemodeGenericSchedulingAutoCpSatSolver,
@@ -40,7 +41,7 @@ from discrete_optimization.workforce.commons.fairness_modeling_ortools import (
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
-    CumulativeResource,
+    NonSkillCumulativeResource,
     Task,
     UnaryResource,
 )
@@ -94,7 +95,7 @@ class AdditionalCPConstraints:
 
 class CPSatAutoAllocSchedulingSolver(
     SinglemodeGenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, CumulativeResource, NoNonRenewableResource
+        Task, UnaryResource, NoSkill, NonSkillCumulativeResource, NoNonRenewableResource
     ],
     SolverAllocScheduling,
 ):
@@ -177,7 +178,7 @@ class CPSatAutoAllocSchedulingSolver(
         )
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource]
+        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
     ) -> AllocSchedulingSolution:
         schedule = np.zeros((self.problem.number_tasks, 2), dtype=int)
         allocation = -np.ones(self.problem.number_tasks, dtype=int)
@@ -196,7 +197,7 @@ class CPSatAutoAllocSchedulingSolver(
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource]:
+    ) -> TemporarySolution[Task, UnaryResource, NoSkill]:
         """Create solution at temporary format from cpsat variables.
 
         Override it to

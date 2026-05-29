@@ -6,7 +6,7 @@ import logging
 import math
 import random
 from abc import abstractmethod
-from typing import Generic, Optional, Union
+from typing import Generic, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -207,7 +207,7 @@ class NeighborBuilderMix(NeighborBuilder[Task]):
     def __init__(
         self,
         list_neighbor: list[NeighborBuilder[Task]],
-        weight_neighbor: Optional[Union[list[float], npt.NDArray[float]]] = None,
+        weight_neighbor: Optional[list[float] | npt.NDArray[float]] = None,
         verbose: bool = False,
     ):
         self.list_neighbor = list_neighbor

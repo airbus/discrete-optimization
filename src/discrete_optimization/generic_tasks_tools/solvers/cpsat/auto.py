@@ -6,7 +6,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Generic, Optional, Union
+from typing import Any, Generic, Optional
 
 import networkx as nx
 from ortools.sat.python.cp_model import (
@@ -30,6 +30,10 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
 )
 from discrete_optimization.generic_tasks_tools.scheduling import (
     Task,
+)
+from discrete_optimization.generic_tasks_tools.skill import (
+    NonSkillCumulativeResource,
+    Skill,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpm import Cpm
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
@@ -76,14 +80,14 @@ class Objective(Enum):
 
 
 @dataclass
-class TaskVariable(Generic[UnaryResource]):
+class TaskVariable(Generic[UnaryResource, Skill]):
     """Task characteristics found by a cpsat solution."""
 
     start: int  # start time of the task
     end: int  # end time of the task
     mode: int  # chosen mode for the task
-    allocated: list[UnaryResource] = field(
-        default_factory=list
+    allocated: dict[UnaryResource, set[Skill]] = field(
+        default_factory=dict
     )  # resources allocated to the task
     info: dict[str, Any] = field(
         default_factory=dict
@@ -91,19 +95,19 @@ class TaskVariable(Generic[UnaryResource]):
 
 
 @dataclass
-class TemporarySolution(Generic[Task, UnaryResource]):
+class TemporarySolution(Generic[Task, UnaryResource, Skill]):
     """Temporary format for a cpsat solution."""
 
-    task_variables: dict[Task, TaskVariable[UnaryResource]]
+    task_variables: dict[Task, TaskVariable[UnaryResource, Skill]]
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
-AnyResource = Union[NonRenewableResource, UnaryResource, CumulativeResource]
+AnyResource = NonRenewableResource | UnaryResource | Skill | NonSkillCumulativeResource
 
 
 class GenericSchedulingAutoCpSatSolver(
     GenericSchedulingCpSatSolver[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
     WarmstartMixin,
 ):
@@ -161,9 +165,6 @@ class GenericSchedulingAutoCpSatSolver(
     # Task start/end bounds settings
     use_cpm_for_task_bounds = False
     """Flag telling whether cpm should be used to refine task bounds."""
-    # Allocation settings
-    exactly_one_unary_resource_per_task = False
-    """Whether enforcing exactly one resource allocated to each task."""
     # Multimode settings
     duplicate_start_var_per_mode = False
     """Whether adding a start variable for each task mode."""
@@ -184,6 +185,7 @@ class GenericSchedulingAutoCpSatSolver(
     modes_start_variables: dict[Task, dict[int, LinearExprT]]
     allocation_is_present: dict[Task, dict[UnaryResource, LinearExprT]]
     allocation_intervals: dict[Task, dict[UnaryResource, IntervalVar]]
+    skill_variables: dict[Task, dict[UnaryResource, dict[Skill, LinearExprT]]]
     demand_variables: dict[Task, dict[AnyResource, LinearExprT]]
     energy_variables: dict[Task, dict[AnyResource, LinearExprT]]
     all_used_variables: dict[AnyResource, IntVar]
@@ -379,6 +381,7 @@ class GenericSchedulingAutoCpSatSolver(
         self.energy_variables = {}
         self.allocation_is_present = {}
         self.allocation_intervals = {}
+        self.skill_variables = {}
 
         self.all_used_variables_created = False
         self.all_used_variables = {}
@@ -391,6 +394,7 @@ class GenericSchedulingAutoCpSatSolver(
         if self.needs_duration_variables or self.needs_task_interval:
             self._create_task_duration_and_interval_variables()
         self._create_allocation_variables()
+        self._create_skill_variables()
         if self.avoid_interval_optional:
             self._create_demand_variables()
         if self.use_energy_constraints:
@@ -529,6 +533,64 @@ class GenericSchedulingAutoCpSatSolver(
                         name=f"interval_mode_{task}_{mode}",
                     )
                 )
+
+    def _create_skill_variables(self):
+        for task in self.problem.tasks_list:
+            skills_of_task = self.problem.get_skills_of_task(task)
+            if len(skills_of_task) == 0:
+                # no skill usage to track
+                continue
+            self.skill_variables[task] = {}
+            for unary_resource in self.problem.unary_resources_list:
+                if self.is_compatible_task_unary_resource(
+                    task=task, unary_resource=unary_resource
+                ):
+                    self.skill_variables[task][unary_resource] = {}
+                    is_allocated = self.get_task_unary_resource_is_present_variable(
+                        task=task, unary_resource=unary_resource
+                    )
+                    skills_of_unary_resource = (
+                        self.problem.get_skills_of_unary_resource(unary_resource)
+                    )
+
+                    common_skills = skills_of_task.intersection(
+                        skills_of_unary_resource
+                    )
+                    for skill in common_skills:
+                        if len(common_skills) == 1:
+                            self.skill_variables[task][unary_resource][skill] = (
+                                is_allocated
+                            )
+                        else:
+                            skill_var = self.cp_model.new_bool_var(
+                                name=f"skill_{task}_{skill}_{unary_resource}"
+                            )
+                            self.skill_variables[task][unary_resource][skill] = (
+                                skill_var
+                            )
+                            # no skill used if not allocated
+                            self.cp_model.add(skill_var <= is_allocated)
+
+                    # constraints on skill variables due to options
+                    if (
+                        len(common_skills) > 1
+                    ):  # next constraints are useless if skill_var == is_allocated
+                        if self.use_only_skill_to_allocate:
+                            if self.use_only_one_skill_per_task:
+                                # allocation => exactly one skill used
+                                self.cp_model.add_exactly_one(
+                                    self.skill_variables[task][unary_resource].values()
+                                ).only_enforce_if(is_allocated)
+                            else:
+                                # allocation => at least one skill used
+                                self.cp_model.add_at_least_one(
+                                    self.skill_variables[task][unary_resource].values()
+                                ).only_enforce_if(is_allocated)
+                        elif self.use_only_one_skill_per_task:
+                            # at most one skill from each resource used for a given task
+                            self.cp_model.add_at_most_one(
+                                self.skill_variables[task][unary_resource].values()
+                            )
 
     def _create_demand_variables(self):
         for task in self.problem.tasks_list:
@@ -688,7 +750,7 @@ class GenericSchedulingAutoCpSatSolver(
 
     def _create_mode_resource_used_variable(
         self,
-        resource: Union[Resource, NonRenewableResource],
+        resource: Resource | NonRenewableResource,
         conso_fn: Callable[[Task, int], int],
     ) -> IntVar:
         used = self.cp_model.new_bool_var(f"used_{resource}")
@@ -869,26 +931,14 @@ class GenericSchedulingAutoCpSatSolver(
         # precedence
         self.create_precedence_constraints()
         # at most or exactly one resource allocated per task?
-        self._add_unary_resources_per_task_constraints()
+        self.add_unary_resources_per_task_constraints()
+        # skill value per task constraints
+        self.create_fine_skill_constraints()
+        self.create_coarse_skill_constraints()  # redundant
         # energy constraints
         if self.use_energy_constraints:
             branches = self.prepare_energy_constraints()
             self.create_energy_constraints(branches=branches)
-
-    def _add_unary_resources_per_task_constraints(self) -> None:
-        if self.exactly_one_unary_resource_per_task:
-            if not self.at_most_one_unary_resource_per_task:
-                logger.warning(
-                    "`at_most_one_unary_resource_per_task` False `exactly_one_unary_resource_per_task` set to True. "
-                    "`exactly_one_unary_resource_per_task` will take the precedence."
-                )
-
-            for is_allocated_task_vars_mapping in self.allocation_is_present.values():
-                self.cp_model.add_exactly_one(is_allocated_task_vars_mapping.values())
-                # avoid adding at most constraint when creating done variables
-                self.at_most_one_unary_resource_per_task_constraints_added = True
-        elif self.at_most_one_unary_resource_per_task:
-            self.add_at_most_one_unary_resource_per_task_constraints()
 
     def _set_objective(self) -> None:
         objective = None
@@ -990,9 +1040,17 @@ class GenericSchedulingAutoCpSatSolver(
             else:
                 raise e
 
+    def get_skill_variable(
+        self, task: Task, unary_resource: UnaryResource, skill: Skill
+    ) -> LinearExprT:
+        try:
+            return self.skill_variables[task][unary_resource][skill]
+        except KeyError:
+            return 0
+
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource]:
+    ) -> TemporarySolution[Task, UnaryResource, Skill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -1022,13 +1080,26 @@ class GenericSchedulingAutoCpSatSolver(
                 for mode in modes:
                     if cpsolvercb.Value(self.modes_is_present[task][mode]):
                         break
-            allocated = [
-                unary_resource
+
+            def get_skill_used(task: Task, unary_resource: UnaryResource) -> set[Skill]:
+                try:
+                    skill_variables = self.skill_variables[task][unary_resource]
+                except KeyError:
+                    return set()
+                else:
+                    return {
+                        skill
+                        for skill, skill_var in skill_variables.items()
+                        if cpsolvercb.Value(skill_var)
+                    }
+
+            allocated = {
+                unary_resource: get_skill_used(task=task, unary_resource=unary_resource)
                 for unary_resource, is_allocated_var in self.allocation_is_present[
                     task
                 ].items()
                 if cpsolvercb.Value(is_allocated_var)
-            ]
+            }
             task_variables[task] = TaskVariable(
                 start=start, end=end, mode=mode, allocated=allocated
             )
@@ -1042,7 +1113,7 @@ class GenericSchedulingAutoCpSatSolver(
 
     def set_warm_start(self, solution: Solution) -> None:
         solution: GenericSchedulingSolution[
-            Task, UnaryResource, CumulativeResource, NonRenewableResource
+            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
         ]
         # warm start cp_model
         self.cp_model.clear_hints()
@@ -1079,9 +1150,9 @@ class GenericSchedulingAutoCpSatSolver(
 
     @abstractmethod
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource]
+        self, temp_sol: TemporarySolution[Task, UnaryResource, Skill]
     ) -> GenericSchedulingSolution[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ]:
         """Convert solution from autosolver format into do format.
 
@@ -1212,7 +1283,7 @@ class GenericSchedulingAutoCpSatSolver(
 
 class SinglemodeGenericSchedulingAutoCpSatSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
     SinglemodeSchedulingCpSatSolver[Task],
 ):

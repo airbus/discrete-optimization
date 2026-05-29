@@ -333,6 +333,7 @@ class CpsatTeamAllocationSolver(
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         include_all_binary_vars = kwargs["include_all_binary_vars"]
         assert include_pair_overlap or overlapping_advanced
+        self.exactly_one_unary_resource_per_task = not optional_activities
         domains_for_task: list[list[int]] = []
         # Take into account the allocation constraints directly in domains of variable.
         for i in range(self.problem.number_of_activity):
@@ -364,13 +365,10 @@ class CpsatTeamAllocationSolver(
                     ]
                     for f in forbidden:
                         self.cp_model.Add(allocation_binary[i][f] == 0)
+        # at most or exactly one allocated team per activity
+        self.add_unary_resources_per_task_constraints()
         if optional_activities:
             is_allocated = self.create_is_allocated_variables()
-        else:
-            for i in range(len(allocation_binary)):
-                self.cp_model.AddExactlyOne(
-                    [allocation_binary[i][j] for j in allocation_binary[i]]
-                )
 
         if include_pair_overlap:
             for edge in self.problem.graph_activity.edges:

@@ -68,6 +68,7 @@ class CpSatColoringSolver(
     ] + WithStartingSolutionColoringSolver.hyperparameters
 
     at_most_one_unary_resource_per_task = True
+    exactly_one_unary_resource_per_task = True
     problem: ColoringProblem
     _nb_colors: int
 
