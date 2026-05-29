@@ -40,7 +40,21 @@ def test_imopse_cpsat():
     assert model.satisfy(solution)
 
 
-def test_imopse_cpsat_w_non_renewable_n_cumulative_resource():
+@pytest.mark.parametrize(
+    "one_worker_per_task, one_skill_per_task, exact_skill, slack_skill",
+    [
+        (True, False, False, False),
+        (True, False, False, False),
+        (False, True, False, False),
+        (False, True, True, False),
+        (False, True, True, True),
+        (False, False, True, True),
+        (True, False, True, True),
+    ],
+)
+def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(
+    one_worker_per_task, one_skill_per_task, exact_skill, slack_skill
+):
     file = [f for f in get_data_available() if "100_5_64_9.def" in f][0]
     model, _ = parse_file(file, max_horizon=1000)
 
@@ -48,7 +62,10 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource():
         problem=model,
     )
     cp_model.init_model(
-        one_worker_per_task=True,
+        one_worker_per_task=one_worker_per_task,
+        one_skill_per_task=one_skill_per_task,
+        exact_skill=exact_skill,
+        slack_skill=slack_skill,
     )
     cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCp.default_cpsat()
@@ -57,6 +74,19 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource():
     )
     solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
     assert model.satisfy(solution)
+    # more assert according to modeling options
+    if one_worker_per_task:
+        assert all(
+            len(allocated) <= 1 for allocated in solution.employee_usage.values()
+        )
+    if one_skill_per_task:
+        assert all(
+            all(len(skills_used) == 1 for skills_used in allocated.values())
+            for allocated in solution.employee_usage.values()
+        )
+    assert solution.check_skill_constraints(
+        exact=exact_skill, slack=5 if slack_skill else 0
+    )
 
     # add resources that should change schedule and mode choice
     task = model.tasks_list[0]

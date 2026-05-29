@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Generic, Hashable, TypeVar, Union
+from typing import Generic, Hashable, TypeVar
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
@@ -18,7 +18,7 @@ from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
 
 CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
 OtherCalendarResource = TypeVar("OtherCalendarResource", bound=Hashable)
-Resource = Union[CumulativeResource, OtherCalendarResource]
+Resource = CumulativeResource | OtherCalendarResource
 
 
 class CumulativeResourceProblem(

@@ -109,15 +109,16 @@ class TaskDetailsPreemptive:
 
 Task = Hashable
 UnaryResource = Hashable
-CumulativeResource = str
-Resource = Union[CumulativeResource, UnaryResource]
-NonRenewableResource = str
 Skill = str
+NonSkillCumulativeResource = str
+CumulativeResource = Skill | NonSkillCumulativeResource
+Resource = CumulativeResource | UnaryResource
+NonRenewableResource = str
 
 
 class MultiskillRcpspSolution(
     GenericSchedulingSolution[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
 ):
     problem: MultiskillRcpspProblem
@@ -183,6 +184,15 @@ class MultiskillRcpspSolution(
 
     def get_mode(self, task: Task) -> int:
         return self.modes[task]
+
+    def is_skill_used(
+        self, task: Task, unary_resource: UnaryResource, skill: Skill
+    ) -> bool:
+        return (
+            task in self.employee_usage
+            and unary_resource in self.employee_usage[task]
+            and skill in self.employee_usage[task][unary_resource]
+        )
 
 
 class PreemptiveMultiskillRcpspSolution(MultiskillRcpspSolution):
@@ -1985,7 +1995,7 @@ def intersect(i1, i2):
 
 class MultiskillRcpspProblem(
     GenericSchedulingProblem[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
 ):
     sgs: ScheduleGenerationScheme
@@ -2029,7 +2039,7 @@ class MultiskillRcpspProblem(
         strictly_disjunctive_subtasks: bool = True,
     ):
         self.skills_set = skills_set
-        self.skills_list = sorted(self.skills_set)
+        self._skills_list = sorted(self.skills_set)
 
         self.resources_set = resources_set
         self.non_renewable_resources = non_renewable_resources
@@ -2115,6 +2125,7 @@ class MultiskillRcpspProblem(
         """
         self._max_skill_over_worker_to_recompute = True
         self.update_resource_sets()
+        self.update_skills()
         self.create_employee_task_compatibility()
         self.update_calendars()
         self.update_special_constraints()
@@ -2234,6 +2245,32 @@ class MultiskillRcpspProblem(
         return self._tasks_list
 
     @property
+    def skills_list(self) -> list[Skill]:
+        return self._skills_list
+
+    @property
+    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+        """List of cumulative resources that are not skills.
+
+        NB: we consider also the lower bound on number of used employees as cumulative resource
+        to get the corresponding calendar constraint.
+
+        """
+        return [
+            res
+            for res in self.resources_list
+            if res not in self.non_renewable_resources
+        ] + [NB_EMPLOYEES_LB]
+
+    def get_unary_resource_skill_value(
+        self, unary_resource: UnaryResource, skill: Skill
+    ) -> int:
+        try:
+            return self.employees[unary_resource].dict_skill[skill].skill_value
+        except KeyError:
+            return 0
+
+    @property
     def non_renewable_resources_list(self) -> list[NonRenewableResource]:
         return self._non_renewable_resources_list
 
@@ -2246,23 +2283,6 @@ class MultiskillRcpspProblem(
         self, resource: NonRenewableResource, task: Task, mode: int
     ) -> int:
         return self.mode_details[task][mode].get(resource, 0)
-
-    @property
-    def cumulative_resources_list(self) -> list[CumulativeResource]:
-        """List of cumulative resources.
-
-        NB: we consider also skills as cumulative resources.
-
-        """
-        return (
-            [
-                res
-                for res in self.resources_list
-                if res not in self.non_renewable_resources
-            ]
-            + self.skills_list
-            + [NB_EMPLOYEES_LB]
-        )
 
     def get_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
@@ -2376,20 +2396,14 @@ class MultiskillRcpspProblem(
             for s in self.skills_set
         }
         self.compatibility_task_employee: dict[Task, dict[UnaryResource, bool]] = {}
-        self.skills_of_task: dict[Task, set[Skill]] = {}
         for task in self.tasks_list:
             self.compatibility_task_employee[task] = {}
-            skills_of_task = set()
-            for mode in self.mode_details[task]:
-                for skill in self.skills_set:
-                    if self.mode_details[task][mode].get(skill, 0) > 0:
-                        skills_of_task.add(skill)
+            skills_of_task = self.get_skills_of_task(task)
             for employee in self.employees:
                 if any(employee in self.employees_per_skill[s] for s in skills_of_task):
                     self.compatibility_task_employee[task][employee] = True
                 else:
                     self.compatibility_task_employee[task][employee] = False
-            self.skills_of_task[task] = skills_of_task
 
     def get_precedence_constraints(self) -> dict[Task, list[Task]]:
         return self.successors
@@ -2552,43 +2566,22 @@ class MultiskillRcpspProblem(
         return self.satisfy_classic(variable)
 
     def satisfy_classic(self, rcpsp_sol: MultiskillRcpspSolution) -> bool:
-        # check the skills :
-        if len(rcpsp_sol.schedule) != self.nb_tasks:
-            return False
-        for task in self.tasks_list:
-            mode = rcpsp_sol.modes[task]
-            required_skills = {
-                s: conso
-                for s in self.mode_details[task][mode]
-                if s in self.skills_set
-                and (conso := self.mode_details[task][mode][s]) > 0
-            }
-            # Skills for the given task are used
-            if len(required_skills) > 0:
-                for skill in required_skills:
-                    employees_used = [
-                        self.employees[emp].dict_skill[skill].skill_value
-                        for emp in rcpsp_sol.employee_usage[task]
-                        if skill in rcpsp_sol.employee_usage[task][emp]
-                    ]
-                    if sum(employees_used) < required_skills[skill]:
-                        logger.debug("1")
-                        return False
-
-        # Check for renewable resources capacity violations
-        # include employees and cumulative resources
-        if not rcpsp_sol.check_all_calendar_resource_capacity_constraints():
-            return False
-
-        # Check for non-renewable resource violation
-        if not rcpsp_sol.check_all_non_renewable_resource_capacity_constraints():
-            return False
-
-        # Check precedences / successors
-        if not rcpsp_sol.check_precedence_constraints():
-            return False
-
-        return True
+        return (
+            # check all tasks scheduled
+            len(rcpsp_sol.schedule) == self.nb_tasks
+            # Check for renewable resources capacity violations
+            # include employees and cumulative resources
+            and rcpsp_sol.check_all_calendar_resource_capacity_constraints()
+            # Check for non-renewable resource violation
+            and rcpsp_sol.check_all_non_renewable_resource_capacity_constraints()
+            # Check precedences / successors
+            and rcpsp_sol.check_precedence_constraints()
+            # Check skills
+            and rcpsp_sol.check_skill_constraints()
+            # Check consistency between compatibility/allocation/skill usage
+            and rcpsp_sol.check_skill_usage_and_allocation_consistency()
+            and rcpsp_sol.check_allocation_consistency()
+        )
 
     def satisfy_preemptive(self, rcpsp_sol: PreemptiveMultiskillRcpspSolution) -> bool:
         # check the skills :

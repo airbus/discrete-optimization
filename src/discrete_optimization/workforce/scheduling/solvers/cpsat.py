@@ -19,11 +19,15 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
 )
+from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
     GenericSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     SinglemodeSchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
+    WithoutSkillSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -46,7 +50,7 @@ from discrete_optimization.workforce.commons.fairness_modeling_ortools import (
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
-    CumulativeResource,
+    NonSkillCumulativeResource,
     Task,
     UnaryResource,
 )
@@ -100,9 +104,12 @@ class AdditionalCPConstraints:
 
 class CPSatAllocSchedulingSolver(
     GenericSchedulingCpSatSolver[
-        Task, UnaryResource, CumulativeResource, NoNonRenewableResource
+        Task, UnaryResource, NoSkill, NonSkillCumulativeResource, NoNonRenewableResource
     ],
     SinglemodeSchedulingCpSatSolver[Task],
+    WithoutSkillSchedulingCpSatSolver[
+        Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
+    ],
     SolverAllocScheduling,
     WarmstartMixin,
 ):
@@ -305,6 +312,7 @@ class CPSatAllocSchedulingSolver(
         args = self.complete_with_default_hyperparameters(args)
         add_lower_bound = args["add_lower_bound"]
         optional_activities = args["optional_activities"]
+        self.exactly_one_unary_resource_per_task = not optional_activities
         adding_redundant_cumulative = args["adding_redundant_cumulative"]
         super().init_model(**args)
         starts_var = {}
@@ -373,6 +381,9 @@ class CPSatAllocSchedulingSolver(
                     [is_present_var[i][x] for x in is_present_var[i]]
                 )
                 # else managed later by self.create_actually_done_variables()
+
+        # At most or exactly one team per activity
+        self.add_unary_resources_per_task_constraints()
 
         # Precedence constraints
         self.create_precedence_constraints()

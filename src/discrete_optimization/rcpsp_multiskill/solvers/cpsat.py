@@ -26,10 +26,11 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp_multiskill.problem import (
     NB_EMPLOYEES_LB,
-    CumulativeResource,
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,
     NonRenewableResource,
+    NonSkillCumulativeResource,
+    Skill,
     Task,
     UnaryResource,
 )
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 class CpSatMultiskillRcpspSolver(
     GenericSchedulingCpSatSolver[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
 ):
     hyperparameters = [
@@ -58,28 +59,20 @@ class CpSatMultiskillRcpspSolver(
             raise NotImplementedError()
         self.variables = {}
 
+    def get_skill_variable(
+        self, task: Task, unary_resource: UnaryResource, skill: Skill
+    ) -> LinearExprT:
+        try:
+            return self.variables["worker_variable"]["skill_used"][task][
+                unary_resource
+            ][skill]
+        except KeyError:
+            return 0
+
     def get_task_unary_resource_interval(
         self, task: Task, unary_resource: UnaryResource
     ) -> IntervalVar:
         return self.variables["worker_variable"]["opt_intervals"][task][unary_resource]
-
-    def is_compatible_task_unary_resource(
-        self, task: Task, unary_resource: UnaryResource
-    ) -> bool:
-        if len(self.problem.skills_of_task[task]) == 0:
-            # never allocate an employee to a task not needing a skill
-            return False
-        elif self._one_worker_per_task:
-            return any(
-                all(
-                    self.problem.employees[unary_resource].get_skill_level(s)
-                    >= self.problem.mode_details[task][mode].get(s, 0)
-                    for s in self.problem.skills_of_task[task]
-                )
-                for mode in self.problem.mode_details[task]
-            )
-        else:
-            return super().is_compatible_task_unary_resource(task, unary_resource)
 
     def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
         if not self.problem.is_multimode or len(self.problem.get_task_modes(task)) == 1:
@@ -135,8 +128,8 @@ class CpSatMultiskillRcpspSolver(
         one_skill_per_task = args.get("one_skill_per_task", False)
         redundant_skill_cumulative = args["redundant_skill_cumulative"]
         redundant_worker_cumulative = args["redundant_worker_cumulative"]
-        # store one_worker_per_task to use in `is_compatible_task_unary_resource`
-        self._one_worker_per_task = one_worker_per_task
+        # store one_worker_per_task to be used in `is_compatible_task_unary_resource`
+        self.at_most_one_unary_resource_per_task = one_worker_per_task
 
         super().init_model(**args)
         self.variables = {}

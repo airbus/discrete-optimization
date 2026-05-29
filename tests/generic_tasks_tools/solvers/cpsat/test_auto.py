@@ -7,7 +7,7 @@ import copy
 import logging
 import re
 from copy import deepcopy
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, Optional
 
 import pytest
 
@@ -15,6 +15,11 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
+)
+from discrete_optimization.generic_tasks_tools.skill import (
+    NoSkill,
+    WithoutSkillProblem,
+    WithoutSkillSolution,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
@@ -38,23 +43,28 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 
 UnaryResource = str
-CumulativeResource = str
-Resource = Union[UnaryResource, CumulativeResource]
+Skill = NoSkill
+NonSkillCumulativeResource = str
+CumulativeResource = Skill | NonSkillCumulativeResource
+Resource = UnaryResource | CumulativeResource
 NonRenewableResource = str
 Task = str
 
 
 class MySolution(
     GenericSchedulingSolution[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
-    ]
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+    ],
+    WithoutSkillSolution[
+        Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
+    ],
 ):
     problem: MyProblem
 
     def __init__(
         self,
         problem: MyProblem,
-        temp_sol: TemporarySolution[Task, UnaryResource],
+        temp_sol: TemporarySolution[Task, UnaryResource, Skill],
     ):
         super().__init__(problem)
         self.temp_sol = temp_sol
@@ -77,8 +87,9 @@ class MySolution(
 
 class MyProblem(
     GenericSchedulingProblem[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
-    ]
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+    ],
+    WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
 ):
     horizon = 10
     non_renewable_resources = ["non_renewable_resource"]
@@ -105,7 +116,7 @@ class MyProblem(
     successors = {"task-1": ["task-2"]}
 
     @property
-    def cumulative_resources_list(self) -> list[CumulativeResource]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         return self.cumulative_resources
 
     def get_cumulative_resource_consumption(
@@ -207,13 +218,13 @@ class MyProblem(
 
 class MyAutoCpsatSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ]
 ):
     problem: MyProblem
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource]
+        self, temp_sol: TemporarySolution[Task, UnaryResource, Skill]
     ) -> MySolution:
         return MySolution(problem=self.problem, temp_sol=temp_sol)
 
@@ -240,8 +251,12 @@ def test_problem(caplog):
         problem=problem,
         temp_sol=TemporarySolution(
             task_variables={
-                "task-1": TaskVariable(start=1, end=4, mode=1, allocated=["worker1"]),
-                "task-2": TaskVariable(start=5, end=9, mode=0, allocated=["worker2"]),
+                "task-1": TaskVariable(
+                    start=1, end=4, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=5, end=9, mode=0, allocated={"worker2": set()}
+                ),
             }
         ),
     )
@@ -257,8 +272,12 @@ def test_problem(caplog):
         problem=problem,
         temp_sol=TemporarySolution(
             task_variables={
-                "task-1": TaskVariable(start=3, end=6, mode=1, allocated=["worker2"]),
-                "task-2": TaskVariable(start=6, end=10, mode=0, allocated=["worker2"]),
+                "task-1": TaskVariable(
+                    start=3, end=6, mode=1, allocated={"worker2": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=6, end=10, mode=0, allocated={"worker2": set()}
+                ),
             }
         ),
     )
@@ -296,8 +315,12 @@ def test_problem(caplog):
         problem=problem,
         temp_sol=TemporarySolution(
             task_variables={
-                "task-1": TaskVariable(start=3, end=6, mode=1, allocated=["worker1"]),
-                "task-2": TaskVariable(start=6, end=10, mode=0, allocated=["worker1"]),
+                "task-1": TaskVariable(
+                    start=3, end=6, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=6, end=10, mode=0, allocated={"worker1": set()}
+                ),
             }
         ),
     )
@@ -310,8 +333,12 @@ def test_problem(caplog):
         problem=problem,
         temp_sol=TemporarySolution(
             task_variables={
-                "task-1": TaskVariable(start=1, end=4, mode=1, allocated=["worker1"]),
-                "task-2": TaskVariable(start=4, end=8, mode=0, allocated=["worker2"]),
+                "task-1": TaskVariable(
+                    start=1, end=4, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=4, end=8, mode=0, allocated={"worker2": set()}
+                ),
             }
         ),
     )
@@ -324,8 +351,12 @@ def test_problem(caplog):
         problem=problem,
         temp_sol=TemporarySolution(
             task_variables={
-                "task-1": TaskVariable(start=1, end=2, mode=1, allocated=["worker1"]),
-                "task-2": TaskVariable(start=5, end=9, mode=0, allocated=["worker2"]),
+                "task-1": TaskVariable(
+                    start=1, end=2, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=5, end=9, mode=0, allocated={"worker2": set()}
+                ),
             }
         ),
     )
@@ -340,8 +371,12 @@ def test_problem(caplog):
         problem=problem,
         temp_sol=TemporarySolution(
             task_variables={
-                "task-1": TaskVariable(start=1, end=4, mode=1, allocated=["worker1"]),
-                "task-2": TaskVariable(start=4, end=8, mode=0, allocated=["worker2"]),
+                "task-1": TaskVariable(
+                    start=1, end=4, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=4, end=8, mode=0, allocated={"worker2": set()}
+                ),
             }
         ),
     )
@@ -420,8 +455,12 @@ def test_auto(
         problem=problem,
         temp_sol=TemporarySolution(
             task_variables={
-                "task-1": TaskVariable(start=1, end=4, mode=1, allocated=["worker1"]),
-                "task-2": TaskVariable(start=6, end=10, mode=0, allocated=["worker2"]),
+                "task-1": TaskVariable(
+                    start=1, end=4, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=6, end=10, mode=0, allocated={"worker2": set()}
+                ),
             }
         ),
     )

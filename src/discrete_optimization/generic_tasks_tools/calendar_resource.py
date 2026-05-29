@@ -7,7 +7,7 @@ import logging
 from abc import abstractmethod
 from collections.abc import Hashable, Iterable
 from functools import cache
-from typing import Generic, Optional, TypeVar, Union
+from typing import Generic, Optional, TypeVar
 
 import numpy as np
 
@@ -267,7 +267,7 @@ class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]
 
     def compute_aggregated_calendar_resources_consumptions(
         self, weights: Optional[dict[Resource, int]] = None
-    ):
+    ) -> int:
         """Compute aggregated consumption of each calendar resource by the solution.
 
         Args:
@@ -323,9 +323,33 @@ class WithoutCalendarResourceSolution(
     def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:
         raise ValueError(f"{resource} is not a calendar resource of the problem.")
 
+    def check_calendar_resource_capacity_constraint(self, resource: Resource) -> bool:
+        return True
+
+    def check_calendar_resource_capacity_constraints(
+        self, resources: Iterable[Resource]
+    ) -> bool:
+        return True
+
+    def check_all_calendar_resource_capacity_constraints(self) -> bool:
+        return True
+
+    def compute_aggregated_calendar_resources_consumptions(
+        self, weights: Optional[dict[Resource, int]] = None
+    ):
+        return 0
+
+    def compute_nb_calendar_resources_used(
+        self, weights: Optional[dict[Resource, int]] = None
+    ) -> int:
+        return 0
+
+    def compute_calendar_resources_consumptions(self) -> dict[Resource, int]:
+        return {}
+
 
 def convert_calendar_to_availability_intervals(
-    calendar: Union[int, list[int]], horizon: int
+    calendar: int | list[int], horizon: int
 ) -> list[tuple[int, int, int]]:
     """Convert a calendar into availability intervals.
 

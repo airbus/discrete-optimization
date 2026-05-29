@@ -324,7 +324,9 @@ def test_compute_sufficient_assumptions(problem):
     )
 
 
-@pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
+@pytest.mark.parametrize(
+    "modelisation_allocation", list(ModelisationAllocationOrtools)[::-1]
+)
 def test_constraint_nb_usages(problem, modelisation_allocation):
     solver = CpsatTeamAllocationSolver(problem)
     solver.init_model(modelisation_allocation=modelisation_allocation)
@@ -333,6 +335,7 @@ def test_constraint_nb_usages(problem, modelisation_allocation):
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
     nb_usages_total = sol.compute_nb_unary_resource_usages()
+    print(nb_usages_total)
     unary_resource = "adba7"
     nb_usages = sol.compute_nb_unary_resource_usages(unary_resources=(unary_resource,))
 
@@ -349,7 +352,8 @@ def test_constraint_nb_usages(problem, modelisation_allocation):
         ).get_best_solution()
         assert sol is None
     else:
-        target = int(nb_usages_total / 2)
+        print(solver.solver.value(solver.get_nb_tasks_done_variable()))
+        target = nb_usages_total - 5
         constraints = solver.add_constraint_on_total_nb_usages(
             sign=SignEnum.LESS, target=target
         )

@@ -1,7 +1,7 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+import logging
 from abc import abstractmethod
 from enum import Enum
 from typing import Any, Iterable, Optional
@@ -17,6 +17,8 @@ from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.solvers.utils import is_a_trivial_zero
 from discrete_optimization.generic_tools.cp_tools import SignEnum
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
+
+logger = logging.getLogger(__name__)
 
 
 class AllocationCpSatSolver(
@@ -36,6 +38,8 @@ class AllocationCpSatSolver(
     Default to False, ie several resources allowed per task.
 
     """
+    exactly_one_unary_resource_per_task = False
+    """Whether enforcing exactly one resource allocated to each task."""
 
     allocation_changes_variables_created = False
     """Flag telling whether 'allocation changes variables' have been created"""
@@ -49,8 +53,6 @@ class AllocationCpSatSolver(
     """Flag telling whether 'done variables' have been created"""
     done_variables: dict[Task, IntVar]
     """Variables tracking whether a task has at least one unary resource allocated."""
-    at_most_one_unary_resource_per_task_constraints_added = False
-    """Flag telling whether constraints ensuring at most one unary resource per task have been created"""
 
     @property
     def subset_tasks_of_interest(self) -> Iterable[Task]:
@@ -90,7 +92,6 @@ class AllocationCpSatSolver(
         self.used_variables = {}
         self.done_variables_created = False
         self.done_variables_created = {}
-        self.at_most_one_unary_resource_per_task_constraints_added = False
 
     @abstractmethod
     def get_task_unary_resource_is_present_variable(
@@ -255,8 +256,6 @@ class AllocationCpSatSolver(
                 ]
                 if len(list_is_present_variables) > 0:
                     if self.at_most_one_unary_resource_per_task:
-                        if not self.at_most_one_unary_resource_per_task_constraints_added:
-                            self.cp_model.add_at_most_one(list_is_present_variables)
                         nb_teams_allocated_to_task = sum(list_is_present_variables)
                         self.cp_model.add(
                             nb_teams_allocated_to_task == 1
@@ -269,18 +268,25 @@ class AllocationCpSatSolver(
                 else:
                     self.cp_model.add(done == 0)
             self.done_variables_created = True
-            if self.at_most_one_unary_resource_per_task:
-                self.at_most_one_unary_resource_per_task_constraints_added = True
 
-    def add_at_most_one_unary_resource_per_task_constraints(self):
-        """Add constraints to cp model so that no more than one unary resource is allocated per task.
+    def add_unary_resources_per_task_constraints(self):
+        """Add constraints on number min/max of allocated resources per task.
 
-        Calling method avoid recreating the constraint if already done (e.g. when calling `create_done_variables()`)
+        According to options `at_most_one_unary_resource_per_task` and `exactly_one_unary_resource_per_task`.
 
         """
         if (
-            self.at_most_one_unary_resource_per_task
-            and not self.at_most_one_unary_resource_per_task_constraints_added
+            self.exactly_one_unary_resource_per_task
+            and not self.at_most_one_unary_resource_per_task
+        ):
+            # warning if not exactly => at_most
+            logger.warning(
+                "`at_most_one_unary_resource_per_task` is False while `exactly_one_unary_resource_per_task` is True. "
+                "`exactly_one_unary_resource_per_task` will take the precedence."
+            )
+        if (
+            self.exactly_one_unary_resource_per_task
+            or self.at_most_one_unary_resource_per_task
         ):
             for task in self.subset_tasks_of_interest:
                 list_is_present_variables = [
@@ -296,10 +302,16 @@ class AllocationCpSatSolver(
                         )
                     )
                 ]
-                if len(list_is_present_variables) > 0:
+                if (
+                    len(list_is_present_variables) > 0
+                    and self.exactly_one_unary_resource_per_task
+                ):
+                    self.cp_model.add_exactly_one(list_is_present_variables)
+                elif (
+                    len(list_is_present_variables) > 1
+                    and self.at_most_one_unary_resource_per_task
+                ):
                     self.cp_model.add_at_most_one(list_is_present_variables)
-
-            self.at_most_one_unary_resource_per_task_constraints_added = True
 
     def get_nb_tasks_done_variable(self) -> Any:
         self.create_done_variables()

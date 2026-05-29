@@ -10,18 +10,15 @@ from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
-    CumulativeResource,
     GenericSchedulingProblem,
     Resource,
 )
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
-    CumulativeResourceSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.skill import (
+    NonSkillCumulativeResource,
+    Skill,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resource import (
     NonRenewableCpSatSolver,
@@ -29,21 +26,28 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resou
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
     PrecedenceSchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
+    SkillSchedulingCpSatSolver,
+)
 
 
 class GenericSchedulingCpSatSolver(
-    CumulativeResourceSchedulingCpSatSolver[Task, CumulativeResource, UnaryResource],
+    SkillSchedulingCpSatSolver[
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
+    ],
     NonRenewableCpSatSolver[Task, NonRenewableResource],
-    AllocationCpSatSolver[Task, UnaryResource],
     PrecedenceSchedulingCpSatSolver[Task],
-    Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource],
+    Generic[
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+    ],
 ):
-    """Mixin for cpsat solver dealing with sheduling + allocation problems.
+    """Mixin for cpsat solver dealing with scheduling + allocation problems.
 
     Has access to helping methods to create constraints for
     - precedence
     - renewable resource with calendar (unary resource to allocate, or cumulative resource)
     - non-renewable resource capacity
+    - skills brought to tasks by allocated unary resources
 
     For a more all-in-one version actually creating variables, constraints and objectives,
     see `GenericSchedulingAutoCpSatSolver`.
@@ -51,7 +55,7 @@ class GenericSchedulingCpSatSolver(
     """
 
     problem: GenericSchedulingProblem[
-        Task, UnaryResource, CumulativeResource, NonRenewableResource
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ]
 
     def get_resource_consumption_intervals(

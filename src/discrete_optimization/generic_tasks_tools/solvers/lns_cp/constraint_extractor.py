@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, Union
+from typing import Any, Generic, Optional
 
 import numpy as np
 
@@ -314,7 +314,7 @@ class ConstraintExtractorPortfolio(BaseConstraintExtractor[Task]):
     def __init__(
         self,
         extractors: list[BaseConstraintExtractor[Task]],
-        weights: Union[list[float], np.array] = None,
+        weights: list[float] | np.ndarray | None = None,
         verbose: bool = False,
     ):
         self.extractors = extractors

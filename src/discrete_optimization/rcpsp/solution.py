@@ -20,6 +20,10 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.skill import (
+    NoSkill,
+    WithoutSkillSolution,
+)
 from discrete_optimization.generic_tools.do_problem import RobustProblem
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
@@ -29,6 +33,7 @@ Task = Hashable
 Resource = str
 NonRenewableResource = str
 CumulativeResource = Resource
+NonSkillCumulativeResource = CumulativeResource
 
 
 class TaskDetails:
@@ -39,7 +44,10 @@ class TaskDetails:
 
 class RcpspSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, CumulativeResource, NonRenewableResource
+        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+    ],
+    WithoutSkillSolution[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutAllocationSolution[Task],
 ):

@@ -19,6 +19,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
     Objective,
@@ -33,8 +34,8 @@ from discrete_optimization.rcpsp.problem import (
     Task,
 )
 from discrete_optimization.rcpsp.solution import (
-    CumulativeResource,
     NonRenewableResource,
+    NonSkillCumulativeResource,
 )
 from discrete_optimization.rcpsp.solvers import RcpspSolver
 
@@ -43,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 class CpSatAutoRcpspSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, NoUnaryResource, CumulativeResource, NonRenewableResource
+        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
     ],
     RcpspSolver,
 ):
@@ -232,7 +233,7 @@ class CpSatAutoRcpspSolver(
         )
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource]
+        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
     ) -> RcpspSolution:
         schedule = {}
         modes_dict = {}
@@ -315,7 +316,7 @@ class CpSatAutoResourceRcpspSolver(CpSatAutoRcpspSolver):
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource]:
+    ) -> TemporarySolution[Task, UnaryResource, NoSkill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -342,7 +343,7 @@ class CpSatAutoResourceRcpspSolver(CpSatAutoRcpspSolver):
         return temp_sol
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource]
+        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
     ) -> RcpspSolution:
         """Convert temporary solution to rcpsp format.
 
@@ -430,7 +431,7 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource]:
+    ) -> TemporarySolution[Task, UnaryResource, NoSkill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -457,7 +458,7 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
         return temp_sol
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource]
+        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
     ) -> RcpspSolution:
         """Convert temporary solution to rcpsp format.
 

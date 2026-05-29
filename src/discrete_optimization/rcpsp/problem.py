@@ -28,6 +28,7 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
 )
+from discrete_optimization.generic_tasks_tools.skill import NoSkill, WithoutSkillProblem
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -45,8 +46,8 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
 from discrete_optimization.rcpsp.solution import (
-    CumulativeResource,
     NonRenewableResource,
+    NonSkillCumulativeResource,
     RcpspSolution,
     Resource,
     Task,
@@ -71,7 +72,10 @@ class ScheduleGenerationScheme(Enum):
 
 class RcpspProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, CumulativeResource, NonRenewableResource
+        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+    ],
+    WithoutSkillProblem[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutAllocationProblem[Task],
 ):
@@ -367,7 +371,7 @@ class RcpspProblem(
         return self.non_renewable_resources
 
     @property
-    def cumulative_resources_list(self) -> list[CumulativeResource]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         return [
             resource
             for resource in self.resources_list

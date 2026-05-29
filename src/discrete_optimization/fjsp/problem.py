@@ -21,6 +21,11 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.skill import (
+    NoSkill,
+    WithoutSkillProblem,
+    WithoutSkillSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -34,13 +39,21 @@ from discrete_optimization.jsp.problem import Subjob, Task
 logger = logging.getLogger(__name__)
 
 
-CumulativeResource = int  # machine id
-Resource = CumulativeResource  # no other resource
+NonSkillCumulativeResource = int  # machine id
+CumulativeResource = NonSkillCumulativeResource  # no skill
+Resource = NonSkillCumulativeResource  # no other resource
 
 
 class FJobShopSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NoNonRenewableResource,
+    ],
+    WithoutSkillSolution[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutNonRenewableResourceSolution[Task],
     WithoutAllocationSolution[Task],
@@ -86,7 +99,14 @@ class Job:
 
 class FJobShopProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, CumulativeResource, NoNonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NoNonRenewableResource,
+    ],
+    WithoutSkillProblem[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutNonRenewableResourceProblem[Task],
     WithoutAllocationProblem[Task],
@@ -175,7 +195,7 @@ class FJobShopProblem(
             return 0
 
     @property
-    def cumulative_resources_list(self) -> list[CumulativeResource]:
+    def non_skill_cumulative_resources_list(self) -> list[CumulativeResource]:
         return list(range(self.n_machines))
 
     def get_resource_availabilities(

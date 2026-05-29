@@ -22,6 +22,10 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
 )
+from discrete_optimization.generic_tasks_tools.skill import (
+    NonSkillCumulativeResource,
+    Skill,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +63,7 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
     def __init__(
         self,
         problem: GenericSchedulingProblem[
-            Task, UnaryResource, CumulativeResource, NonRenewableResource
+            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
         ],
         horizon: Optional[int] = None,
     ):

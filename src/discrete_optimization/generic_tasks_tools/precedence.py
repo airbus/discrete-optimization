@@ -77,3 +77,8 @@ class WithoutPrecedenceProblem(PrecedenceProblem[Task]):
 
     def get_precedence_constraints(self) -> dict[Task, Iterable[Task]]:
         return {}
+
+
+class WithoutPrecedenceSolution(PrecedenceSolution[Task]):
+    def check_precedence_constraints(self) -> bool:
+        return True
