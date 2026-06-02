@@ -130,6 +130,11 @@ class GenericSchedulingAutoCpSatSolver(
             name="avoid_interval_optional", choices=[True, False], default=True
         ),
         CategoricalHyperparameter(
+            name="add_redundant_skill_cumulative_constraints",
+            choices=[True, False],
+            default=False,
+        ),
+        CategoricalHyperparameter(
             name="use_cpm_for_task_bounds", choices=[True, False], default=False
         ),
         CategoricalHyperparameter(
@@ -176,6 +181,13 @@ class GenericSchedulingAutoCpSatSolver(
     keep_only_most_nested_energy_constraints = True
     """Whether to keep only most nested subgraphs for energy constraints."""
     # Calendar constraints settings
+    add_redundant_skill_cumulative_constraints = False
+    """Whether adding redundant calendar cumulative constraints on skills.
+
+    These constraints are redundant with the calendar constraints on unary_resources
+    as the calendar for a skill is deduce from unary_resource calendars.
+
+    """
 
     # cpsat variables
     start_or_end_variables: dict[tuple[Task, StartOrEnd], LinearExprT]
@@ -234,7 +246,10 @@ class GenericSchedulingAutoCpSatSolver(
         Returns:
 
         """
-        return True
+        if resource in self.problem.skills_list:
+            return self.add_redundant_skill_cumulative_constraints
+        else:
+            return True
 
     def compute_task_bounds(self) -> None:
         """Compute tighter bounds for tasks.
@@ -340,12 +355,17 @@ class GenericSchedulingAutoCpSatSolver(
         duplicate_start_var_per_mode: Optional[bool] = None,
         use_energy_constraints: Optional[bool] = None,
         keep_only_most_nested_energy_constraints: Optional[bool] = None,
+        add_redundant_skill_cumulative_constraints: Optional[bool] = None,
         **kwargs: Any,
     ) -> None:
         """Init cp model and reset stored variables if any."""
         super().init_model(**kwargs)
 
         # update default settings
+        if add_redundant_skill_cumulative_constraints is not None:
+            self.add_redundant_skill_cumulative_constraints = (
+                add_redundant_skill_cumulative_constraints
+            )
         if use_cpm_for_task_bounds is not None:
             self.use_cpm_for_task_bounds = use_cpm_for_task_bounds
         if use_energy_constraints is not None:
