@@ -494,7 +494,10 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
             )
 
     def update_infos_from_numba_output(
-        self, rcpsp_schedule, skills_usage, unfeasible_non_renewable_resources
+        self,
+        rcpsp_schedule: dict[int, tuple[int, int]],
+        skills_usage: dict[int, np.ndarray],
+        unfeasible_non_renewable_resources,
     ):
         if unfeasible_non_renewable_resources:
             self.schedule = {
@@ -646,7 +649,11 @@ class VariantPreemptiveMultiskillRcpspSolution(PreemptiveMultiskillRcpspSolution
             )
 
     def update_from_numba_output(
-        self, starts_dict, ends_dict, skills_usage, unfeasible_non_renewable_resources
+        self,
+        starts_dict: dict[int, np.ndarray],
+        ends_dict: dict[int, np.ndarray],
+        skills_usage: dict[int, np.ndarray],
+        unfeasible_non_renewable_resources,
     ):
         if unfeasible_non_renewable_resources:
             self.schedule = {
@@ -1008,7 +1015,7 @@ def sgs_multi_skill(solution: VariantMultiskillRcpspSolution):
         )
         rcpsp_schedule[act_id]["end_time"] = activity_end_times[act_id]
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
-        last_act_id = max(problem.successors.keys())
+        last_act_id: Task = max(problem.successors.keys())
         rcpsp_schedule[last_act_id] = {
             "start_time": 99999999,
             "end_time": 9999999,
@@ -1266,7 +1273,7 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
     rcpsp_schedule = schedules
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         rcpsp_schedule_feasible = False
-        last_act_id = max(problem.successors.keys())
+        last_act_id: Task = max(problem.successors.keys())
         rcpsp_schedule[last_act_id] = {
             "starts": [99999999],
             "ends": [9999999],
@@ -1603,7 +1610,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
     rcpsp_schedule = schedules
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         rcpsp_schedule_feasible = False
-        last_act_id = max(problem.successors.keys())
+        last_act_id: Task = max(problem.successors.keys())
         rcpsp_schedule[last_act_id] = {
             "starts": [99999999],
             "ends": [9999999],
@@ -1894,7 +1901,7 @@ def sgs_multi_skill_partial_schedule(
         rcpsp_schedule[act_id]["end_time"] = activity_end_times[act_id]
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         rcpsp_schedule_feasible = False
-        last_act_id = max(problem.successors.keys())
+        last_act_id: Task = max(problem.successors.keys())
         if last_act_id not in rcpsp_schedule.keys():
             rcpsp_schedule[last_act_id] = {
                 "start_time": 99999999,
@@ -2013,6 +2020,8 @@ class MultiskillRcpspProblem(
     # {task_id: {mode: {resource: is_releasable during preemption }
     strictly_disjunctive_subtasks: bool
     # only used in preemptive mode, specifies that subtasks of tasks should be strictly disjunctive or not (i.e (st1, end1), (st2, end2), in strictly disjunctive case, st2>end1+1)
+    source_task: Task
+    sink_task: Task
 
     def __init__(
         self,
@@ -2067,16 +2076,20 @@ class MultiskillRcpspProblem(
             )
             self.employees_list = employees_list
         self.index_task = {self.tasks_list[i]: i for i in range(self.n_jobs)}
-        self.source_task = source_task
+
         if source_task is None:
             self.source_task = min(
                 self.tasks_list
             )  # tasks id should be comparable in this case
-        self.sink_task = sink_task
+        else:
+            self.source_task = source_task
         if sink_task is None:
             self.sink_task = max(
                 self.tasks_list
             )  # tasks id should be comparable in this case
+        else:
+            self.sink_task = sink_task
+
         self.tasks_list_non_dummy = [
             t for t in self.tasks_list if t not in {self.source_task, self.sink_task}
         ]

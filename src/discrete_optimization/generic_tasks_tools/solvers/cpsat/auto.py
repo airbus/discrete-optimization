@@ -175,6 +175,7 @@ class GenericSchedulingAutoCpSatSolver(
     """Whether using energy constraints."""
     keep_only_most_nested_energy_constraints = True
     """Whether to keep only most nested subgraphs for energy constraints."""
+    # Calendar constraints settings
 
     # cpsat variables
     start_or_end_variables: dict[tuple[Task, StartOrEnd], LinearExprT]
