@@ -19,6 +19,9 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    merge_resources_availability_intervals,
+)
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResourceProblem,
     CumulativeResourceSolution,
@@ -98,6 +101,27 @@ class SkillProblem(
             )
             > 0
         }
+
+    def compute_skill_availabilities(self, skill: Skill) -> list[tuple[int, int, int]]:
+        """Deduce skill availabilities from unary_resource availabilities and skill values."""
+        return merge_resources_availability_intervals(
+            intervals_per_resource=[
+                [
+                    (start, end, int(is_present) * skill_value)
+                    for (start, end, is_present) in self.get_resource_availabilities(
+                        resource=unary_resource
+                    )
+                ]
+                for unary_resource in self.unary_resources_list
+                if (
+                    skill_value := self.get_unary_resource_skill_value(
+                        unary_resource=unary_resource, skill=skill
+                    )
+                )
+                > 0
+            ],
+            horizon=self.get_makespan_upper_bound(),
+        )
 
     def update_skills(self):
         self.get_skills_of_task.cache_clear()

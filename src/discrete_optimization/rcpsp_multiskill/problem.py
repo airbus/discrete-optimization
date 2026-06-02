@@ -2345,20 +2345,7 @@ class MultiskillRcpspProblem(
                 calendar=self.resources_availability[resource], horizon=self.horizon
             )
         elif resource in self.skills_set:
-            return convert_calendar_to_availability_intervals(
-                calendar=merge_resources_calendars(
-                    calendars=[
-                        [
-                            skill_level * int(present)
-                            for present in emp.calendar_employee
-                        ]
-                        for emp in self.employees.values()
-                        if (skill_level := emp.get_skill_level(resource)) > 0
-                    ],
-                    horizon=self.horizon,
-                ),
-                horizon=self.horizon,
-            )
+            return self.compute_skill_availabilities(resource)
         elif resource in self.employees:
             return convert_calendar_to_availability_intervals(
                 calendar=[

@@ -124,9 +124,7 @@ class CpSatAutoMultiskillRcpspSolver(
         Returns:
 
         """
-        if resource in self.problem.skills_set:
-            return self._redundant_skill_cumulative
-        elif resource == NB_EMPLOYEES_LB:
+        if resource == NB_EMPLOYEES_LB:
             return self._redundant_worker_cumulative
         else:
             return super().include_constraint_on_cumulative_resource(resource)
@@ -138,7 +136,9 @@ class CpSatAutoMultiskillRcpspSolver(
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         # redundant cumulative resources to consider
-        self._redundant_skill_cumulative = kwargs["redundant_skill_cumulative"]
+        self.add_redundant_skill_cumulative_constraints = kwargs[
+            "redundant_skill_cumulative"
+        ]
         self._redundant_worker_cumulative = kwargs["redundant_worker_cumulative"]
 
         # additional constraints (we solve a subproblem)
