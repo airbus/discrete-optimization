@@ -22,6 +22,10 @@ from discrete_optimization.generic_tasks_tools.skill import (
     SkillProblem,
     SkillSolution,
 )
+from discrete_optimization.generic_tasks_tools.timelag import (
+    TimelagProblem,
+    TimelagSolution,
+)
 
 CumulativeResource = Skill | NonSkillCumulativeResource
 Resource = CumulativeResource | UnaryResource
@@ -31,6 +35,7 @@ class GenericSchedulingProblem(
     SkillProblem[Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     PrecedenceSchedulingProblem[Task],
+    TimelagProblem[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
@@ -100,6 +105,7 @@ class GenericSchedulingSolution(
     ],
     NonRenewableResourceSolution[Task, NonRenewableResource],
     PrecedenceSchedulingSolution[Task],
+    TimelagSolution[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],

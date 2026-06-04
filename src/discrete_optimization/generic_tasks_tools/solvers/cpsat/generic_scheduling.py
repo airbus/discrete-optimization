@@ -29,6 +29,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduli
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
     SkillSchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.timelag import (
+    TimelagCpSatSolver,
+)
 
 
 class GenericSchedulingCpSatSolver(
@@ -37,6 +40,7 @@ class GenericSchedulingCpSatSolver(
     ],
     NonRenewableCpSatSolver[Task, NonRenewableResource],
     PrecedenceSchedulingCpSatSolver[Task],
+    TimelagCpSatSolver[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],

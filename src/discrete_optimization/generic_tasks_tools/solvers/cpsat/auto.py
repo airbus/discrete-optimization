@@ -940,6 +940,8 @@ class GenericSchedulingAutoCpSatSolver(
         )
 
     def _add_constraints(self) -> None:
+        # time lag
+        self.create_timelag_constraints()
         # non-renewable resources capacity
         for resource in self.problem.non_renewable_resources_list:
             self.create_non_renewable_resources_constraint(resource=resource)

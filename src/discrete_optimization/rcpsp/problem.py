@@ -174,6 +174,8 @@ class RcpspProblem(
     """
 
     sgs: ScheduleGenerationScheme
+    source_task: Task
+    sink_task: Task
 
     def __init__(
         self,
@@ -365,6 +367,35 @@ class RcpspProblem(
     @property
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
+
+    def get_start_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
+        timelags = self.special_constraints.start_to_start_min_time_lag
+        for task1, task2 in self.special_constraints.start_together:
+            timelag = (task1, task2, 0)
+            if timelag not in timelags:
+                timelags.append(timelag)
+        return timelags
+
+    def get_start_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
+        timelags = self.special_constraints.start_to_start_max_time_lag
+        for task1, task2 in self.special_constraints.start_together:
+            timelag = (task1, task2, 0)
+            if timelag not in timelags:
+                timelags.append(timelag)
+        return timelags
+
+    def get_end_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
+        timelags = self.special_constraints.start_at_end_plus_offset
+        for task1, task2 in self.special_constraints.start_at_end:
+            timelag = (task1, task2, 0)
+            if timelag not in timelags:
+                timelags.append(timelag)
+        return timelags
+
+    def get_end_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
+        return [
+            (task1, task2, 0) for task1, task2 in self.special_constraints.start_at_end
+        ]
 
     @property
     def non_renewable_resources_list(self) -> list[NonRenewableResource]:
