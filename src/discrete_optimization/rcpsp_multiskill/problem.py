@@ -2257,6 +2257,35 @@ class MultiskillRcpspProblem(
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
 
+    def get_start_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
+        timelags = self.special_constraints.start_to_start_min_time_lag
+        for task1, task2 in self.special_constraints.start_together:
+            timelag = (task1, task2, 0)
+            if timelag not in timelags:
+                timelags.append(timelag)
+        return timelags
+
+    def get_start_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
+        timelags = self.special_constraints.start_to_start_max_time_lag
+        for task1, task2 in self.special_constraints.start_together:
+            timelag = (task1, task2, 0)
+            if timelag not in timelags:
+                timelags.append(timelag)
+        return timelags
+
+    def get_end_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
+        timelags = self.special_constraints.start_at_end_plus_offset
+        for task1, task2 in self.special_constraints.start_at_end:
+            timelag = (task1, task2, 0)
+            if timelag not in timelags:
+                timelags.append(timelag)
+        return timelags
+
+    def get_end_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
+        return [
+            (task1, task2, 0) for task1, task2 in self.special_constraints.start_at_end
+        ]
+
     @property
     def skills_list(self) -> list[Skill]:
         return self._skills_list
@@ -2580,7 +2609,9 @@ class MultiskillRcpspProblem(
             and rcpsp_sol.check_skill_constraints()
             # Check consistency between compatibility/allocation/skill usage
             and rcpsp_sol.check_skill_usage_and_allocation_consistency()
-            and rcpsp_sol.check_allocation_consistency()
+            and rcpsp_sol.check_allocation_consistency
+            # Check time lags
+            and rcpsp_sol.check_time_lags()
         )
 
     def satisfy_preemptive(self, rcpsp_sol: PreemptiveMultiskillRcpspSolution) -> bool:

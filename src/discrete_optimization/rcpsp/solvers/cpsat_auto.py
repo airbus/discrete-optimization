@@ -127,73 +127,8 @@ class CpSatAutoRcpspSolver(
     def add_special_temporal_constraints(
         self,
     ):
-        """Add special temporal constraints to the CP model."""
+        """Add special temporal constraints not already taken into account by cpsat-auto."""
         model = self.cp_model
-        # start_to_start_min_time_lag: start(t1) + offset <= start(t2) where offset >= 0 (minimum time lag)
-        for (
-            t1,
-            t2,
-            offset,
-        ) in self.problem.special_constraints.start_to_start_min_time_lag:
-            model.add(
-                self.get_task_start_or_end_variable(
-                    task=t1, start_or_end=StartOrEnd.START
-                )
-                + offset
-                <= self.get_task_start_or_end_variable(
-                    task=t2, start_or_end=StartOrEnd.START
-                )
-            )
-
-        # start_to_start_max_time_lag: start(t2) <= start(t1) + offset where offset >= 0 (maximum time lag)
-        for (
-            t1,
-            t2,
-            offset,
-        ) in self.problem.special_constraints.start_to_start_max_time_lag:
-            model.add(
-                self.get_task_start_or_end_variable(
-                    task=t2, start_or_end=StartOrEnd.START
-                )
-                <= self.get_task_start_or_end_variable(
-                    task=t1, start_or_end=StartOrEnd.START
-                )
-                + offset
-            )
-
-        # start_together: start(t1) == start(t2)
-        for t1, t2 in self.problem.special_constraints.start_together:
-            model.add(
-                self.get_task_start_or_end_variable(
-                    task=t1, start_or_end=StartOrEnd.START
-                )
-                == self.get_task_start_or_end_variable(
-                    task=t2, start_or_end=StartOrEnd.START
-                )
-            )
-
-        # start_at_end: end(t1) == start(t2)
-        for t1, t2 in self.problem.special_constraints.start_at_end:
-            model.add(
-                self.get_task_start_or_end_variable(
-                    task=t1, start_or_end=StartOrEnd.END
-                )
-                == self.get_task_start_or_end_variable(
-                    task=t2, start_or_end=StartOrEnd.START
-                )
-            )
-
-        # start_at_end_plus_offset: end(t1) + offset <= start(t2)
-        for t1, t2, offset in self.problem.special_constraints.start_at_end_plus_offset:
-            model.add(
-                self.get_task_start_or_end_variable(
-                    task=t1, start_or_end=StartOrEnd.END
-                )
-                + offset
-                <= self.get_task_start_or_end_variable(
-                    task=t2, start_or_end=StartOrEnd.START
-                )
-            )
 
         # disjunctive_tasks: tasks cannot overlap (pairwise)
         # Either end(t1) <= start(t2) OR end(t2) <= start(t1)
