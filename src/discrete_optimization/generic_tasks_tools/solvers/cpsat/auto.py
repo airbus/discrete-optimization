@@ -35,7 +35,6 @@ from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
     Skill,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpm import Cpm
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
     GenericSchedulingCpSatSolver,
 )
@@ -259,47 +258,10 @@ class GenericSchedulingAutoCpSatSolver(
         - else only use min possible duration with 0, new_horizon (set by the solver in `self.get_makespan_upper_bound()`)
 
         """
-        if self.use_cpm_for_task_bounds:
-            cpm = Cpm(problem=self.problem, horizon=self.get_makespan_upper_bound())
-            cpm.compute_task_bounds()
-            self.tasks_bounds = cpm.get_task_bounds()
-        else:
-            self.tasks_bounds = {}
-            for task in self.problem.tasks_list:
-                start_lower_bound = self.problem.get_task_start_or_end_lower_bound(
-                    task=task, start_or_end=StartOrEnd.START
-                )
-                end_upper_bound = min(
-                    # use current bound + new "horizon"
-                    self.problem.get_task_start_or_end_upper_bound(
-                        task=task, start_or_end=StartOrEnd.END
-                    ),
-                    self.get_makespan_upper_bound(),
-                )
-                min_duration = min(
-                    self.problem.get_task_mode_duration(task=task, mode=mode)
-                    for mode in self.problem.get_task_modes(task=task)
-                )
-                end_lower_bound = max(
-                    # use start_lower bound + min_durations
-                    self.problem.get_task_start_or_end_lower_bound(
-                        task=task, start_or_end=StartOrEnd.END
-                    ),
-                    start_lower_bound + min_duration,
-                )
-                start_upper_bound = min(
-                    # use end_upper_bound - min_durations
-                    self.problem.get_task_start_or_end_upper_bound(
-                        task=task, start_or_end=StartOrEnd.START
-                    ),
-                    end_upper_bound - min_duration,
-                )
-                self.tasks_bounds[task] = (
-                    start_lower_bound,
-                    end_lower_bound,
-                    start_upper_bound,
-                    end_upper_bound,
-                )
+        self.tasks_bounds = self.problem.compute_tighter_task_bounds(
+            use_cpm=self.use_cpm_for_task_bounds,
+            horizon=self.get_makespan_upper_bound(),
+        )
 
     def get_task_start_or_end_lower_bound(
         self, task: Task, start_or_end: StartOrEnd

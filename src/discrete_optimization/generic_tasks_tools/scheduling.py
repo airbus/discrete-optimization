@@ -42,38 +42,6 @@ class SchedulingProblem(TasksProblem[Task]):
         """Get an upper bound on global makespan."""
         pass
 
-    def get_task_start_or_end_lower_bound(
-        self, task: Task, start_or_end: StartOrEnd
-    ) -> int:
-        """Get a lower bound on start or end of a given task.
-
-        Default implementation: 0
-
-        Args:
-            task:
-            start_or_end:
-
-        Returns:
-
-        """
-        return 0
-
-    def get_task_start_or_end_upper_bound(
-        self, task: Task, start_or_end: StartOrEnd
-    ) -> int:
-        """Get an upper bound on start or end of a given task.
-
-        Default implementation: makespan upper bound
-
-        Args:
-            task:
-            start_or_end:
-
-        Returns:
-
-        """
-        return self.get_makespan_upper_bound()
-
 
 class SchedulingSolution(TasksSolution[Task]):
     """Base class for solution to scheduling problems."""

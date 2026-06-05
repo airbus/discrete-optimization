@@ -57,8 +57,6 @@ from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
 )
 from discrete_optimization.rcpsp.utils import (
-    get_end_bounds_from_additional_constraint,
-    get_start_bounds_from_additional_constraint,
     intersect,
 )
 
@@ -294,6 +292,7 @@ class RcpspProblem(
         """
         self.update_calendars()
         self.update_special_constraints()
+        self.update_task_bounds()
         self.update_functions()
 
     def update_special_constraints(self):
@@ -459,30 +458,68 @@ class RcpspProblem(
     def get_task_start_or_end_lower_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:
-        match start_or_end:
-            case StartOrEnd.START:
-                lb, ub = get_start_bounds_from_additional_constraint(
-                    rcpsp_problem=self, activity=task
-                )
-            case _:
-                lb, ub = get_end_bounds_from_additional_constraint(
-                    rcpsp_problem=self, activity=task
-                )
-        return lb
+        lb: int | None = None
+        if self.includes_special_constraint():
+            # special constraints
+            match start_or_end:
+                case StartOrEnd.START:  # start
+                    if (
+                        self.special_constraints.start_times is not None
+                        and task in self.special_constraints.start_times
+                    ):
+                        # lb = ub = forced start time
+                        lb = self.special_constraints.start_times[task]
+                    elif task in self.special_constraints.start_times_window:
+                        # start window
+                        lb, ub = self.special_constraints.start_times_window[task]
+
+                case _:  # end
+                    if (
+                        self.special_constraints.end_times is not None
+                        and task in self.special_constraints.end_times
+                    ):
+                        # lb = ub = forced end time
+                        lb = self.special_constraints.end_times[task]
+                    elif task in self.special_constraints.end_times_window:
+                        # end window
+                        lb, ub = self.special_constraints.end_times_window[task]
+        if lb is not None:
+            return lb
+        else:
+            return 0  # default lower bound
 
     def get_task_start_or_end_upper_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:
-        match start_or_end:
-            case StartOrEnd.START:
-                lb, ub = get_start_bounds_from_additional_constraint(
-                    rcpsp_problem=self, activity=task
-                )
-            case _:
-                lb, ub = get_end_bounds_from_additional_constraint(
-                    rcpsp_problem=self, activity=task
-                )
-        return ub
+        ub: int | None = None
+        if self.includes_special_constraint():
+            # special constraints
+            match start_or_end:
+                case StartOrEnd.START:  # start
+                    if (
+                        self.special_constraints.start_times is not None
+                        and task in self.special_constraints.start_times
+                    ):
+                        # lb = ub = forced start time
+                        ub = self.special_constraints.start_times[task]
+                    elif task in self.special_constraints.start_times_window:
+                        # start window
+                        lb, ub = self.special_constraints.start_times_window[task]
+
+                case _:  # end
+                    if (
+                        self.special_constraints.end_times is not None
+                        and task in self.special_constraints.end_times
+                    ):
+                        # lb = ub = forced end time
+                        ub = self.special_constraints.end_times[task]
+                    elif task in self.special_constraints.end_times_window:
+                        # end window
+                        lb, ub = self.special_constraints.end_times_window[task]
+        if ub is not None:
+            return ub
+        else:
+            return self.get_makespan_upper_bound()  # default upper bound
 
     def update_functions(self) -> None:
         (

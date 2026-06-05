@@ -270,6 +270,7 @@ class AllocSchedulingProblem(
             add_additional_constraint=True,
         )
         self.update_tasks_list()
+        self.update_task_bounds()
         self.update_resource_availabilities()
         self.compatible_teams_per_activity = self.compatible_teams_all_activity()
 
@@ -624,28 +625,7 @@ def satisfy_time_window(
     solution: AllocSchedulingSolution,
     partial_solution: bool = False,
 ):
-    for t in range(solution.schedule.shape[0]):
-        tsk = problem.tasks_list[t]
-        lb_s, ub_s = problem.start_window.get(tsk, (None, None))
-        lb_e, ub_e = problem.end_window.get(tsk, (None, None))
-        st, end = solution.schedule[t, :]
-        if lb_s is not None:
-            if st < lb_s:
-                ##logger.info(f"Task {t} starting before {lb_s}")
-                return False
-        if ub_s is not None:
-            if st > ub_s:
-                ##logger.info(f"Task {t} starting after {ub_s}")
-                return False
-        if lb_e is not None:
-            if end < lb_e:
-                ##logger.info(f"Task {t} ending before {lb_e}")
-                return False
-        if ub_e is not None:
-            if end > ub_e:
-                ##logger.info(f"Task {t} ending after {ub_e}")
-                return False
-    return True
+    return solution.check_time_windows()
 
 
 def full_satisfy(

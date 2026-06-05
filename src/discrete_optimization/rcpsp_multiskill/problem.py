@@ -24,6 +24,7 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
     merge_resources_calendars,
 )
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -2109,7 +2110,12 @@ class MultiskillRcpspProblem(
             self.employees_list[i]: i for i in range(len(self.employees_list))
         }
         self.nb_employees = len(self.employees_list)
-        self.special_constraints = special_constraints
+        if special_constraints is None:
+            self.special_constraints = SpecialConstraintsDescription(
+                skip_special_constraints=True
+            )
+        else:
+            self.special_constraints = special_constraints
         self.partial_preemption_data = partial_preemption_data
         self.always_releasable_resources = always_releasable_resources
         self.never_releasable_resources = never_releasable_resources
@@ -2142,6 +2148,7 @@ class MultiskillRcpspProblem(
         self.create_employee_task_compatibility()
         self.update_calendars()
         self.update_special_constraints()
+        self.update_task_bounds()
         self.update_functions()
 
     def update_resource_sets(self):
@@ -2201,27 +2208,28 @@ class MultiskillRcpspProblem(
                     self.always_releasable_resources.add(r)
 
     def update_special_constraints(self):
-        self.do_special_constraints = self.special_constraints is not None
-        if self.special_constraints is None:
-            self.special_constraints = SpecialConstraintsDescription()
-        self.predecessors_dict = {task: [] for task in self.successors}
-        for task in self.successors:
-            for stask in self.successors[task]:
-                self.predecessors_dict[stask] += [task]
-        if self.do_special_constraints:
-            for t1, t2 in self.special_constraints.start_at_end:
-                if t2 not in self.successors[t1]:
-                    self.successors[t1].append(t2)
-            for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
-                if t2 not in self.successors[t1]:
-                    self.successors[t1].append(t2)
-            for t1, t2 in self.special_constraints.start_together:
-                for predt1 in self.predecessors_dict[t1]:
-                    if t2 not in self.successors[predt1]:
-                        self.successors[predt1] += [t2]
-                for predt2 in self.predecessors_dict[t2]:
-                    if t1 not in self.successors[predt2]:
-                        self.successors[predt2] += [t1]
+        if self.special_constraints.skip_special_constraints:
+            self.do_special_constraints = False
+        else:
+            self.do_special_constraints = True
+            predecessors_dict = {task: [] for task in self.successors}
+            for task in self.successors:
+                for stask in self.successors[task]:
+                    predecessors_dict[stask] += [task]
+            if self.do_special_constraints:
+                for t1, t2 in self.special_constraints.start_at_end:
+                    if t2 not in self.successors[t1]:
+                        self.successors[t1].append(t2)
+                for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
+                    if t2 not in self.successors[t1]:
+                        self.successors[t1].append(t2)
+                for t1, t2 in self.special_constraints.start_together:
+                    for predt1 in predecessors_dict[t1]:
+                        if t2 not in self.successors[predt1]:
+                            self.successors[predt1] += [t2]
+                    for predt2 in predecessors_dict[t2]:
+                        if t1 not in self.successors[predt2]:
+                            self.successors[predt2] += [t1]
         self.graph = self.compute_graph()
         self.predecessors = self.graph.predecessors_dict
 
@@ -2462,6 +2470,72 @@ class MultiskillRcpspProblem(
     ) -> bool:
         return self.compatibility_task_employee[task][unary_resource]
 
+    def get_task_start_or_end_lower_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        lb: int | None = None
+        if self.includes_special_constraint():
+            # special constraints
+            match start_or_end:
+                case StartOrEnd.START:  # start
+                    if (
+                        self.special_constraints.start_times is not None
+                        and task in self.special_constraints.start_times
+                    ):
+                        # lb = ub = forced start time
+                        lb = self.special_constraints.start_times[task]
+                    elif task in self.special_constraints.start_times_window:
+                        # start window
+                        lb, ub = self.special_constraints.start_times_window[task]
+
+                case _:  # end
+                    if (
+                        self.special_constraints.end_times is not None
+                        and task in self.special_constraints.end_times
+                    ):
+                        # lb = ub = forced end time
+                        lb = self.special_constraints.end_times[task]
+                    elif task in self.special_constraints.end_times_window:
+                        # end window
+                        lb, ub = self.special_constraints.end_times_window[task]
+        if lb is not None:
+            return lb
+        else:
+            return 0  # default lower bound
+
+    def get_task_start_or_end_upper_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        ub: int | None = None
+        if self.includes_special_constraint():
+            # special constraints
+            match start_or_end:
+                case StartOrEnd.START:  # start
+                    if (
+                        self.special_constraints.start_times is not None
+                        and task in self.special_constraints.start_times
+                    ):
+                        # lb = ub = forced start time
+                        ub = self.special_constraints.start_times[task]
+                    elif task in self.special_constraints.start_times_window:
+                        # start window
+                        lb, ub = self.special_constraints.start_times_window[task]
+
+                case _:  # end
+                    if (
+                        self.special_constraints.end_times is not None
+                        and task in self.special_constraints.end_times
+                    ):
+                        # lb = ub = forced end time
+                        ub = self.special_constraints.end_times[task]
+                    elif task in self.special_constraints.end_times_window:
+                        # end window
+                        lb, ub = self.special_constraints.end_times_window[task]
+        if ub is not None:
+            return ub
+        else:
+            return self.get_makespan_upper_bound()  # default upper bound
+
     def get_resource_available(self, res, time):
         return self.resources_availability[res][time]
 
@@ -2609,9 +2683,11 @@ class MultiskillRcpspProblem(
             and rcpsp_sol.check_skill_constraints()
             # Check consistency between compatibility/allocation/skill usage
             and rcpsp_sol.check_skill_usage_and_allocation_consistency()
-            and rcpsp_sol.check_allocation_consistency
+            and rcpsp_sol.check_allocation_consistency()
             # Check time lags
             and rcpsp_sol.check_time_lags()
+            # Check time window
+            and rcpsp_sol.check_time_windows()
         )
 
     def satisfy_preemptive(self, rcpsp_sol: PreemptiveMultiskillRcpspSolution) -> bool:

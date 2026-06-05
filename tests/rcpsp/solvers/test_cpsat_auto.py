@@ -378,9 +378,10 @@ def test_special_constraints():
 
     resources = {"R1": 2}
 
-    # Test 1: start_together constraint
+    # Test 1: start_together constraint + start times
     special_constraints_1 = SpecialConstraintsDescription(
         start_together=[(2, 3)],  # tasks 2 and 3 start together
+        start_times={4: 10},  # task 4 should start at 10
     )
 
     problem_1 = RcpspProblem(
@@ -402,11 +403,13 @@ def test_special_constraints():
         f"task 2 starts at {solution_1.get_start_time(2)}, "
         f"task 3 starts at {solution_1.get_start_time(3)}"
     )
+    assert solution_1.get_start_time(4) == 10
     assert problem_1.satisfy(solution_1), "Solution should satisfy all constraints"
 
-    # Test 2: start_at_end constraint
+    # Test 2: start_at_end constraint + end times
     special_constraints_2 = SpecialConstraintsDescription(
         start_at_end=[(3, 4)],  # task 4 starts when task 3 ends
+        end_times={5: 20},  # task 5 ends at 20
     )
 
     problem_2 = RcpspProblem(
@@ -428,6 +431,7 @@ def test_special_constraints():
         f"task 3 ends at {solution_2.get_end_time(3)}, "
         f"task 4 starts at {solution_2.get_start_time(4)}"
     )
+    assert solution_2.get_end_time(5) == 20
     assert problem_2.satisfy(solution_2), "Solution should satisfy all constraints"
 
     # Test 3: start_times_window constraint

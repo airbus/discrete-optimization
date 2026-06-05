@@ -3,10 +3,12 @@
 #  LICENSE file in the root directory of this source tree.
 """CPM to compute lower/uppe bound on start/end of tasks"""
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from heapq import heapify, heappop, heappush
-from typing import Any, Generic, Optional
+from typing import TYPE_CHECKING, Any, Generic, Optional
 
 import networkx as nx
 
@@ -16,9 +18,6 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.generic_scheduling import (
-    GenericSchedulingProblem,
-)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
 )
@@ -26,6 +25,11 @@ from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
     Skill,
 )
+
+if TYPE_CHECKING:  # avoid circular imports due to annotations
+    from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+        GenericSchedulingProblem,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +57,7 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
     end lower_bounds = end upper bound for sink tasks. So sink tasks end upper bound will be set to horizon instead.
 
     For each task, we take best of propagated bound and existing problem bound on start/end
-    (via `problem.get_task_start_or_end_lower_bound()`).
+    (via `problem.get_task_start_or_end_tighter_lower_bound()` and `problem.get_task_start_or_end_tighter_upper_bound()`).
 
     Attributes:
         horizon: if set, override `problem.get_makespan_upper_bound()`.
@@ -246,8 +250,8 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
             # update time to take into account problem bound
             time = max(
                 time,
-                self.problem.get_task_start_or_end_lower_bound(
-                    task=node, start_or_end=StartOrEnd.START
+                self.problem.get_task_start_or_end_tighter_lower_bound(
+                    task=node, start_or_end=StartOrEnd.START, use_cpm=False
                 ),
             )
             self.map_node[node].start_lower_bound = time
@@ -258,8 +262,8 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
             # end lower bound : best of start lower bound + min duration and problem bound
             self.map_node[node].end_lower_bound = max(
                 time + min_duration,
-                self.problem.get_task_start_or_end_lower_bound(
-                    task=node, start_or_end=StartOrEnd.END
+                self.problem.get_task_start_or_end_tighter_lower_bound(
+                    task=node, start_or_end=StartOrEnd.END, use_cpm=False
                 ),
             )
             done.add(node)
@@ -287,8 +291,8 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
             # update time to take into account problem bound
             eub = min(
                 -time,
-                self.problem.get_task_start_or_end_upper_bound(
-                    task=node, start_or_end=StartOrEnd.END
+                self.problem.get_task_start_or_end_tighter_upper_bound(
+                    task=node, start_or_end=StartOrEnd.END, use_cpm=False
                 ),
             )
             self.map_node[node].end_upper_bound = eub
@@ -299,8 +303,8 @@ class Cpm(Generic[Task, UnaryResource, CumulativeResource, NonRenewableResource]
             # start upper bound: best of end upper bound - min_duration and problem bound
             self.map_node[node].start_upper_bound = min(
                 eub - min_duration,
-                self.problem.get_task_start_or_end_upper_bound(
-                    task=node, start_or_end=StartOrEnd.START
+                self.problem.get_task_start_or_end_tighter_upper_bound(
+                    task=node, start_or_end=StartOrEnd.START, use_cpm=False
                 ),
             )
             done.add(node)
