@@ -321,23 +321,43 @@ class CPSatAutoAllocSchedulingSolver(
                     ):
                         margin = additional_constraints.adding_margin_on_sequence[1]
                         # create just additional interval for the "routing" constraint.
-                        intervals = [
-                            self.cp_model.new_optional_fixed_size_interval_var(
-                                start=self.get_task_start_or_end_variable(
-                                    task=task, start_or_end=StartOrEnd.START
-                                ),
-                                size=self.problem.tasks_data[task].duration_task
-                                + margin,
-                                is_present=self.get_task_unary_resource_is_present_variable(
+                        if self.avoid_interval_optional:
+                            intervals = [
+                                self.cp_model.new_fixed_size_interval_var(
+                                    start=self.get_task_start_or_end_variable(
+                                        task=task, start_or_end=StartOrEnd.START
+                                    ),
+                                    size=self.problem.tasks_data[task].duration_task
+                                    + margin,
+                                    name=f"dummy_longer_task_{task, team}",
+                                )
+                                for task in self.compatible_tasks[team]
+                            ]
+                            demands = [
+                                self.get_task_unary_resource_is_present_variable(
                                     task=task, unary_resource=team
-                                ),
-                                name=f"dummy_longer_task_{task, team}",
-                            )
-                            for task in self.compatible_tasks[team]
-                        ]
+                                )
+                                for task in self.compatible_tasks[team]
+                            ]
+                        else:
+                            intervals = [
+                                self.cp_model.new_optional_fixed_size_interval_var(
+                                    start=self.get_task_start_or_end_variable(
+                                        task=task, start_or_end=StartOrEnd.START
+                                    ),
+                                    size=self.problem.tasks_data[task].duration_task
+                                    + margin,
+                                    is_present=self.get_task_unary_resource_is_present_variable(
+                                        task=task, unary_resource=team
+                                    ),
+                                    name=f"dummy_longer_task_{task, team}",
+                                )
+                                for task in self.compatible_tasks[team]
+                            ]
+                            demands = [1] * len(intervals)
                         self.cp_model.add_cumulative(
                             intervals=intervals,
-                            demands=[1] * len(intervals),
+                            demands=demands,
                             capacity=1,
                         )
 
