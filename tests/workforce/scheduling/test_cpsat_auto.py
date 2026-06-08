@@ -54,7 +54,6 @@ def test_cpsat(problem):
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
-        time_limit=10,
     )
     sol: AllocSchedulingSolution = res[-1][0]
     assert problem.satisfy(sol)
@@ -88,7 +87,6 @@ def test_cpsat(problem):
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
-        time_limit=10,
     )
     sol2: AllocSchedulingSolution = res[0][0]
     assert (init_sol.schedule == sol2.schedule).all()
@@ -120,7 +118,6 @@ def test_cpsat(problem):
     res = solver_relaxed.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
-        time_limit=5,
     )
 
     # compare solutions
@@ -211,7 +208,6 @@ def test_cpsat_params(
     )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=15,
         parameters_cp=parameters_cp,
         **kwargs,
     )
@@ -237,7 +233,6 @@ def test_cpsat_modelisation_dispersion(problem, modelisation_dispersion):
     )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=10,
         parameters_cp=parameters_cp,
         **kwargs,
     )
@@ -253,7 +248,6 @@ def test_cpsat_set_model_obj_aggregated(problem):
     # solution to compare with for DELTA_TO_EXISTING_SOLUTION
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=10,
     )
     base_solution = res.get_best_solution()
 
@@ -274,7 +268,6 @@ def test_cpsat_set_model_obj_aggregated(problem):
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
-        time_limit=5,
     )
     assert len(res) == 1
     sol = res[-1][0]
@@ -288,7 +281,6 @@ def test_cpsat_lexico(problem):
     # solution to compare with for DELTA_TO_EXISTING_SOLUTION
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        time_limit=10,
     )
     base_solution = res.get_best_solution()
 

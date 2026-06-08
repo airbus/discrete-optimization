@@ -331,10 +331,20 @@ def test_constraint_nb_usages(problem, modelisation_allocation):
     solver = CpsatTeamAllocationSolver(problem)
     solver.init_model(modelisation_allocation=modelisation_allocation)
     sol: TeamAllocationSolution
-    sol = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)]
-    ).get_best_solution()
-    nb_usages_total = sol.compute_nb_unary_resource_usages()
+    nb_usages_total = 0
+    n_try = 0
+    while (
+        modelisation_allocation.BINARY_OPTIONAL_ACTIVITIES
+        and nb_usages_total == 0
+        and n_try < 5
+    ):
+        # sometimes with optional activities, no team are allocated in first solution found.
+        # it makes the next tests crash so we relaunch it
+        sol = solver.solve(
+            callbacks=[NbIterationStopper(nb_iteration_max=1)]
+        ).get_best_solution()
+        nb_usages_total = sol.compute_nb_unary_resource_usages()
+        n_try += 1
     print(nb_usages_total)
     unary_resource = "adba7"
     nb_usages = sol.compute_nb_unary_resource_usages(unary_resources=(unary_resource,))

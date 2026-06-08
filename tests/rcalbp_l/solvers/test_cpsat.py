@@ -23,7 +23,7 @@ def solver(problem):
 def test_cpsat_solver_basic(problem, solver):
     """Test basic CP-SAT solving with a short time limit."""
     p = ParametersCp.default_cpsat()
-    p.nb_process = 4
+    p.nb_process = 1  # to ensure stopping after one solution
 
     result_storage = solver.solve(
         time_limit=10,
