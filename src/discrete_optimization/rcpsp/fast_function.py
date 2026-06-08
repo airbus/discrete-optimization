@@ -267,7 +267,7 @@ def sgs_fast_preemptive_some_special_constraints(
     preemptive_tag: npt.NDArray[np.bool_],  # array(task)->bool
     predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
     successors: npt.NDArray[np.int_],  # array(task, task)->bool
-    start_at_end_plus_offset: npt.NDArray[
+    start_after_end_plus_offset: npt.NDArray[
         np.int_
     ],  # array(N, 3) -> (task1, task2, offset)
     start_to_start_min_time_lag: npt.NDArray[
@@ -303,10 +303,10 @@ def sgs_fast_preemptive_some_special_constraints(
         start_to_start_min_time_lag_links[task] = np.sum(
             start_to_start_min_time_lag[:, 1] == task
         )
-    start_at_end_plus_offset_links = np.zeros(nb_task)
+    start_after_end_plus_offset_links = np.zeros(nb_task)
     for task in range(nb_task):
-        start_at_end_plus_offset_links[task] = np.sum(
-            start_at_end_plus_offset[:, 1] == task
+        start_after_end_plus_offset_links[task] = np.sum(
+            start_after_end_plus_offset[:, 1] == task
         )
 
     done = 0
@@ -322,7 +322,7 @@ def sgs_fast_preemptive_some_special_constraints(
                 pred_links[permutation_task[i]] == 0
                 and done_np[permutation_task[i]] == 0
                 and start_to_start_min_time_lag_links[permutation_task[i]] == 0
-                and start_at_end_plus_offset_links[permutation_task[i]] == 0
+                and start_after_end_plus_offset_links[permutation_task[i]] == 0
             ):
                 act_id = permutation_task[i]
                 found = True
@@ -436,15 +436,15 @@ def sgs_fast_preemptive_some_special_constraints(
                         int(minimum_starting_time[task]), starts_dict[act_id][0] + off
                     )
                     start_to_start_min_time_lag_links[task] -= 1
-            for t in range(start_at_end_plus_offset.shape[0]):
-                if start_at_end_plus_offset[t, 0] == act_id:
-                    task = start_at_end_plus_offset[t, 1]
-                    off = start_at_end_plus_offset[t, 2]
+            for t in range(start_after_end_plus_offset.shape[0]):
+                if start_after_end_plus_offset[t, 0] == act_id:
+                    task = start_after_end_plus_offset[t, 1]
+                    off = start_after_end_plus_offset[t, 2]
                     minimum_starting_time[task] = max(
                         int(minimum_starting_time[task]),
                         activity_end_times[act_id] + off,
                     )
-                    start_at_end_plus_offset_links[task] -= 1
+                    start_after_end_plus_offset_links[task] -= 1
     return starts_dict, ends_dict, unfeasible_non_renewable_resources
 
 

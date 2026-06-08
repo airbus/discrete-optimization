@@ -56,7 +56,9 @@ class SpecialConstraintsDescription:
         list_partial_order: Optional[list[list[Hashable]]] = None,
         start_together: Optional[list[tuple[Hashable, Hashable]]] = None,
         start_at_end: Optional[list[tuple[Hashable, Hashable]]] = None,
-        start_at_end_plus_offset: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        start_after_end_plus_offset: Optional[
+            list[tuple[Hashable, Hashable, int]]
+        ] = None,
         start_to_start_min_time_lag: Optional[
             list[tuple[Hashable, Hashable, int]]
         ] = None,
@@ -100,10 +102,10 @@ class SpecialConstraintsDescription:
             self.start_at_end = []
         else:
             self.start_at_end = start_at_end
-        if start_at_end_plus_offset is None:
-            self.start_at_end_plus_offset = []
+        if start_after_end_plus_offset is None:
+            self.start_after_end_plus_offset = []
         else:
-            self.start_at_end_plus_offset = start_at_end_plus_offset
+            self.start_after_end_plus_offset = start_after_end_plus_offset
         if start_to_start_min_time_lag is None:
             self.start_to_start_min_time_lag = []
         else:
@@ -142,7 +144,7 @@ class SpecialConstraintsDescription:
 
         self.dict_start_at_end_offset: dict[Hashable, dict[Hashable, int]] = {}
         self.dict_start_at_end_offset_reverse: dict[Hashable, dict[Hashable, int]] = {}
-        for i, j, off in self.start_at_end_plus_offset:
+        for i, j, off in self.start_after_end_plus_offset:
             if i not in self.dict_start_at_end_offset:
                 self.dict_start_at_end_offset[i] = {}
             if j not in self.dict_start_at_end_offset_reverse:

@@ -31,7 +31,9 @@ class PostProcessLeftShift(PostProcessSolution):
             def check_solution(problem, solution):
                 start_together = partial_solution.start_together
                 start_at_end = partial_solution.start_at_end
-                start_at_end_plus_offset = partial_solution.start_at_end_plus_offset
+                start_after_end_plus_offset = (
+                    partial_solution.start_after_end_plus_offset
+                )
                 start_to_start_min_time_lag = (
                     partial_solution.start_to_start_min_time_lag
                 )
@@ -52,7 +54,7 @@ class PostProcessLeftShift(PostProcessSolution):
                     )
                     if not b:
                         return False
-                for t1, t2, off in start_at_end_plus_offset:
+                for t1, t2, off in start_after_end_plus_offset:
                     b = (
                         solution.rcpsp_schedule[t2]["start_time"]
                         >= solution.rcpsp_schedule[t1]["end_time"] + off

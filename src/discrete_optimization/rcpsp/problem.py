@@ -300,25 +300,8 @@ class RcpspProblem(
             self.do_special_constraints = False
         else:
             self.do_special_constraints = True
-            predecessors_dict: dict[Hashable, list[Hashable]] = {
-                task: [] for task in self.successors
-            }
-            for task in self.successors:
-                for stask in self.successors[task]:
-                    predecessors_dict[stask] += [task]
-            for t1, t2 in self.special_constraints.start_at_end:
-                if t2 not in self.successors[t1]:
-                    self.successors[t1].append(t2)
-            for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
-                if t2 not in self.successors[t1]:
-                    self.successors[t1].append(t2)
-            for t1, t2 in self.special_constraints.start_together:
-                for predt1 in predecessors_dict[t1]:
-                    if t2 not in self.successors[predt1]:
-                        self.successors[predt1] += [t2]
-                for predt2 in predecessors_dict[t2]:
-                    if t1 not in self.successors[predt2]:
-                        self.successors[predt2] += [t1]
+        self.update_time_lags()
+        self.update_precedence_constraints()
         self.graph = self.compute_graph(
             compute_predecessors=self.do_special_constraints
         )
@@ -368,7 +351,7 @@ class RcpspProblem(
         return self._tasks_list
 
     def get_start_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
-        timelags = self.special_constraints.start_to_start_min_time_lag
+        timelags = list(self.special_constraints.start_to_start_min_time_lag)
         for task1, task2 in self.special_constraints.start_together:
             timelag = (task1, task2, 0)
             if timelag not in timelags:
@@ -376,7 +359,7 @@ class RcpspProblem(
         return timelags
 
     def get_start_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
-        timelags = self.special_constraints.start_to_start_max_time_lag
+        timelags = list(self.special_constraints.start_to_start_max_time_lag)
         for task1, task2 in self.special_constraints.start_together:
             timelag = (task1, task2, 0)
             if timelag not in timelags:
@@ -384,7 +367,7 @@ class RcpspProblem(
         return timelags
 
     def get_end_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
-        timelags = self.special_constraints.start_at_end_plus_offset
+        timelags = list(self.special_constraints.start_after_end_plus_offset)
         for task1, task2 in self.special_constraints.start_at_end:
             timelag = (task1, task2, 0)
             if timelag not in timelags:
@@ -578,9 +561,9 @@ class RcpspProblem(
             for n in self.tasks_list
         ]
         edges: list[tuple[Hashable, Hashable, dict[str, Any]]] = []
-        for n in self.successors:
-            for succ in self.successors[n]:
-                edges += [(n, succ, {})]
+        for task, next_tasks in self.get_consolidated_precedence_constraints().items():
+            for succ in next_tasks:
+                edges += [(task, succ, {})]
         return Graph(
             nodes, edges, compute_predecessors=compute_predecessors, undirected=False
         )
@@ -948,7 +931,7 @@ def compute_constraints_details(
         return []
     start_together = constraints.start_together
     start_at_end = constraints.start_at_end
-    start_at_end_plus_offset = constraints.start_at_end_plus_offset
+    start_after_end_plus_offset = constraints.start_after_end_plus_offset
     disjunctive = constraints.disjunctive_tasks
     list_constraints_not_respected: list[
         tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
@@ -1005,13 +988,20 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for t1, t2, off in start_at_end_plus_offset:
+    for t1, t2, off in start_after_end_plus_offset:
         time1 = solution.get_end_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
         if not b:
             list_constraints_not_respected += [
-                ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
+                (
+                    "start_after_end_plus_offset",
+                    t1,
+                    t2,
+                    time1,
+                    time2,
+                    abs(time2 - time1),
+                )
             ]
     for t1, t2 in disjunctive:
         segt = intersect(
@@ -1093,7 +1083,9 @@ def check_solution_with_special_constraints(
         return False
     start_together = problem.special_constraints.start_together
     start_at_end = problem.special_constraints.start_at_end
-    start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
+    start_after_end_plus_offset = (
+        problem.special_constraints.start_after_end_plus_offset
+    )
     disjunctive = problem.special_constraints.disjunctive_tasks
     for t1, t2, off in problem.special_constraints.start_to_start_min_time_lag:
         b = solution.get_start_time(t1) + off <= solution.get_start_time(t2)
@@ -1187,10 +1179,10 @@ def check_solution_with_special_constraints(
                     )
                 )
             return False
-    for t1, t2, off in start_at_end_plus_offset:
+    for t1, t2, off in start_after_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
         if not b:
-            logger.debug(("start_at_end_plus_offset NOT respected: ", t1, t2, off))
+            logger.debug(("start_after_end_plus_offset NOT respected: ", t1, t2, off))
             logger.debug(
                 (
                     solution.get_start_time(t2),

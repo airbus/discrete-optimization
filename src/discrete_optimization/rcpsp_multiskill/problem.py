@@ -2215,24 +2215,8 @@ class MultiskillRcpspProblem(
             self.do_special_constraints = False
         else:
             self.do_special_constraints = True
-            predecessors_dict = {task: [] for task in self.successors}
-            for task in self.successors:
-                for stask in self.successors[task]:
-                    predecessors_dict[stask] += [task]
-            if self.do_special_constraints:
-                for t1, t2 in self.special_constraints.start_at_end:
-                    if t2 not in self.successors[t1]:
-                        self.successors[t1].append(t2)
-                for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
-                    if t2 not in self.successors[t1]:
-                        self.successors[t1].append(t2)
-                for t1, t2 in self.special_constraints.start_together:
-                    for predt1 in predecessors_dict[t1]:
-                        if t2 not in self.successors[predt1]:
-                            self.successors[predt1] += [t2]
-                    for predt2 in predecessors_dict[t2]:
-                        if t1 not in self.successors[predt2]:
-                            self.successors[predt2] += [t1]
+        self.update_time_lags()
+        self.update_precedence_constraints()
         self.graph = self.compute_graph()
         self.predecessors = self.graph.predecessors_dict
 
@@ -2269,7 +2253,7 @@ class MultiskillRcpspProblem(
         return self._tasks_list
 
     def get_start_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
-        timelags = self.special_constraints.start_to_start_min_time_lag
+        timelags = list(self.special_constraints.start_to_start_min_time_lag)
         for task1, task2 in self.special_constraints.start_together:
             timelag = (task1, task2, 0)
             if timelag not in timelags:
@@ -2277,7 +2261,7 @@ class MultiskillRcpspProblem(
         return timelags
 
     def get_start_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
-        timelags = self.special_constraints.start_to_start_max_time_lag
+        timelags = list(self.special_constraints.start_to_start_max_time_lag)
         for task1, task2 in self.special_constraints.start_together:
             timelag = (task1, task2, 0)
             if timelag not in timelags:
@@ -2285,7 +2269,7 @@ class MultiskillRcpspProblem(
         return timelags
 
     def get_end_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
-        timelags = self.special_constraints.start_at_end_plus_offset
+        timelags = list(self.special_constraints.start_after_end_plus_offset)
         for task1, task2 in self.special_constraints.start_at_end:
             timelag = (task1, task2, 0)
             if timelag not in timelags:
@@ -2622,16 +2606,16 @@ class MultiskillRcpspProblem(
             (
                 n,
                 {
-                    mode: self.mode_details[n][mode]["duration"]
+                    str(mode): self.mode_details[n][mode]["duration"]
                     for mode in self.mode_details[n]
                 },
             )
             for n in self.tasks_list
         ]
         edges = []
-        for n in self.successors:
-            for succ in self.successors[n]:
-                edges += [(n, succ, {})]
+        for task, next_tasks in self.get_consolidated_precedence_constraints().items():
+            for succ in next_tasks:
+                edges += [(task, succ, {})]
         return Graph(nodes, edges, False)
 
     def build_mode_dict(self, rcpsp_modes_from_solution):
@@ -3428,8 +3412,8 @@ def create_np_data_and_jit_functions(
             successors[i, index_s] = 1
 
     if rcpsp_problem.includes_special_constraint():
-        start_at_end_plus_offset = np.zeros(
-            (len(rcpsp_problem.special_constraints.start_at_end_plus_offset), 3),
+        start_after_end_plus_offset = np.zeros(
+            (len(rcpsp_problem.special_constraints.start_after_end_plus_offset), 3),
             dtype=np.int_,
         )
         start_after_nunit = np.zeros(
@@ -3437,10 +3421,14 @@ def create_np_data_and_jit_functions(
             dtype=np.int_,
         )
         j = 0
-        for t1, t2, off in rcpsp_problem.special_constraints.start_at_end_plus_offset:
-            start_at_end_plus_offset[j, 0] = rcpsp_problem.index_task[t1]
-            start_at_end_plus_offset[j, 1] = rcpsp_problem.index_task[t2]
-            start_at_end_plus_offset[j, 2] = off
+        for (
+            t1,
+            t2,
+            off,
+        ) in rcpsp_problem.special_constraints.start_after_end_plus_offset:
+            start_after_end_plus_offset[j, 0] = rcpsp_problem.index_task[t1]
+            start_after_end_plus_offset[j, 1] = rcpsp_problem.index_task[t2]
+            start_after_end_plus_offset[j, 2] = off
             j += 1
         j = 0
         for (
@@ -3472,7 +3460,7 @@ def create_np_data_and_jit_functions(
     # worker_skills         # array(workers, skills)->int
     if rcpsp_problem.preemptive:
         if rcpsp_problem.includes_special_constraint() and (
-            start_after_nunit.shape[0] > 0 or start_at_end_plus_offset.shape[0] > 0
+            start_after_nunit.shape[0] > 0 or start_after_end_plus_offset.shape[0] > 0
         ):
             func_sgs = partial(
                 sgs_fast_ms_preemptive_some_special_constraints,
@@ -3482,7 +3470,7 @@ def create_np_data_and_jit_functions(
                 worker_available=worker_available,
                 duration_array=duration_array,
                 minimum_starting_time_array=minimum_starting_time_array,
-                start_at_end_plus_offset=start_at_end_plus_offset,
+                start_after_end_plus_offset=start_after_end_plus_offset,
                 start_after_nunit=start_after_nunit,
                 predecessors=predecessors,
                 preemptive_tag=preemptive_tag,
@@ -3602,7 +3590,7 @@ def compute_constraints_details(
 ):
     start_together = constraints.start_together
     start_at_end = constraints.start_at_end
-    start_at_end_plus_offset = constraints.start_at_end_plus_offset
+    start_after_end_plus_offset = constraints.start_after_end_plus_offset
     start_after_nunit = constraints.start_to_start_min_time_lag
     disjunctive = constraints.disjunctive_tasks
     list_constraints_not_respected = []
@@ -3622,13 +3610,20 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for t1, t2, off in start_at_end_plus_offset:
+    for t1, t2, off in start_after_end_plus_offset:
         time1 = solution.get_end_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
         if not b:
             list_constraints_not_respected += [
-                ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
+                (
+                    "start_after_end_plus_offset",
+                    t1,
+                    t2,
+                    time1,
+                    time2,
+                    abs(time2 - time1),
+                )
             ]
     for t1, t2, off in start_after_nunit:
         time1 = solution.get_start_time(t1) + off
@@ -3746,7 +3741,9 @@ def check_solution(
 ):
     start_together = problem.special_constraints.start_together
     start_at_end = problem.special_constraints.start_at_end
-    start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
+    start_after_end_plus_offset = (
+        problem.special_constraints.start_after_end_plus_offset
+    )
     start_after_nunit = problem.special_constraints.start_to_start_min_time_lag
     disjunctive = problem.special_constraints.disjunctive_tasks
     for t1, t2 in start_together:
@@ -3761,7 +3758,7 @@ def check_solution(
             b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
             return False
-    for t1, t2, off in start_at_end_plus_offset:
+    for t1, t2, off in start_after_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
         if not b:
             return False

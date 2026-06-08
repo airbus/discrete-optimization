@@ -107,7 +107,7 @@ class GraphSpecialConstraintsRcpsp(GraphRcpsp):
         for K in (
             self.special_constraints.start_together
             + self.special_constraints.start_at_end
-            + self.special_constraints.start_at_end_plus_offset
+            + self.special_constraints.start_after_end_plus_offset
             + self.special_constraints.start_to_start_min_time_lag
             + self.special_constraints.disjunctive_tasks
         ):

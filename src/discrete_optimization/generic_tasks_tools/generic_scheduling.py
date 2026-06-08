@@ -1,6 +1,7 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from collections import defaultdict
 from functools import cache
 from typing import Generic, Optional
 
@@ -8,7 +9,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
     NonRenewableResourceProblem,
@@ -28,6 +29,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpm import Cpm
 from discrete_optimization.generic_tasks_tools.timelag import (
     TimelagProblem,
     TimelagSolution,
+    consolidate_min_time_lags,
 )
 from discrete_optimization.generic_tasks_tools.timewindow import (
     TimewindowProblem,
@@ -304,6 +306,135 @@ class GenericSchedulingProblem(
                 )
                 for task in self.tasks_list
             }
+
+    @cache
+    def get_consolidated_time_lags(
+        self,
+        task1_start_or_end: StartOrEnd,
+        task2_start_or_end: StartOrEnd,
+        min_or_max: MinOrMax,
+    ):
+        """Get consolidated time lags.
+
+        Same normalization as in `TimelagProblem` parent class.
+        Also taking into account precedence constraints to enrich end to start min time lags.
+
+        Args:
+            task1_start_or_end:
+            task2_start_or_end:
+            min_or_max:
+
+        Returns:
+
+        """
+        timelags = super().get_consolidated_time_lags(
+            task1_start_or_end=task1_start_or_end,
+            task2_start_or_end=task2_start_or_end,
+            min_or_max=min_or_max,
+        )
+        if (task1_start_or_end, task2_start_or_end, min_or_max) == (
+            StartOrEnd.END,
+            StartOrEnd.START,
+            MinOrMax.MIN,
+        ):
+            # end to start min time lags: we add precedence constraints and keep only max(resulting offsets)
+            timelags = consolidate_min_time_lags(
+                timelags
+                + [
+                    (task1, task2, 0)
+                    for task1, next_tasks in self.get_precedence_constraints().items()
+                    for task2 in next_tasks
+                ]
+            )
+        return timelags
+
+    @cache
+    def get_consolidated_precedence_constraints(self) -> dict[Task, set[Task]]:
+        """Consolidate precedence constraints defined by problem.
+
+        It takes into account time lags constraints.
+        - end to start min constraint with non-negative offsets => precedence constraint
+        - start synchronization => corresponding tasks should appear together in successors
+        - end synchornization => corresponding tasks should share their successors
+
+        """
+        successors = defaultdict(set)
+
+        # end to task min timelag with offset >=0  => precedence constraint
+        # (original ones already included in consolidated time lags)
+        for task1, task2, offset in self.get_consolidated_time_lags(
+            task1_start_or_end=StartOrEnd.END,
+            task2_start_or_end=StartOrEnd.START,
+            min_or_max=MinOrMax.MIN,
+        ):
+            if offset >= 0:
+                successors[task1].add(task2)
+
+        # end together => same successors
+        min_end_to_end_timelags_0_offset = [
+            (t1, t2)
+            for t1, t2, offset in self.get_consolidated_time_lags(
+                task1_start_or_end=StartOrEnd.END,
+                task2_start_or_end=StartOrEnd.END,
+                min_or_max=MinOrMax.MIN,
+            )
+            if offset == 0
+        ]
+        max_end_to_end_timelags_0_offset = [
+            (t1, t2) for t2, t1 in min_end_to_end_timelags_0_offset
+        ]
+        end_together = set(min_end_to_end_timelags_0_offset).intersection(
+            max_end_to_end_timelags_0_offset
+        )
+        for task1, task2 in end_together:
+            successors[task1].update(successors[task2])
+            # the reverse will be done during the loop as (task2, task1) should also be in end_together
+
+        # start together => same predecessors
+        min_start_to_start_timelags_0_offset = [
+            (t1, t2)
+            for t1, t2, offset in self.get_consolidated_time_lags(
+                task1_start_or_end=StartOrEnd.START,
+                task2_start_or_end=StartOrEnd.START,
+                min_or_max=MinOrMax.MIN,
+            )
+            if offset == 0
+        ]
+        max_start_to_start_timelags_0_offset = [
+            (t1, t2) for t2, t1 in min_start_to_start_timelags_0_offset
+        ]
+        start_together = set(min_start_to_start_timelags_0_offset).intersection(
+            max_start_to_start_timelags_0_offset
+        )
+        for task, next_tasks in successors.items():
+            for task1, task2 in start_together:
+                if task1 in next_tasks:
+                    next_tasks.add(task2)
+
+        return successors
+
+    def update_time_lags(self) -> None:
+        """Method to call when time lags have been updated.
+
+        Clear cache from consolidated precedence constraints and time lags.
+
+        Returns:
+
+        """
+        self.get_consolidated_time_lags.cache_clear()
+        super().get_consolidated_time_lags.cache_clear()  # beware: parent class method also using cache !
+        self.get_consolidated_precedence_constraints.cache_clear()
+
+    def update_precedence_constraints(self) -> None:
+        """Method to call when precedence constraints have been updated.
+
+        Clear cache from consolidated precedence constraints and time lags.
+
+        Returns:
+
+        """
+        self.get_consolidated_precedence_constraints.cache_clear()
+        self.get_consolidated_time_lags.cache_clear()
 
 
 class GenericSchedulingSolution(
