@@ -48,7 +48,6 @@ class AggregRcpspProblem(RobustProblem, RcpspProblem):
             special_constraints=list_problem[0].special_constraints
             if list_problem[0].do_special_constraints
             else None,
-            relax_the_start_at_end=list_problem[0].relax_the_start_at_end,
             fixed_permutation=list_problem[0].fixed_permutation,
             fixed_modes=list_problem[0].fixed_modes,
         )

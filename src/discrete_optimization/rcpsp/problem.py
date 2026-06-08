@@ -110,7 +110,6 @@ class RcpspProblem(
         index_task_non_dummy (dict[Hashable, int]): mapping task id to index among all non-dummy tasks (from 0 to n_jobs_non_dummy)
         special_constraints (SpecialConstraintsDescription): special additional constraints
         do_special_constraints (bool): True if they are special constraints to take into account
-        relax_the_start_at_end (bool): relax some conditions, only if do_special_constraints.
         fixed_permutation (Optional[list[int]]): To be used by solutions specifying only `rcpsp_modes`,
             e.g. in alternating genetic algorithms, that are updating only one solution attribute at a time.
             See `RcpspSolution` for more details.
@@ -188,7 +187,6 @@ class RcpspProblem(
         name_task: Optional[dict[Hashable, str]] = None,
         calendar_details: Optional[dict[str, list[list[int]]]] = None,
         special_constraints: Optional[SpecialConstraintsDescription] = None,
-        relax_the_start_at_end: bool = True,
         fixed_permutation: Optional[list[int]] = None,
         fixed_modes: Optional[list[int]] = None,
         **kwargs: Any,
@@ -207,7 +205,6 @@ class RcpspProblem(
             name_task:
             calendar_details:
             special_constraints:
-            relax_the_start_at_end:
             fixed_permutation:
             fixed_modes:
             **kwargs:
@@ -262,7 +259,6 @@ class RcpspProblem(
             "makespan": True,
             "mean_resource_reserve": kwargs.get("mean_resource_reserve", False),
         }
-        self.relax_the_start_at_end = relax_the_start_at_end
         self.fixed_permutation = fixed_permutation
         self.fixed_modes = fixed_modes
 
@@ -634,7 +630,6 @@ class RcpspProblem(
             if not check_solution_with_special_constraints(
                 problem=self,
                 solution=variable,
-                relax_the_start_at_end=self.relax_the_start_at_end,
             ):
                 return False
 
@@ -1077,7 +1072,6 @@ def compute_constraints_details(
 def check_solution_with_special_constraints(
     problem: RcpspProblem,
     solution: RcpspSolution,
-    relax_the_start_at_end: bool = True,
 ) -> bool:
     if not solution.rcpsp_schedule_feasible:
         return False
@@ -1128,56 +1122,38 @@ def check_solution_with_special_constraints(
             )
             return False
     for t1, t2 in start_together:
-        if not relax_the_start_at_end:
-            b = solution.get_start_time(t1) == solution.get_start_time(t2)
-            if not b:
-                logger.debug(("start_together NOT respected: ", t1, t2))
-                logger.debug(
-                    (
-                        "start(",
-                        t1,
-                        ") = ",
-                        solution.get_start_time(t1),
-                        " should be == start(",
-                        t2,
-                        ") = ",
-                        solution.get_start_time(t2),
-                    )
+        b = solution.get_start_time(t1) == solution.get_start_time(t2)
+        if not b:
+            logger.debug(("start_together NOT respected: ", t1, t2))
+            logger.debug(
+                (
+                    "start(",
+                    t1,
+                    ") = ",
+                    solution.get_start_time(t1),
+                    " should be == start(",
+                    t2,
+                    ") = ",
+                    solution.get_start_time(t2),
                 )
-                return False
+            )
+            return False
     for t1, t2 in start_at_end:
-        if relax_the_start_at_end:
-            b = solution.get_start_time(t2) >= solution.get_end_time(t1)
-        else:
-            b = solution.get_start_time(t2) == solution.get_end_time(t1)
+        b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
             logger.debug(("start_at_end NOT respected: ", t1, t2))
-            if relax_the_start_at_end:
-                logger.debug(
-                    (
-                        "start(",
-                        t2,
-                        ") = ",
-                        solution.get_start_time(t2),
-                        " should be >= end(",
-                        t1,
-                        ") = ",
-                        solution.get_end_time(t1),
-                    )
+            logger.debug(
+                (
+                    "start(",
+                    t2,
+                    ") = ",
+                    solution.get_start_time(t2),
+                    " should be == end(",
+                    t1,
+                    ") = ",
+                    solution.get_end_time(t1),
                 )
-            else:
-                logger.debug(
-                    (
-                        "start(",
-                        t2,
-                        ") = ",
-                        solution.get_start_time(t2),
-                        " should be == end(",
-                        t1,
-                        ") = ",
-                        solution.get_end_time(t1),
-                    )
-                )
+            )
             return False
     for t1, t2, off in start_after_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off

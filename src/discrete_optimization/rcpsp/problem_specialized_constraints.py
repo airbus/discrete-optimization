@@ -133,7 +133,6 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
         horizon,
         special_constraints: SpecialConstraintsDescription = None,
         preemptive_indicator: dict[Hashable, bool] = None,
-        relax_the_start_at_end: bool = True,
         tasks_list: list[Union[int, str]] = None,
         source_task=None,
         sink_task=None,
@@ -181,7 +180,6 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
         self.sgs_func_partial = (
             generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive
         )
-        self.relax_the_start_at_end = relax_the_start_at_end
         (
             self.func_sgs,
             self.func_sgs_2,
@@ -213,7 +211,6 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
             horizon=self.horizon,
             special_constraints=deepcopy(self.special_constraints),
             preemptive_indicator=deepcopy(self.preemptive_indicator),
-            relax_the_start_at_end=self.relax_the_start_at_end,
             tasks_list=deepcopy(self.tasks_list),
             source_task=self.source_task,
             sink_task=self.sink_task,
@@ -229,7 +226,6 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
             horizon=self.horizon,
             special_constraints=self.special_constraints,
             preemptive_indicator=self.preemptive_indicator,
-            relax_the_start_at_end=self.relax_the_start_at_end,
             tasks_list=self.tasks_list,
             source_task=self.source_task,
             sink_task=self.sink_task,
@@ -269,7 +265,6 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
         s = check_solution(
             problem=self,
             solution=variable,
-            relax_the_start_at_end=self.relax_the_start_at_end,
         )
         if not s:
             return s
@@ -449,7 +444,6 @@ def check_solution(
         RcpspSolution,
         PreemptiveRcpspSolution,
     ],
-    relax_the_start_at_end: bool = True,
 ):
     if not solution.rcpsp_schedule_feasible:
         return False
@@ -460,15 +454,11 @@ def check_solution(
     )
     disjunctive = problem.special_constraints.disjunctive_tasks
     for t1, t2 in start_together:
-        if not relax_the_start_at_end:
-            b = solution.get_start_time(t1) == solution.get_start_time(t2)
-            if not b:
-                return False
+        b = solution.get_start_time(t1) == solution.get_start_time(t2)
+        if not b:
+            return False
     for t1, t2 in start_at_end:
-        if relax_the_start_at_end:
-            b = solution.get_start_time(t2) >= solution.get_end_time(t1)
-        else:
-            b = solution.get_start_time(t2) == solution.get_end_time(t1)
+        b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
             return False
     for t1, t2, off in start_after_end_plus_offset:
