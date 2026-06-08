@@ -147,7 +147,6 @@ class CpSatAutoMultiskillRcpspSolver(
             "one_worker_per_task", False
         )
         # skill
-        self.use_only_one_skill_per_task = kwargs.get("one_skill_per_task", False)
         self.use_exact_skill = kwargs.get("exact_skill", False)
         self.use_slack_for_skill = kwargs.get("slack_skill", False)
 
