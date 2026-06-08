@@ -3737,7 +3737,6 @@ def start_together_problem_description(
 def check_solution(
     problem: Union[MultiskillRcpspProblem],
     solution: Union[MultiskillRcpspSolution, PreemptiveMultiskillRcpspSolution],
-    relax_the_start_at_end: bool = True,
 ):
     start_together = problem.special_constraints.start_together
     start_at_end = problem.special_constraints.start_at_end
@@ -3747,15 +3746,11 @@ def check_solution(
     start_after_nunit = problem.special_constraints.start_to_start_min_time_lag
     disjunctive = problem.special_constraints.disjunctive_tasks
     for t1, t2 in start_together:
-        if not relax_the_start_at_end:
-            b = solution.get_start_time(t1) == solution.get_start_time(t2)
-            if not b:
-                return False
+        b = solution.get_start_time(t1) == solution.get_start_time(t2)
+        if not b:
+            return False
     for t1, t2 in start_at_end:
-        if relax_the_start_at_end:
-            b = solution.get_start_time(t2) >= solution.get_end_time(t1)
-        else:
-            b = solution.get_start_time(t2) == solution.get_end_time(t1)
+        b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
             return False
     for t1, t2, off in start_after_end_plus_offset:
