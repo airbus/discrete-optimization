@@ -73,7 +73,7 @@ class OptalMSRcpspSolver(
         super().init_model(**args)
         args = self.complete_with_default_hyperparameters(args)
         one_worker_per_task = args.get("one_worker_per_task", False)
-        one_skill_per_task = args.get("one_skill_per_task", False)
+        one_skill_per_task = self.problem.only_one_skill_per_task
         redundant_skill_cumulative = args["redundant_skill_cumulative"]
         redundant_worker_cumulative = args["redundant_worker_cumulative"]
         self.cp_model = cp.Model()

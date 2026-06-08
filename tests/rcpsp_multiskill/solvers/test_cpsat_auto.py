@@ -63,13 +63,13 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(
 ):
     file = [f for f in get_data_available() if "100_5_64_9.def" in f][0]
     model, _ = parse_file(file, max_horizon=1000)
+    model.only_one_skill_per_task = one_skill_per_task
 
     solver = CpSatAutoMultiskillRcpspSolver(
         problem=model,
     )
     solver.init_model(
         one_worker_per_task=one_worker_per_task,
-        one_skill_per_task=one_skill_per_task,
         exact_skill=exact_skill,
         slack_skill=slack_skill,
         use_energy_constraints=use_energy_constraints,

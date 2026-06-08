@@ -24,10 +24,11 @@ def example_mslib_optal():
     files_dict = get_data_available()
     file = [f for f in files_dict["MSLIB4"] if "MSLIB_Set4_1003.msrcp" in f][0]
     model = parse_file(file, skill_level_version=False)
+    model.only_one_skill_per_task = False
     solver = OptalMSRcpspSolver(
         problem=model,
     )
-    solver.init_model(one_skill_per_task=False, one_worker_per_task=False)
+    solver.init_model(one_worker_per_task=False)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     res = solver.solve(

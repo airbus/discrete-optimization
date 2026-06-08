@@ -43,6 +43,9 @@ class SkillProblem(
         Task, UnaryResource, Skill, NonSkillCumulativeResource, OtherCalendarResource
     ],
 ):
+    only_one_skill_per_task: bool = False
+    """Only one skill from each unary resource allocated to a given task can be used for the task."""
+
     @property
     @abstractmethod
     def skills_list(self) -> list[Skill]:
@@ -221,6 +224,29 @@ class SkillSolution(
                         logger.debug(
                             f"Skill {skill} from unary_resource {unary_resource} is used for task {task}, "
                             "but the unary_resource has not this skill."
+                        )
+                        return False
+
+        return True
+
+    def check_only_one_skill_per_task_and_unary_resource(self):
+        # only one skill per task ?
+        if self.problem.only_one_skill_per_task:
+            for task in self.problem.tasks_list:
+                for unary_resource in self.problem.unary_resources_list:
+                    if (
+                        sum(
+                            self.is_skill_used(
+                                task=task, unary_resource=unary_resource, skill=skill
+                            )
+                            for skill in self.problem.get_skills_of_unary_resource(
+                                unary_resource=unary_resource
+                            )
+                        )
+                        > 1
+                    ):
+                        logger.debug(
+                            f"The unary resource {unary_resource} is using more than one skill for task {task}."
                         )
                         return False
 

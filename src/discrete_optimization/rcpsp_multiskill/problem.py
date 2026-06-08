@@ -2046,7 +2046,10 @@ class MultiskillRcpspProblem(
         never_releasable_resources: set[str] = None,
         resource_blocking_data: list[tuple[list[Task], set[str]]] = None,
         strictly_disjunctive_subtasks: bool = True,
+        only_one_skill_per_task: bool = False,
     ):
+        self.only_one_skill_per_task = only_one_skill_per_task
+
         self.skills_set = skills_set
         self._skills_list = sorted(self.skills_set)
 
@@ -2607,6 +2610,7 @@ class MultiskillRcpspProblem(
             and rcpsp_sol.check_precedence_constraints()
             # Check skills
             and rcpsp_sol.check_skill_constraints()
+            and rcpsp_sol.check_only_one_skill_per_task_and_unary_resource()
             # Check consistency between compatibility/allocation/skill usage
             and rcpsp_sol.check_skill_usage_and_allocation_consistency()
             and rcpsp_sol.check_allocation_consistency

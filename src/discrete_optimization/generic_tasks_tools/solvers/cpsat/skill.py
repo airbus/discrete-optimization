@@ -44,8 +44,6 @@ class SkillSchedulingCpSatSolver(
     """Allow some additional slack on skill value, even when `use_exact_skill` is activated."""
     max_slack_for_skill: int = 5
     """Maximum slack for skill value."""
-    use_only_one_skill_per_task: bool = False
-    """Use only one skill from each unary resource allocated to a given task."""
     use_only_skill_to_allocate: bool = False
     """Do not allocate a unary_resource if not contributing to a skill needed by a given task."""
 

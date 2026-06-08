@@ -597,7 +597,7 @@ class GenericSchedulingAutoCpSatSolver(
                         len(common_skills) > 1
                     ):  # next constraints are useless if skill_var == is_allocated
                         if self.use_only_skill_to_allocate:
-                            if self.use_only_one_skill_per_task:
+                            if self.problem.only_one_skill_per_task:
                                 # allocation => exactly one skill used
                                 self.cp_model.add_exactly_one(
                                     self.skill_variables[task][unary_resource].values()
@@ -607,7 +607,7 @@ class GenericSchedulingAutoCpSatSolver(
                                 self.cp_model.add_at_least_one(
                                     self.skill_variables[task][unary_resource].values()
                                 ).only_enforce_if(is_allocated)
-                        elif self.use_only_one_skill_per_task:
+                        elif self.problem.only_one_skill_per_task:
                             # at most one skill from each resource used for a given task
                             self.cp_model.add_at_most_one(
                                 self.skill_variables[task][unary_resource].values()
