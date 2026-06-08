@@ -165,7 +165,7 @@ class SpecialConstraintsPreemptiveRcpspProblem(PreemptiveRcpspProblem):
             for t1, t2 in self.special_constraints.start_at_end:
                 if t2 not in self.successors[t1]:
                     self.successors[t1].append(t2)
-            for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
+            for t1, t2, off in self.special_constraints.start_after_end_plus_offset:
                 if t2 not in self.successors[t1]:
                     self.successors[t1].append(t2)
             for t1, t2 in self.special_constraints.start_together:
@@ -309,7 +309,7 @@ def compute_constraints_details(
         return []
     start_together = constraints.start_together
     start_at_end = constraints.start_at_end
-    start_at_end_plus_offset = constraints.start_at_end_plus_offset
+    start_after_end_plus_offset = constraints.start_after_end_plus_offset
     start_to_start_min_time_lag = constraints.start_to_start_min_time_lag
     start_to_start_max_time_lag = constraints.start_to_start_max_time_lag
     disjunctive = constraints.disjunctive_tasks
@@ -330,13 +330,20 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for t1, t2, off in start_at_end_plus_offset:
+    for t1, t2, off in start_after_end_plus_offset:
         time1 = solution.get_end_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
         if not b:
             list_constraints_not_respected += [
-                ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
+                (
+                    "start_after_end_plus_offset",
+                    t1,
+                    t2,
+                    time1,
+                    time2,
+                    abs(time2 - time1),
+                )
             ]
     for t1, t2, off in start_to_start_min_time_lag:
         time1 = solution.get_start_time(t1) + off
@@ -448,7 +455,9 @@ def check_solution(
         return False
     start_together = problem.special_constraints.start_together
     start_at_end = problem.special_constraints.start_at_end
-    start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
+    start_after_end_plus_offset = (
+        problem.special_constraints.start_after_end_plus_offset
+    )
     disjunctive = problem.special_constraints.disjunctive_tasks
     for t1, t2 in start_together:
         if not relax_the_start_at_end:
@@ -462,10 +471,10 @@ def check_solution(
             b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
             return False
-    for t1, t2, off in start_at_end_plus_offset:
+    for t1, t2, off in start_after_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
         if not b:
-            logger.debug(("start_at_end_plus_offset NOT respected: ", t1, t2, off))
+            logger.debug(("start_after_end_plus_offset NOT respected: ", t1, t2, off))
             logger.debug(
                 (
                     solution.get_start_time(t2),
@@ -1357,15 +1366,15 @@ def create_np_data_and_jit_functions(
                 rcpsp_problem.special_constraints.start_times_window[t][0]
             )
 
-    start_at_end_plus_offset = np.zeros(
-        (len(rcpsp_problem.special_constraints.start_at_end_plus_offset), 3),
+    start_after_end_plus_offset = np.zeros(
+        (len(rcpsp_problem.special_constraints.start_after_end_plus_offset), 3),
         dtype=np.int_,
     )
     j = 0
-    for t1, t2, off in rcpsp_problem.special_constraints.start_at_end_plus_offset:
-        start_at_end_plus_offset[j, 0] = rcpsp_problem.index_task[t1]
-        start_at_end_plus_offset[j, 1] = rcpsp_problem.index_task[t2]
-        start_at_end_plus_offset[j, 2] = off
+    for t1, t2, off in rcpsp_problem.special_constraints.start_after_end_plus_offset:
+        start_after_end_plus_offset[j, 0] = rcpsp_problem.index_task[t1]
+        start_after_end_plus_offset[j, 1] = rcpsp_problem.index_task[t2]
+        start_after_end_plus_offset[j, 2] = off
         j += 1
     start_to_start_min_time_lag = np.zeros(
         (len(rcpsp_problem.special_constraints.start_to_start_min_time_lag), 3),
@@ -1382,7 +1391,7 @@ def create_np_data_and_jit_functions(
             sgs_fast_preemptive_some_special_constraints,
             consumption_array=consumption_array,
             preemptive_tag=preemptive_tag,
-            start_at_end_plus_offset=start_at_end_plus_offset,
+            start_after_end_plus_offset=start_after_end_plus_offset,
             start_to_start_min_time_lag=start_to_start_min_time_lag,
             minimum_starting_time_array=minimum_starting_time_array,
             duration_array=duration_array,

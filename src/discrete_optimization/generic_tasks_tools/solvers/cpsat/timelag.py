@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
 )
@@ -16,21 +16,51 @@ class TimelagCpSatSolver(SchedulingCpSatSolver[Task]):
 
     def _create_timelag_constraints(
         self,
-        tasks_n_offsets_min: list[tuple[Task, Task, int]],
-        tasks_n_offsets_max: list[tuple[Task, Task, int]],
         task1_start_or_end: StartOrEnd,
         task2_start_or_end: StartOrEnd,
     ) -> None:
-        tasks_n_offsets_common = set(tasks_n_offsets_min).intersection(
-            set(tasks_n_offsets_max)
+        # after normalization only offsets >=0 (min time lags) or >0 (max time lags)
+        min_timelags = self.problem.get_consolidated_time_lags(
+            task1_start_or_end=task1_start_or_end,
+            task2_start_or_end=task2_start_or_end,
+            min_or_max=MinOrMax.MIN,
         )
-        tasks_n_offsets_min_only = set(tasks_n_offsets_min).difference(
-            set(tasks_n_offsets_max)
+        max_timelags = self.problem.get_consolidated_time_lags(
+            task1_start_or_end=task1_start_or_end,
+            task2_start_or_end=task2_start_or_end,
+            min_or_max=MinOrMax.MAX,
         )
-        tasks_n_offsets_max_only = set(tasks_n_offsets_max).difference(
-            set(tasks_n_offsets_min)
+
+        # equality constraints: two cases with consolidated time lags
+        # - offset > 0: (t1, t2, offset) in min and max time lags
+        # - offset==0: (t1, t2, 0) in min time lags and (t2, t1, 0) in reversed tasks min time lags
+        # set computation
+        equality_timelags_positive_offset = set(min_timelags).intersection(max_timelags)
+        min_timelags_0_offset = [
+            (t1, t2, 0) for (t1, t2, offset) in min_timelags if offset == 0
+        ]
+        max_timelags_0_offset = [
+            (t1, t2, 0)
+            for (t2, t1, offset) in self.problem.get_consolidated_time_lags(
+                task1_start_or_end=task2_start_or_end,
+                task2_start_or_end=task1_start_or_end,
+                min_or_max=MinOrMax.MIN,
+            )
+            if offset == 0
+        ]
+        equality_timelags_0_offset = set()
+        for t1, t2, _ in min_timelags_0_offset:
+            if (t1, t2, 0) in max_timelags_0_offset and (
+                # avoid adding twice an equality (start(t1) == start(t2) and start(t2) == start(t1))
+                task1_start_or_end != task2_start_or_end
+                or (t2, t1, 0) not in equality_timelags_0_offset
+            ):
+                equality_timelags_0_offset.add((t1, t2, 0))
+        equality_timelags = equality_timelags_positive_offset.union(
+            equality_timelags_0_offset
         )
-        for task1, task2, offset in tasks_n_offsets_common:
+        # add corresponding constraints to cp_model
+        for task1, task2, offset in equality_timelags:
             self.cp_model.add(
                 self.get_task_start_or_end_variable(
                     task=task1, start_or_end=task1_start_or_end
@@ -40,7 +70,12 @@ class TimelagCpSatSolver(SchedulingCpSatSolver[Task]):
                     task=task2, start_or_end=task2_start_or_end
                 )
             )
-        for task1, task2, offset in tasks_n_offsets_min_only:
+
+        # min only constraints
+        min_only_timelags = set(min_timelags).difference(
+            set(max_timelags).union(max_timelags_0_offset)
+        )
+        for task1, task2, offset in min_only_timelags:
             self.cp_model.add(
                 self.get_task_start_or_end_variable(
                     task=task1, start_or_end=task1_start_or_end
@@ -50,7 +85,9 @@ class TimelagCpSatSolver(SchedulingCpSatSolver[Task]):
                     task=task2, start_or_end=task2_start_or_end
                 )
             )
-        for task1, task2, offset in tasks_n_offsets_max_only:
+        # max only constraints
+        max_only_timelags = set(max_timelags).difference(min_timelags)
+        for task1, task2, offset in max_only_timelags:
             self.cp_model.add(
                 self.get_task_start_or_end_variable(
                     task=task1, start_or_end=task1_start_or_end
@@ -63,27 +100,15 @@ class TimelagCpSatSolver(SchedulingCpSatSolver[Task]):
 
     def create_timelag_constraints(self) -> None:
         """Add precedence constraints to cp model."""
-        self._create_timelag_constraints(
-            tasks_n_offsets_min=self.problem.get_start_to_start_min_time_lags(),
-            tasks_n_offsets_max=self.problem.get_start_to_start_max_time_lags(),
-            task1_start_or_end=StartOrEnd.START,
-            task2_start_or_end=StartOrEnd.START,
-        )
-        self._create_timelag_constraints(
-            tasks_n_offsets_min=self.problem.get_end_to_start_min_time_lags(),
-            tasks_n_offsets_max=self.problem.get_end_to_start_max_time_lags(),
-            task1_start_or_end=StartOrEnd.END,
-            task2_start_or_end=StartOrEnd.START,
-        )
-        self._create_timelag_constraints(
-            tasks_n_offsets_min=self.problem.get_end_to_end_min_time_lags(),
-            tasks_n_offsets_max=self.problem.get_end_to_end_max_time_lags(),
-            task1_start_or_end=StartOrEnd.END,
-            task2_start_or_end=StartOrEnd.END,
-        )
-        self._create_timelag_constraints(
-            tasks_n_offsets_min=self.problem.get_start_to_end_min_time_lags(),
-            tasks_n_offsets_max=self.problem.get_start_to_end_max_time_lags(),
-            task1_start_or_end=StartOrEnd.START,
-            task2_start_or_end=StartOrEnd.END,
-        )
+        for task1_start_or_end in StartOrEnd:
+            for task2_start_or_end in StartOrEnd:
+                if (task1_start_or_end, task2_start_or_end) == (
+                    StartOrEnd.START,
+                    StartOrEnd.END,
+                ):
+                    # already covered by (StartOrEnd.END, StartOrEnd.START)
+                    continue
+                self._create_timelag_constraints(
+                    task1_start_or_end=task1_start_or_end,
+                    task2_start_or_end=task2_start_or_end,
+                )

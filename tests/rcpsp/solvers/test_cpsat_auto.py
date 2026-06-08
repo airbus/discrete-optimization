@@ -391,6 +391,7 @@ def test_special_constraints():
         successors=successors,
         horizon=100,
         special_constraints=special_constraints_1,
+        relax_the_start_at_end=False,
     )
 
     solver_1 = CpSatAutoRcpspSolver(problem=problem_1)

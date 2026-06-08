@@ -913,8 +913,7 @@ class GenericSchedulingAutoCpSatSolver(
                 resource
             ) or self.include_constraint_on_cumulative_resource(resource=resource):
                 self.create_calendar_resources_constraint(resource=resource)
-        # precedence
-        self.create_precedence_constraints()
+        # precedence: already included in time lag constraints
         # at most or exactly one resource allocated per task?
         self.add_unary_resources_per_task_constraints()
         # skill value per task constraints

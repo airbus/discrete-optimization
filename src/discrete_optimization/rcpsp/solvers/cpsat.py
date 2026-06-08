@@ -241,8 +241,12 @@ class CpSatRcpspSolver(
         for t1, t2 in self.problem.special_constraints.start_at_end:
             model.Add(ends_var[t1] == starts_var[t2])
 
-        # start_at_end_plus_offset: end(t1) + offset <= start(t2)
-        for t1, t2, offset in self.problem.special_constraints.start_at_end_plus_offset:
+        # start_after_end_plus_offset: end(t1) + offset <= start(t2)
+        for (
+            t1,
+            t2,
+            offset,
+        ) in self.problem.special_constraints.start_after_end_plus_offset:
             model.Add(ends_var[t1] + offset <= starts_var[t2])
 
         # disjunctive_tasks: tasks cannot overlap (pairwise)

@@ -2364,8 +2364,8 @@ def soft_start_to_start_max_time_lag_mrcpsp(
     return [s], ["penalty_start_to_start_max_time_lag"]
 
 
-def hard_start_at_end_plus_offset_mrcpsp(
-    list_start_at_end_plus_offset,
+def hard_start_after_end_plus_offset_mrcpsp(
+    list_start_after_end_plus_offset,
     cp_solver: Union[
         CpMultimodeRcpspSolver,
         CPMultimodeWithFakeTaskRcpspSolver,
@@ -2373,7 +2373,7 @@ def hard_start_at_end_plus_offset_mrcpsp(
     ],
 ):
     constraint_strings = []
-    for t1, t2, delta in list_start_at_end_plus_offset:
+    for t1, t2, delta in list_start_after_end_plus_offset:
         string = (
             "constraint start["
             + str(cp_solver.index_in_minizinc[t2])
@@ -2389,14 +2389,14 @@ def hard_start_at_end_plus_offset_mrcpsp(
     return constraint_strings
 
 
-def hard_start_at_end_plus_offset(
-    list_start_at_end_plus_offset,
+def hard_start_after_end_plus_offset(
+    list_start_after_end_plus_offset,
     cp_solver: Union[
         CpPreemptiveRcpspSolver, CpMultimodePreemptiveRcpspSolver, CpRcpspSolver
     ],
 ):
     constraint_strings = []
-    for t1, t2, delta in list_start_at_end_plus_offset:
+    for t1, t2, delta in list_start_after_end_plus_offset:
         if isinstance(cp_solver, CpRcpspSolver):
             string = (
                 "constraint s["
@@ -2423,8 +2423,8 @@ def hard_start_at_end_plus_offset(
     return constraint_strings
 
 
-def soft_start_at_end_plus_offset_mrcpsp(
-    list_start_at_end_plus_offset: list[tuple[Hashable, Hashable, int]],
+def soft_start_after_end_plus_offset_mrcpsp(
+    list_start_after_end_plus_offset: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[
         CpMultimodeRcpspSolver,
         CPMultimodeWithFakeTaskRcpspSolver,
@@ -2433,83 +2433,83 @@ def soft_start_at_end_plus_offset_mrcpsp(
 ):
     s = (
         """
-        var 0..max_time*nb_start_at_end_plus_offset: penalty_start_at_end_plus_offset;\n
-        int: nb_start_at_end_plus_offset="""
-        + str(len(list_start_at_end_plus_offset))
+        var 0..max_time*nb_start_after_end_plus_offset: penalty_start_after_end_plus_offset;\n
+        int: nb_start_after_end_plus_offset="""
+        + str(len(list_start_after_end_plus_offset))
         + """;\n"""
         + """
-        array[1..nb_start_at_end_plus_offset] of Act: st1_6="""
+        array[1..nb_start_after_end_plus_offset] of Act: st1_6="""
         + str(
             [
                 cp_solver.index_in_minizinc[t1]
-                for t1, t2, delta in list_start_at_end_plus_offset
+                for t1, t2, delta in list_start_after_end_plus_offset
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_at_end_plus_offset] of Act: st2_6="""
+        array[1..nb_start_after_end_plus_offset] of Act: st2_6="""
         + str(
             [
                 cp_solver.index_in_minizinc[t2]
-                for t1, t2, delta in list_start_at_end_plus_offset
+                for t1, t2, delta in list_start_after_end_plus_offset
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_at_end_plus_offset] of int: nunits_6="""
-        + str([delta for t1, t2, delta in list_start_at_end_plus_offset])
+        array[1..nb_start_after_end_plus_offset] of int: nunits_6="""
+        + str([delta for t1, t2, delta in list_start_after_end_plus_offset])
         + """;\n"""
         + """
-        constraint sum(i in 1..nb_start_at_end_plus_offset)(max([0, start[st1_6[i]]+adur[st1_6[i]+nunits_6[i]-start[st2_6[i]]]))==penalty_start_at_end_plus_offset;\n
+        constraint sum(i in 1..nb_start_after_end_plus_offset)(max([0, start[st1_6[i]]+adur[st1_6[i]+nunits_6[i]-start[st2_6[i]]]))==penalty_start_after_end_plus_offset;\n
         """
     )
-    return [s], ["penalty_start_at_end_plus_offset"]
+    return [s], ["penalty_start_after_end_plus_offset"]
 
 
-def soft_start_at_end_plus_offset(
-    list_start_at_end_plus_offset: list[tuple[Hashable, Hashable, int]],
+def soft_start_after_end_plus_offset(
+    list_start_after_end_plus_offset: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[
         CpPreemptiveRcpspSolver, CpMultimodePreemptiveRcpspSolver, CpRcpspSolver
     ],
 ):
     s = (
         """
-        var 0..max_time*nb_start_at_end_plus_offset: penalty_start_at_end_plus_offset;\n
-        int: nb_start_at_end_plus_offset="""
-        + str(len(list_start_at_end_plus_offset))
+        var 0..max_time*nb_start_after_end_plus_offset: penalty_start_after_end_plus_offset;\n
+        int: nb_start_after_end_plus_offset="""
+        + str(len(list_start_after_end_plus_offset))
         + """;\n"""
         + """
-        array[1..nb_start_at_end_plus_offset] of Tasks: st1_7="""
+        array[1..nb_start_after_end_plus_offset] of Tasks: st1_7="""
         + str(
             [
                 cp_solver.index_in_minizinc[t1]
-                for t1, t2, delta in list_start_at_end_plus_offset
+                for t1, t2, delta in list_start_after_end_plus_offset
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_at_end_plus_offset] of Tasks: st2_7="""
+        array[1..nb_start_after_end_plus_offset] of Tasks: st2_7="""
         + str(
             [
                 cp_solver.index_in_minizinc[t2]
-                for t1, t2, delta in list_start_at_end_plus_offset
+                for t1, t2, delta in list_start_after_end_plus_offset
             ]
         )
         + """;\n"""
         + """
-        array[1..nb_start_at_end_plus_offset] of int: nunits="""
-        + str([delta for t1, t2, delta in list_start_at_end_plus_offset])
+        array[1..nb_start_after_end_plus_offset] of int: nunits="""
+        + str([delta for t1, t2, delta in list_start_after_end_plus_offset])
         + """;\n"""
     )
     if isinstance(cp_solver, CpRcpspSolver):
         s += """
-             constraint sum(i in 1..nb_start_at_end_plus_offset)(max([0, s[st1_7[i]]+d[st1_7[i]]+nunits[i]-s[st2_7[i]]]))==penalty_start_at_end_plus_offset;\n
+             constraint sum(i in 1..nb_start_after_end_plus_offset)(max([0, s[st1_7[i]]+d[st1_7[i]]+nunits[i]-s[st2_7[i]]]))==penalty_start_after_end_plus_offset;\n
              """
     else:
         s += """
-             constraint sum(i in 1..nb_start_at_end_plus_offset)(max([0, s_preemptive[st1_7[i], nb_preemptive]+nunits[i]-s[st2_7[i]]]))==penalty_start_at_end_plus_offset;\n
+             constraint sum(i in 1..nb_start_after_end_plus_offset)(max([0, s_preemptive[st1_7[i], nb_preemptive]+nunits[i]-s[st2_7[i]]]))==penalty_start_after_end_plus_offset;\n
              """
-    return [s], ["penalty_start_at_end_plus_offset"]
+    return [s], ["penalty_start_after_end_plus_offset"]
 
 
 def hard_start_at_end_mrcpsp(
@@ -2971,9 +2971,9 @@ def add_hard_special_constraints_mrcpsp(
                 list_start_to_start_max_time_lag=partial_solution.start_to_start_max_time_lag,
                 cp_solver=cp_solver,
             )
-        if partial_solution.start_at_end_plus_offset is not None:
-            constraint_strings += hard_start_at_end_plus_offset_mrcpsp(
-                list_start_at_end_plus_offset=partial_solution.start_at_end_plus_offset,
+        if partial_solution.start_after_end_plus_offset is not None:
+            constraint_strings += hard_start_after_end_plus_offset_mrcpsp(
+                list_start_after_end_plus_offset=partial_solution.start_after_end_plus_offset,
                 cp_solver=cp_solver,
             )
         if partial_solution.start_at_end is not None:
@@ -3063,9 +3063,9 @@ def add_soft_special_constraints_mrcpsp(
             )
             constraint_strings += c
             name_penalty += n
-        if partial_solution.start_at_end_plus_offset is not None:
-            c, n = soft_start_at_end_plus_offset_mrcpsp(
-                list_start_at_end_plus_offset=partial_solution.start_at_end_plus_offset,
+        if partial_solution.start_after_end_plus_offset is not None:
+            c, n = soft_start_after_end_plus_offset_mrcpsp(
+                list_start_after_end_plus_offset=partial_solution.start_after_end_plus_offset,
                 cp_solver=cp_solver,
             )
             constraint_strings += c
@@ -3142,9 +3142,9 @@ def add_hard_special_constraints(
             list_start_to_start_max_time_lag=partial_solution.start_to_start_max_time_lag,
             cp_solver=cp_solver,
         )
-    if partial_solution.start_at_end_plus_offset is not None:
-        constraint_strings += hard_start_at_end_plus_offset(
-            list_start_at_end_plus_offset=partial_solution.start_at_end_plus_offset,
+    if partial_solution.start_after_end_plus_offset is not None:
+        constraint_strings += hard_start_after_end_plus_offset(
+            list_start_after_end_plus_offset=partial_solution.start_after_end_plus_offset,
             cp_solver=cp_solver,
         )
     if partial_solution.start_at_end is not None:
@@ -3223,9 +3223,9 @@ def add_soft_special_constraints(
         constraint_strings += c
         name_penalty += n
 
-    if partial_solution.start_at_end_plus_offset is not None:
-        c, n = soft_start_at_end_plus_offset(
-            list_start_at_end_plus_offset=partial_solution.start_at_end_plus_offset,
+    if partial_solution.start_after_end_plus_offset is not None:
+        c, n = soft_start_after_end_plus_offset(
+            list_start_after_end_plus_offset=partial_solution.start_after_end_plus_offset,
             cp_solver=cp_solver,
         )
         constraint_strings += c

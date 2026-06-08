@@ -22,10 +22,32 @@ class PrecedenceProblem(TasksProblem[Task]):
         """Map each task to the tasks that need to be performed after it."""
         ...
 
+    def get_consolidated_precedence_constraints(self) -> dict[Task, set[Task]]:
+        """Consolidate precedence constraints defined by problem.
+
+        In GenericSchedulingProblem it will also take into account time lags constraints.
+        Default implementation is only taking get_precededence_constraints, removing the potential duplicates.
+
+        """
+        return {
+            task: set(next_tasks)
+            for task, next_tasks in self.get_precedence_constraints().items()
+        }
+
+    def update_precedence_constraints(self) -> None:
+        """Method to call when precedence constraints have been updated.
+
+        To be overriden in child classes.
+
+        Returns:
+
+        """
+        pass
+
     def get_precedence_graph(self) -> Graph:
         nodes = [(task, {}) for task in self.tasks_list]
         edges = []
-        successors = self.get_precedence_constraints()
+        successors = self.get_consolidated_precedence_constraints()
         for n in successors:
             for succ in successors[n]:
                 edges += [(n, succ, {})]
