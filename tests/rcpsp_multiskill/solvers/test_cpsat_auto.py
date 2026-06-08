@@ -307,10 +307,9 @@ def test_constraint_same_allocation_as_ref(problem):
         ref, tasks=subtasks, unary_resources=subresources
     )
     solver.add_constraint_on_task_unary_resource_allocation(
-        task=task, unary_resource=employee, used=True
-    )
-    solver.add_constraint_on_task_unary_resource_allocation(
-        task=98, unary_resource=employee, used=True
+        task=task,
+        unary_resource=employee,
+        used=not (ref.is_allocated(task=task, unary_resource=employee)),
     )
     sol = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
