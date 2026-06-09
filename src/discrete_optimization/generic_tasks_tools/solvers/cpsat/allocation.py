@@ -313,11 +313,11 @@ class AllocationCpSatSolver(
                 ):
                     self.cp_model.add_at_most_one(list_is_present_variables)
 
-    def get_nb_tasks_done_variable(self) -> Any:
+    def get_nb_tasks_done_variable(self) -> LinearExprT:
         self.create_done_variables()
         return sum(self.done_variables.values())
 
-    def get_nb_unary_resources_used_variable(self) -> Any:
+    def get_nb_unary_resources_used_variable(self) -> LinearExprT:
         self.create_used_variables()
         return sum(self.used_variables.values())
 

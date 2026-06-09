@@ -4,9 +4,7 @@
 import logging
 from abc import abstractmethod
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Generic, Optional
+from typing import Any, Optional
 
 import networkx as nx
 from ortools.sat.python.cp_model import (
@@ -23,6 +21,12 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     CumulativeResource,
     GenericSchedulingSolution,
     Resource,
+)
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    OBJECTIVE_DEFAULT_WEIGHTS,
+    Objective,
+    RawSolution,
+    TaskVariable,
 )
 from discrete_optimization.generic_tasks_tools.multimode import SinglemodeProblem
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
@@ -50,56 +54,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class Objective(Enum):
-    """Objective to be used by the solver."""
-
-    MAKESPAN = "makespan"
-    """Global makespan of the schedule, to minimize."""
-    NB_TASKS_DONE = "nb_tasks_done"
-    """Number of tasks with at least one resource allocated, to maximize."""
-    NB_UNARY_RESOURCES_USED = "nb_unary_resources_used"
-    """Number of allocated unary resources, to minimize."""
-    NB_RESOURCES_USED = "nb_resources_used"
-    """Weighted sum of resources used, to minimize.
-
-    Include non-renewable, cumulative, and unary resources.
-    The weigths are to be defined in `solver.objective_resource_weights`.
-
-    """
-    RESOURCES_CONSUMPTION = "resources_consumption"
-    """Weighted sum of resources consumptions, to minimize.
-
-    Include non-renewable, cumulative, and unary resources.
-    The weigths are to be defined in `solver.objective_resource_weights`.
-
-    """
-    CUSTOM = "custom_objective"
-
-
-@dataclass
-class TaskVariable(Generic[UnaryResource, Skill]):
-    """Task characteristics found by a cpsat solution."""
-
-    start: int  # start time of the task
-    end: int  # end time of the task
-    mode: int  # chosen mode for the task
-    allocated: dict[UnaryResource, set[Skill]] = field(
-        default_factory=dict
-    )  # resources allocated to the task
-    info: dict[str, Any] = field(
-        default_factory=dict
-    )  # additional information if needed
-
-
-@dataclass
-class TemporarySolution(Generic[Task, UnaryResource, Skill]):
-    """Temporary format for a cpsat solution."""
-
-    task_variables: dict[Task, TaskVariable[UnaryResource, Skill]]
-    metadata: dict[str, Any] = field(default_factory=dict)
-
 
 AnyResource = NonRenewableResource | UnaryResource | Skill | NonSkillCumulativeResource
 
@@ -154,7 +108,7 @@ class GenericSchedulingAutoCpSatSolver(
     ]
 
     # objective settings
-    objective = Objective.MAKESPAN  # Objective set by `init_model()`
+    objective: Objective = Objective.MAKESPAN  # Objective set by `init_model()`
     objective_resource_weights: Optional[dict[AnyResource, int]] = None
     """Weights to be used by the objective when summing used resources or resources consumption.
 
@@ -875,7 +829,7 @@ class GenericSchedulingAutoCpSatSolver(
             "potentially because calendar and non-renewable resources intersect."
         )
 
-    def get_nb_resources_used_variable(self) -> Any:
+    def get_nb_resources_used_variable(self) -> LinearExprT:
         """Get cpsat variable tracking number of resources used at least in one task.
 
         If necessary, intermediate variables tracking is a specific resource is used are created.
@@ -890,7 +844,7 @@ class GenericSchedulingAutoCpSatSolver(
             for resource, used in self.all_used_variables.items()
         )
 
-    def get_aggregated_resources_consumptions_variable(self) -> Any:
+    def get_aggregated_resources_consumptions_variable(self) -> LinearExprT:
         """Get cpsat variable aggregating consumptions of each resource."""
         weights = self.objective_resource_weights
         if weights is None:
@@ -925,25 +879,29 @@ class GenericSchedulingAutoCpSatSolver(
             self.create_energy_constraints(branches=branches)
 
     def _set_objective(self) -> None:
-        objective = None
-        match self.objective:
+        if self.objective == Objective.CUSTOM:
+            # for custom objective, inheriting classes should override `init_model()` to define the objective.
+            return
+
+        objective_var = self.get_objective_variable(self.objective)
+        weight = -OBJECTIVE_DEFAULT_WEIGHTS[self.objective]
+        self.cp_model.minimize(weight * objective_var)
+
+    def get_objective_variable(self, objective: Objective) -> LinearExprT:
+        match objective:
             case Objective.MAKESPAN:
-                objective = self.get_global_makespan_variable()
+                objective_var = self.get_global_makespan_variable()
             case Objective.NB_TASKS_DONE:
-                objective = -self.get_nb_tasks_done_variable()
+                objective_var = self.get_nb_tasks_done_variable()
             case Objective.NB_UNARY_RESOURCES_USED:
-                objective = self.get_nb_unary_resources_used_variable()
+                objective_var = self.get_nb_unary_resources_used_variable()
             case Objective.NB_RESOURCES_USED:
-                objective = self.get_nb_resources_used_variable()
+                objective_var = self.get_nb_resources_used_variable()
             case Objective.RESOURCES_CONSUMPTION:
-                objective = self.get_aggregated_resources_consumptions_variable()
-            case Objective.CUSTOM:
-                # do not define it here. User will do it in overridden `init_model()`.
-                ...
+                objective_var = self.get_aggregated_resources_consumptions_variable()
             case _:
                 raise NotImplementedError()
-        if objective is not None:
-            self.cp_model.minimize(objective)
+        return objective_var
 
     def get_task_interval(self, task: Task) -> IntervalVar:
         if self.needs_task_interval:
@@ -1034,7 +992,7 @@ class GenericSchedulingAutoCpSatSolver(
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource, Skill]:
+    ) -> RawSolution[Task, UnaryResource, Skill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -1087,13 +1045,13 @@ class GenericSchedulingAutoCpSatSolver(
             task_variables[task] = TaskVariable(
                 start=start, end=end, mode=mode, allocated=allocated
             )
-        return TemporarySolution(task_variables=task_variables)
+        return RawSolution(task_variables=task_variables)
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
         # construct generic tasks variables
-        temp_sol = self.retrieve_tasks_variables(cpsolvercb=cpsolvercb)
+        raw_sol = self.retrieve_tasks_variables(cpsolvercb=cpsolvercb)
         # convert to specific solution type
-        return self.convert_task_variables_to_solution(temp_sol=temp_sol)
+        return self.convert_task_variables_to_solution(raw_sol=raw_sol)
 
     def set_warm_start(self, solution: Solution) -> None:
         solution: GenericSchedulingSolution[
@@ -1134,7 +1092,7 @@ class GenericSchedulingAutoCpSatSolver(
 
     @abstractmethod
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, Skill]
+        self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> GenericSchedulingSolution[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ]:
@@ -1143,7 +1101,7 @@ class GenericSchedulingAutoCpSatSolver(
         To be used in `self.retrieve_solution()`.
 
         Args:
-            temp_sol:
+            raw_sol:
 
         Returns:
 

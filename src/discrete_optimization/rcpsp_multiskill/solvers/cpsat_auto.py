@@ -8,9 +8,11 @@ from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
 )
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    RawSolution,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
-    TemporarySolution,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -49,14 +51,14 @@ class CpSatAutoMultiskillRcpspSolver(
     problem: MultiskillRcpspProblem
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, Skill]
+        self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> Solution:
         """Convert solution from autosolver format into do format.
 
         To be used in `self.retrieve_solution()`.
 
         Args:
-            temp_sol:
+            raw_sol:
 
         Returns:
 
@@ -64,7 +66,7 @@ class CpSatAutoMultiskillRcpspSolver(
         modes_dict = {}
         schedule = {}
         employee_usage = {}
-        for task, task_variable in temp_sol.task_variables.items():
+        for task, task_variable in raw_sol.task_variables.items():
             schedule[task] = {
                 "start_time": task_variable.start,
                 "end_time": task_variable.end,
@@ -81,12 +83,12 @@ class CpSatAutoMultiskillRcpspSolver(
             modes=modes_dict,
             employee_usage=employee_usage,
         )
-        sol._internal_obj = temp_sol.metadata
+        sol._internal_obj = raw_sol.metadata
         return sol
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource, Skill]:
+    ) -> RawSolution[Task, UnaryResource, Skill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -101,14 +103,14 @@ class CpSatAutoMultiskillRcpspSolver(
             the task variables for the intermediate solution
 
         """
-        temp_sol = super().retrieve_tasks_variables(cpsolvercb)
+        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
 
         # internal objective
-        temp_sol.metadata["makespan"] = cpsolvercb.value(
+        raw_sol.metadata["makespan"] = cpsolvercb.value(
             self.get_global_makespan_variable()
         )
 
-        return temp_sol
+        return raw_sol
 
     def include_constraint_on_cumulative_resource(
         self, resource: CumulativeResource

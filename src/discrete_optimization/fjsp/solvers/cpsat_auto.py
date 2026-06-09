@@ -15,13 +15,15 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    RawSolution,
+)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
 )
 from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
-    TemporarySolution,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
     WithoutSkillSchedulingCpSatSolver,
@@ -72,12 +74,12 @@ class CpSatAutoFjspSolver(
         return self._max_time
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
     ) -> FJobShopSolution:
         schedule = [
             [
                 (
-                    (task_var := temp_sol.task_variables[j, k]).start,
+                    (task_var := raw_sol.task_variables[j, k]).start,
                     task_var.end,
                     self.problem.mode2machine[j, k][task_var.mode],
                     task_var.mode,

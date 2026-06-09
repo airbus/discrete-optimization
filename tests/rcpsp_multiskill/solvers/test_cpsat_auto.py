@@ -99,6 +99,7 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(
     # add resources that should change schedule and mode choice
     task = model.tasks_list[0]
     t = solution.get_start_time(task)
+    print(t)
     assert solution.get_mode(task) == 1
     calendar = [2] * model.horizon
     calendar[t] = 1
@@ -120,7 +121,11 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(
         problem=model,
     )
     solver.init_model(
-        one_worker_per_task=True,
+        one_worker_per_task=one_worker_per_task,
+        exact_skill=exact_skill,
+        slack_skill=slack_skill,
+        use_energy_constraints=use_energy_constraints,
+        redundant_skill_cumulative=redundant_skill_cumulative,
     )
     p = ParametersCp.default_cpsat()
     res = solver.solve(

@@ -11,6 +11,7 @@ from typing import Any
 from ortools.sat.python.cp_model import (
     Constraint,
     CpSolverSolutionCallback,
+    LinearExprT,
     ObjLinearExprT,
 )
 
@@ -19,11 +20,13 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    Objective,
+    RawSolution,
+)
 from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
-    Objective,
-    TemporarySolution,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -161,18 +164,18 @@ class CpSatAutoRcpspSolver(
             self.create_mode_pair_constraint()
             self.add_special_temporal_constraints()
 
-    def get_global_makespan_variable(self) -> Any:
+    def get_global_makespan_variable(self) -> LinearExprT:
         self.remove_constraints_on_objective()
         return self.get_task_start_or_end_variable(
             task=self.problem.sink_task, start_or_end=StartOrEnd.END
         )
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
     ) -> RcpspSolution:
         schedule = {}
         modes_dict = {}
-        for task, task_variable in temp_sol.task_variables.items():
+        for task, task_variable in raw_sol.task_variables.items():
             schedule[task] = {
                 "start_time": task_variable.start,
                 "end_time": task_variable.end,
@@ -251,7 +254,7 @@ class CpSatAutoResourceRcpspSolver(CpSatAutoRcpspSolver):
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource, NoSkill]:
+    ) -> RawSolution[Task, UnaryResource, NoSkill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -266,27 +269,27 @@ class CpSatAutoResourceRcpspSolver(CpSatAutoRcpspSolver):
             the task variables for the intermediate solution
 
         """
-        temp_sol = super().retrieve_tasks_variables(cpsolvercb)
+        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
 
-        temp_sol.metadata.update(
+        raw_sol.metadata.update(
             {
                 obj: cpsolvercb.value(self._internal_objective(obj))
                 for obj in self.get_lexico_objectives_available()
             }
         )
 
-        return temp_sol
+        return raw_sol
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
     ) -> RcpspSolution:
         """Convert temporary solution to rcpsp format.
 
         Add internal objectives.
 
         """
-        sol = super().convert_task_variables_to_solution(temp_sol=temp_sol)
-        sol._internal_objectives = temp_sol.metadata
+        sol = super().convert_task_variables_to_solution(raw_sol=raw_sol)
+        sol._internal_objectives = raw_sol.metadata
         return sol
 
     def get_lexico_objectives_available(self) -> list[str]:
@@ -366,7 +369,7 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource, NoSkill]:
+    ) -> RawSolution[Task, UnaryResource, NoSkill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -381,27 +384,27 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
             the task variables for the intermediate solution
 
         """
-        temp_sol = super().retrieve_tasks_variables(cpsolvercb)
+        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
 
-        temp_sol.metadata.update(
+        raw_sol.metadata.update(
             {
                 obj: cpsolvercb.value(self._internal_objective(obj))
                 for obj in self.get_lexico_objectives_available()
             }
         )
 
-        return temp_sol
+        return raw_sol
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
     ) -> RcpspSolution:
         """Convert temporary solution to rcpsp format.
 
         Add internal objectives.
 
         """
-        sol = super().convert_task_variables_to_solution(temp_sol=temp_sol)
-        sol._internal_objectives = temp_sol.metadata
+        sol = super().convert_task_variables_to_solution(raw_sol=raw_sol)
+        sol._internal_objectives = raw_sol.metadata
         return sol
 
     def get_lexico_objectives_available(self) -> list[str]:
