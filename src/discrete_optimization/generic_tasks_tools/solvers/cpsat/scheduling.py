@@ -91,7 +91,7 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         if self.constraints_on_makespan is not None:
             self.remove_constraints(self.constraints_on_makespan)
 
-    def get_global_makespan_variable(self) -> Any:
+    def get_global_makespan_variable(self) -> LinearExprT:
         # remove previous constraints on makespan variable from cp model
         self.remove_constraints_on_objective()
         # get makespan variable
@@ -108,7 +108,7 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         ]
         return makespan
 
-    def get_subtasks_makespan_variable(self, subtasks: Iterable[Task]) -> Any:
+    def get_subtasks_makespan_variable(self, subtasks: Iterable[Task]) -> LinearExprT:
         # remove previous constraints on makespan variable from cp model
         self.remove_constraints_on_objective()
         # get makespan variable
@@ -125,14 +125,18 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         ]
         return makespan
 
-    def get_subtasks_sum_end_time_variable(self, subtasks: Iterable[Task]) -> Any:
+    def get_subtasks_sum_end_time_variable(
+        self, subtasks: Iterable[Task]
+    ) -> LinearExprT:
         self.remove_constraints_on_objective()
         return sum(
             self.get_task_start_or_end_variable(task, StartOrEnd.END)
             for task in subtasks
         )
 
-    def get_subtasks_sum_start_time_variable(self, subtasks: Iterable[Task]) -> Any:
+    def get_subtasks_sum_start_time_variable(
+        self, subtasks: Iterable[Task]
+    ) -> LinearExprT:
         self.remove_constraints_on_objective()
         return sum(
             self.get_task_start_or_end_variable(task, StartOrEnd.START)

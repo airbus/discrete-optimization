@@ -319,7 +319,7 @@ class CpSatRcpspSolver(
         objective = self.get_global_makespan_variable()
         self.minimize_variable(objective)
 
-    def get_global_makespan_variable(self) -> Any:
+    def get_global_makespan_variable(self) -> LinearExprT:
         self.remove_constraints_on_objective()
         return self.variables["end"][self.problem.sink_task]
 

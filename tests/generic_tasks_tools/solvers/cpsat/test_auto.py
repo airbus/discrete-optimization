@@ -16,6 +16,11 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    Objective,
+    RawSolution,
+    TaskVariable,
+)
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
     WithoutSkillProblem,
@@ -23,9 +28,6 @@ from discrete_optimization.generic_tasks_tools.skill import (
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
-    Objective,
-    TaskVariable,
-    TemporarySolution,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
@@ -64,25 +66,25 @@ class MySolution(
     def __init__(
         self,
         problem: MyProblem,
-        temp_sol: TemporarySolution[Task, UnaryResource, Skill],
+        raw_sol: RawSolution[Task, UnaryResource, Skill],
     ):
         super().__init__(problem)
-        self.temp_sol = temp_sol
+        self.raw_sol = raw_sol
 
     def get_end_time(self, task: Task) -> int:
-        return self.temp_sol.task_variables[task].end
+        return self.raw_sol.task_variables[task].end
 
     def get_start_time(self, task: Task) -> int:
-        return self.temp_sol.task_variables[task].start
+        return self.raw_sol.task_variables[task].start
 
     def get_mode(self, task: Task) -> int:
-        return self.temp_sol.task_variables[task].mode
+        return self.raw_sol.task_variables[task].mode
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
-        return unary_resource in self.temp_sol.task_variables[task].allocated
+        return unary_resource in self.raw_sol.task_variables[task].allocated
 
     def copy(self) -> Solution:
-        return MySolution(problem=self.problem, temp_sol=deepcopy(self.temp_sol))
+        return MySolution(problem=self.problem, raw_sol=deepcopy(self.raw_sol))
 
 
 class MyProblem(
@@ -224,9 +226,9 @@ class MyAutoCpsatSolver(
     problem: MyProblem
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, Skill]
+        self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> MySolution:
-        return MySolution(problem=self.problem, temp_sol=temp_sol)
+        return MySolution(problem=self.problem, raw_sol=raw_sol)
 
     def __init__(
         self,
@@ -249,7 +251,7 @@ def test_problem(caplog):
     problem = MyProblem()
     sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=1, end=4, mode=1, allocated={"worker1": set()}
@@ -270,7 +272,7 @@ def test_problem(caplog):
 
     sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=3, end=6, mode=1, allocated={"worker2": set()}
@@ -289,7 +291,7 @@ def test_problem(caplog):
 
     sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=3,
@@ -313,7 +315,7 @@ def test_problem(caplog):
     # nok: worker not available
     sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=3, end=6, mode=1, allocated={"worker1": set()}
@@ -331,7 +333,7 @@ def test_problem(caplog):
     # nok: cumulative resource not available
     sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=1, end=4, mode=1, allocated={"worker1": set()}
@@ -349,7 +351,7 @@ def test_problem(caplog):
     # nok: duration not correct
     sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=1, end=2, mode=1, allocated={"worker1": set()}
@@ -369,7 +371,7 @@ def test_problem(caplog):
     problem.mode_details["task-2"][0]["cumulative_resource"] = 1
     sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=1, end=4, mode=1, allocated={"worker1": set()}
@@ -435,7 +437,7 @@ def test_auto(
     assert problem.satisfy(sol)
     kpi = problem.evaluate(sol)
     print(kpi)
-    print(sol.temp_sol.task_variables)
+    print(sol.raw_sol.task_variables)
 
     if objective == Objective.NB_UNARY_RESOURCES_USED:
         assert kpi["nb_allocated"] == 1
@@ -453,7 +455,7 @@ def test_auto(
     # check warm start from a "bad" solution
     bad_sol = MySolution(
         problem=problem,
-        temp_sol=TemporarySolution(
+        raw_sol=RawSolution(
             task_variables={
                 "task-1": TaskVariable(
                     start=1, end=4, mode=1, allocated={"worker1": set()}
@@ -474,7 +476,7 @@ def test_auto(
         callbacks=[NbIterationStopper(1)],
     )
     sol, fit = res[0]
-    assert sol.temp_sol.task_variables == bad_sol.temp_sol.task_variables
+    assert sol.raw_sol.task_variables == bad_sol.raw_sol.task_variables
 
 
 def test_task_bounds_user():

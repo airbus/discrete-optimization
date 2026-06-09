@@ -93,7 +93,7 @@ class CpSatMultiskillRcpspSolver(
     def get_task_mode_is_present_variable(self, task: Task, mode: int) -> LinearExprT:
         return self.variables["mode_variable"]["is_present"][task][mode]
 
-    def get_global_makespan_variable(self) -> Any:
+    def get_global_makespan_variable(self) -> LinearExprT:
         self.remove_constraints_on_objective()
         return self.variables["makespan"]
 

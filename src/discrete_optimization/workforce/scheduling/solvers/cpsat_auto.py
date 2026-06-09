@@ -13,14 +13,16 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    Objective,
+    RawSolution,
+)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
 )
 from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
-    Objective,
     SinglemodeGenericSchedulingAutoCpSatSolver,
-    TemporarySolution,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
@@ -178,13 +180,13 @@ class CPSatAutoAllocSchedulingSolver(
         )
 
     def convert_task_variables_to_solution(
-        self, temp_sol: TemporarySolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
     ) -> AllocSchedulingSolution:
         schedule = np.zeros((self.problem.number_tasks, 2), dtype=int)
         allocation = -np.ones(self.problem.number_tasks, dtype=int)
         for i_task in range(self.problem.number_tasks):
             task = self.problem.index_to_task[i_task]
-            task_variable = temp_sol.task_variables[task]
+            task_variable = raw_sol.task_variables[task]
             schedule[i_task, 0] = task_variable.start
             schedule[i_task, 1] = task_variable.end
             for team in task_variable.allocated:
@@ -192,12 +194,12 @@ class CPSatAutoAllocSchedulingSolver(
         sol = AllocSchedulingSolution(
             problem=self.problem, schedule=schedule, allocation=allocation
         )
-        sol._intern_obj = temp_sol.metadata
+        sol._intern_obj = raw_sol.metadata
         return sol
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> TemporarySolution[Task, UnaryResource, NoSkill]:
+    ) -> RawSolution[Task, UnaryResource, NoSkill]:
         """Create solution at temporary format from cpsat variables.
 
         Override it to
@@ -206,7 +208,7 @@ class CPSatAutoAllocSchedulingSolver(
 
         """
         # retrieve main tasks variables
-        temp_sol = super().retrieve_tasks_variables(cpsolvercb)
+        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
         # log objectives
         logger.info(f"Objs = {[cpsolvercb.value(x) for x in self.variables['objs']]}")
         logger.info(
@@ -220,8 +222,8 @@ class CPSatAutoAllocSchedulingSolver(
                 )
         # store objectives
         for obj in self.variables["objectives"]:
-            temp_sol.metadata[obj] = cpsolvercb.value(self.variables["objectives"][obj])
-        return temp_sol
+            raw_sol.metadata[obj] = cpsolvercb.value(self.variables["objectives"][obj])
+        return raw_sol
 
     def is_compatible_task_unary_resource(
         self, task: Task, unary_resource: UnaryResource
