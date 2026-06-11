@@ -9,7 +9,9 @@ from discrete_optimization.binpack.parser import (
 )
 from discrete_optimization.binpack.solvers.asp import AspBinPackingSolver
 from discrete_optimization.binpack.solvers.greedy import (
-    GreedyBinPackOpenEvolve,
+    BinSelectionStrategy,
+    GreedyBinPackSolver,
+    SortingStrategy,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -33,8 +35,11 @@ def run_asp_with_ws():
     f = [ff for ff in get_data_available_bppc() if "BPPC_4_1_1.txt" in ff][0]
     problem = parse_bin_packing_constraint_file(f)
 
-    solver = GreedyBinPackOpenEvolve(problem)
-    sol = solver.solve().get_best_solution()
+    solver = GreedyBinPackSolver(problem)
+    sol = solver.solve(
+        sorting_strategy=SortingStrategy.NONE,
+        bin_selection_strategy=BinSelectionStrategy.FIRST_FIT,
+    ).get_best_solution()
     nb_bins = problem.evaluate(sol)["nb_bins"]
     print("Solution from Greedy", problem.evaluate(sol))
     solver = AspBinPackingSolver(problem=problem)
