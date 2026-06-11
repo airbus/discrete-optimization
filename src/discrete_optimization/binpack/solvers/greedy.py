@@ -1,7 +1,7 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from collections import defaultdict
+from enum import Enum
 from typing import Any, Optional
 
 import networkx as nx
@@ -11,17 +11,88 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import (
+    ParamsObjectiveFunction,
+    SolverDO,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
 
+class SortingStrategy(Enum):
+    """Strategy for sorting items before bin assignment.
+
+    - NONE: Process items in original order
+    - WEIGHT_DESC: Sort by weight descending
+    - WEIGHT_DESC_CONFLICT_ASC: Sort by weight descending, then conflict count ascending
+    - CONFLICT_DESC_WEIGHT_DESC: Sort by conflict count descending, then weight descending
+    """
+
+    NONE = "none"
+    WEIGHT_DESC = "weight_desc"
+    WEIGHT_DESC_CONFLICT_ASC = "weight_desc_conflict_asc"
+    CONFLICT_DESC_WEIGHT_DESC = "conflict_desc_weight_desc"
+
+
+class BinSelectionStrategy(Enum):
+    """Strategy for selecting which bin to assign an item to.
+
+    - FIRST_FIT: Choose the first bin that fits the item
+    - BEST_FIT_MIN_WEIGHT: Choose bin with minimum total weight after adding item
+    - BEST_FIT_MIN_REMAINING: Choose bin with minimum remaining capacity after adding item
+    """
+
+    FIRST_FIT = "first_fit"
+    BEST_FIT_MIN_WEIGHT = "best_fit_min_weight"
+    BEST_FIT_MIN_REMAINING = "best_fit_min_remaining"
+
+
 class GreedyBinPackSolver(SolverDO):
+    """Greedy bin packing solver with configurable sorting and bin selection strategies.
+
+    Supports multiple greedy heuristics for bin packing problems with optional
+    incompatibility constraints. The behavior is controlled by two strategy hyperparameters.
+
+    Hyperparameters:
+        sorting_strategy: How to sort items before assignment
+        bin_selection_strategy: How to select bins for items
+
+    Example:
+        # Best Fit Decreasing (BFD) heuristic
+        solver = GreedyBinPackSolver(problem)
+        solver.solve(
+            sorting_strategy=SortingStrategy.CONFLICT_DESC_WEIGHT_DESC,
+            bin_selection_strategy=BinSelectionStrategy.BEST_FIT_MIN_REMAINING
+        )
+    """
+
     problem: BinPackProblem
 
-    def __init__(self, problem: BinPackProblem, **kwargs: Any):
-        super().__init__(problem, **kwargs)
+    hyperparameters = [
+        EnumHyperparameter(
+            name="sorting_strategy",
+            enum=SortingStrategy,
+            default=SortingStrategy.CONFLICT_DESC_WEIGHT_DESC,
+        ),
+        EnumHyperparameter(
+            name="bin_selection_strategy",
+            enum=BinSelectionStrategy,
+            default=BinSelectionStrategy.BEST_FIT_MIN_REMAINING,
+        ),
+    ]
+
+    def __init__(
+        self,
+        problem: BinPackProblem,
+        params_objective_function: ParamsObjectiveFunction | None = None,
+        **kwargs: Any,
+    ):
+        super().__init__(problem, params_objective_function, **kwargs)
+        # Build incompatibility graph
         graph = nx.Graph()
         graph.add_nodes_from(range(self.problem.nb_items))
         if self.problem.has_constraint:
@@ -32,126 +103,131 @@ class GreedyBinPackSolver(SolverDO):
     def solve(
         self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        callback = CallbackList(callbacks=callbacks)
-        callback.on_solve_start(self)
-        allocation = [None for i in range(self.problem.nb_items)]
-        capa_per_bins = defaultdict(lambda: 0)
-        used_bins = []
-        item_per_bins = defaultdict(lambda: set())
-        nb_bins = 0
-        for j in range(self.problem.nb_items):
-            weight = self.problem.list_items[j].weight
-            neighbors = self.neighbors[j]
-            if nb_bins == 0:
-                nb_bins = 1
-                used_bins.append(0)
-                capa_per_bins[0] += weight
-                allocation[j] = 0
-                item_per_bins[0].add(j)
-            else:
-                success = False
-                for bin_ in used_bins:
-                    if weight + capa_per_bins[bin_] > self.problem.capacity_bin:
-                        continue
-                    if any(n in item_per_bins[bin_] for n in neighbors):
-                        continue
-                    capa_per_bins[bin_] += weight
-                    allocation[j] = bin_
-                    item_per_bins[bin_].add(j)
-                    success = True
-                    break
-                if not success:
-                    new_bin = used_bins[-1] + 1
-                    used_bins.append(new_bin)
-                    item_per_bins[new_bin].add(j)
-                    capa_per_bins[new_bin] += weight
-                    allocation[j] = new_bin
-        res = self.create_result_storage([])
-        sol = BinPackSolution(problem=self.problem, allocation=allocation)
-        fit = self.aggreg_from_sol(sol)
-        res.append((sol, fit))
-        callback.on_solve_end(res, self)
-        return res
+        """Solve using greedy bin packing with configured strategies."""
+        # Complete kwargs with default hyperparameters
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        sorting_strategy = kwargs["sorting_strategy"]
+        bin_selection_strategy = kwargs["bin_selection_strategy"]
 
-
-class GreedyBinPackOpenEvolve(SolverDO):
-    problem: BinPackProblem
-
-    def __init__(self, problem: BinPackProblem, **kwargs: Any):
-        super().__init__(problem, **kwargs)
-        graph = nx.Graph()
-        graph.add_nodes_from(range(self.problem.nb_items))
-        if self.problem.has_constraint:
-            graph.add_edges_from(list(self.problem.incompatible_items))
-        self.graph = graph
-        self.neighbors = {n: set(self.graph.neighbors(n)) for n in self.graph.nodes}
-
-    def solve(self, callbacks: Optional[list[Callback]] = None, **kwargs):
-        """
-        - list_weights: give for each item its size.
-        - set_conflicts: {(index1, index2), (index0, index4)...} : means that index1 and index2 are not put in the same bin etc
-        - capacity_bin : is the size of each bin
-        Returns a list of int (corresponding to bin index for each item index), the len of the list should be len(list_weights).
-        """
         callback = CallbackList(callbacks=callbacks)
         callback.on_solve_start(self)
 
-        list_weights = [item.weight for item in self.problem.list_items]
-        n = self.problem.nb_items
-        bin_assignment = [0] * n
-        bin_weights = [0]  # Keeps track of weights in each bin.
-        bin_conflicts = [
-            set()
-        ]  # Keeps track of items in each bin for conflict checking.
+        nb_items = self.problem.nb_items
+        list_items = self.problem.list_items
 
-        # Heuristic: Sort by decreasing weight, then decreasing number of conflicts
-        sorted_items = sorted(
-            range(n),
-            key=lambda i: (list_weights[i], -len(self.neighbors[i])),
-            reverse=True,
-        )
+        # Sort items according to strategy
+        item_indices = self._sort_items(sorting_strategy)
 
-        for i in sorted_items:
-            best_bin = -1
-            min_weight_increase = float("inf")  # Minimizes the increase in bin weight
-        bin_conflicts = [
-            set()
-        ]  # Keeps track of items in each bin for conflict checking.
+        # Initialize data structures
+        allocation = [None] * nb_items
+        bin_weights = []
+        bin_items = []
 
-        # Heuristic: Sort by decreasing weight, then decreasing number of conflicts
-        sorted_items = sorted(
-            range(n),
-            key=lambda i: (list_weights[i], -len(self.neighbors[i])),
-            reverse=True,
-        )
+        # Assign items to bins
+        for item_idx in item_indices:
+            weight = list_items[item_idx].weight
+            neighbors = self.neighbors[item_idx]
 
-        for i in sorted_items:
-            best_bin = -1
-            min_weight_increase = float("inf")
-            for j in range(len(bin_weights)):
-                valid_placement = True
-                for k in bin_conflicts[j]:
-                    if k in self.neighbors[i]:
-                        valid_placement = False
-                        break
-                if (
-                    valid_placement
-                    and bin_weights[j] + list_weights[i] <= self.problem.capacity_bin
-                ):
-                    if bin_weights[j] + list_weights[i] < min_weight_increase:
-                        min_weight_increase = bin_weights[j] + list_weights[i]
-                        best_bin = j
+            # Find best bin according to strategy
+            best_bin = self._select_bin(
+                weight, neighbors, bin_weights, bin_items, bin_selection_strategy
+            )
 
             if best_bin != -1:
-                bin_assignment[i] = best_bin
-                bin_weights[best_bin] += list_weights[i]
-                bin_conflicts[best_bin].add(i)
+                # Assign to existing bin
+                bin_weights[best_bin] += weight
+                bin_items[best_bin].add(item_idx)
+                allocation[item_idx] = best_bin
             else:
-                bin_assignment[i] = len(bin_weights)
-                bin_weights.append(list_weights[i])
-                bin_conflicts.append({i})
-        sol = BinPackSolution(problem=self.problem, allocation=bin_assignment)
+                # Create new bin
+                new_bin = len(bin_weights)
+                bin_weights.append(weight)
+                bin_items.append({item_idx})
+                allocation[item_idx] = new_bin
+
+        # Build and return solution
+        sol = BinPackSolution(problem=self.problem, allocation=allocation)
         fit = self.aggreg_from_sol(sol)
         res = self.create_result_storage([(sol, fit)])
         callback.on_solve_end(res, self)
         return res
+
+    def _sort_items(self, sorting_strategy: SortingStrategy) -> list[int]:
+        """Sort items according to the given sorting strategy."""
+        nb_items = self.problem.nb_items
+        list_items = self.problem.list_items
+
+        if sorting_strategy == SortingStrategy.NONE:
+            return list(range(nb_items))
+
+        elif sorting_strategy == SortingStrategy.WEIGHT_DESC:
+            return sorted(
+                range(nb_items), key=lambda i: list_items[i].weight, reverse=True
+            )
+
+        elif sorting_strategy == SortingStrategy.WEIGHT_DESC_CONFLICT_ASC:
+            return sorted(
+                range(nb_items),
+                key=lambda i: (list_items[i].weight, -len(self.neighbors[i])),
+                reverse=True,
+            )
+
+        elif sorting_strategy == SortingStrategy.CONFLICT_DESC_WEIGHT_DESC:
+            return sorted(
+                range(nb_items),
+                key=lambda i: (len(self.neighbors[i]), list_items[i].weight),
+                reverse=True,
+            )
+
+        return list(range(nb_items))
+
+    def _select_bin(
+        self,
+        weight: float,
+        neighbors: set[int],
+        bin_weights: list[float],
+        bin_items: list[set[int]],
+        bin_selection_strategy: BinSelectionStrategy,
+    ) -> int:
+        """Select a bin for the item according to the given strategy.
+
+        Returns:
+            Bin index to use, or -1 if no existing bin fits
+        """
+        capacity_bin = self.problem.capacity_bin
+
+        if bin_selection_strategy == BinSelectionStrategy.FIRST_FIT:
+            # First bin that fits
+            for bin_id in range(len(bin_weights)):
+                if bin_weights[bin_id] + weight <= capacity_bin:
+                    if not any(n in bin_items[bin_id] for n in neighbors):
+                        return bin_id
+            return -1
+
+        elif bin_selection_strategy == BinSelectionStrategy.BEST_FIT_MIN_WEIGHT:
+            # Bin with minimum total weight after adding item
+            best_bin = -1
+            min_weight = float("inf")
+            for bin_id in range(len(bin_weights)):
+                if bin_weights[bin_id] + weight <= capacity_bin:
+                    if not any(n in bin_items[bin_id] for n in neighbors):
+                        new_weight = bin_weights[bin_id] + weight
+                        if new_weight < min_weight:
+                            min_weight = new_weight
+                            best_bin = bin_id
+            return best_bin
+
+        elif bin_selection_strategy == BinSelectionStrategy.BEST_FIT_MIN_REMAINING:
+            # Bin with minimum remaining capacity after adding item
+            best_bin = -1
+            min_remaining = float("inf")
+            for bin_id in range(len(bin_weights)):
+                if bin_weights[bin_id] + weight <= capacity_bin:
+                    if not any(n in bin_items[bin_id] for n in neighbors):
+                        remaining = capacity_bin - (bin_weights[bin_id] + weight)
+                        if remaining < min_remaining:
+                            min_remaining = remaining
+                            best_bin = bin_id
+            return best_bin
+
+        return -1
