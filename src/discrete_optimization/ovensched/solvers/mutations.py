@@ -30,7 +30,7 @@ class OvenPermutationSwap(Mutation):
     """
     Mutation operator that swaps two random positions in the permutation.
     This is a simple but effective mutation for permutation-based solutions.
-    We dont use common SwapMutation to handle the cache mecanism happening in VectorOvenSchedulingSolution
+    We don't use common SwapMutation to handle the cache mechanism happening in VectorOvenSchedulingSolution
     """
 
     def __init__(self, problem: OvenSchedulingProblem, **kwargs: Any):
@@ -46,7 +46,6 @@ class OvenPermutationSwap(Mutation):
         Returns:
             Tuple of (new solution, local move object)
         """
-        solution, move = super().mutate(solution)
 
         if not isinstance(solution, VectorOvenSchedulingSolution):
             raise ValueError(
