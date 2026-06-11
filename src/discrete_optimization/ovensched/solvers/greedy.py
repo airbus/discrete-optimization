@@ -7,8 +7,12 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import Any
+from typing import Any, Optional
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import SolverDO, StatusSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -51,12 +55,16 @@ class GreedyOvenSchedulingSolver(SolverDO):
         """Initialize the model (no-op for greedy heuristic)."""
         pass
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
         """Solve the problem using greedy heuristic.
 
         Returns:
             ResultStorage with the greedy solution
         """
+        cb = CallbackList(callbacks)
+        cb.on_solve_start(self)
         logger.info("Running greedy heuristic solver...")
         solution = self._greedy_by_attribute_batching()
         # Evaluate solution
@@ -65,6 +73,8 @@ class GreedyOvenSchedulingSolver(SolverDO):
         result = self.create_result_storage(
             list_solution_fits=[(solution, fitness)],
         )
+        cb.on_step_end(0, result, self)
+        cb.on_solve_end(result, self)
         logger.info(f"Greedy solution: fitness={fitness}")
         self.status_solver = StatusSolver.SATISFIED
         return result
@@ -144,9 +154,19 @@ class GreedyOvenSchedulingSolver(SolverDO):
                         candidate_start = last_batch.end_time
                         # Add setup cost
                         prev_attr = last_batch.task_attribute
-                        setup_cost = self.problem.setup_costs[prev_attr][attr]
-                        candidate_start += setup_cost
-
+                        candidate_start += self.problem.setup_times[prev_attr][attr]
+                    else:
+                        prev_attr = self.problem.machines_data[m].initial_attribute
+                        candidate_start += self.problem.setup_times[prev_attr][attr]
+                    candidate_start = max(
+                        candidate_start,
+                        max(
+                            [
+                                self.problem.tasks_data[j].earliest_start
+                                for j in batch_jobs
+                            ]
+                        ),
+                    )
                     # Find next available window that can fit this batch
                     start_time = None
                     end_time = None
