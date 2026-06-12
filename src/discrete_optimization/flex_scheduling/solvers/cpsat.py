@@ -31,7 +31,6 @@ from discrete_optimization.flex_scheduling.problem import (
     ObjectiveParamEarliness,
     ObjectiveParamResource,
     ObjectiveParamTardiness,
-    ObjectiveParamWIP,
     ObjectivesEnum,
     ResourceData,
     ScheduleSolution,
@@ -41,8 +40,14 @@ from discrete_optimization.flex_scheduling.problem import (
 )
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
-    GenericSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
+    CumulativeResourceSchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resource import (
+    NonRenewableCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
+    PrecedenceSchedulingCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -72,9 +77,9 @@ class DurationEncodingEnum(Enum):
 
 
 class CpSatFlexSolver(
-    GenericSchedulingCpSatSolver[
-        Task, NoUnaryResource, CumulativeResource, NonRenewableResource
-    ],
+    PrecedenceSchedulingCpSatSolver[Task],
+    CumulativeResourceSchedulingCpSatSolver[Task, CumulativeResource, NoUnaryResource],
+    NonRenewableCpSatSolver[Task, NonRenewableResource],
     WarmstartMixin,
 ):
     hyperparameters = [
@@ -1379,28 +1384,22 @@ class CpSatFlexSolver(
                 )
                 names.append(name)
             if obj_enum == ObjectivesEnum.WORK_IN_PROGRESS:
-                var, name = self.create_wip_objective(
-                    obj_params_wip=self.problem.objective_params.params_obj[obj_enum]
-                )
-                objs.append(var)
-                weights.append(
-                    self.problem.objective_params.params_obj[obj_enum].weight
-                )
-                names.append(name)
-                if self.problem.objective_params.params_obj[
-                    obj_enum
-                ].count_nb_group_in_progress:
+                obj_params_wip = self.problem.objective_params.params_obj[obj_enum]
+                if obj_params_wip.count_nb_group_in_progress:
                     self.init_and_constraint_wip_variables()
                     objs.append(self.variables["capacity_group_execution"])
-                    weights.append(
-                        self.problem.objective_params.params_obj[
-                            obj_enum
-                        ].coefficient_on_nb_group_in_progress
-                    )
-                    names.append("capacity_group_execution")
+                    weights.append(obj_params_wip.coefficient_on_nb_group_in_progress)
+                    names.append("wip_cost")
             if obj_enum == ObjectivesEnum.TARDINESS:
                 var, name = self.create_tardiness_objective(
                     obj_tardiness=self.problem.objective_params.params_obj[obj_enum]
+                )
+                objs.append(var)
+                weights.append(1)
+                names.append(name)
+            if obj_enum == ObjectivesEnum.EARLINESS:
+                var, name = self.create_earliness_objective(
+                    obj_earliness=self.problem.objective_params.params_obj[obj_enum]
                 )
                 objs.append(var)
                 weights.append(1)
@@ -1448,23 +1447,6 @@ class CpSatFlexSolver(
             )
         ]
         return sum(resource_cost), "resource_cost"
-
-    def create_wip_objective(self, obj_params_wip: ObjectiveParamWIP):
-        wip_cost = []
-        self.variables["earliness_task"] = {}
-        for t, w in obj_params_wip.weight_per_task.items():
-            task_idx = self.problem.task_id_to_index[t]
-            if (w != 0) and self.problem.tasks[task_idx].max_ending_date is not None:
-                max_ending_date = self.problem.tasks[task_idx].max_ending_date
-                self.variables["earliness_task"][t] = self.cp_model.NewIntVar(
-                    lb=0, ub=max_ending_date, name=f"earliness_task_{t}"
-                )
-                self.cp_model.AddMaxEquality(
-                    self.variables["earliness_task"][t],
-                    [0, max_ending_date - self.variables["ends"][task_idx]],
-                )
-                wip_cost.append(self.variables["earliness_task"][t] * w)
-        return sum(wip_cost), "wip_cost"
 
     def create_earliness_objective(self, obj_earliness: ObjectiveParamEarliness):
         self.variables["earliness"] = {"tasks": {}, "groups": {}}

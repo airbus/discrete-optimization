@@ -14,7 +14,6 @@ from discrete_optimization.flex_scheduling.problem import (
     ObjectiveParamResource,
     ObjectiveParams,
     ObjectiveParamTardiness,
-    ObjectiveParamWIP,
     ObjectivesEnum,
     ResourceData,
     TaskData,
@@ -31,7 +30,7 @@ class FlexProblemGenerator:
         horizon: Optional[int] = None,
         seed: int = 42,
         tardiness_weight: int = 20,
-        wip_weight: int = 1,
+        earliness_weight: int = 1,
         tightness_factor: float = 1.3,
         nb_tools: int = 12,
         nb_stations: int = 32,
@@ -67,7 +66,7 @@ class FlexProblemGenerator:
             self.horizon = horizon
 
         self.tardiness_weight = int(tardiness_weight)
-        self.wip_weight = int(wip_weight)
+        self.earliness_weight = int(earliness_weight)
         self.tightness_factor = tightness_factor
 
     def _generate_calendar(self, kind: str, capacity: int) -> np.ndarray:
@@ -162,7 +161,7 @@ class FlexProblemGenerator:
 
         task_counter = 0
         task_tardiness_weights = {}
-        task_wip_weights = {}
+        task_earliness_weights = {}
 
         for msn_idx, (p_type, path_len) in enumerate(product_configs):
             msn_id = f"MSN{msn_idx + 1}"
@@ -306,30 +305,31 @@ class FlexProblemGenerator:
             t.soft_max_end_date = True
 
             task_tardiness_weights[delivery_task_id] = self.tardiness_weight
-            task_wip_weights[delivery_task_id] = self.wip_weight
+            task_earliness_weights[delivery_task_id] = self.earliness_weight
 
         # --- 3. OBJECTIVES ---
         obj_params = ObjectiveParams(
             params_obj={
                 ObjectivesEnum.MAKESPAN: 1.0,
-                ObjectivesEnum.WORK_IN_PROGRESS: ObjectiveParamWIP(
-                    weight=1,
-                    weight_per_task=task_wip_weights,
-                    weights_per_group_task={},
-                    count_nb_group_in_progress=False,
-                    coefficient_on_nb_group_in_progress=5.0,
-                ),
                 ObjectivesEnum.TARDINESS: ObjectiveParamTardiness(
                     weight_per_task=task_tardiness_weights, weight_per_groups={}
                 ),
                 ObjectivesEnum.EARLINESS: ObjectiveParamEarliness(
-                    weight_per_task=task_wip_weights, weight_per_groups={}
+                    weight_per_task=task_earliness_weights, weight_per_groups={}
                 ),
                 ObjectivesEnum.RESOURCE_COST: ObjectiveParamResource(
                     weight=1,
                     weight_per_resource_unit={"R1": 1, "R2": 1, "R35": 2},
                     consider_in_objectives={r.id: r.is_operator for r in resources},
                 ),
+                # WIP disabled by default - enable with count_nb_group_in_progress=True if needed
+                # ObjectivesEnum.WORK_IN_PROGRESS: ObjectiveParamWIP(
+                #     weight=1,
+                #     weight_per_task={},  # Not used - WIP is only for concurrent groups
+                #     weights_per_group_task={},
+                #     count_nb_group_in_progress=True,
+                #     coefficient_on_nb_group_in_progress=5.0,
+                # ),
             }
         )
 

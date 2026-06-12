@@ -31,7 +31,7 @@ def test_cpsat_small_problem(random_seed):
         nb_msn=3,  # 3 products
         seed=42,
         tardiness_weight=10,
-        wip_weight=1,
+        earliness_weight=1,
         tightness_factor=1.5,
         nb_tools=3,
         nb_stations=10,  # Need at least 7 for large products
@@ -69,7 +69,7 @@ def test_cpsat_tiny_problem_full_solve(random_seed):
         nb_msn=2,  # Only 2 products
         seed=123,
         tardiness_weight=5,
-        wip_weight=1,
+        earliness_weight=1,
         tightness_factor=2.0,
         nb_tools=2,
         nb_stations=8,  # Need enough for product routes
@@ -99,7 +99,7 @@ def test_cpsat_with_objectives(random_seed):
         nb_msn=3,
         seed=456,
         tardiness_weight=20,
-        wip_weight=2,
+        earliness_weight=2,
         tightness_factor=1.3,
         nb_tools=4,
         nb_stations=10,  # Need enough for product routes
@@ -118,11 +118,11 @@ def test_cpsat_with_objectives(random_seed):
     evaluation = problem.evaluate(solution)
     assert "makespan" in evaluation
 
-    # Check if tardiness/wip objectives are computed
+    # Check if tardiness/earliness objectives are computed
     if "tardiness" in evaluation:
         assert evaluation["tardiness"] >= 0
-    if "wip_cost" in evaluation:
-        assert isinstance(evaluation["wip_cost"], (int, float))
+    if "earliness" in evaluation:
+        assert evaluation["earliness"] >= 0
 
 
 def test_cpsat_solution_structure(random_seed):
