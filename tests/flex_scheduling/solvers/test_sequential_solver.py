@@ -29,7 +29,7 @@ def test_sequential_solver_basic(random_seed):
         nb_msn=3,  # 3 products
         seed=42,
         tardiness_weight=10,
-        wip_weight=1,
+        earliness_weight=1,
         tightness_factor=1.5,
         nb_tools=3,
         nb_stations=10,  # Need at least 7 for large products
@@ -63,7 +63,7 @@ def test_sequential_solver_tiny_problem(random_seed):
         nb_msn=2,  # Only 2 products
         seed=123,
         tardiness_weight=5,
-        wip_weight=1,
+        earliness_weight=1,
         tightness_factor=2.0,
         nb_tools=2,
         nb_stations=8,  # Need enough for product routes

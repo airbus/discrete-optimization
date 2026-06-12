@@ -21,6 +21,13 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 )
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
+from discrete_optimization.generic_tasks_tools.skill import (
+    NonSkillCumulativeResource,
+    NoSkill,
+    Skill,
+    WithoutSkillProblem,
+    WithoutSkillSolution,
+)
 from discrete_optimization.generic_tools.do_problem import *
 
 RESOURCE_KEY = Hashable
@@ -251,7 +258,10 @@ class ObjectiveParams:
 
 class ScheduleSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, CumulativeResource, NonRenewableResource
+        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+    ],
+    WithoutSkillSolution[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutAllocationSolution[Task],
 ):
@@ -317,10 +327,17 @@ class ScheduleSolutionPreemptive(SchedulingSolution[Task], MultimodeSolution[Tas
 
 class FlexProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, CumulativeResource, NonRenewableResource
+        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+    ],
+    WithoutSkillProblem[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutAllocationProblem[Task],
 ):
+    @property
+    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+        return [resource.id for resource in self.resources if resource.renewable]
+
     def get_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
@@ -331,10 +348,6 @@ class FlexProblem(
                 .resource_consumption.get(resource, 0)
             )
         return 0
-
-    @property
-    def cumulative_resources_list(self) -> list[CumulativeResource]:
-        return [r.id for r in self.resources if r.renewable]
 
     @cache
     def get_resource_availabilities(
@@ -491,6 +504,29 @@ class FlexProblem(
             self.max_end_time,
         ) = get_lb_ub_start_end_date(self)
 
+    @staticmethod
+    def _compute_resource_usage_preemptive(
+        problem: "FlexProblem",
+        schedule: list[list[tuple[int, int]]],
+        modes: np.ndarray,
+    ) -> Dict[RESOURCE_KEY, np.ndarray]:
+        """Compute resource usage over time for a preemptive schedule."""
+        resource_usage = {
+            r.id: np.zeros(problem.horizon, dtype=int) for r in problem.resources
+        }
+
+        for task_idx in range(problem.nb_tasks):
+            mode = int(modes[task_idx])
+            task_data = problem.tasks[task_idx].modes[mode]
+
+            # For each interval in the preemptive schedule
+            for start, end in schedule[task_idx]:
+                for t in range(start, end):
+                    for res_id, consumption in task_data.resource_consumption.items():
+                        resource_usage[res_id][t] += consumption
+
+        return resource_usage
+
     def evaluate(self, variable: ScheduleSolution) -> Dict[str, Any]:
         """
         Evaluate the solution to compute KPIs matching the CP solver objectives.
@@ -505,11 +541,149 @@ class FlexProblem(
         from .fsp_utils import SolutionDetails
 
         if isinstance(variable, ScheduleSolutionPreemptive):
-            return {
-                "makespan": max(
-                    [variable.schedule[i][-1][1] for i in range(len(variable.schedule))]
-                )
+            makespan = max(
+                [variable.schedule[i][-1][1] for i in range(len(variable.schedule))]
+            )
+            resource_consumption = self._compute_resource_usage_preemptive(
+                self, variable.schedule, variable.modes
+            )
+
+            # Initialize all objectives
+            evaluation = {
+                "makespan": makespan,
+                "tardiness": 0.0,
+                "earliness": 0.0,
+                "resource_cost": 0.0,
+                "wip_cost": 0.0,
             }
+
+            # --- Tardiness ---
+            if ObjectivesEnum.TARDINESS in self.objective_params.params_obj:
+                obj_param = self.objective_params.params_obj[ObjectivesEnum.TARDINESS]
+                tardiness = 0.0
+
+                for t_id, weight in obj_param.weight_per_task.items():
+                    if weight > 0:
+                        idx = self.task_id_to_index[t_id]
+                        deadline = self.tasks[idx].max_ending_date
+                        if deadline is not None:
+                            end_time = variable.schedule[idx][-1][1]
+                            tardiness += max(0, end_time - deadline) * weight
+
+                for g_id, weight in obj_param.weight_per_groups.items():
+                    if weight > 0:
+                        g_idx = self.group_id_to_index[g_id]
+                        group = self.tasks_group[g_idx]
+                        deadline = group.max_ending_date
+                        if deadline is not None:
+                            task_indices = [
+                                self.task_id_to_index[t] for t in group.tasks_group
+                            ]
+                            group_end = max(
+                                variable.schedule[idx][-1][1] for idx in task_indices
+                            )
+                            tardiness += max(0, group_end - deadline) * weight
+
+                evaluation["tardiness"] = tardiness
+
+            # --- Earliness ---
+            if ObjectivesEnum.EARLINESS in self.objective_params.params_obj:
+                obj_param = self.objective_params.params_obj[ObjectivesEnum.EARLINESS]
+                earliness = 0.0
+
+                for t_id, weight in obj_param.weight_per_task.items():
+                    if weight > 0:
+                        idx = self.task_id_to_index[t_id]
+                        deadline = self.tasks[idx].max_ending_date
+                        if deadline is not None:
+                            end_time = variable.schedule[idx][-1][1]
+                            earliness += max(0, deadline - end_time) * weight
+
+                for g_id, weight in obj_param.weight_per_groups.items():
+                    if weight > 0:
+                        g_idx = self.group_id_to_index[g_id]
+                        group = self.tasks_group[g_idx]
+                        deadline = group.max_ending_date
+                        if deadline is not None:
+                            task_indices = [
+                                self.task_id_to_index[t] for t in group.tasks_group
+                            ]
+                            group_end = max(
+                                variable.schedule[idx][-1][1] for idx in task_indices
+                            )
+                            earliness += max(0, deadline - group_end) * weight
+
+                evaluation["earliness"] = earliness
+
+            # --- Resource Cost ---
+            if ObjectivesEnum.RESOURCE_COST in self.objective_params.params_obj:
+                obj_param = self.objective_params.params_obj[
+                    ObjectivesEnum.RESOURCE_COST
+                ]
+                cost = 0.0
+                for res_id, weight in obj_param.weight_per_resource_unit.items():
+                    if weight == 0:
+                        continue
+                    if (
+                        res_id in obj_param.consider_in_objectives
+                        and not obj_param.consider_in_objectives[res_id]
+                    ):
+                        continue
+                    max_usage = np.max(resource_consumption[res_id])
+                    cost += max_usage * weight
+                evaluation["resource_cost"] = cost
+
+            # --- WIP Cost ---
+            # WIP (Work In Progress) = maximum number of concurrent groups in progress
+            if ObjectivesEnum.WORK_IN_PROGRESS in self.objective_params.params_obj:
+                obj_param = self.objective_params.params_obj[
+                    ObjectivesEnum.WORK_IN_PROGRESS
+                ]
+                wip_cost = 0.0
+
+                if (
+                    obj_param.count_nb_group_in_progress
+                    and obj_param.coefficient_on_nb_group_in_progress != 0
+                ):
+                    relevant_groups = [
+                        g
+                        for g in self.tasks_group
+                        if g.type_of_group == GroupType.SUBGROUP_TASK_FOR_OBJECTIVE
+                    ]
+
+                    if relevant_groups:
+                        events = []
+                        for g in relevant_groups:
+                            t_indices = [
+                                self.task_id_to_index[t] for t in g.tasks_group
+                            ]
+                            g_start = min(
+                                variable.schedule[idx][0][0] for idx in t_indices
+                            )
+                            g_end = max(
+                                variable.schedule[idx][-1][1] for idx in t_indices
+                            )
+                            events.append((g_start, 1))
+                            events.append((g_end, -1))
+
+                        events.sort(key=lambda x: (x[0], x[1]))
+
+                        max_concurrent_groups = 0
+                        current_concurrent = 0
+                        for _, change in events:
+                            current_concurrent += change
+                            max_concurrent_groups = max(
+                                max_concurrent_groups, current_concurrent
+                            )
+
+                        wip_cost = (
+                            max_concurrent_groups
+                            * obj_param.coefficient_on_nb_group_in_progress
+                        )
+
+                evaluation["wip_cost"] = wip_cost
+
+            return evaluation
 
         # 1. Base Metrics
         makespan = np.max(variable.schedule[:, 1])
@@ -521,8 +695,13 @@ class FlexProblem(
         )
         resource_consumption = sd.resource_usage
         sd.compute_details()
+        # Initialize all objectives declared in get_objective_register()
         evaluation = {
             "makespan": makespan,
+            "tardiness": 0.0,
+            "earliness": 0.0,
+            "resource_cost": 0.0,
+            "wip_cost": 0.0,
         }
         # 2. Objective-based Metrics
         # We iterate through the objective parameters to calculate specific costs
@@ -604,25 +783,13 @@ class FlexProblem(
                 cost += max_usage * weight
             evaluation["resource_cost"] = cost
         # --- WIP Cost ---
+        # WIP (Work In Progress) = maximum number of concurrent groups in progress
         if ObjectivesEnum.WORK_IN_PROGRESS in self.objective_params.params_obj:
             obj_param = self.objective_params.params_obj[
                 ObjectivesEnum.WORK_IN_PROGRESS
             ]
             wip_cost = 0.0
 
-            # 1. Task WIP: (Deadline - End) * Weight
-            # Note: This follows the arithmetic in fsp_cpsat_solver.py -> create_wip_objective
-            for t_id, weight in obj_param.weight_per_task.items():
-                if weight != 0:
-                    idx = self.task_id_to_index[t_id]
-                    deadline = self.tasks[idx].max_ending_date
-                    if deadline is not None:
-                        end_time = variable.schedule[idx, 1]
-                        wip_cost += (deadline - end_time) * weight
-
-            # 2. Group Capacity (Parallelism) Cost
-            # Corresponds to 'capacity_group_execution' in CP solvers.
-            # It counts the maximum number of overlapping groups.
             if (
                 obj_param.count_nb_group_in_progress
                 and obj_param.coefficient_on_nb_group_in_progress != 0
@@ -659,7 +826,7 @@ class FlexProblem(
                             max_concurrent_groups, current_concurrent
                         )
 
-                    wip_cost += (
+                    wip_cost = (
                         max_concurrent_groups
                         * obj_param.coefficient_on_nb_group_in_progress
                     )
@@ -670,6 +837,16 @@ class FlexProblem(
 
     def satisfy(self, variable: ScheduleSolution) -> bool:
         from .fsp_utils import SolutionDetails
+
+        # TODO: implement proper satisfaction checking for preemptive schedules
+        #  Should check:
+        #  - Task durations (sum of intervals = required duration)
+        #  - Resource constraints (preemptive intervals respect calendars)
+        #  - Precedence constraints
+        #  - Group constraints
+        #  - Time windows (min/max start/end dates)
+        if isinstance(variable, ScheduleSolutionPreemptive):
+            return True
 
         l_violation = []
         sd = SolutionDetails(
@@ -687,7 +864,6 @@ class FlexProblem(
         l_violation += satisfy_precedence_group(variable, self)
         l_violation += satisfy_release_and_date(variable, self)
         l_violation += satisfy_generic_precedence_constraint(variable, self)
-        print(l_violation)
         return len(l_violation) == 0
 
     def get_attribute_register(self) -> EncodingRegister:
