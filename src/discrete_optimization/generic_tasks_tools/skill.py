@@ -10,8 +10,9 @@ A skill is a cumulative resource which is attached to a unary resource.
 import logging
 from abc import abstractmethod
 from collections.abc import Hashable
-from functools import cache
 from typing import Generic, TypeVar
+
+import wrapt
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
@@ -69,7 +70,7 @@ class SkillProblem(
         """Skill value of given resource for given skill."""
         ...
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_skills_of_task(self, task: Task) -> set[Skill]:
         return {
             skill
@@ -83,7 +84,7 @@ class SkillProblem(
             )
         }
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_unary_resource_with_skill(self, skill: Skill) -> set[UnaryResource]:
         return {
             unary_resource
@@ -94,7 +95,7 @@ class SkillProblem(
             > 0
         }
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_skills_of_unary_resource(self, unary_resource: UnaryResource) -> set[Skill]:
         return {
             skill

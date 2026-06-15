@@ -54,6 +54,7 @@ dependencies = [
     "didppy>=0.8.0",
     "setuptools",
     "pandas>=2",
+    "wrapt>=2.2.1",
 ]
 dynamic = ["version"]
 

@@ -2,8 +2,9 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from collections import defaultdict
-from functools import cache
 from typing import Generic, Optional
+
+import wrapt
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
@@ -108,7 +109,7 @@ class GenericSchedulingProblem(
         """Check if given resource is a unary resource."""
         return resource in self.unary_resources_list
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_task_start_or_end_tighter_lower_bound(
         self,
         task: Task,
@@ -177,7 +178,7 @@ class GenericSchedulingProblem(
                     ),
                 )
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_task_start_or_end_tighter_upper_bound(
         self,
         task: Task,
@@ -255,7 +256,7 @@ class GenericSchedulingProblem(
         self.get_task_start_or_end_tighter_lower_bound.cache_clear()
         self.compute_tighter_task_bounds.cache_clear()
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def compute_tighter_task_bounds(
         self, use_cpm: bool = False, horizon: Optional[int] = None
     ) -> dict[Task, tuple[int, int, int, int]]:
@@ -307,7 +308,7 @@ class GenericSchedulingProblem(
                 for task in self.tasks_list
             }
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_consolidated_time_lags(
         self,
         task1_start_or_end: StartOrEnd,
@@ -348,7 +349,7 @@ class GenericSchedulingProblem(
             )
         return timelags
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_consolidated_precedence_constraints(self) -> dict[Task, set[Task]]:
         """Consolidate precedence constraints defined by problem.
 
