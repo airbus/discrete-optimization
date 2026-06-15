@@ -60,8 +60,8 @@ class CpSatAutoFjspSolver(
     def init_model(self, **kwargs: Any) -> None:
         # optional parameters
         kwargs = self.complete_with_default_hyperparameters(kwargs)
-        self._max_time = kwargs.get(
-            "max_time", self.problem.get_makespan_upper_bound()
+        self._max_time: int | None = kwargs.get(
+            "max_time", None
         )  # update the upper bound for makespan
         self.duplicate_start_var_per_mode = kwargs["duplicate_temporal_var"]
         # whether to add cumulative constraint on top of no_overlap constraint
@@ -71,7 +71,10 @@ class CpSatAutoFjspSolver(
         super().init_model(**kwargs)
 
     def get_makespan_upper_bound(self) -> int:
-        return self._max_time
+        if self._max_time is None:
+            return super().get_makespan_upper_bound()
+        else:
+            return min(self._max_time, super().get_makespan_upper_bound())
 
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]

@@ -20,7 +20,13 @@ logger = logging.Logger(__name__)
 class PrecedenceSchedulingProblem(PrecedenceProblem[Task], SchedulingProblem[Task]):
     """Scheduling problem with precedence constraints on tasks."""
 
-    ...
+    def get_last_tasks(self) -> list[Task]:
+        precedence_graph = self.get_precedence_graph()
+        return [
+            task
+            for task, n_successors in precedence_graph.graph_nx.out_degree
+            if n_successors == 0
+        ]
 
 
 class PrecedenceSchedulingSolution(PrecedenceSolution[Task], SchedulingSolution[Task]):

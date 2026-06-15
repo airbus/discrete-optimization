@@ -348,6 +348,57 @@ class GenericSchedulingProblem(
             )
         return timelags
 
+    def get_makespan_lower_bound(self) -> int:
+        """Get a lower bound on global makespan.
+
+        Computed tighter lower bounds on last tasks can be used to get a better makespan lower bound.
+
+        """
+        return max(
+            self.get_task_start_or_end_tighter_lower_bound(
+                task=task, start_or_end=StartOrEnd.END
+            )
+            for task in self.get_last_tasks()
+        )
+
+    def get_makespan_tighter_lower_bound(
+        self, use_cpm: bool = False, horizon: Optional[int] = None
+    ) -> int:
+        """Get a tighter lower bound on global makespan.
+
+        Args:
+            use_cpm: whether to use CPM bound propagation through precedence graph to improve tightness
+            horizon: new horizon to take into account when computing tighter bounds,
+                default to problem horizon.
+                NB: The choice of horizon should not affect the result for the lower bound, but it could avoid
+                CPM complete recomputation thanks to caching if it was already launched with same horizon.
+
+        """
+        if horizon is None:
+            horizon = self.get_makespan_tighter_upper_bound()
+        return max(
+            self.get_task_start_or_end_tighter_lower_bound(
+                task=task, start_or_end=StartOrEnd.END, use_cpm=use_cpm, horizon=horizon
+            )
+            for task in self.get_last_tasks()
+        )
+
+    def get_makespan_tighter_upper_bound(self) -> int:
+        """Compute a tighter upper bound on makespan.
+
+        The original makespan upper bound is used when computing tighter bounds for tasks starts and ends,
+        via `self.compute_tighter_task_bounds()` or `self.get_task_start_or_end_tighter_upper_bound()`.
+        From that tighter bounds, we can derive a new makespan upper bound.
+
+        """
+        return max(
+            # do not use CPM (not necessary as last tasks horizon are just computed from horizon + time windows even in CPM)
+            self.get_task_start_or_end_tighter_upper_bound(
+                task=task, start_or_end=StartOrEnd.END, use_cpm=False
+            )
+            for task in self.get_last_tasks()
+        )
+
     @wrapt.lru_cache(maxsize=None)
     def get_consolidated_precedence_constraints(self) -> dict[Task, set[Task]]:
         """Consolidate precedence constraints defined by problem.

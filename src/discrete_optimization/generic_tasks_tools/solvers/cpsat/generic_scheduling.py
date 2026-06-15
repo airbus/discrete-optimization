@@ -108,3 +108,6 @@ class GenericSchedulingCpSatSolver(
 
         """
         ...
+
+    def get_makespan_upper_bound(self) -> int:
+        return self.problem.get_makespan_tighter_upper_bound()

@@ -217,6 +217,12 @@ class GenericSchedulingAutoCpSatSolver(
             horizon=self.get_makespan_upper_bound(),
         )
 
+    def get_makespan_lower_bound(self) -> int:
+        return self.problem.get_makespan_tighter_lower_bound(
+            use_cpm=self.use_cpm_for_task_bounds,
+            horizon=self.get_makespan_upper_bound(),
+        )
+
     def get_task_start_or_end_lower_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:

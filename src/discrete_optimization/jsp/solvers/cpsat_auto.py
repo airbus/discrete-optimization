@@ -48,14 +48,16 @@ class CpSatAutoJspSolver(
     problem: JobShopProblem
 
     def get_makespan_upper_bound(self) -> int:
-        return self._max_time
+        if self._max_time is None:
+            return super().get_makespan_upper_bound()
+        else:
+            return min(self._max_time, super().get_makespan_upper_bound())
 
     def init_model(self, **kwargs: Any) -> None:
-        max_time = kwargs.get(
+        self._max_time: int | None = kwargs.get(
             "max_time",
-            self.problem.get_makespan_upper_bound(),
-        )
-        self._max_time = max_time  # will be used by the makespan variable
+            None,
+        )  # new horizon
 
         super().init_model(**kwargs)
 
