@@ -55,6 +55,19 @@ class TimewindowProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return self.get_makespan_upper_bound()
 
+    def get_makespan_lower_bound(self) -> int:
+        """Get a lower bound on global makespan.
+
+        Time windows on last tasks can be used to get a better makespan lower bound.
+
+        """
+        return max(
+            self.get_task_start_or_end_lower_bound(
+                task=task, start_or_end=StartOrEnd.END
+            )
+            for task in self.get_last_tasks()
+        )
+
 
 class TimewindowSolution(SchedulingSolution[Task], Generic[Task]):
     """Class for solution of problems having time windows between tasks."""

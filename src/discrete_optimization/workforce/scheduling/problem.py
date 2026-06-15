@@ -245,11 +245,8 @@ class AllocSchedulingProblem(
     ) -> bool:
         return unary_resource in self.compatible_teams_per_activity[task]
 
-    def get_makespan_lower_bound(self) -> int:
-        return max(int(self.get_lb_end_window(t)) for t in self.tasks_list)
-
     def get_makespan_upper_bound(self) -> int:
-        return max(int(self.get_ub_end_window(t)) for t in self.tasks_list)
+        return self.horizon
 
     def set_objective_handling(self, objective_handling: ObjectiveHandling):
         self.objective_handling = objective_handling
