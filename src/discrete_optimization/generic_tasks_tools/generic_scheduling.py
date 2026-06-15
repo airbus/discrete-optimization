@@ -308,7 +308,6 @@ class GenericSchedulingProblem(
                 for task in self.tasks_list
             }
 
-    @wrapt.lru_cache(maxsize=None)
     def get_consolidated_time_lags(
         self,
         task1_start_or_end: StartOrEnd,
@@ -422,7 +421,6 @@ class GenericSchedulingProblem(
         Returns:
 
         """
-        self.get_consolidated_time_lags.cache_clear()
         super().get_consolidated_time_lags.cache_clear()  # beware: parent class method also using cache !
         self.get_consolidated_precedence_constraints.cache_clear()
 
@@ -434,8 +432,7 @@ class GenericSchedulingProblem(
         Returns:
 
         """
-        self.get_consolidated_precedence_constraints.cache_clear()
-        self.get_consolidated_time_lags.cache_clear()
+        self.update_time_lags()
 
 
 class GenericSchedulingSolution(
