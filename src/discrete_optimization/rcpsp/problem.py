@@ -6,12 +6,13 @@ import logging
 from collections.abc import Callable, Hashable, Iterable
 from copy import deepcopy
 from enum import Enum
-from functools import cache, partial
+from functools import partial
 from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+import wrapt
 
 from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
@@ -402,7 +403,7 @@ class RcpspProblem(
         mode_detail = self.mode_details[task][mode]
         return mode_detail.get(resource, 0)
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_resource_availabilities(
         self, resource: Resource
     ) -> list[tuple[int, int, int]]:

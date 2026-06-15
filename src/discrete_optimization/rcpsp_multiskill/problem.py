@@ -10,11 +10,12 @@ from collections import defaultdict
 from collections.abc import Hashable
 from copy import deepcopy
 from enum import Enum
-from functools import cache, partial
+from functools import partial
 from typing import Optional, Union
 
 import numpy as np
 import scipy.stats as ss
+import wrapt
 
 from discrete_optimization.generic_rcpsp_tools.attribute_type import (
     ListIntegerRcpsp,
@@ -2349,7 +2350,7 @@ class MultiskillRcpspProblem(
         else:
             raise ValueError(f"{resource} is not a cumulative resource of the problem.")
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_resource_availabilities(
         self, resource: Resource
     ) -> list[tuple[int, int, int]]:

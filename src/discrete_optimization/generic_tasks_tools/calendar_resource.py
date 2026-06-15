@@ -6,10 +6,10 @@ from __future__ import annotations
 import logging
 from abc import abstractmethod
 from collections.abc import Hashable, Iterable
-from functools import cache
 from typing import Generic, Optional, TypeVar
 
 import numpy as np
+import wrapt
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.scheduling import (
@@ -60,7 +60,7 @@ class CalendarResourceProblem(SchedulingProblem[Task], Generic[Task, Resource]):
         """
         ...
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_resource_consolidated_availabilities(
         self, resource: Resource, horizon: Optional[int] = None
     ) -> list[tuple[int, int, int]]:
@@ -86,7 +86,7 @@ class CalendarResourceProblem(SchedulingProblem[Task], Generic[Task, Resource]):
             horizon=horizon,
         )
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_resource_calendar(
         self, resource: Resource, horizon: Optional[int] = None
     ) -> list[int]:
@@ -107,7 +107,7 @@ class CalendarResourceProblem(SchedulingProblem[Task], Generic[Task, Resource]):
             horizon=horizon,
         )
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_resource_max_capacity(self, resource: Resource) -> int:
         """Get max capacity of the given resource
 

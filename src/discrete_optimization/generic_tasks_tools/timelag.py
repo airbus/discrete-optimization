@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 from collections import defaultdict
-from functools import cache
 from typing import Generic
+
+import wrapt
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
@@ -152,7 +153,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
                 timelags = []
         return timelags
 
-    @cache
+    @wrapt.lru_cache(maxsize=None)
     def get_consolidated_time_lags(
         self,
         task1_start_or_end: StartOrEnd,
