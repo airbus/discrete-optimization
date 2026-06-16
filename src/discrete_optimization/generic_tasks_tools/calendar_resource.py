@@ -154,6 +154,19 @@ class CalendarResourceProblem(SchedulingProblem[Task], Generic[Task, Resource]):
             if (consumption := max_capacity - value) > 0
         ]
 
+    def __getstate__(self):
+        """Get state for pickle.
+
+        Solve issue when instance has cached methods called. (And thus unpickable cache created.)
+        See https://github.com/GrahamDumpleton/wrapt/issues/343
+
+        """
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if not key.startswith("_lru_cache_")
+        }
+
 
 class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]):
     problem: CalendarResourceProblem[Task, Resource]
