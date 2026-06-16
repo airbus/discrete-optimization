@@ -31,7 +31,7 @@ def test_graph_tools(rcpsp_problem_file):
     )
     some_successor_task = random.choice(rcpsp_problem.successors[some_task])
     rcpsp_problem_copy.successors[some_successor_task].append(some_task)
-    rcpsp_problem.update_problem()
+    rcpsp_problem_copy.update_problem()
     graph_rcpsp_with_loop = build_graph_rcpsp_object(rcpsp_problem_copy)
     cycles = graph_rcpsp_with_loop.check_loop()
     # With this precedence graph, the rcpsp is no longer feasible.
