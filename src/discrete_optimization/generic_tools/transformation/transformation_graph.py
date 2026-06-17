@@ -20,12 +20,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-try:
-    import networkx as nx
-
-    NETWORKX_AVAILABLE = True
-except ImportError:
-    NETWORKX_AVAILABLE = False
+import networkx as nx
 
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
@@ -143,11 +138,6 @@ class TransformationGraph:
 
     def __init__(self):
         """Initialize empty transformation graph."""
-        if not NETWORKX_AVAILABLE:
-            raise ImportError(
-                "NetworkX required for TransformationGraph. Install with: pip install networkx"
-            )
-
         self.graph: nx.DiGraph = nx.DiGraph()
         self.transformations: dict[tuple[str, str], TransformationEdge] = {}
 

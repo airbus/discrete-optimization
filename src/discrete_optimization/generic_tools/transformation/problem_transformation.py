@@ -141,19 +141,6 @@ class ProblemTransformation(ABC, Generic[P1, S1, P2, S2]):
         """
         return exact_transformation()
 
-    def get_metadata(self) -> TransformationMetadata:
-        """Get overall transformation metadata (for backward compatibility).
-
-        DEPRECATED: Use get_forward_metadata() and get_backward_metadata() instead.
-
-        Returns forward metadata by default for compatibility.
-
-        Returns:
-            TransformationMetadata (forward transformation)
-
-        """
-        return self.get_forward_metadata()
-
     def is_forward_exact(self) -> bool:
         """Check if forward problem transformation is exact.
 

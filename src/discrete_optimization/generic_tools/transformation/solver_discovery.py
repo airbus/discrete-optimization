@@ -371,7 +371,7 @@ def find_best_transformation_path(
 ) -> Optional[TransformationPath]:
     """Find best transformation path between problems.
 
-    "Best" = prefer exact, then shortest, then lowest weight.
+    "Best" = prefer exact, then lowest weight, then shortest.
 
     Args:
         source: Source problem type
