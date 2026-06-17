@@ -6,10 +6,13 @@
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
-from collections import defaultdict, deque
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Optional
+
+import networkx as nx
 
 from discrete_optimization.generic_tools.do_problem import (
     Problem,
@@ -24,6 +27,8 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -410,6 +415,9 @@ class SolverGraph:
     # Execution state
     node_outputs: dict[str, NodeData]  # node_id -> NodeData
 
+    # NetworkX graph cache
+    _nx_graph: Optional[nx.DiGraph]  # Cached NetworkX representation
+
     def __init__(self, source_problem: Problem):
         """Initialize solver graph.
 
@@ -422,6 +430,7 @@ class SolverGraph:
         self.edges = defaultdict(list)
         self.reverse_edges = defaultdict(list)
         self.node_outputs = {}
+        self._nx_graph = None
 
     def add_transformation(
         self, node_id: str, transformation: ProblemTransformation
@@ -436,6 +445,9 @@ class SolverGraph:
             Node ID (for chaining)
 
         """
+        if node_id in self.nodes:
+            logging.error(f"{node_id} already added in the graph computation")
+            return None
         node = TransformationNode(node_id, transformation)
         self.nodes[node_id] = node
         return node_id
@@ -451,6 +463,9 @@ class SolverGraph:
             Node ID (for chaining)
 
         """
+        if node_id in self.nodes:
+            logging.error(f"{node_id} already added in the graph computation")
+            return None
         node = SolverNode(node_id, solver_brick)
         self.nodes[node_id] = node
         return node_id
@@ -466,6 +481,9 @@ class SolverGraph:
             Node ID (for chaining)
 
         """
+        if node_id in self.nodes:
+            logging.error(f"{node_id} already added in the graph computation")
+            return None
         node = MergeNode(node_id, strategy)
         self.nodes[node_id] = node
         return node_id
@@ -487,6 +505,9 @@ class SolverGraph:
             Node ID (for chaining)
 
         """
+        if node_id in self.nodes:
+            logging.error(f"{node_id} already added in the graph computation")
+            return None
         node = BackTransformNode(node_id, transformation, source_problem)
         self.nodes[node_id] = node
         return node_id
@@ -509,9 +530,28 @@ class SolverGraph:
 
         self.edges[from_node].append(to_node)
         self.reverse_edges[to_node].append(from_node)
+        # Invalidate NetworkX cache
+        self._nx_graph = None
+
+    def _build_networkx_graph(self) -> nx.DiGraph:
+        """Build NetworkX DiGraph representation.
+
+        Returns:
+            NetworkX directed graph representing the solver graph
+
+        """
+        if self._nx_graph is None:
+            self._nx_graph = nx.DiGraph()
+            # Add all nodes
+            self._nx_graph.add_nodes_from(self.nodes.keys())
+            # Add all edges
+            for from_node, to_nodes in self.edges.items():
+                for to_node in to_nodes:
+                    self._nx_graph.add_edge(from_node, to_node)
+        return self._nx_graph
 
     def topological_sort(self) -> list[str]:
-        """Return nodes in topological order.
+        """Return nodes in topological order using NetworkX.
 
         Returns:
             List of node IDs in execution order
@@ -520,25 +560,15 @@ class SolverGraph:
             ValueError: If graph contains a cycle
 
         """
-        in_degree = {
-            node_id: len(self.reverse_edges[node_id]) for node_id in self.nodes
-        }
-        queue = deque([node_id for node_id, deg in in_degree.items() if deg == 0])
-        result = []
+        # Build/retrieve NetworkX graph
+        nx_graph = self._build_networkx_graph()
 
-        while queue:
-            node_id = queue.popleft()
-            result.append(node_id)
-
-            for downstream in self.edges[node_id]:
-                in_degree[downstream] -= 1
-                if in_degree[downstream] == 0:
-                    queue.append(downstream)
-
-        if len(result) != len(self.nodes):
-            raise ValueError("Graph contains a cycle!")
-
-        return result
+        # Use NetworkX topological sort
+        try:
+            return list(nx.topological_sort(nx_graph))
+        except (nx.NetworkXError, nx.NetworkXUnfeasible) as e:
+            # NetworkX raises NetworkXUnfeasible for cycles
+            raise ValueError("Graph contains a cycle!") from e
 
     def run(self, **solve_kwargs: Any) -> ResultStorage:
         """Execute the graph and return final results.
