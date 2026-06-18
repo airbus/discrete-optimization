@@ -29,8 +29,6 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 
-DURATION = "duration"
-
 # types for annotations
 Skill = str
 NonSkillCumulativeResource = str
@@ -40,8 +38,6 @@ Task = Hashable
 CumulativeResource = NonSkillCumulativeResource | Skill
 Resource = CumulativeResource | UnaryResource  # calendar resources
 AnyResource = NonRenewableResource | Resource
-DurationKey = type(DURATION)
-ModeDetailKey = Resource | DurationKey
 UnaryAvailabilityIntervals = list[tuple[int, int]]  # start, end
 AvailabilityIntervals = list[tuple[int, int, int]]  # start, end, value
 
@@ -60,7 +56,10 @@ class GenericSchedulingImplProblem(
     def __init__(
         self,
         horizon: int,
-        mode_details: dict[Task, dict[int, dict[ModeDetailKey, int]]],
+        durations_per_mode: dict[Task, dict[int, int]],
+        resource_consumptions: Optional[
+            dict[Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]]
+        ] = None,
         successors: Optional[dict[Task, Iterable[Task]]] = None,
         unary_resources: Optional[set[UnaryResource]] = None,
         unary_resources_skills: Optional[dict[UnaryResource, dict[Skill, int]]] = None,
@@ -89,7 +88,11 @@ class GenericSchedulingImplProblem(
 
         Args:
             horizon: max allowed time to finish the tasks
-            mode_details: details tasks by task, mode by mode of task duration and resource consumption
+            durations_per_mode: task -> mode -> duration. Tasks durations, mode by mode.
+                This is used to know all available tasks, all available modes for a given task, and corresponding durations.
+            resource_consumptions: task -> mode -> resource -> conso.
+                Cumulative or non-renewable resource consumption, task by task, mode by mode. The resource can be a skill.
+                Missing key => conso = 0
             successors: maps a task to its successors in the precedence graph.
                 Each successor task must start after the given task ends.
                 Default to no precedence constraints. Note that a consolidated version of it will
@@ -132,8 +135,14 @@ class GenericSchedulingImplProblem(
 
         """
         self.horizon = horizon
-        self.mode_details = mode_details
+        self.durations_per_mode = durations_per_mode
         # default values
+        if resource_consumptions is None:
+            self.resource_consumptions: dict[
+                Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]
+            ] = {}
+        else:
+            self.resource_consumptions = resource_consumptions
         if successors is None:
             self.successors: dict[Task, Iterable[Task]] = {}
         else:
@@ -203,7 +212,7 @@ class GenericSchedulingImplProblem(
 
     def update_problem(self):
         """Method to call when some attributes of the problem are modified."""
-        self._tasks_list = list(self.mode_details)
+        self._tasks_list = list(self.durations_per_mode)
         self._skills_list = list(self.skills)
         self._non_skill_cumulative_resources_list = list(
             self.non_skill_cumulative_resources
@@ -261,7 +270,7 @@ class GenericSchedulingImplProblem(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> int:
         try:
-            return self.mode_details[task][mode][resource]
+            return self.resource_consumptions[task][mode][resource]
         except KeyError:
             return 0
 
@@ -291,12 +300,7 @@ class GenericSchedulingImplProblem(
             )
 
     def get_task_mode_duration(self, task: Task, mode: int) -> int:
-        try:
-            return self.mode_details[task][mode][DURATION]
-        except KeyError:
-            raise ValueError(
-                f"No duration specified in mode_details for task, mode = {task, mode}"
-            )
+        return self.durations_per_mode[task][mode]
 
     @property
     def non_renewable_resources_list(self) -> list[NonRenewableResource]:
@@ -311,7 +315,7 @@ class GenericSchedulingImplProblem(
         self, resource: NonRenewableResource, task: Task, mode: int
     ) -> int:
         try:
-            return self.mode_details[task][mode][resource]
+            return self.resource_consumptions[task][mode][resource]
         except KeyError:
             return 0
 
@@ -364,7 +368,7 @@ class GenericSchedulingImplProblem(
         return self.horizon
 
     def get_task_modes(self, task: Task) -> set[int]:
-        return set(self.mode_details[task])
+        return set(self.durations_per_mode[task])
 
     @property
     def unary_resources_list(self) -> list[UnaryResource]:

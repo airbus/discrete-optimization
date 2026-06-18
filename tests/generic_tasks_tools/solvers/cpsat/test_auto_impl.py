@@ -14,7 +14,6 @@ import discrete_optimization.rcpsp_multiskill.parser_imopse as parser_imopse
 from discrete_optimization.fjsp.problem import FJobShopSolution
 from discrete_optimization.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
-    DURATION,
     GenericSchedulingImplProblem,
     GenericSchedulingImplSolution,
 )
@@ -69,13 +68,28 @@ def test_auto(
 
     problem = GenericSchedulingImplProblem(
         horizon=10,
-        mode_details={
+        durations_per_mode={
             "task-1": {
-                0: {"non_renewable_resource": 2, "duration": 1},
-                1: {"non_renewable_resource": 1, "duration": 3},
+                0: 1,
+                1: 3,
             },
             "task-2": {
-                0: {"cumulative_resource": 2, "duration": 4},
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
             },
         },
         successors={"task-1": ["task-2"]},
@@ -242,9 +256,37 @@ def test_rcpsp_simple():
     end_to_end_min_time_lags = problem.get_end_to_end_min_time_lags() + [
         (t2, t1, -offset) for t1, t2, offset in problem.get_end_to_end_max_time_lags()
     ]
+    durations_per_mode = {
+        task: {
+            mode: problem.get_task_mode_duration(task=task, mode=mode)
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
+    resource_consumptions = {
+        task: {
+            mode: {
+                **{
+                    resource: problem.get_cumulative_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    for resource in problem.cumulative_resources_list
+                },
+                **{
+                    resource: problem.get_non_renewable_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    for resource in problem.non_renewable_resources_list
+                },
+            }
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
     generic_problem = GenericSchedulingImplProblem(
         horizon=horizon,
-        mode_details=mode_details,
+        durations_per_mode=durations_per_mode,
+        resource_consumptions=resource_consumptions,
         successors=successors,
         non_skill_cumulative_resources=resources,
         time_windows=time_windows,
@@ -297,9 +339,37 @@ def test_rcpsp_mm():
         resource: problem.get_resource_availabilities(resource)
         for resource in problem.non_skill_cumulative_resources_list
     }
+    durations_per_mode = {
+        task: {
+            mode: problem.get_task_mode_duration(task=task, mode=mode)
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
+    resource_consumptions = {
+        task: {
+            mode: {
+                **{
+                    resource: problem.get_cumulative_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    for resource in problem.cumulative_resources_list
+                },
+                **{
+                    resource: problem.get_non_renewable_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    for resource in problem.non_renewable_resources_list
+                },
+            }
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
     generic_problem = GenericSchedulingImplProblem(
         horizon=problem.horizon,
-        mode_details=problem.mode_details,
+        durations_per_mode=durations_per_mode,
+        resource_consumptions=resource_consumptions,
         successors=problem.successors,
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         non_renewable_resources=non_renewable_resources,
@@ -423,9 +493,37 @@ def test_rcpsp_multiskill(
         ]
         for unary_resource in unary_resources
     }
+    durations_per_mode = {
+        task: {
+            mode: problem.get_task_mode_duration(task=task, mode=mode)
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
+    resource_consumptions = {
+        task: {
+            mode: {
+                **{
+                    resource: problem.get_cumulative_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    for resource in problem.cumulative_resources_list
+                },
+                **{
+                    resource: problem.get_non_renewable_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    for resource in problem.non_renewable_resources_list
+                },
+            }
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
     generic_problem = GenericSchedulingImplProblem(
         horizon=problem.horizon,
-        mode_details=problem.mode_details,
+        durations_per_mode=durations_per_mode,
+        resource_consumptions=resource_consumptions,
         successors=problem.successors,
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         non_renewable_resources=non_renewable_resources,
@@ -505,16 +603,20 @@ def test_jsp():
         resource: problem.get_resource_availabilities(resource)
         for resource in problem.non_skill_cumulative_resources_list
     }
-    mode_details = {
+    durations_per_mode = {
+        task: {
+            mode: problem.get_task_mode_duration(task=task, mode=mode)
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
+    resource_consumptions = {
         task: {
             mode: {
-                DURATION: problem.get_task_mode_duration(task=task, mode=mode),
-                **{
-                    resource: problem.get_cumulative_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.cumulative_resources_list
-                },
+                resource: problem.get_cumulative_resource_consumption(
+                    resource=resource, task=task, mode=mode
+                )
+                for resource in problem.cumulative_resources_list
             }
             for mode in problem.get_task_modes(task)
         }
@@ -523,7 +625,8 @@ def test_jsp():
     successors = problem.get_precedence_constraints()
     generic_problem = GenericSchedulingImplProblem(
         horizon=problem.horizon,
-        mode_details=mode_details,
+        durations_per_mode=durations_per_mode,
+        resource_consumptions=resource_consumptions,
         successors=successors,
         non_skill_cumulative_resources=non_skill_cumulative_resources,
     )
@@ -571,16 +674,20 @@ def test_fjsp():
         resource: problem.get_resource_availabilities(resource)
         for resource in problem.non_skill_cumulative_resources_list
     }
-    mode_details = {
+    durations_per_mode = {
+        task: {
+            mode: problem.get_task_mode_duration(task=task, mode=mode)
+            for mode in problem.get_task_modes(task)
+        }
+        for task in problem.tasks_list
+    }
+    resource_consumptions = {
         task: {
             mode: {
-                DURATION: problem.get_task_mode_duration(task=task, mode=mode),
-                **{
-                    resource: problem.get_cumulative_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.cumulative_resources_list
-                },
+                resource: problem.get_cumulative_resource_consumption(
+                    resource=resource, task=task, mode=mode
+                )
+                for resource in problem.cumulative_resources_list
             }
             for mode in problem.get_task_modes(task)
         }
@@ -589,7 +696,8 @@ def test_fjsp():
     successors = problem.get_precedence_constraints()
     generic_problem = GenericSchedulingImplProblem(
         horizon=problem.horizon,
-        mode_details=mode_details,
+        durations_per_mode=durations_per_mode,
+        resource_consumptions=resource_consumptions,
         successors=successors,
         non_skill_cumulative_resources=non_skill_cumulative_resources,
     )
