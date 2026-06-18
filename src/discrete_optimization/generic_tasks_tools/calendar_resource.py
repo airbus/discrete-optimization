@@ -163,7 +163,7 @@ class CalendarResourceProblem(SchedulingProblem[Task], Generic[Task, Resource]):
         """
         return {
             key: value
-            for key, value in self.__dict__.items()
+            for key, value in super().__getstate__().items()
             if not key.startswith("_lru_cache_")
         }
 
