@@ -29,13 +29,28 @@ def problem_wo_skills():
 
     return GenericSchedulingImplProblem(
         horizon=10,
-        mode_details={
+        durations_per_mode={
             "task-1": {
-                0: {"non_renewable_resource": 2, "duration": 1},
-                1: {"non_renewable_resource": 1, "duration": 3},
+                0: 1,
+                1: 3,
             },
             "task-2": {
-                0: {"cumulative_resource": 2, "duration": 4},
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
             },
         },
         successors={"task-1": ["task-2"]},
@@ -181,7 +196,7 @@ def test_problem(problem_wo_skills, caplog):
     assert "Duration" in caplog.text
 
     # lower cumulative_resource requirement => better sol
-    problem.mode_details["task-2"][0]["cumulative_resource"] = 1
+    problem.resource_consumptions["task-2"][0]["cumulative_resource"] = 1
     problem.update_problem()
     sol = GenericSchedulingImplSolution(
         problem=problem,
