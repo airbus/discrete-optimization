@@ -96,7 +96,7 @@ def test_problem(problem_wo_skills, caplog):
     assert d["nb_tasks_done"] == 2
     assert d["nb_unary_resources_used"] == 2
     assert d["nb_resources_used"] == 4
-    assert d["resources_consumption"] == 5
+    assert d["resources_levels"] == 5
     assert d["custom_objective"] == -7
 
     sol = GenericSchedulingImplSolution(

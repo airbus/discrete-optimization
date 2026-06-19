@@ -56,8 +56,8 @@ class Objective(Enum):
     The weigths are to be defined in `solver.objective_resource_weights`.
 
     """
-    RESOURCES_CONSUMPTION = "resources_consumption"
-    """Weighted sum of resources consumptions, to minimize.
+    RESOURCES_LEVELS = "resources_levels"
+    """Weighted sum of resources levels (i.e. needed capacities), to minimize.
 
     Include non-renewable, cumulative, and unary resources.
     The weigths are to be defined in `solver.objective_resource_weights`.
@@ -71,7 +71,7 @@ OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
     Objective.NB_TASKS_DONE: 1,
     Objective.NB_UNARY_RESOURCES_USED: -1,
     Objective.NB_RESOURCES_USED: -1,
-    Objective.RESOURCES_CONSUMPTION: -1,
+    Objective.RESOURCES_LEVELS: -1,
     Objective.CUSTOM: 1,
 }
 """Default weight applied to a given objective so that it will be *maximized*."""

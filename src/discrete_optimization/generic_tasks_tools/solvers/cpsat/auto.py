@@ -110,9 +110,9 @@ class GenericSchedulingAutoCpSatSolver(
     # objective settings
     objective: Objective = Objective.MAKESPAN  # Objective set by `init_model()`
     objective_resource_weights: Optional[dict[AnyResource, int]] = None
-    """Weights to be used by the objective when summing used resources or resources consumption.
+    """Weights to be used by the objective when summing used resources or resources levels.
 
-    This is the case if `objective` is set to `Objective.NB_RESOURCES_USED` or  `Objective.RESOURCES_CONSUMPTION`.
+    This is the case if `objective` is set to `Objective.NB_RESOURCES_USED` or  `Objective.RESOURCES_LEVELS`.
     Default to 1 for resources not mentioned.
 
     Hypothesis: cumulative, unary, and non-renewable resources have different values.
@@ -158,10 +158,10 @@ class GenericSchedulingAutoCpSatSolver(
     """Variables tracking whether a (unary, cumulative, or non-renewable) resource has been used at least once."""
     all_used_variables_created = False
     """Flag telling whether 'all_used_variables' have been created"""
-    resource_consumption_variables: dict[AnyResource, LinearExprT]
-    """Variables tracking total consumption of each (unary, cumulative, or non-renewable) resource."""
-    resource_consumption_variables_created = False
-    """Flag telling whether 'resource_consumption_variables' have been created"""
+    resource_level_variables: dict[AnyResource, LinearExprT]
+    """Variables tracking level (capacity needed) of each (unary, cumulative, or non-renewable) resource."""
+    resource_level_variables_created = False
+    """Flag telling whether 'resource_level_variables' have been created"""
 
     @property
     def needs_duration_variables(self) -> bool:
@@ -328,8 +328,8 @@ class GenericSchedulingAutoCpSatSolver(
 
         self.all_used_variables_created = False
         self.all_used_variables = {}
-        self.resource_consumption_variables_created = False
-        self.resource_consumption_variables = {}
+        self.resource_level_variables_created = False
+        self.resource_level_variables = {}
 
     def _create_variables(self):
         self._create_start_or_end_variables()
@@ -709,20 +709,18 @@ class GenericSchedulingAutoCpSatSolver(
             self.cp_model.add(used == 0)
         return used
 
-    def _create_resource_consumption_variables(self):
-        if not self.resource_consumption_variables_created:
+    def _create_resource_level_variables(self):
+        if not self.resource_level_variables_created:
             self.check_resources_lists()
             self.create_used_variables()
             # allocated unary resources
             for resource in self.problem.unary_resources_list:
-                self.resource_consumption_variables[resource] = self.used_variables[
-                    resource
-                ]
+                self.resource_level_variables[resource] = self.used_variables[resource]
             # cumulative resources
             for resource in self.problem.cumulative_resources_list:
                 max_capacity = self.problem.get_resource_max_capacity(resource)
-                conso_tot_var = self.cp_model.new_int_var(
-                    lb=0, ub=max_capacity, name=f"conso_{resource}"
+                level_var = self.cp_model.new_int_var(
+                    lb=0, ub=max_capacity, name=f"level_{resource}"
                 )
                 if max_capacity > 1:
                     # cumulative constraint on the new "conso" variable
@@ -744,15 +742,15 @@ class GenericSchedulingAutoCpSatSolver(
                             self.cp_model.add_cumulative(
                                 intervals=intervals,
                                 demands=demands,
-                                capacity=conso_tot_var,
+                                capacity=level_var,
                             )
                             for (
                                 _,
                                 conso_var,
                             ) in intervals_n_consumptions:
-                                self.cp_model.add(conso_tot_var >= conso_var)
+                                self.cp_model.add(level_var >= conso_var)
                         else:
-                            conso_tot_var = 0
+                            level_var = 0
                     else:
                         mode_intervals_consumptions_is_present = [
                             (
@@ -784,16 +782,16 @@ class GenericSchedulingAutoCpSatSolver(
                             self.cp_model.add_cumulative(
                                 intervals=intervals,
                                 demands=demands,
-                                capacity=conso_tot_var,
+                                capacity=level_var,
                             )
                             for (
                                 _,
                                 conso,
                                 is_present,
                             ) in mode_intervals_consumptions_is_present:
-                                self.cp_model.add(conso_tot_var >= conso * is_present)
+                                self.cp_model.add(level_var >= conso * is_present)
                         else:
-                            conso_tot_var = 0
+                            level_var = 0
                 else:
                     # disjunctive resource, no need to use the interval variables
                     # (no overlap constraint already handled by `create_calendar_resources_constraint()`
@@ -808,22 +806,22 @@ class GenericSchedulingAutoCpSatSolver(
                     ]
                     if len(list_is_present_variables) > 0:
                         self.cp_model.add_max_equality(
-                            conso_tot_var, list_is_present_variables
+                            level_var, list_is_present_variables
                         )
                     else:
-                        conso_tot_var = 0
+                        level_var = 0
 
-                self.resource_consumption_variables[resource] = conso_tot_var
+                self.resource_level_variables[resource] = level_var
             # non-renewable resources
             for resource in self.problem.non_renewable_resources_list:
-                self.resource_consumption_variables[resource] = sum(
+                self.resource_level_variables[resource] = sum(
                     self.get_non_renewable_resource_demand_variable(
                         task=task, resource=resource
                     )
                     for task in self.problem.tasks_list
                 )
 
-            self.resource_consumption_variables_created = True
+            self.resource_level_variables_created = True
 
     def check_resources_lists(self):
         resources_list = (
@@ -850,15 +848,15 @@ class GenericSchedulingAutoCpSatSolver(
             for resource, used in self.all_used_variables.items()
         )
 
-    def get_aggregated_resources_consumptions_variable(self) -> LinearExprT:
-        """Get cpsat variable aggregating consumptions of each resource."""
+    def get_aggregated_resources_levels_variable(self) -> LinearExprT:
+        """Get cpsat variable aggregating levels (ie min capacities needed) of each resource."""
         weights = self.objective_resource_weights
         if weights is None:
             weights = {}
-        self._create_resource_consumption_variables()
+        self._create_resource_level_variables()
         return sum(
             weights.get(resource, 1) * conso
-            for resource, conso in self.resource_consumption_variables.items()
+            for resource, conso in self.resource_level_variables.items()
         )
 
     def _add_constraints(self) -> None:
@@ -903,8 +901,8 @@ class GenericSchedulingAutoCpSatSolver(
                 objective_var = self.get_nb_unary_resources_used_variable()
             case Objective.NB_RESOURCES_USED:
                 objective_var = self.get_nb_resources_used_variable()
-            case Objective.RESOURCES_CONSUMPTION:
-                objective_var = self.get_aggregated_resources_consumptions_variable()
+            case Objective.RESOURCES_LEVELS:
+                objective_var = self.get_aggregated_resources_levels_variable()
             case _:
                 raise NotImplementedError()
         return objective_var
