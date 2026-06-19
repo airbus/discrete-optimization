@@ -124,7 +124,7 @@ def test_auto(
     exactly_one_unary_resource_per_task = objective in [
         Objective.NB_UNARY_RESOURCES_USED,
         Objective.NB_RESOURCES_USED,
-        Objective.RESOURCES_CONSUMPTION,
+        Objective.RESOURCES_LEVELS,
     ]
 
     solver = GenericSchedulingAutoCpSatImplSolver(

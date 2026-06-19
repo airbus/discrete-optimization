@@ -269,8 +269,8 @@ class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]
             resources=self.problem.calendar_resources_list
         )
 
-    def compute_calendar_resources_consumptions(self) -> dict[Resource, int]:
-        """Compute total consumption of each calendar resource by the solution."""
+    def compute_calendar_resources_levels(self) -> dict[Resource, int]:
+        """Compute the level (i.e. min capacity needed) for each calendar resource."""
         return {
             resource: int(timed_conso.max())
             for resource, timed_conso in self._compute_calendar_resource_consumption_np(
@@ -278,10 +278,10 @@ class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]
             ).items()
         }
 
-    def compute_aggregated_calendar_resources_consumptions(
+    def compute_aggregated_calendar_resources_levels(
         self, weights: Optional[dict[Resource, int]] = None
     ) -> int:
-        """Compute aggregated consumption of each calendar resource by the solution.
+        """Compute aggregated level (i.e. min capacity needed) of each calendar resource.
 
         Args:
             weights: optional weights to apply to each resource in the sum. Default to 1.
@@ -291,7 +291,7 @@ class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]
             weights = {}
         return sum(
             conso * weights.get(resource, 1)
-            for resource, conso in self.compute_calendar_resources_consumptions().items()
+            for resource, conso in self.compute_calendar_resources_levels().items()
         )
 
     def compute_nb_calendar_resources_used(
@@ -310,7 +310,7 @@ class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]
             weights = {}
         return sum(
             (conso > 0) * weights.get(resource, 1)
-            for resource, conso in self.compute_calendar_resources_consumptions().items()
+            for resource, conso in self.compute_calendar_resources_levels().items()
         )
 
 
@@ -347,7 +347,7 @@ class WithoutCalendarResourceSolution(
     def check_all_calendar_resource_capacity_constraints(self) -> bool:
         return True
 
-    def compute_aggregated_calendar_resources_consumptions(
+    def compute_aggregated_calendar_resources_levels(
         self, weights: Optional[dict[Resource, int]] = None
     ):
         return 0
@@ -357,7 +357,7 @@ class WithoutCalendarResourceSolution(
     ) -> int:
         return 0
 
-    def compute_calendar_resources_consumptions(self) -> dict[Resource, int]:
+    def compute_calendar_resources_levels(self) -> dict[Resource, int]:
         return {}
 
 

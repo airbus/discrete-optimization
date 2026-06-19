@@ -317,13 +317,11 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
 
         super().init_model(**kwargs)
 
-        resources_consumption_var = (
-            self.get_aggregated_resources_consumptions_variable()
-        )
+        resources_level_var = self.get_aggregated_resources_levels_variable()
         makespan_var = self.get_global_makespan_variable()
 
         self.cp_model.minimize(
-            weight_on_used_resource * resources_consumption_var
+            weight_on_used_resource * resources_level_var
             + weight_on_makespan * makespan_var
         )
 
@@ -331,7 +329,7 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
         if obj == "makespan":
             return self.get_global_makespan_variable()
         elif obj == "used_resource":
-            return self.get_aggregated_resources_consumptions_variable()
+            return self.get_aggregated_resources_levels_variable()
         else:
             raise ValueError(f"Unknown objective '{obj}'.")
 

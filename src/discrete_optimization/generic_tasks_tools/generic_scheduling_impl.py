@@ -130,7 +130,7 @@ class GenericSchedulingImplProblem(
                 actually minimize the makespan.
             custom_evaluate_fn: function used to evaluate the "custom" objective (to be maximized).
             objective_resource_weights: Weights to be used by the objective when summing used resources
-                (`Objective.NB_RESOURCES_USED`) or resources consumption (`Objective.RESOURCES_CONSUMPTION`).
+                (`Objective.NB_RESOURCES_USED`) or resources levels (`Objective.RESOURCES_LEVELS`).
                 Default to 1 for resources not mentioned.
 
         """
@@ -477,8 +477,8 @@ class GenericSchedulingImplProblem(
                 ) + variable.compute_nb_non_renewable_resources_used(
                     weights=self.objective_resource_weights
                 )
-            case Objective.RESOURCES_CONSUMPTION:
-                return variable.compute_aggregated_calendar_resources_consumptions(
+            case Objective.RESOURCES_LEVELS:
+                return variable.compute_aggregated_calendar_resources_levels(
                     weights=self.objective_resource_weights
                 ) + variable.compute_aggregated_non_renewable_resources_consumptions(
                     weights=self.objective_resource_weights

@@ -172,7 +172,7 @@ class MyProblem(
             nb_allocated=variable.compute_nb_unary_resources_used(),
             nb_resources_used=variable.compute_nb_calendar_resources_used()
             + variable.compute_nb_non_renewable_resources_used(),
-            resources_consumptions=variable.compute_aggregated_calendar_resources_consumptions()
+            resources_levels=variable.compute_aggregated_calendar_resources_levels()
             + variable.compute_aggregated_non_renewable_resources_consumptions(),
             nb_tasks_done=variable.compute_nb_tasks_done(),
         )
@@ -206,7 +206,7 @@ class MyProblem(
                     type=TypeObjective.OBJECTIVE,
                     default_weight=1,
                 ),
-                resources_consumptions=ObjectiveDoc(
+                resources_levels=ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE,
                     default_weight=1,
                 ),
@@ -268,7 +268,7 @@ def test_problem(caplog):
     assert d["nb_tasks_done"] == 2
     assert d["nb_allocated"] == 2
     assert d["nb_resources_used"] == 4
-    assert d["resources_consumptions"] == 5
+    assert d["resources_levels"] == 5
 
     sol = MySolution(
         problem=problem,
@@ -410,7 +410,7 @@ def test_auto(
     if objective in [
         Objective.NB_UNARY_RESOURCES_USED,
         Objective.NB_RESOURCES_USED,
-        Objective.RESOURCES_CONSUMPTION,
+        Objective.RESOURCES_LEVELS,
     ]:
         solver.exactly_one_unary_resource_per_task = True
     with caplog.at_level(logging.WARNING):
