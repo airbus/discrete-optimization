@@ -3,9 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-from discrete_optimization.fjsp.parser import get_data_available, parse_file
-from discrete_optimization.fjsp.solvers.optal import OptalFJspSolver
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.shop.fjsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.fjsp.solvers.optal import OptalFJspSolver
 
 logging.basicConfig(level=logging.INFO)
 

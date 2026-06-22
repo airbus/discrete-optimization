@@ -9,10 +9,8 @@ from typing import Optional
 
 import pytest
 
-import discrete_optimization.fjsp.parser as fjsp_parser
-import discrete_optimization.jsp.parser as jsp_parser
-from discrete_optimization.fjsp.problem import FJobShopSolution, Job
-from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver, FJobShopProblem
+import discrete_optimization.shop.fjsp.parser as fjsp_parser
+import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
@@ -23,7 +21,9 @@ from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSat
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.jsp.problem import JobShopProblem
+from discrete_optimization.shop.fjsp.problem import FJobShopSolution
+from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.jsp.problem import JobShopProblem
 
 logging.basicConfig(level=logging.INFO)
 
@@ -87,21 +87,13 @@ def test_fjsp_solver_on_jsp():
         f for f in jsp_parser.get_data_available() if os.path.basename(f) == "orb10"
     ][0]
     problem: JobShopProblem = jsp_parser.parse_file(file_path)
-    fproblem = FJobShopProblem(
-        list_jobs=[
-            Job(job_id=i, sub_jobs=[[sj] for sj in problem.list_jobs[i]])
-            for i in range(problem.n_jobs)
-        ],
-        n_jobs=problem.n_jobs,
-        n_machines=problem.n_machines,
-    )
-    solver = CpSatFjspSolver(problem=fproblem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     res = solver.solve(
         parameters_cp=p, callbacks=[NbIterationStopper(nb_iteration_max=1)]
     )
     sol, _ = res.get_best_solution_fit()
-    assert fproblem.satisfy(sol)
+    assert problem.satisfy(sol)
 
     # test prob.task_lists and sol.get_start_stime/end_time
     assert len(problem.tasks_list) == problem.n_all_jobs
@@ -116,7 +108,7 @@ def test_cpsat_fjsp():
     print(file)
     problem = fjsp_parser.parse_file(file)
     print(problem)
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     res = solver.solve(
         parameters_cp=p,
@@ -137,7 +129,7 @@ def test_objectives():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     solver.init_model()
     p = ParametersCp.default()
 
@@ -146,7 +138,6 @@ def test_objectives():
     objective = solver.get_subtasks_makespan_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == max(sol.get_end_time(task) for task in subtasks)
 
 
 def test_mode_constraint():
@@ -155,7 +146,7 @@ def test_mode_constraint():
     problem = fjsp_parser.parse_file(file)
     assert problem.is_multimode
 
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     kwargs_solve = dict(
         parameters_cp=p,
@@ -182,17 +173,8 @@ def test_mode_constraint_monomode():
     filename = "la02"
     filepath = [f for f in jsp_parser.get_data_available() if f.endswith(filename)][0]
     problem: JobShopProblem = jsp_parser.parse_file(filepath)
-    fproblem = FJobShopProblem(
-        list_jobs=[
-            Job(job_id=i, sub_jobs=[[sj] for sj in problem.list_jobs[i]])
-            for i in range(problem.n_jobs)
-        ],
-        n_jobs=problem.n_jobs,
-        n_machines=problem.n_machines,
-    )
-    assert not fproblem.is_multimode
 
-    solver = CpSatFjspSolver(problem=fproblem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     kwargs_solve = dict(
         parameters_cp=p,
@@ -223,7 +205,7 @@ def test_task_constraints(task, start_or_end, sign, time):
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     sol: FJobShopSolution = solver.solve(
         parameters_cp=p,
@@ -270,7 +252,7 @@ def test_chaining_tasks_constraint():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     sol: FJobShopSolution = solver.solve(
         parameters_cp=p,
@@ -310,7 +292,7 @@ def test_cpsat_retrieve_stats():
     print(file)
     problem = fjsp_parser.parse_file(file)
     print(problem)
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     res = solver.solve(
         parameters_cp=p,
@@ -331,7 +313,7 @@ def test_cpsat_retrieve_stats_via_clb():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     stats_clb = StatsCpsatCallback()
     res = solver.solve(

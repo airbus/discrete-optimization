@@ -11,9 +11,9 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution
-from discrete_optimization.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution
+from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 
 
 @pytest.fixture

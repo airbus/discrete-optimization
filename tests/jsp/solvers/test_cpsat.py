@@ -11,9 +11,9 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution
-from discrete_optimization.jsp.solvers.cpsat import CpSatJspSolver
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution
+from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def problem() -> JobShopProblem:
 
 
 def test_cpsat_jsp(random_seed, problem):
-    solver = CpSatJspSolver(problem=problem)
+    solver = CpSatAutoJspSolver(problem=problem)
     parameters_cp = ParametersCp.default()
     sol: JobShopSolution = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
@@ -51,24 +51,30 @@ def test_cpsat_jsp(random_seed, problem):
     objective = solver.get_subtasks_makespan_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == max(sol.get_end_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == max(
+        sol.get_end_time(task) for task in subtasks
+    )
     # sum end time subtasks
     subtasks = {(0, 1), (1, 2)}
     objective = solver.get_subtasks_sum_end_time_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == sum(sol.get_end_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == sum(
+        sol.get_end_time(task) for task in subtasks
+    )
     # sum start time subtasks
     subtasks = {(0, 1), (1, 2)}
     objective = solver.get_subtasks_sum_start_time_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == sum(sol.get_start_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == sum(
+        sol.get_start_time(task) for task in subtasks
+    )
     # max end time
     objective = solver.get_global_makespan_variable()
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == sol.get_max_end_time()
+    assert solver.solver.ObjectiveValue() == sol.get_max_end_time()
 
 
 @pytest.mark.parametrize(
@@ -83,7 +89,7 @@ def test_cpsat_jsp(random_seed, problem):
     ],
 )
 def test_task_constraint(problem, task, start_or_end, sign, time, random_seed):
-    solver = CpSatJspSolver(problem=problem)
+    solver = CpSatAutoJspSolver(problem=problem)
     parameters_cp = ParametersCp.default()
     sol: JobShopSolution = solver.solve(
         parameters_cp=parameters_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]
@@ -116,7 +122,7 @@ def test_task_constraint(problem, task, start_or_end, sign, time, random_seed):
 
 
 def test_chaining_tasks_constraint(problem, random_seed):
-    solver = CpSatJspSolver(problem=problem)
+    solver = CpSatAutoJspSolver(problem=problem)
     parameters_cp = ParametersCp.default()
     task1 = (0, 0)
     task2 = (1, 4)

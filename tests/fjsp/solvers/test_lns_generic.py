@@ -3,8 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 
-from discrete_optimization.fjsp.parser import get_data_available, parse_file
-from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
     ConstraintExtractorList,
     MultimodeConstraintExtractor,
@@ -18,6 +16,8 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
+from discrete_optimization.shop.fjsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
 
 
 def test_lnscpsat_fjsp():
@@ -25,7 +25,7 @@ def test_lnscpsat_fjsp():
     file = [f for f in files if "Behnke1.fjs" in f][0]
     print(file)
     problem = parse_file(file)
-    solver = CpSatFjspSolver(problem=problem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     constraint_handler = TasksConstraintHandler(

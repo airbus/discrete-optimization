@@ -5,8 +5,8 @@
 import logging
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.solvers.cpsat import CpSatJspSolver
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,7 +25,7 @@ def run_cpsat_jsp():
         problem.n_machines,
         " machines",
     )
-    solver = CpSatJspSolver(problem=problem)
+    solver = CpSatAutoJspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     res = solver.solve(parameters_cp=p, time_limit=10)

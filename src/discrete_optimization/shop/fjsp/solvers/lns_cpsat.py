@@ -8,12 +8,13 @@ from typing import Any, Hashable, Iterable, Optional
 
 from ortools.sat.python.cp_model import Constraint
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
-from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tools.lns_cp import OrtoolsCpSatConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+from discrete_optimization.shop.fjsp.problem import FJobShopProblem, FJobShopSolution
+from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
 
 
 class NeighborBuilderSubPart:
@@ -25,11 +26,7 @@ class NeighborBuilderSubPart:
         self.problem = problem
         self.nb_cut_part = nb_cut_part
         self.current_sub_part = 0
-        self.keys = [
-            (i, j)
-            for i in range(self.problem.n_jobs)
-            for j in range(len(self.problem.list_jobs[i].sub_jobs))
-        ]
+        self.keys = self.problem.tasks_list
         self.set_keys = set(self.keys)
 
     def find_subtasks(
@@ -39,7 +36,7 @@ class NeighborBuilderSubPart:
     ) -> tuple[set[tuple[int, int]], set[tuple[int, int]]]:
         nb_job_sub = math.ceil(self.problem.n_all_jobs / self.nb_cut_part)
         task_of_interest = sorted(
-            self.keys, key=lambda x: current_solution.schedule[x[0]][x[1]][0]
+            self.keys, key=lambda x: current_solution.get_start_time(x)
         )
         task_of_interest = task_of_interest[
             self.current_sub_part * nb_job_sub : (self.current_sub_part + 1)
@@ -60,7 +57,7 @@ class FjspConstraintHandler(OrtoolsCpSatConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        solver: CpSatFjspSolver,
+        solver: CpSatAutoFjspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
@@ -82,21 +79,25 @@ class FjspConstraintHandler(OrtoolsCpSatConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         keys = random.sample(
-            list(solver.variables["starts"]),
-            k=int(self.fraction_segment_to_fix * len(solver.variables["starts"])),
+            self.problem.tasks_list,
+            k=int(self.fraction_segment_to_fix * len(self.problem.tasks_list)),
         )
         constraints = []
         for k in keys:
-            st, end, machine, i_opt = sol.schedule[k[0]][k[1]]
+            st, end = sol.get_start_time(k), sol.get_end_time(k)
             constraints.append(
-                solver.cp_model.Add(solver.variables["starts"][k] <= st + 20)
+                solver.cp_model.Add(
+                    solver.get_task_start_or_end_variable(k, StartOrEnd.START)
+                    <= st + 20
+                )
             )
             constraints.append(
-                solver.cp_model.Add(solver.variables["starts"][k] >= st - 20)
+                solver.cp_model.Add(
+                    solver.get_task_start_or_end_variable(k, StartOrEnd.START)
+                    >= st - 20
+                )
             )
-            # constraints.append(solver.cp_model.Add(solver.variables["ends"][k] <= end+20))
-            # constraints.append(solver.cp_model.Add(solver.variables["ends"][k] >= end-20))
-        solver.cp_model.Minimize(solver.variables["makespan"])
+        solver.cp_model.Minimize(solver._makespan)
         solver.set_warm_start(sol)
         return constraints
 
@@ -110,7 +111,7 @@ class NeighFjspConstraintHandler(OrtoolsCpSatConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        solver: CpSatFjspSolver,
+        solver: CpSatAutoFjspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
@@ -133,21 +134,23 @@ class NeighFjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         keys_part, keys = self.neighbor_builder.find_subtasks(current_solution=sol)
         constraints = []
         for k in keys:
-            st, end, machine, i_opt = sol.schedule[k[0]][k[1]]
+            st, end = sol.get_start_time(k), sol.get_end_time(k)
             constraints.append(
-                solver.cp_model.Add(solver.variables["starts"][k] <= st + 2)
+                solver.cp_model.Add(
+                    solver.get_task_start_or_end_variable(k, StartOrEnd.START) <= st + 2
+                )
             )
             constraints.append(
-                solver.cp_model.Add(solver.variables["starts"][k] >= st - 2)
+                solver.cp_model.Add(
+                    solver.get_task_start_or_end_variable(k, StartOrEnd.START) >= st - 2
+                )
             )
-            # constraints.append(solver.cp_model.Add(solver.variables["ends"][k] <= end+2))
-            # constraints.append(solver.cp_model.Add(solver.variables["ends"][k] >= end-2))
-        for key in solver.variables["ends"]:
+        for key in self.problem.tasks_list:
             constraints.append(
-                solver.cp_model.Add(solver.variables["ends"][key] <= makespan)
+                solver.cp_model.Add(
+                    solver.get_task_start_or_end_variable(key, StartOrEnd.END)
+                    <= makespan
+                )
             )
-        # m = solver.cp_model.NewIntVar(lb=0, ub=makespan, name="")
-        # solver.cp_model.AddMaxEquality(m, [solver.variables["ends"][k] for k in keys_part])
-        # solver.cp_model.Minimize(m) #+sum([solver.variables["ends"][k] for k in keys_part]))
         solver.set_warm_start(sol)
         return constraints

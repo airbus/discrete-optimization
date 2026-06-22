@@ -9,13 +9,8 @@ from typing import Optional
 
 import pytest
 
-import discrete_optimization.fjsp.parser as fjsp_parser
-import discrete_optimization.jsp.parser as jsp_parser
-from discrete_optimization.fjsp.problem import FJobShopSolution, Job
-from discrete_optimization.fjsp.solvers.cpsat_auto import (
-    CpSatAutoFjspSolver,
-    FJobShopProblem,
-)
+import discrete_optimization.shop.fjsp.parser as fjsp_parser
+import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
@@ -26,7 +21,12 @@ from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSat
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.jsp.problem import JobShopProblem, Subjob
+from discrete_optimization.shop.base import Job, Subjob, SubjobRecipe
+from discrete_optimization.shop.fjsp.problem import FJobShopProblem, FJobShopSolution
+from discrete_optimization.shop.fjsp.solvers.cpsat_auto import (
+    CpSatAutoFjspSolver,
+)
+from discrete_optimization.shop.jsp.problem import JobShopProblem
 
 logging.basicConfig(level=logging.INFO)
 
@@ -92,15 +92,7 @@ def test_fjsp_solver_on_jsp(duplicate_temporal_var, add_cumulative_constraint):
         f for f in jsp_parser.get_data_available() if os.path.basename(f) == "orb10"
     ][0]
     problem: JobShopProblem = jsp_parser.parse_file(file_path)
-    fproblem = FJobShopProblem(
-        list_jobs=[
-            Job(job_id=i, sub_jobs=[[sj] for sj in problem.list_jobs[i]])
-            for i in range(problem.n_jobs)
-        ],
-        n_jobs=problem.n_jobs,
-        n_machines=problem.n_machines,
-    )
-    solver = CpSatAutoFjspSolver(problem=fproblem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     res = solver.solve(
         parameters_cp=p,
@@ -109,8 +101,7 @@ def test_fjsp_solver_on_jsp(duplicate_temporal_var, add_cumulative_constraint):
         add_cumulative_constraint=add_cumulative_constraint,
     )
     sol, _ = res.get_best_solution_fit()
-    assert fproblem.satisfy(sol)
-
+    assert problem.satisfy(sol)
     # test prob.task_lists and sol.get_start_stime/end_time
     assert len(problem.tasks_list) == problem.n_all_jobs
     for task in problem.tasks_list:
@@ -156,7 +147,9 @@ def test_objectives():
     objective = solver.get_subtasks_makespan_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == max(sol.get_end_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == max(
+        sol.get_end_time(task) for task in subtasks
+    )
 
 
 def test_mode_constraint():
@@ -192,17 +185,7 @@ def test_mode_constraint_monomode():
     filename = "la02"
     filepath = [f for f in jsp_parser.get_data_available() if f.endswith(filename)][0]
     problem: JobShopProblem = jsp_parser.parse_file(filepath)
-    fproblem = FJobShopProblem(
-        list_jobs=[
-            Job(job_id=i, sub_jobs=[[sj] for sj in problem.list_jobs[i]])
-            for i in range(problem.n_jobs)
-        ],
-        n_jobs=problem.n_jobs,
-        n_machines=problem.n_machines,
-    )
-    assert not fproblem.is_multimode
-
-    solver = CpSatAutoFjspSolver(problem=fproblem)
+    solver = CpSatAutoFjspSolver(problem=problem)
     p = ParametersCp.default()
     kwargs_solve = dict(
         parameters_cp=p,
@@ -363,36 +346,52 @@ def test_task_bounds():
     problem = FJobShopProblem(
         list_jobs=[
             Job(
-                job_id=0,
-                sub_jobs=[
-                    [
-                        Subjob(machine_id=0, processing_time=1),
-                        Subjob(machine_id=1, processing_time=2),
-                    ],
-                    [
-                        Subjob(machine_id=0, processing_time=2),
-                        Subjob(machine_id=1, processing_time=1),
-                    ],
+                job_index=0,
+                subjobs=[
+                    Subjob(
+                        0,
+                        0,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=1),
+                            SubjobRecipe(machine_index=1, processing_time=2),
+                        ],
+                    ),
+                    Subjob(
+                        1,
+                        0,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=2),
+                            SubjobRecipe(machine_index=1, processing_time=1),
+                        ],
+                    ),
                 ],
             ),
             Job(
-                job_id=1,
-                sub_jobs=[
-                    [
-                        Subjob(machine_id=0, processing_time=1),
-                        Subjob(machine_id=1, processing_time=2),
-                    ],
-                    [
-                        Subjob(machine_id=0, processing_time=2),
-                        Subjob(machine_id=1, processing_time=3),
-                    ],
+                job_index=1,
+                subjobs=[
+                    Subjob(
+                        0,
+                        1,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=1),
+                            SubjobRecipe(machine_index=1, processing_time=2),
+                        ],
+                    ),
+                    Subjob(
+                        1,
+                        1,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=2),
+                            SubjobRecipe(machine_index=1, processing_time=3),
+                        ],
+                    ),
                 ],
             ),
         ]
     )
     solver = CpSatAutoFjspSolver(problem=problem)
     solver.init_model()
-    assert (solver.tasks_bounds) == {
+    assert solver.tasks_bounds == {
         (0, 0): (0, 1, 7, 8),
         (0, 1): (1, 2, 8, 9),
         (1, 0): (0, 1, 6, 7),

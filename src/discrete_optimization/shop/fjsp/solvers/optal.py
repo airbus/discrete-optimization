@@ -6,13 +6,17 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Optional
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution, Task
 from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
+)
+from discrete_optimization.shop.fjsp.problem import (
+    FJobShopProblem,
+    FJobShopSolution,
+    Task,
 )
 
 try:
@@ -42,9 +46,9 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
         opt_intervals = {}
         intervals_per_machines = defaultdict(lambda: set())
         for i in range(self.problem.n_jobs):
-            for k in range(len(self.problem.list_jobs[i].sub_jobs)):
-                subjob_option = self.problem.list_jobs[i].sub_jobs[k]
-                durations = [opt.processing_time for opt in subjob_option]
+            for k in range(len(self.problem.list_jobs[i].subjobs)):
+                subjob_recipes = self.problem.list_jobs[i].subjobs[k].recipes
+                durations = [opt.processing_time for opt in subjob_recipes]
                 intervals[(i, k)] = self.cp_model.interval_var(
                     start=(0, self.problem.horizon),
                     end=(0, self.problem.horizon),
@@ -52,18 +56,25 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
                     optional=False,
                     name=f"interval_{i}_{k}",
                 )
-                for opt in subjob_option:
-                    opt_intervals[(i, k, opt.machine_id)] = self.cp_model.interval_var(
-                        start=(0, self.problem.horizon),
-                        end=(0, self.problem.horizon),
-                        length=opt.processing_time,
-                        optional=True,
-                        name=f"interval_{i}_{k}_{opt.machine_id}",
+                for opt in subjob_recipes:
+                    opt_intervals[(i, k, opt.machine_index)] = (
+                        self.cp_model.interval_var(
+                            start=(0, self.problem.horizon),
+                            end=(0, self.problem.horizon),
+                            length=opt.processing_time,
+                            optional=True,
+                            name=f"interval_{i}_{k}_{opt.machine_index}",
+                        )
                     )
-                    intervals_per_machines[opt.machine_id].add((i, k, opt.machine_id))
+                    intervals_per_machines[opt.machine_index].add(
+                        (i, k, opt.machine_index)
+                    )
                 self.cp_model.alternative(
                     intervals[(i, k)],
-                    [opt_intervals[(i, k, opt.machine_id)] for opt in subjob_option],
+                    [
+                        opt_intervals[(i, k, opt.machine_index)]
+                        for opt in subjob_recipes
+                    ],
                 )
                 if k >= 1:
                     self.cp_model.end_before_start(
@@ -89,16 +100,31 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
 
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:
         schedule = []
+        machine_index = []
+        recipe_index = []
         for i in range(self.problem.n_jobs):
             sched_i = []
-            for k in range(len(self.problem.list_jobs[i].sub_jobs)):
-                for index_opt, opt in enumerate(self.problem.list_jobs[i].sub_jobs[k]):
+            machine_index_i = []
+            recipe_index_i = []
+            for k in range(len(self.problem.list_jobs[i].subjobs)):
+                for index_opt, opt in enumerate(
+                    self.problem.list_jobs[i].subjobs[k].recipes
+                ):
                     if result.solution.is_present(
-                        self.variables["opt_intervals"][(i, k, opt.machine_id)]
+                        self.variables["opt_intervals"][(i, k, opt.machine_index)]
                     ):
                         st, end = result.solution.get_value(
-                            self.variables["opt_intervals"][(i, k, opt.machine_id)]
+                            self.variables["opt_intervals"][(i, k, opt.machine_index)]
                         )
-                        sched_i.append((st, end, opt.machine_id, index_opt))
+                        sched_i.append((st, end))
+                        machine_index_i.append(opt.machine_index)
+                        recipe_index_i.append(index_opt)
             schedule.append(sched_i)
-        return FJobShopSolution(problem=self.problem, schedule=schedule)
+            machine_index.append(machine_index_i)
+            recipe_index.append(recipe_index_i)
+        return FJobShopSolution(
+            problem=self.problem,
+            schedule=schedule,
+            machine_index=machine_index,
+            recipe_index=recipe_index,
+        )

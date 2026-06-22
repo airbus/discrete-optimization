@@ -12,7 +12,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution, Task
+from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution, Task
 
 try:
     import optalcp as cp
@@ -46,13 +46,13 @@ class OptalJspSolver(SchedulingOptalSolver[Task]):
         ends = []
         for i, job in enumerate(self.problem.list_jobs):
             prev = None
-            for j, subjob in enumerate(job):
+            for j, subjob in enumerate(job.subjobs):
                 # Create an interval variable for each operation
                 operation = self.cp_model.interval_var(
-                    length=subjob.processing_time,
-                    name=f"J{i + 1}O{j + 1}M{subjob.machine_id + 1}",
+                    length=subjob.recipes[0].processing_time,
+                    name=f"J{i}O{j}M{subjob.recipes[0].machine_index}",
                 )
-                machines[subjob.machine_id].append(operation)
+                machines[subjob.recipes[0].machine_index].append(operation)
                 self._all_intervals[i].append(operation)
                 # Add precedence constraint with the previous operation in the same job
                 if prev is not None:
@@ -73,7 +73,7 @@ class OptalJspSolver(SchedulingOptalSolver[Task]):
         schedule = []
         for i in range(self.problem.n_jobs):
             sched_i = []
-            for k in range(len(self.problem.list_jobs[i])):
+            for k in range(self.problem.nb_subjob_per_job[i]):
                 sched_i.append(
                     result.solution.get_value(self.get_task_interval_variable((i, k)))
                 )

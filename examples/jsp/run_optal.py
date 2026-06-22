@@ -6,9 +6,9 @@ import logging
 from matplotlib import pyplot as plt
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.solvers.optal import OptalJspSolver
-from discrete_optimization.jsp.utils import plot_jobshop_solution
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.solvers.optal import OptalJspSolver
+from discrete_optimization.shop.utils import plot_shop_solution
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,7 +22,7 @@ def run_optal():
     res = solver.solve(parameters_cp=p, time_limit=5)
     sol = res.get_best_solution()
     print(problem.satisfy(sol), problem.evaluate(sol))
-    plot_jobshop_solution(sol)
+    plot_shop_solution(sol)
     plt.show()
 
 
