@@ -32,12 +32,12 @@ def problem() -> JobShopProblem:
 
 
 def test_via_fjsp(problem):
-    from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+    from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 
     solver = TransformationSolver(
         transformation=JspToFjspTransformation(),
         source_problem=problem,
-        solver_brick=SubBrick(CpSatAutoFjspSolver, {}),
+        solver_brick=SubBrick(CpSatFjspSolver, {}),
     )
     res = solver.solve(callbacks=[NbIterationStopper(1)])
     sol = res[-1][0]

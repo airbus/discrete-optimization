@@ -100,13 +100,3 @@ class CumulativeResourceSchedulingCpSatSolver(
             )
             > 0
         )
-
-    def get_task_interval(self, task: Task) -> IntervalVar:
-        """Return interval variable for the task.
-
-        This variable corresponds to the task schedule, whatever the mode.
-        This is needed when wanting to avoid using optional interval,
-        i.e. if `self.avoid_interval_optional` is set to True.
-
-        """
-        raise NotImplementedError

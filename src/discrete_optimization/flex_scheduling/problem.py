@@ -20,6 +20,9 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
+from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+    WithoutNoOverlapProblem,
+)
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
@@ -329,14 +332,12 @@ class FlexProblem(
     GenericSchedulingProblem[
         Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
     ],
+    WithoutNoOverlapProblem[Task],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutAllocationProblem[Task],
 ):
-    def get_no_overlap(self) -> set[frozenset[Task]]:
-        return set()
-
     @property
     def non_skill_cumulative_resources_list(self) -> list[Skill]:
         return [resource.id for resource in self.resources if resource.renewable]

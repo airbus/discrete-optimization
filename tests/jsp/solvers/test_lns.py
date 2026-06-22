@@ -17,7 +17,7 @@ from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
 from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
-from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
+from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver
 
 
 @pytest.mark.parametrize(
@@ -26,7 +26,7 @@ from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 )
 def test_lns(objective_subproblem):
     problem = parse_file(get_data_available()[0])
-    subsolver = CpSatAutoJspSolver(problem=problem)
+    subsolver = CpSatJspSolver(problem=problem)
     parameters_cp = ParametersCp.default()
     initial_res = subsolver.solve(
         parameters_cp=parameters_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]
@@ -55,7 +55,7 @@ def test_lns(objective_subproblem):
 @pytest.mark.parametrize("objective_subproblem", ALLOCATION_OBJECTIVES)
 def test_lns_obj_nok(objective_subproblem):
     problem = parse_file(get_data_available()[0])
-    subsolver = CpSatAutoJspSolver(problem=problem)
+    subsolver = CpSatJspSolver(problem=problem)
     parameters_cp = ParametersCp.default()
     initial_res = subsolver.solve(
         parameters_cp=parameters_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]

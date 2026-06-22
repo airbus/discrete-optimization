@@ -4,9 +4,9 @@
 
 import logging
 
-from discrete_optimization.shop.solvers.cpsat_auto import CpSatAutoShopSolver
+from discrete_optimization.shop.solvers.cpsat import CpSatShopSolver
 
 logger = logging.getLogger(__name__)
 
 
-CpSatAutoFjspSolver = CpSatAutoShopSolver
+CpSatJspSolver = CpSatShopSolver

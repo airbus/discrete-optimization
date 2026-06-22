@@ -12,7 +12,7 @@ from discrete_optimization.generic_tools.lns_tools import (
     TrivialInitialSolution,
 )
 from discrete_optimization.shop.fjsp.parser import get_data_available, parse_file
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.fjsp.solvers.lns_cpsat import (
     FjspConstraintHandler,
     NeighborBuilderSubPart,
@@ -25,7 +25,7 @@ def test_lnscpsat_fjsp():
     file = [f for f in files if "Behnke1.fjs" in f][0]
     print(file)
     problem = parse_file(file)
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     start_solution = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )

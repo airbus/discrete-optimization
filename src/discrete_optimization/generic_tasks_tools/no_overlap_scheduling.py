@@ -22,7 +22,10 @@ class NoOverlapProblem(SchedulingProblem[Task]):
 
     @abstractmethod
     def get_no_overlap(self) -> set[frozenset[Task]]:
-        """Map each task to the tasks that need to be performed after it."""
+        """
+        An object in this returned set is a (frozen) set of task,
+        where no task should overlap with another one in this set
+        """
         ...
 
 

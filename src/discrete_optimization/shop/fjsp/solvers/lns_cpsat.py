@@ -14,7 +14,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.shop.fjsp.problem import FJobShopProblem, FJobShopSolution
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 
 
 class NeighborBuilderSubPart:
@@ -57,7 +57,7 @@ class FjspConstraintHandler(OrtoolsCpSatConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        solver: CpSatAutoFjspSolver,
+        solver: CpSatFjspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
@@ -111,7 +111,7 @@ class NeighFjspConstraintHandler(OrtoolsCpSatConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        solver: CpSatAutoFjspSolver,
+        solver: CpSatFjspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
         **kwargs: Any,

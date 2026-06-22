@@ -17,7 +17,7 @@ from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
 from discrete_optimization.shop.fjsp.parser import get_data_available, parse_file
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 
 
 def test_lnscpsat_fjsp():
@@ -25,7 +25,7 @@ def test_lnscpsat_fjsp():
     file = [f for f in files if "Behnke1.fjs" in f][0]
     print(file)
     problem = parse_file(file)
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     constraint_handler = TasksConstraintHandler(

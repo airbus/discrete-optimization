@@ -12,6 +12,9 @@ from discrete_optimization.generic_tasks_tools.multimode import (
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     SinglemodeSchedulingProblem,
 )
+from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+    WithoutNoOverlapProblem,
+)
 from discrete_optimization.shop.base import AnyShopSolution, CommonShopProblem, Task
 
 
@@ -19,7 +22,9 @@ class JobShopSolution(AnyShopSolution, SinglemodeSolution[Task]):
     problem: JobShopProblem
 
 
-class JobShopProblem(CommonShopProblem, SinglemodeSchedulingProblem[Task]):
+class JobShopProblem(
+    CommonShopProblem, WithoutNoOverlapProblem[Task], SinglemodeSchedulingProblem[Task]
+):
     def get_task_duration(self, task: Task) -> int:
         return self.list_jobs[task[0]].subjobs[task[1]].recipes[0].processing_time
 
@@ -39,12 +44,3 @@ class JobShopProblem(CommonShopProblem, SinglemodeSchedulingProblem[Task]):
             for j, job in enumerate(self.list_jobs)
             for k in range(len(job.subjobs))
         }
-
-    def get_no_overlap(self) -> set[frozenset[Task]]:
-        # Already taken into account in precedence.
-        return {}
-        # set_jobs = set()
-        # for i in range(self.n_jobs):
-        #    set_jobs.add(frozenset([(i, j)
-        #                            for j in range(len(self.jobs[i].subjobs))]))
-        # return set_jobs
