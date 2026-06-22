@@ -54,6 +54,13 @@ class SchedulingSolution(TasksSolution[Task]):
     @abstractmethod
     def get_start_time(self, task: Task) -> int: ...
 
+    def get_start_or_end_time(self, task: Task, start_or_end: StartOrEnd) -> int:
+        """Get the start or end time for a given task."""
+        if start_or_end == StartOrEnd.START:
+            return self.get_start_time(task)
+        else:
+            return self.get_end_time(task)
+
     def get_duration(self, task: Task) -> int:
         return self.get_end_time(task) - self.get_start_time(task)
 
@@ -63,11 +70,7 @@ class SchedulingSolution(TasksSolution[Task]):
     def constraint_on_task_satisfied(
         self, task: Task, start_or_end: StartOrEnd, sign: SignEnum, time: int
     ) -> bool:
-        if start_or_end == StartOrEnd.START:
-            actual_time = self.get_start_time(task)
-        else:
-            actual_time = self.get_end_time(task)
-
+        actual_time = self.get_start_or_end_time(task=task, start_or_end=start_or_end)
         if sign == SignEnum.UEQ:
             return actual_time >= time
         elif sign == SignEnum.LEQ:
@@ -78,6 +81,8 @@ class SchedulingSolution(TasksSolution[Task]):
             return actual_time > time
         elif sign == SignEnum.EQUAL:
             return actual_time == time
+        else:
+            raise NotImplementedError()
 
     def constraint_chaining_tasks_satisfied(self, task1: Task, task2: Task) -> bool:
         return self.get_end_time(task1) == self.get_start_time(task2)

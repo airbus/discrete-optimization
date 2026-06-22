@@ -212,6 +212,16 @@ def test_problem(problem_wo_skills, caplog):
         ),
     )
     assert problem.satisfy(sol)
+    d = problem.evaluate(sol)
+    assert d["time_penalty"] == 0
+
+    # time penalty with wirong time windows and time lags
+    problem.time_windows["task-1"] = 2, None, None, None
+    problem.end_to_start_min_time_lags.append(("task-1", "task-2", 2))
+    problem.update_problem()
+    assert not problem.satisfy(sol)
+    d = problem.evaluate(sol)
+    assert d["time_penalty"] == 3
 
 
 def test_task_bounds_simple(problem_wo_skills):
