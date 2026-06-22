@@ -109,6 +109,23 @@ def test_auto(
         },
         objective=objective,
         custom_evaluate_fn=custom_evaluate_fn,
+        mode_costs={
+            "task-1": {
+                0: 100,
+                1: 3,
+            },
+            "task-2": {
+                0: 0,
+            },
+        },
+        unary_resource_costs={
+            "task-1": {
+                1: {
+                    "worker1": 27,
+                    "worker2": 10,
+                },
+            },
+        },
     )
 
     # prepare solver
@@ -125,6 +142,7 @@ def test_auto(
         Objective.NB_UNARY_RESOURCES_USED,
         Objective.NB_RESOURCES_USED,
         Objective.RESOURCES_LEVELS,
+        Objective.COST,
     ]
 
     solver = GenericSchedulingAutoCpSatImplSolver(
@@ -154,6 +172,12 @@ def test_auto(
         assert kpi["makespan"] == 9
     elif objective == Objective.NB_TASKS_DONE:
         assert kpi["nb_tasks_done"] == 2
+    elif objective == Objective.COST:
+        assert sol.get_mode("task-1") == 1
+        assert not sol.is_allocated("task-1", unary_resource="worker1")
+        assert sol.is_allocated("task-1", unary_resource="worker2")
+        assert kpi["cost"] == 3 + 10
+
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == 2 - 9
     elif isinstance(objective, list):
@@ -161,6 +185,8 @@ def test_auto(
         assert kpi["makespan"] == 9
 
     # check warm start from a "bad" solution
+    if objective == Objective.COST:
+        return  # skip warm start
     bad_sol = GenericSchedulingImplSolution(
         problem=problem,
         raw_sol=RawSolution(
