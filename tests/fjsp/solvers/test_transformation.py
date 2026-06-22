@@ -1,19 +1,19 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-import discrete_optimization.fjsp.parser as fjsp_parser
-from discrete_optimization.fjsp.transformations.to_rcpsp import (
-    FjspToRcpspTransformation,
-)
-from discrete_optimization.fjsp.transformations.to_workforce import (
-    FjspToWorkforceSchedulingTransformation,
-)
+import discrete_optimization.shop.fjsp.parser as fjsp_parser
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.generic_tools.transformation import TransformationSolver
 from discrete_optimization.rcpsp.solvers.pile import PileRcpspSolver
+from discrete_optimization.shop.fjsp.transformations.to_rcpsp import (
+    FjspToRcpspTransformation,
+)
+from discrete_optimization.shop.fjsp.transformations.to_workforce import (
+    FjspToWorkforceSchedulingTransformation,
+)
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
     CPSatAllocSchedulingSolver,
 )

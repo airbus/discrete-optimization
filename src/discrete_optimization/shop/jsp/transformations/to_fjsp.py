@@ -2,15 +2,18 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-"""Transformation from JobShop to FlexibleJobShop."""
+"""Transformation from JobShop to FlexibleJobShop.
+With new common API for shop-problems, there is no really transformation needed.
+"""
 
+from copy import deepcopy
 from typing import Optional
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution, Job
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
 )
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution
+from discrete_optimization.shop.fjsp.problem import FJobShopProblem, FJobShopSolution
+from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution
 
 
 class JspToFjspTransformation(
@@ -39,18 +42,8 @@ class JspToFjspTransformation(
             Equivalent FlexibleJobShop problem
 
         """
-        # Convert each job: list[Subjob] → Job with list[SubjobOptions]
-        fjsp_jobs = []
-
-        for job_idx, jsp_job in enumerate(source_problem.list_jobs):
-            # Each subjob in JSP has 1 fixed machine
-            # In FJSP, this becomes 1 option (list with single Subjob)
-            sub_jobs_options = [[subjob] for subjob in jsp_job]
-
-            fjsp_jobs.append(Job(job_id=job_idx, sub_jobs=sub_jobs_options))
-
         return FJobShopProblem(
-            list_jobs=fjsp_jobs,
+            list_jobs=deepcopy(source_problem.list_jobs),
             n_jobs=source_problem.n_jobs,
             n_machines=source_problem.n_machines,
             horizon=source_problem.horizon,
@@ -69,14 +62,7 @@ class JspToFjspTransformation(
             Equivalent JobShop solution
 
         """
-        # FJSP schedule: list[list[tuple[start, end, machine, option]]]
-        # JSP schedule: list[list[tuple[start, end]]]
-        jsp_schedule = [
-            [(start, end) for start, end, machine, option in job_schedule]
-            for job_schedule in solution.schedule
-        ]
-
-        return JobShopSolution(problem=source_problem, schedule=jsp_schedule)
+        return solution
 
     def forward_transform_solution(
         self, solution: JobShopSolution, target_problem: FJobShopProblem
@@ -91,21 +77,4 @@ class JspToFjspTransformation(
             Equivalent FlexibleJobShop solution for warmstart
 
         """
-        # JSP schedule: list[list[tuple[start, end]]]
-        # FJSP schedule: list[list[tuple[start, end, machine, option]]]
-        # We need to add machine_id and option=0
-
-        fjsp_schedule = []
-
-        for job_idx, job_schedule in enumerate(solution.schedule):
-            fjsp_job_schedule = []
-            for subjob_idx, (start, end) in enumerate(job_schedule):
-                # Get the machine from the source problem
-                machine_id = solution.problem.list_jobs[job_idx][subjob_idx].machine_id
-                option = 0  # Only 1 option in transformed FJSP
-
-                fjsp_job_schedule.append((start, end, machine_id, option))
-
-            fjsp_schedule.append(fjsp_job_schedule)
-
-        return FJobShopSolution(problem=target_problem, schedule=fjsp_schedule)
+        return solution

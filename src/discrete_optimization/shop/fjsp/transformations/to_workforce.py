@@ -12,7 +12,6 @@ from typing import Optional
 
 import numpy as np
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
 )
@@ -20,6 +19,7 @@ from discrete_optimization.generic_tools.transformation.transformation_metadata 
     TransformationMetadata,
     exact_transformation,
 )
+from discrete_optimization.shop.fjsp.problem import FJobShopProblem, FJobShopSolution
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
@@ -91,22 +91,26 @@ class FjspToWorkforceSchedulingTransformation(
         job_task_mapping = {}  # job_id -> list of task_ids
 
         for job in source_problem.list_jobs:
-            job_id = job.job_id
+            job_id = job.job_index
             job_tasks = []
 
-            for op_idx, sub_job_options in enumerate(job.sub_jobs):
+            for op_idx, sub_job_options in enumerate(job.subjobs):
                 task_name = f"job_{job_id}_op_{op_idx}"
                 tasks_list.append(task_name)
 
                 # Eligible teams (machines) from sub-job options
-                eligible_machines = {option.machine_id for option in sub_job_options}
+                eligible_machines = {
+                    option.machine_index for option in sub_job_options.recipes
+                }
                 eligible_teams = {team_names[m_id] for m_id in eligible_machines}
                 available_team_for_activity[task_name] = eligible_teams
 
                 # Duration: use minimum duration across all machine options
                 # Note: In FJSP, duration depends on machine choice, but AllocSchedulingProblem
                 # requires a fixed duration per task. We use min duration as a representative value.
-                duration = min(option.processing_time for option in sub_job_options)
+                duration = min(
+                    option.processing_time for option in sub_job_options.recipes
+                )
 
                 # Task description
                 tasks_data[task_name] = TasksDescription(
@@ -169,7 +173,7 @@ class FjspToWorkforceSchedulingTransformation(
         # Build FJSP schedule as list[list[tuple[int, int, int, int]]]
         # For each job and sub-job: (start, end, machine_id, option)
         schedule = [[] for _ in range(source_problem.n_jobs)]
-
+        machine_index = [[] for _ in range(source_problem.n_jobs)]
         # Parse task names to extract job and operation indices
         for task_idx, task in enumerate(solution.problem.tasks_list):
             # Task name format: "job_{job_id}_op_{op_idx}"
@@ -188,22 +192,25 @@ class FjspToWorkforceSchedulingTransformation(
                 # Find the option (mode) index that corresponds to this machine
                 # Look up in the job's sub_jobs to find which option uses this machine
                 job = source_problem.list_jobs[job_id]
-                sub_job_options = job.sub_jobs[op_idx]
+                sub_job_options = job.subjobs[op_idx]
                 option_idx = 0
-                for opt_idx, option in enumerate(sub_job_options):
-                    if option.machine_id == machine_id:
+                for opt_idx, option in enumerate(sub_job_options.recipes):
+                    if option.machine_index == machine_id:
                         option_idx = opt_idx
                         break
 
                 # Ensure schedule has enough space
                 while len(schedule[job_id]) <= op_idx:
-                    schedule[job_id].append((0, 0, 0, 0))
+                    schedule[job_id].append((0, 0))
+                    machine_index[job_id].append(0)
 
-                schedule[job_id][op_idx] = (start, end, machine_id, option_idx)
+                schedule[job_id][op_idx] = (start, end)
+                machine_index[job_id][op_idx] = machine_id
 
         return FJobShopSolution(
             problem=source_problem,
             schedule=schedule,
+            machine_index=machine_index,
         )
 
     def forward_transform_solution(
@@ -241,10 +248,11 @@ class FjspToWorkforceSchedulingTransformation(
                     and job_id < len(solution.schedule)
                     and op_idx < len(solution.schedule[job_id])
                 ):
-                    start, end, machine_id, option_idx = solution.schedule[job_id][
-                        op_idx
-                    ]
-
+                    start, end = (
+                        solution.get_start_time((job_id, op_idx)),
+                        solution.get_end_time((job_id, op_idx)),
+                    )
+                    machine_id = solution.machine_index[job_id][op_idx]
                     schedule_arr[task_idx, 0] = start
                     schedule_arr[task_idx, 1] = end
                     allocation_arr[task_idx] = machine_id

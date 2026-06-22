@@ -334,6 +334,9 @@ class FlexProblem(
     ],
     WithoutAllocationProblem[Task],
 ):
+    def get_no_overlap(self) -> set[frozenset[Task]]:
+        return set()
+
     @property
     def non_skill_cumulative_resources_list(self) -> list[Skill]:
         return [resource.id for resource in self.resources if resource.renewable]

@@ -4,6 +4,8 @@
 
 """Problem transformations for JobShop."""
 
-from discrete_optimization.jsp.transformations.to_fjsp import JspToFjspTransformation
+from discrete_optimization.shop.jsp.transformations.to_fjsp import (
+    JspToFjspTransformation,
+)
 
 __all__ = ["JspToFjspTransformation"]
