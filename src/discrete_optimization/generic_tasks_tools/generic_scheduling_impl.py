@@ -16,7 +16,9 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     OBJECTIVE_DEFAULT_WEIGHTS,
+    PENALTY_DEFAULT_WEIGHTS,
     Objective,
+    Penalty,
     RawSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -83,6 +85,7 @@ class GenericSchedulingImplProblem(
             Callable[[GenericSchedulingImplSolution], int]
         ] = None,
         objective_resource_weights: Optional[dict[AnyResource, int]] = None,
+        compute_time_penalty: bool = True,
     ):
         """
 
@@ -132,6 +135,7 @@ class GenericSchedulingImplProblem(
             objective_resource_weights: Weights to be used by the objective when summing used resources
                 (`Objective.NB_RESOURCES_USED`) or resources levels (`Objective.RESOURCES_LEVELS`).
                 Default to 1 for resources not mentioned.
+            compute_time_penalty: whether to include time penalties in evaluation
 
         """
         self.horizon = horizon
@@ -208,6 +212,7 @@ class GenericSchedulingImplProblem(
             self.objective_resource_weights: dict[AnyResource, int] = {}
         else:
             self.objective_resource_weights = objective_resource_weights
+        self.compute_time_penalty = compute_time_penalty
         self.update_problem()
 
     def update_problem(self):
@@ -454,43 +459,41 @@ class GenericSchedulingImplProblem(
         raise NotImplementedError()
 
     def evaluate(self, variable: Solution) -> dict[str, float]:
-        return {
+        dict_eval = {
             objective.value: self.compute_subobjective(
                 variable=variable, objective=objective
             )
             for objective, _ in self.weighted_objectives
         }
+        if self.compute_time_penalty:
+            penalty = Penalty.TIME
+            dict_eval[penalty.value] = self.compute_penalty(
+                variable=variable, penalty=penalty
+            )
+        return dict_eval
 
     def compute_subobjective(
-        self, variable: GenericSchedulingImplSolution, objective: Objective
+        self,
+        variable: GenericSchedulingSolution,
+        objective: Objective,
+        resource_weights: Optional[dict[AnyResource, int]] = None,
     ) -> int:
+        if resource_weights is None:
+            resource_weights = self.objective_resource_weights
         match objective:
-            case Objective.MAKESPAN:
-                return variable.get_max_end_time()
-            case Objective.NB_TASKS_DONE:
-                return variable.compute_nb_tasks_done()
-            case Objective.NB_UNARY_RESOURCES_USED:
-                return variable.compute_nb_unary_resources_used()
-            case Objective.NB_RESOURCES_USED:
-                return variable.compute_nb_calendar_resources_used(
-                    weights=self.objective_resource_weights
-                ) + variable.compute_nb_non_renewable_resources_used(
-                    weights=self.objective_resource_weights
-                )
-            case Objective.RESOURCES_LEVELS:
-                return variable.compute_aggregated_calendar_resources_levels(
-                    weights=self.objective_resource_weights
-                ) + variable.compute_aggregated_non_renewable_resources_consumptions(
-                    weights=self.objective_resource_weights
-                )
             case Objective.CUSTOM:
                 if self.custom_evaluate_fn is None:
                     raise RuntimeError(
                         "self.custom_evaluate_fn is not defined but custom objective used."
                     )
+                assert isinstance(variable, GenericSchedulingImplSolution)
                 return self.custom_evaluate_fn(variable)
             case _:
-                raise NotImplementedError()
+                return super().compute_subobjective(
+                    variable=variable,
+                    objective=objective,
+                    resource_weights=resource_weights,
+                )
 
     def get_objective_register(self) -> ObjectiveRegister:
         if len(self.weighted_objectives) == 1:
@@ -503,6 +506,12 @@ class GenericSchedulingImplProblem(
             )
             for objective, weight in self.weighted_objectives
         }
+        if self.compute_time_penalty:
+            penalty = Penalty.TIME
+            dict_objective[penalty.value] = ObjectiveDoc(
+                type=TypeObjective.PENALTY,
+                default_weight=PENALTY_DEFAULT_WEIGHTS[penalty],
+            )
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
             objective_handling=handling,

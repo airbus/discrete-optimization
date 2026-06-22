@@ -75,3 +75,15 @@ OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
     Objective.CUSTOM: 1,
 }
 """Default weight applied to a given objective so that it will be *maximized*."""
+
+
+class Penalty(Enum):
+    "Penalties for a generic scheduling problem."
+
+    TIME = "time_penalty"
+
+
+PENALTY_DEFAULT_WEIGHTS: dict[Penalty, int] = {
+    Penalty.TIME: -100,
+}
+"""Default weight applied to a given penalty to be added to the objective so that it will be *maximized*."""

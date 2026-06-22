@@ -1,6 +1,8 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from collections import defaultdict
 from typing import Generic, Optional
 
@@ -11,6 +13,10 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    Objective,
+    Penalty,
+)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
     NonRenewableResourceProblem,
@@ -39,6 +45,7 @@ from discrete_optimization.generic_tasks_tools.timewindow import (
 
 CumulativeResource = Skill | NonSkillCumulativeResource
 Resource = CumulativeResource | UnaryResource
+AnyResource = NonRenewableResource | Resource
 
 
 class GenericSchedulingProblem(
@@ -484,6 +491,87 @@ class GenericSchedulingProblem(
 
         """
         self.update_time_lags()
+
+    def compute_subobjective(
+        self,
+        variable: GenericSchedulingSolution,
+        objective: Objective,
+        resource_weights: Optional[dict[AnyResource, int]] = None,
+    ) -> int:
+        """Compute subobjective from given solution."""
+        match objective:
+            case Objective.MAKESPAN:
+                return variable.get_max_end_time()
+            case Objective.NB_TASKS_DONE:
+                return variable.compute_nb_tasks_done()
+            case Objective.NB_UNARY_RESOURCES_USED:
+                return variable.compute_nb_unary_resources_used()
+            case Objective.NB_RESOURCES_USED:
+                return variable.compute_nb_calendar_resources_used(
+                    weights=resource_weights
+                ) + variable.compute_nb_non_renewable_resources_used(
+                    weights=resource_weights
+                )
+            case Objective.RESOURCES_LEVELS:
+                return variable.compute_aggregated_calendar_resources_levels(
+                    weights=resource_weights
+                ) + variable.compute_aggregated_non_renewable_resources_consumptions(
+                    weights=resource_weights
+                )
+            case _:
+                raise NotImplementedError()
+
+    def compute_penalty(
+        self, variable: GenericSchedulingSolution, penalty: Penalty
+    ) -> int:
+        """Compute penalty from given solution."""
+        match penalty:
+            case Penalty.TIME:
+                penalty = 0
+                # time windows
+                for task in self.tasks_list:
+                    start = variable.get_start_time(task)
+                    end = variable.get_end_time(task)
+                    start_lb = self.get_task_start_or_end_lower_bound(
+                        task=task, start_or_end=StartOrEnd.START
+                    )
+                    end_lb = self.get_task_start_or_end_lower_bound(
+                        task=task, start_or_end=StartOrEnd.END
+                    )
+                    start_ub = self.get_task_start_or_end_upper_bound(
+                        task=task, start_or_end=StartOrEnd.START
+                    )
+                    end_ub = self.get_task_start_or_end_upper_bound(
+                        task=task, start_or_end=StartOrEnd.END
+                    )
+                    penalty += max(0, start_lb - start)
+                    penalty += max(0, end_lb - end)
+                    penalty += max(0, start - start_ub)
+                    penalty += max(0, end - end_ub)
+                # time lags
+                for task1_start_or_end in StartOrEnd:
+                    for task2_start_or_end in StartOrEnd:
+                        for min_or_max in MinOrMax:
+                            for task1, task2, offset in self.get_original_time_lags(
+                                task1_start_or_end=task1_start_or_end,
+                                task2_start_or_end=task2_start_or_end,
+                                min_or_max=min_or_max,
+                            ):
+                                t1 = variable.get_start_or_end_time(
+                                    task=task1, start_or_end=task1_start_or_end
+                                )
+                                t2 = variable.get_start_or_end_time(
+                                    task=task2, start_or_end=task2_start_or_end
+                                )
+                                if min_or_max == MinOrMax.MIN:
+                                    penalty += max(0, t1 + offset - t2)
+                                else:
+                                    penalty += max(0, t2 - (t1 + offset))
+
+            case _:
+                raise NotImplementedError()
+
+        return penalty
 
     def __getstate__(self):
         """Get state for pickle.
