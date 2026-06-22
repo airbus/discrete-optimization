@@ -258,9 +258,14 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         See https://github.com/GrahamDumpleton/wrapt/issues/343
 
         """
+        try:
+            dico = super().__getstate__()
+        except AttributeError:
+            # python < 3.11: __getstate__() not always defined
+            dico = self.__dict__
         return {
             key: value
-            for key, value in super().__getstate__().items()
+            for key, value in dico.items()
             if not key.startswith("_lru_cache_")
         }
 

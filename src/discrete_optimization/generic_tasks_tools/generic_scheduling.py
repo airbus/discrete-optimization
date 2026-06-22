@@ -608,19 +608,6 @@ class GenericSchedulingProblem(
         """
         return 0
 
-    def __getstate__(self):
-        """Get state for pickle.
-
-        Solve issue when instance has cached methods called. (And thus unpickable cache created.)
-        See https://github.com/GrahamDumpleton/wrapt/issues/343
-
-        """
-        return {
-            key: value
-            for key, value in super().__getstate__().items()
-            if not key.startswith("_lru_cache_")
-        }
-
 
 class GenericSchedulingSolution(
     SkillSolution[
