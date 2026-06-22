@@ -80,6 +80,7 @@ class GenericSchedulingImplProblem(
         start_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
         end_to_start_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
         end_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
+        no_overlap_sets: set[frozenset[Task]] = None,
         objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
         custom_evaluate_fn: Optional[
             Callable[[GenericSchedulingImplSolution], int]
@@ -128,6 +129,7 @@ class GenericSchedulingImplProblem(
             end_to_end_min_time_lags: min time lags constraints between task ends.
                 task1, task2, offset meaning end(task1) + offset <= end(task2)
                 Note that using negative offset can model end-to-end max time lags.
+            no_overlap_sets: a set of (set of tasks that should not overlap together)
             objective: objective for the problem. Default to minimization of makespan.
                 Either an iterable of (objective, weight) so that the problem should *maximize* the aggregated objective
                 resulting from weighted sum of objectives, or a single objective in which case we use the corresponding
@@ -207,6 +209,10 @@ class GenericSchedulingImplProblem(
             self.end_to_end_min_time_lags: list[tuple[Task, Task, int]] = []
         else:
             self.end_to_end_min_time_lags = end_to_end_min_time_lags
+        if no_overlap_sets is None:
+            self.no_overlap_sets = set()
+        else:
+            self.no_overlap_sets = no_overlap_sets
         if isinstance(objective, Objective):
             self.weighted_objectives: tuple[tuple[Objective, int], ...] = (
                 (objective, OBJECTIVE_DEFAULT_WEIGHTS[objective]),
@@ -292,6 +298,9 @@ class GenericSchedulingImplProblem(
             return self.resource_consumptions[task][mode][resource]
         except KeyError:
             return 0
+
+    def get_no_overlap(self) -> set[frozenset[Task]]:
+        return self.no_overlap_sets
 
     @wrapt.lru_cache(maxsize=None)
     def get_resource_availabilities(

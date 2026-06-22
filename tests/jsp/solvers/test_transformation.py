@@ -4,9 +4,6 @@
 
 import pytest
 
-from discrete_optimization.fjsp.transformations.to_rcpsp import (
-    FjspToRcpspTransformation,
-)
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
@@ -17,9 +14,14 @@ from discrete_optimization.generic_tools.transformation.transformation_solver im
     SubBrick,
     TransformationSolver,
 )
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.problem import JobShopProblem
-from discrete_optimization.jsp.transformations.to_fjsp import JspToFjspTransformation
+from discrete_optimization.shop.fjsp.transformations.to_rcpsp import (
+    FjspToRcpspTransformation,
+)
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.problem import JobShopProblem
+from discrete_optimization.shop.jsp.transformations.to_fjsp import (
+    JspToFjspTransformation,
+)
 
 
 @pytest.fixture()
@@ -30,12 +32,12 @@ def problem() -> JobShopProblem:
 
 
 def test_via_fjsp(problem):
-    from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver
+    from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
 
     solver = TransformationSolver(
         transformation=JspToFjspTransformation(),
         source_problem=problem,
-        solver_brick=SubBrick(CpSatFjspSolver, {}),
+        solver_brick=SubBrick(CpSatAutoFjspSolver, {}),
     )
     res = solver.solve(callbacks=[NbIterationStopper(1)])
     sol = res[-1][0]

@@ -6,12 +6,12 @@
 
 from typing import Optional
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
 )
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
+from discrete_optimization.shop.fjsp.problem import FJobShopProblem, FJobShopSolution
 
 
 class FjspToRcpspTransformation(
@@ -56,7 +56,7 @@ class FjspToRcpspTransformation(
         self.tuple_to_task = {}
 
         for job_idx, job in enumerate(source_problem.list_jobs):
-            for subjob_idx in range(len(job.sub_jobs)):
+            for subjob_idx in range(source_problem.nb_subjob_per_job[job_idx]):
                 task_name = self._make_task_name(job_idx, subjob_idx)
                 self.task_to_tuple[task_name] = (job_idx, subjob_idx)
                 self.tuple_to_task[(job_idx, subjob_idx)] = task_name
@@ -81,12 +81,12 @@ class FjspToRcpspTransformation(
 
         # Build mode_details for each task
         for job_idx, job in enumerate(source_problem.list_jobs):
-            for subjob_idx, subjob_options in enumerate(job.sub_jobs):
+            for subjob_idx, subjob_options in enumerate(job.subjobs):
                 task_name = self._make_task_name(job_idx, subjob_idx)
                 mode_details[task_name] = {}
 
                 # Each machine option becomes a mode
-                for mode_idx, subjob in enumerate(subjob_options, start=1):
+                for mode_idx, subjob in enumerate(subjob_options.recipes, start=1):
                     mode = {
                         "duration": subjob.processing_time,
                     }
@@ -96,7 +96,7 @@ class FjspToRcpspTransformation(
                         mode[f"M{machine}"] = 0
 
                     # Set the required machine to 1
-                    mode[f"M{subjob.machine_id}"] = 1
+                    mode[f"M{subjob.machine_index}"] = 1
 
                     mode_details[task_name][mode_idx] = mode
 
@@ -105,16 +105,16 @@ class FjspToRcpspTransformation(
 
         # Add all first subjobs as successors of source
         for job_idx, job in enumerate(source_problem.list_jobs):
-            if len(job.sub_jobs) > 0:
+            if len(job.subjobs) > 0:
                 first_task = self._make_task_name(job_idx, 0)
                 successors[source_task].append(first_task)
 
         # Add precedence within each job
         for job_idx, job in enumerate(source_problem.list_jobs):
-            for subjob_idx in range(len(job.sub_jobs)):
+            for subjob_idx in range(len(job.subjobs)):
                 task_name = self._make_task_name(job_idx, subjob_idx)
 
-                if subjob_idx + 1 < len(job.sub_jobs):
+                if subjob_idx + 1 < len(job.subjobs):
                     # Has a successor within the same job
                     next_task = self._make_task_name(job_idx, subjob_idx + 1)
                     successors[task_name] = [next_task]
@@ -146,8 +146,8 @@ class FjspToRcpspTransformation(
 
         """
         # Build FJSP schedule from RCPSP schedule
-        fjsp_schedule = [[None] * len(job.sub_jobs) for job in source_problem.list_jobs]
-
+        fjsp_schedule = [[None] * len(job.subjobs) for job in source_problem.list_jobs]
+        machine_index = [[None] * len(job.subjobs) for job in source_problem.list_jobs]
         for task_name, task_details in solution.rcpsp_schedule.items():
             if task_name in ["source", "sink"]:
                 continue
@@ -165,25 +165,28 @@ class FjspToRcpspTransformation(
             # Get machine from the chosen option
             machine_id = (
                 source_problem.list_jobs[job_idx]
-                .sub_jobs[subjob_idx][option]
-                .machine_id
+                .subjobs[subjob_idx]
+                .recipes[option]
+                .machine_index
             )
+            fjsp_schedule[job_idx][subjob_idx] = (start, end)
+            machine_index[job_idx][subjob_idx] = machine_id
 
-            fjsp_schedule[job_idx][subjob_idx] = (start, end, machine_id, option)
-
-        return FJobShopSolution(problem=source_problem, schedule=fjsp_schedule)
+        return FJobShopSolution(
+            problem=source_problem, schedule=fjsp_schedule, machine_index=machine_index
+        )
 
     def forward_transform_solution(
         self, solution: FJobShopSolution, target_problem: RcpspProblem
     ) -> Optional[RcpspSolution]:
-        """Transform FlexibleJobShop solution to RCPSP solution (for warmstart).
+        """Transform FlexibleJobShop solution to RCPSP solution (for warm-start).
 
         Args:
             solution: FlexibleJobShop solution
             target_problem: Target RCPSP problem
 
         Returns:
-            Equivalent RCPSP solution for warmstart
+            Equivalent RCPSP solution for warm-start
 
         """
         # Build RCPSP schedule from FJSP schedule
@@ -199,9 +202,9 @@ class FjspToRcpspTransformation(
 
         # Convert FJSP schedule to RCPSP schedule
         for job_idx, job_schedule in enumerate(solution.schedule):
-            for subjob_idx, (start, end, machine_id, option) in enumerate(job_schedule):
+            for subjob_idx, (start, end) in enumerate(job_schedule):
                 task_name = self._make_task_name(job_idx, subjob_idx)
-
+                option = solution.get_mode((job_idx, subjob_idx))
                 rcpsp_schedule[task_name] = {
                     "start_time": start,
                     "end_time": end,

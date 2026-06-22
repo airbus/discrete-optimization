@@ -4,10 +4,10 @@
 
 """Problem transformations for FlexibleJobShop."""
 
-from discrete_optimization.fjsp.transformations.to_rcpsp import (
+from discrete_optimization.shop.fjsp.transformations.to_rcpsp import (
     FjspToRcpspTransformation,
 )
-from discrete_optimization.fjsp.transformations.to_workforce import (
+from discrete_optimization.shop.fjsp.transformations.to_workforce import (
     FjspToWorkforceSchedulingTransformation,
 )
 

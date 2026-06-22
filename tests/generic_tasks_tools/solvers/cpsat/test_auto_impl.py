@@ -3,15 +3,13 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
-import discrete_optimization.fjsp.parser as fjsp_parser
 import numpy as np
 import pytest
-from discrete_optimization.fjsp.problem import FJobShopSolution
-from discrete_optimization.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
 from ortools.sat.python.cp_model import LinearExprT
 
 import discrete_optimization.rcpsp.parser as rcpsp_parser
 import discrete_optimization.rcpsp_multiskill.parser_imopse as parser_imopse
+import discrete_optimization.shop.fjsp.parser as fjsp_parser
 import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
@@ -39,6 +37,8 @@ from discrete_optimization.rcpsp_multiskill.problem import MultiskillRcpspSoluti
 from discrete_optimization.rcpsp_multiskill.solvers.cpsat_auto import (
     CpSatAutoMultiskillRcpspSolver,
 )
+from discrete_optimization.shop.fjsp.problem import FJobShopSolution
+from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
 from discrete_optimization.shop.jsp.problem import JobShopSolution
 from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 

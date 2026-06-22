@@ -22,7 +22,8 @@ from discrete_optimization.generic_tools.transformation.transformation_metadata 
     TransformationMetadata,
     lossy_transformation,
 )
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution, Subjob
+from discrete_optimization.shop.base import Job, Subjob, SubjobRecipe
+from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution
 from discrete_optimization.singlemachine.problem import (
     WeightedTardinessProblem,
     WTSolution,
@@ -110,14 +111,28 @@ class SingleMachineToJspTransformation(
         """
         # Each single-machine job becomes a JSP job with 1 subjob on machine 0
         list_jobs = [
-            [Subjob(machine_id=0, processing_time=source_problem.processing_times[j])]
+            Job(
+                job_index=j,
+                subjobs=[
+                    Subjob(
+                        job_index=j,
+                        subjob_index=0,
+                        recipes=[
+                            SubjobRecipe(
+                                machine_index=0,
+                                processing_time=source_problem.processing_times[j],
+                            )
+                        ],
+                    )
+                ],
+            )
             for j in range(source_problem.num_jobs)
         ]
 
         return JobShopProblem(
             list_jobs=list_jobs,
             n_jobs=source_problem.num_jobs,
-            n_machines=1,  # Single machine
+            n_machines=1,
             horizon=source_problem.get_makespan_upper_bound(),
         )
 

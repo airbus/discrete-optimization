@@ -9,7 +9,7 @@ from discrete_optimization.generic_tools.transformation.transformation_solver im
     SubBrick,
     TransformationSolver,
 )
-from discrete_optimization.jsp.solvers.cpsat import CpSatJspSolver
+from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 from discrete_optimization.singlemachine.transformations.to_jsp import (
     SingleMachineToJspTransformation,
 )
@@ -19,7 +19,7 @@ def test_via_jsp(problem):
     solver = TransformationSolver(
         transformation=SingleMachineToJspTransformation(),
         source_problem=problem,
-        solver_brick=SubBrick(CpSatJspSolver, {}),
+        solver_brick=SubBrick(CpSatAutoJspSolver, {}),
     )
     res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     sol = res.get_best_solution()

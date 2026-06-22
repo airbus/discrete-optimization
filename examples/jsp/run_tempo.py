@@ -4,11 +4,11 @@
 
 import logging
 
-from discrete_optimization.shop.jsp.utils import plot_jobshop_solution
 from matplotlib import pyplot as plt
 
 from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
 from discrete_optimization.shop.jsp.solvers.tempo import TempoJspScheduler
+from discrete_optimization.shop.utils import plot_shop_solution
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -22,7 +22,7 @@ def run_tempo():
     res = solver.solve(time_limit=5)
     sol = res.get_best_solution()
     print(problem.satisfy(sol), problem.evaluate(sol))
-    plot_jobshop_solution(sol)
+    plot_shop_solution(sol)
     plt.show()
 
 
