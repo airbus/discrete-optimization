@@ -200,7 +200,7 @@ jobs:
             extras="${extras}, toulbar"
           fi
 
-          pip install "${wheelfile}[${extras}]" "pytest!=9.1.0" --group test ${additional_specs}
+          pip install "${wheelfile}[${extras}]" "pytest<9.1.0" --group test ${additional_specs}
 
           # Check toulbar install
           if [ "${{ startsWith(matrix.os, 'windows') }}" == false ]; then
