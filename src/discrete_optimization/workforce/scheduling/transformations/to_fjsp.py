@@ -11,12 +11,6 @@ from typing import Optional
 
 import numpy as np
 
-from discrete_optimization.fjsp.problem import (
-    FJobShopProblem,
-    FJobShopSolution,
-    Job,
-    Subjob,
-)
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
 )
@@ -26,6 +20,11 @@ from discrete_optimization.generic_tools.transformation.transformation_metadata 
     LossType,
     TransformationMetadata,
     lossy_transformation,
+)
+from discrete_optimization.shop.base import Job, Subjob, SubjobRecipe
+from discrete_optimization.shop.fjsp.problem import (
+    FJobShopProblem,
+    FJobShopSolution,
 )
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
@@ -164,14 +163,18 @@ class WorkforceSchedulingToFjspTransformation(
             list_jobs=[
                 Job(
                     idx,
-                    sub_jobs=[
-                        [
-                            Subjob(
-                                machine_id=m,
-                                processing_time=jobs[idx]["operations"][0][1],
-                            )
-                            for m in jobs[idx]["operations"][0][0]
-                        ]
+                    subjobs=[
+                        Subjob(
+                            job_index=idx,
+                            subjob_index=0,
+                            recipes=[
+                                SubjobRecipe(
+                                    machine_index=m,
+                                    processing_time=jobs[idx]["operations"][0][1],
+                                )
+                                for m in jobs[idx]["operations"][0][0]
+                            ],
+                        )
                     ],
                 )
                 for idx in range(len(jobs))
@@ -201,7 +204,8 @@ class WorkforceSchedulingToFjspTransformation(
         # Map from job_idx to task_idx
         for task_idx, task in enumerate(source_problem.tasks_list):
             job_idx = task_idx  # One-to-one mapping
-            start, end, machine, _ = solution.schedule[job_idx][0]
+            start, end = solution.schedule[job_idx][0]
+            machine = solution.machine_index[job_idx][0]
             schedule[task_idx, 0] = start
             schedule[task_idx, 1] = end
             allocation[task_idx] = machine
@@ -233,8 +237,14 @@ class WorkforceSchedulingToFjspTransformation(
             machine_id = int(solution.allocation[task_idx])
             option = next(
                 i
-                for i in range(len(target_problem.list_jobs[task_idx][0]))
-                if target_problem.list_jobs[task_idx][0][i].machine_id == machine_id
+                for i in range(
+                    len(target_problem.list_jobs[task_idx].subjobs[0].recipes)
+                )
+                if target_problem.list_jobs[task_idx]
+                .subjobs[0]
+                .recipes[i]
+                .machine_index
+                == machine_id
             )
             # Create operation schedule
             schedule.append([(start, end, machine_id, option)])

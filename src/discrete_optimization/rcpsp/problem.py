@@ -31,6 +31,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 )
 from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
     NoOverlapProblem,
+    WithoutNoOverlapProblem,
 )
 from discrete_optimization.generic_tasks_tools.skill import NoSkill, WithoutSkillProblem
 from discrete_optimization.generic_tools.do_problem import (
@@ -76,6 +77,7 @@ class RcpspProblem(
     GenericSchedulingProblem[
         Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
     ],
+    WithoutNoOverlapProblem[Task],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
@@ -346,10 +348,6 @@ class RcpspProblem(
     def update_resource_availabilities(self) -> None:
         super().update_resource_availabilities()
         self.get_resource_availabilities.cache_clear()
-
-    def get_no_overlap(self) -> set[frozenset[Task]]:
-        # In the future, it could make sense to put some tasks here (sharing same disjunctive constraint)
-        return {}
 
     @property
     def tasks_list(self) -> list[Task]:

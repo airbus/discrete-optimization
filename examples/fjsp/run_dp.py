@@ -4,33 +4,22 @@
 
 import logging
 
-import discrete_optimization.jsp.parser as jsp_parser
-from discrete_optimization.jsp.problem import JobShopProblem
-from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
-
 import discrete_optimization.shop.fjsp.parser as fjsp_parser
+import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.shop.fjsp.problem import FJobShopProblem, Job
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.fjsp.solvers.dp import DpFjspSolver, dp
+from discrete_optimization.shop.jsp.problem import JobShopProblem
 
 logging.basicConfig(level=logging.INFO)
 
 
 def run_dp_jsp():
-    file_path = jsp_parser.get_data_available()[1]
     file_path = [f for f in jsp_parser.get_data_available() if "ta68" in f][0]
     problem: JobShopProblem = jsp_parser.parse_file(file_path)
-    fproblem = FJobShopProblem(
-        list_jobs=[
-            Job(job_id=i, sub_jobs=[[sj] for sj in problem.list_jobs[i]])
-            for i in range(problem.n_jobs)
-        ],
-        n_jobs=problem.n_jobs,
-        n_machines=problem.n_machines,
-    )
-    solver = DpFjspSolver(problem=fproblem)
+    solver = DpFjspSolver(problem=problem)
     res = solver.solve(solver=dp.LNBS, time_limit=20)
     print(res.get_best_solution_fit())
     print(problem.satisfy(res.get_best_solution_fit()[0]))

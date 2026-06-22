@@ -7,7 +7,7 @@ import logging
 from discrete_optimization.generic_tools.callbacks.loggers import ProblemEvaluateLogger
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.shop.fjsp.parser import get_data_available, parse_file
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.solvers.greedy import GreedyShopSolver
 
 logging.basicConfig(level=logging.DEBUG)
@@ -27,7 +27,7 @@ def run_cpsat_jsp():
         problem.n_machines,
         " machines",
     )
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     res = solver.solve(
@@ -54,7 +54,7 @@ def run_cpsat_jsp_warm_start():
     print(
         "Satisfy greedy", problem.satisfy(sol), "Evaluate greedy", problem.evaluate(sol)
     )
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     solver.init_model()
     solver.set_warm_start(sol)
     p = ParametersCp.default_cpsat()

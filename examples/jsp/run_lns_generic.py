@@ -22,7 +22,7 @@ from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
-from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
+from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver
 from examples.fjsp.run_lns_cpsat import ReinitModelCallback
 
 logging.basicConfig(level=logging.INFO)
@@ -32,7 +32,7 @@ def run_lns_cpsat_jsp():
     file_path = get_data_available()[4]
     # file_path = [f for f in get_data_available() if "abz6" in f][0]
     problem = parse_file(file_path)
-    solver = CpSatAutoJspSolver(problem=problem)
+    solver = CpSatJspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 16
     constraint_handler = TasksConstraintHandler(

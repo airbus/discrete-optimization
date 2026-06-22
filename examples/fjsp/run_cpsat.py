@@ -7,7 +7,7 @@ import logging
 import discrete_optimization.shop.fjsp.parser as fjsp_parser
 import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.jsp.problem import JobShopProblem
 
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +17,7 @@ def run_cpsat_jsp():
     file_path = jsp_parser.get_data_available()[1]
     # file_path = [f for f in get_data_available() if "abz6" in f][0]
     problem: JobShopProblem = jsp_parser.parse_file(file_path)
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 12
     res = solver.solve(parameters_cp=p, time_limit=20)
@@ -31,7 +31,7 @@ def run_cpsat_fjsp():
     print(file)
     problem = fjsp_parser.parse_file(file)
     print(problem)
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     res = solver.solve(

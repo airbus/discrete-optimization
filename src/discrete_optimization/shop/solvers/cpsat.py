@@ -45,7 +45,7 @@ class CommonShopCpSatSolver(
     pass
 
 
-class CpSatAutoShopSolver(CommonShopCpSatSolver):
+class CpSatShopSolver(CommonShopCpSatSolver):
     hyperparameters = [
         CategoricalHyperparameter(
             name="duplicate_temporal_var", choices=[True, False], default=False

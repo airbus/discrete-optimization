@@ -11,7 +11,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
-from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
+from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver
 from discrete_optimization.shop.jsp.solvers.dp import DpJspSolver
 
 logging.basicConfig(level=logging.INFO)
@@ -76,7 +76,7 @@ def run_dp_jsp_ws():
     # file_path = get_data_available()[1]
     file_path = [f for f in get_data_available() if "ta68" in f][0]
     problem = parse_file(file_path)
-    solver_ws = CpSatAutoJspSolver(problem)
+    solver_ws = CpSatJspSolver(problem)
     sol_ws = solver_ws.solve(time_limit=2)[0][0]
     print("File path ", file_path)
     solver = DpJspSolver(problem=problem)

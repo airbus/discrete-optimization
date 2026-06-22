@@ -38,9 +38,9 @@ from discrete_optimization.rcpsp_multiskill.solvers.cpsat_auto import (
     CpSatAutoMultiskillRcpspSolver,
 )
 from discrete_optimization.shop.fjsp.problem import FJobShopSolution
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.jsp.problem import JobShopSolution
-from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
+from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver
 
 
 @pytest.mark.parametrize(
@@ -616,7 +616,7 @@ def test_jsp():
     filename = "la02"
     filepath = [f for f in jsp_parser.get_data_available() if f.endswith(filename)][0]
     problem = jsp_parser.parse_file(filepath)
-    solver = CpSatAutoJspSolver(problem=problem)
+    solver = CpSatJspSolver(problem=problem)
     solution: JobShopSolution = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=ParametersCp.default(),
@@ -687,7 +687,7 @@ def test_fjsp():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     solution: FJobShopSolution = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=ParametersCp.default(),

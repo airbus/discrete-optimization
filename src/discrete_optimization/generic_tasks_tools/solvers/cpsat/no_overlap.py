@@ -11,14 +11,13 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
 
 
 class NoOverlapCpSatSolver(SchedulingCpSatSolver[Task]):
-    """Mixin for cpsat solvers dealing with scheduling problems with precedence constraints."""
+    """Mixin for cpsat solvers dealing with scheduling problems
+    with no overlap constraint between set of tasks"""
 
     problem: NoOverlapProblem[Task]
 
     def create_no_overlap_constraints(self):
-        """Add precedence constraints to cp model."""
+        """Add no overlap constraints to cp model."""
         for tasks in self.problem.get_no_overlap():
-            # Not accessible in this mixin.. but ok in execution,
-            # TODO : make this accessible way upper ?!
             intervals = [self.get_task_interval(task) for task in tasks]
             self.cp_model.add_no_overlap(intervals)

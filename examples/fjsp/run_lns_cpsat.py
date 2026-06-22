@@ -25,7 +25,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.shop.fjsp.parser import get_data_available, parse_file
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.fjsp.solvers.lns_cpsat import (
     FjspConstraintHandler,
     NeighborBuilderSubPart,
@@ -48,7 +48,7 @@ def run_lnscpsat_fjsp():
     file = [f for f in files if "Behnke1.fjs" in f][0]
     print(file)
     problem = parse_file(file)
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
     lns_solver = LnsOrtoolsCpSat(
@@ -90,7 +90,7 @@ def run_lns_generic():
     file = [f for f in files if "Behnke55.fjs" in f][0]
     print(file)
     problem = parse_file(file)
-    solver = CpSatAutoFjspSolver(problem=problem)
+    solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
     p.nb_process = 16
     constraint_handler = TasksConstraintHandler(

@@ -4,7 +4,7 @@ from discrete_optimization.generic_tools.callbacks.loggers import ProblemEvaluat
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
 from discrete_optimization.shop.osp.problem import OpenShopProblem
-from discrete_optimization.shop.osp.solvers.cpsat_auto import CpSatAutoOspSolver
+from discrete_optimization.shop.osp.solvers.cpsat import CpSatOspSolver
 from discrete_optimization.shop.osp.solvers.dp import DpOspSolver, dp
 
 logging.basicConfig(level=logging.DEBUG)
@@ -18,7 +18,7 @@ def run_osp():
         n_machines=problem.n_machines,
         horizon=problem.horizon,
     )
-    solver_cpsat = CpSatAutoOspSolver(osp)
+    solver_cpsat = CpSatOspSolver(osp)
     solver_cpsat.init_model(use_cpm_for_task_bounds=False, use_energy_constraints=False)
     res = solver_cpsat.solve(
         parameters_cp=ParametersCp.default_cpsat(),

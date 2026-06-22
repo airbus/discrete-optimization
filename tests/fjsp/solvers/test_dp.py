@@ -10,7 +10,7 @@ import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.fjsp.solvers.dp import DpFjspSolver, dp
 from discrete_optimization.shop.jsp.problem import JobShopProblem
 
@@ -45,7 +45,7 @@ def test_dp_fjsp_ws():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
-    solver_ws = CpSatAutoFjspSolver(problem=problem)
+    solver_ws = CpSatFjspSolver(problem=problem)
     g_sol = solver_ws.solve(time_limit=1)[0][0]
     solver = DpFjspSolver(problem=problem)
     solver.init_model(add_penalty_on_inefficiency=False)

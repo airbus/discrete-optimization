@@ -5,7 +5,7 @@
 from abc import abstractmethod
 from typing import Any, Iterable, Optional
 
-from ortools.sat.python.cp_model import IntVar, LinearExprT
+from ortools.sat.python.cp_model import IntervalVar, IntVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
@@ -51,6 +51,16 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
 
         """
         ...
+
+    def get_task_interval(self, task: Task) -> IntervalVar:
+        """Return interval variable for the task.
+
+        This variable corresponds to the task schedule, whatever the mode.
+        This is needed when wanting to avoid using optional interval,
+        i.e. if `self.avoid_interval_optional` is set to True.
+
+        """
+        raise NotImplementedError
 
     def add_constraint_on_task(
         self, task: Task, start_or_end: StartOrEnd, sign: SignEnum, time: int
