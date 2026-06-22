@@ -36,6 +36,13 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
         """
         ...
 
+    def get_task_allocation(self, task: Task) -> set[UnaryResource]:
+        return {
+            unary_resource
+            for unary_resource in self.problem.unary_resources_list
+            if self.is_allocated(task=task, unary_resource=unary_resource)
+        }
+
     def get_default_tasks_n_unary_resources(
         self,
         tasks: Optional[Iterable[Task]] = None,

@@ -69,6 +69,7 @@ class GenericSchedulingProblem(
     - skill: some cumulative resource are skills that are brought to tasks by allocated unary resources
     - non-renewable: the tasks consume non-renewable resources according to the chosen mode
     - precedence: precedence constraints between tasks
+    - cost: the choice of a mode or of an allocation has a given cost
 
     Even though this class is generic but encompasses also more specific cases:
     - singlemode: actually only one mode per task
@@ -78,6 +79,7 @@ class GenericSchedulingProblem(
     - no calendar: resource capacity can be given as a constant on [0, horizon)
     - no non-renewable ressources: if non_renewable_resources_list empty
     - no precedence constraints: precedence constraints empty
+    - no cost: cost = 0
 
     We suppose that all renewable resources are
     - either cumulative ones
@@ -518,6 +520,8 @@ class GenericSchedulingProblem(
                 ) + variable.compute_aggregated_non_renewable_resources_consumptions(
                     weights=resource_weights
                 )
+            case Objective.COST:
+                return variable.compute_cost()
             case _:
                 raise NotImplementedError()
 
@@ -573,6 +577,37 @@ class GenericSchedulingProblem(
 
         return penalty
 
+    def get_mode_cost(self, task: Task, mode: int) -> int:
+        """Get cost of choosing given mode.
+
+        Default to no cost. To be overridden in child classes with actual costs.
+
+        Args:
+            task:
+            mode:
+
+        Returns:
+
+        """
+        return 0
+
+    def get_unary_resource_cost(
+        self, task: Task, mode: int, unary_resource: UnaryResource
+    ) -> int:
+        """Get cost of allocating given unary resource.
+
+        Default to no cost. To be overridden in child classes with actual costs.
+
+        Args:
+            task:
+            mode:
+            unary_resource:
+
+        Returns:
+
+        """
+        return 0
+
     def __getstate__(self):
         """Get state for pickle.
 
@@ -615,3 +650,19 @@ class GenericSchedulingSolution(
             return super().get_calendar_resource_consumption(
                 resource=resource, task=task
             )
+
+    def compute_cost(self) -> int:
+        return sum(
+            (
+                self.problem.get_mode_cost(
+                    task=task, mode=(mode := self.get_mode(task=task))
+                )
+                + sum(
+                    self.problem.get_unary_resource_cost(
+                        task=task, mode=mode, unary_resource=unary_resource
+                    )
+                    for unary_resource in self.get_task_allocation(task=task)
+                )
+            )
+            for task in self.problem.tasks_list
+        )

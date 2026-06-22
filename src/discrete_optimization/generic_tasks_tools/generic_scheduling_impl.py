@@ -85,6 +85,10 @@ class GenericSchedulingImplProblem(
             Callable[[GenericSchedulingImplSolution], int]
         ] = None,
         objective_resource_weights: Optional[dict[AnyResource, int]] = None,
+        mode_costs: Optional[dict[Task, dict[int, int]]] = None,
+        unary_resource_costs: Optional[
+            dict[Task, dict[int, dict[UnaryResource, int]]]
+        ] = None,
         compute_time_penalty: bool = True,
     ):
         """
@@ -135,6 +139,8 @@ class GenericSchedulingImplProblem(
             objective_resource_weights: Weights to be used by the objective when summing used resources
                 (`Objective.NB_RESOURCES_USED`) or resources levels (`Objective.RESOURCES_LEVELS`).
                 Default to 1 for resources not mentioned.
+            mode_costs: cost of choosing each mode. Missing key => cost = 0.
+            unary_resource_costs: cost of allocating each unary resource. Missing key => cost = 0.
             compute_time_penalty: whether to include time penalties in evaluation
 
         """
@@ -212,6 +218,14 @@ class GenericSchedulingImplProblem(
             self.objective_resource_weights: dict[AnyResource, int] = {}
         else:
             self.objective_resource_weights = objective_resource_weights
+        if mode_costs is None:
+            self.mode_costs = {}
+        else:
+            self.mode_costs = mode_costs
+        if unary_resource_costs is None:
+            self.unary_resource_costs = {}
+        else:
+            self.unary_resource_costs = unary_resource_costs
         self.compute_time_penalty = compute_time_penalty
         self.update_problem()
 
@@ -521,6 +535,20 @@ class GenericSchedulingImplProblem(
     def get_dummy_solution(self) -> Solution:
         raise NotImplementedError()
 
+    def get_mode_cost(self, task: Task, mode: int) -> int:
+        try:
+            return self.mode_costs[task][mode]
+        except KeyError:
+            return super().get_mode_cost(task, mode)
+
+    def get_unary_resource_cost(
+        self, task: Task, mode: int, unary_resource: UnaryResource
+    ) -> int:
+        try:
+            return self.unary_resource_costs[task][mode][unary_resource]
+        except KeyError:
+            return super().get_unary_resource_cost(task, mode, unary_resource)
+
 
 class GenericSchedulingImplSolution(
     GenericSchedulingSolution[
@@ -558,6 +586,9 @@ class GenericSchedulingImplSolution(
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         return unary_resource in self.raw_sol.task_variables[task].allocated
+
+    def get_task_allocation(self, task: Task) -> set[UnaryResource]:
+        return set(self.raw_sol.task_variables[task].allocated)
 
     def copy(self) -> Solution:
         return GenericSchedulingImplSolution(

@@ -63,6 +63,8 @@ class Objective(Enum):
     The weigths are to be defined in `solver.objective_resource_weights`.
 
     """
+    COST = "cost"
+    """Cost of the solution taking into account mode choice and resources consumptions."""
     CUSTOM = "custom_objective"
 
 
@@ -72,6 +74,7 @@ OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
     Objective.NB_UNARY_RESOURCES_USED: -1,
     Objective.NB_RESOURCES_USED: -1,
     Objective.RESOURCES_LEVELS: -1,
+    Objective.COST: -1,
     Objective.CUSTOM: 1,
 }
 """Default weight applied to a given objective so that it will be *maximized*."""
