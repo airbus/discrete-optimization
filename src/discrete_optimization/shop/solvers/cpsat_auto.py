@@ -1,27 +1,13 @@
-#  Copyright (c) 2024 AIRBUS and its affiliates.
+#  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
 import logging
 from typing import Any
 
-from discrete_optimization.fjsp.problem import (
-    FJobShopProblem,
-    FJobShopSolution,
-    NonSkillCumulativeResource,
-    Task,
-)
-from discrete_optimization.generic_tasks_tools.allocation import (
-    NoUnaryResource,
-    UnaryResource,
-)
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
-from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
-    NoNonRenewableResource,
-)
-from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
@@ -31,11 +17,20 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
+from discrete_optimization.shop.base import (
+    AnyShopSolution,
+    CommonShopProblem,
+    NoNonRenewableResource,
+    NonSkillCumulativeResource,
+    NoSkill,
+    NoUnaryResource,
+    Task,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class CpSatAutoFjspSolver(
+class CommonShopCpSatSolver(
     GenericSchedulingAutoCpSatSolver[
         Task,
         NoUnaryResource,
@@ -47,6 +42,10 @@ class CpSatAutoFjspSolver(
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
 ):
+    pass
+
+
+class CpSatAutoShopSolver(CommonShopCpSatSolver):
     hyperparameters = [
         CategoricalHyperparameter(
             name="duplicate_temporal_var", choices=[True, False], default=False
@@ -55,7 +54,8 @@ class CpSatAutoFjspSolver(
             name="add_cumulative_constraint", choices=[True, False], default=False
         ),
     ]
-    problem: FJobShopProblem
+    problem: CommonShopProblem
+    _max_time: int
 
     def init_model(self, **kwargs: Any) -> None:
         # optional parameters
@@ -77,9 +77,9 @@ class CpSatAutoFjspSolver(
             return min(self._max_time, super().get_makespan_upper_bound())
 
     def convert_task_variables_to_solution(
-        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
-    ) -> FJobShopSolution:
-        schedule = [
+        self, raw_sol: RawSolution[Task, NoUnaryResource, NoSkill]
+    ) -> AnyShopSolution:
+        schedule_and_machine = [
             [
                 (
                     (task_var := raw_sol.task_variables[j, k]).start,
@@ -87,8 +87,15 @@ class CpSatAutoFjspSolver(
                     self.problem.mode2machine[j, k][task_var.mode],
                     task_var.mode,
                 )
-                for k, sub_job in enumerate(job.sub_jobs)
+                for k, sub_job in enumerate(job.subjobs)
             ]
             for j, job in enumerate(self.problem.list_jobs)
         ]
-        return FJobShopSolution(problem=self.problem, schedule=schedule)
+        return AnyShopSolution(
+            problem=self.problem,
+            schedule=[
+                [(x[0], x[1]) for x in sched_i] for sched_i in schedule_and_machine
+            ],
+            machine_index=[[x[2] for x in sched_i] for sched_i in schedule_and_machine],
+            recipe_index=[[x[3] for x in sched_i] for sched_i in schedule_and_machine],
+        )

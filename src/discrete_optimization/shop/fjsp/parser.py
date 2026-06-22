@@ -6,10 +6,9 @@ import re
 from typing import Optional
 
 from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
-from discrete_optimization.fjsp.problem import (
+from discrete_optimization.shop.base import Job, Subjob, SubjobRecipe
+from discrete_optimization.shop.fjsp.problem import (
     FJobShopProblem,
-    Job,
-    Subjob,
 )
 
 
@@ -58,13 +57,25 @@ def parse_file(file_path: str):
                     nb_alternative = numbers[cur_index]
                     cur_index += 1
                     for i in range(nb_alternative):
-                        sub = Subjob(
-                            machine_id=numbers[cur_index] - 1,
+                        sub = SubjobRecipe(
+                            machine_index=numbers[cur_index] - 1,
                             processing_time=numbers[cur_index + 1],
                         )
                         options.append(sub)
                         cur_index += 2
                     subjobs.append(options)
                     i_subjob += 1
-                list_jobs.append(Job(job_id=k - 1, sub_jobs=subjobs))
+                list_jobs.append(
+                    Job(
+                        job_index=k - 1,
+                        subjobs=[
+                            Subjob(
+                                subjob_index=sub_index,
+                                job_index=k - 1,
+                                recipes=[opt for opt in option],
+                            )
+                            for sub_index, option in enumerate(subjobs)
+                        ],
+                    )
+                )
         return FJobShopProblem(list_jobs=list_jobs)

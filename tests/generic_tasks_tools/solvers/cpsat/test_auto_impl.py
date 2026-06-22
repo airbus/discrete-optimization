@@ -3,16 +3,16 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
+import discrete_optimization.fjsp.parser as fjsp_parser
 import numpy as np
 import pytest
-from ortools.sat.python.cp_model import LinearExprT
-
-import discrete_optimization.fjsp.parser as fjsp_parser
-import discrete_optimization.jsp.parser as jsp_parser
-import discrete_optimization.rcpsp.parser as rcpsp_parser
-import discrete_optimization.rcpsp_multiskill.parser_imopse as parser_imopse
 from discrete_optimization.fjsp.problem import FJobShopSolution
 from discrete_optimization.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from ortools.sat.python.cp_model import LinearExprT
+
+import discrete_optimization.rcpsp.parser as rcpsp_parser
+import discrete_optimization.rcpsp_multiskill.parser_imopse as parser_imopse
+import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
     GenericSchedulingImplSolution,
@@ -29,8 +29,6 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.jsp.problem import JobShopSolution
-from discrete_optimization.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 from discrete_optimization.rcpsp import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
@@ -41,6 +39,8 @@ from discrete_optimization.rcpsp_multiskill.problem import MultiskillRcpspSoluti
 from discrete_optimization.rcpsp_multiskill.solvers.cpsat_auto import (
     CpSatAutoMultiskillRcpspSolver,
 )
+from discrete_optimization.shop.jsp.problem import JobShopSolution
+from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
 
 
 @pytest.mark.parametrize(

@@ -4,9 +4,12 @@
 
 import pytest
 
-import discrete_optimization.fjsp.parser as fjsp_parser
-from discrete_optimization.fjsp.solvers.optal import OptalFJspSolver, optalcp_available
+import discrete_optimization.shop.fjsp.parser as fjsp_parser
 from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.shop.fjsp.solvers.optal import (
+    OptalFJspSolver,
+    optalcp_available,
+)
 
 
 @pytest.mark.skipif(

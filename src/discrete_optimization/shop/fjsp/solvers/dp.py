@@ -4,13 +4,13 @@
 import re
 from typing import Any
 
-from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, dp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
+from discrete_optimization.shop.fjsp.problem import FJobShopProblem, FJobShopSolution
 
 
 class DpFjspSolver(DpSolver, WarmstartMixin):
@@ -34,22 +34,22 @@ class DpFjspSolver(DpSolver, WarmstartMixin):
         len_ = 0
         while len_ < self.problem.n_all_jobs:
             for i in range(self.problem.n_jobs):
-                if cur_sub_job_per_jobs[i] < len(self.problem.list_jobs[i].sub_jobs):
+                if cur_sub_job_per_jobs[i] < self.problem.nb_subjob_per_job[i]:
                     jobs.append((i, cur_sub_job_per_jobs[i]))
                     durations.append(
                         [
                             x.processing_time
-                            for x in self.problem.list_jobs[i].sub_jobs[
-                                cur_sub_job_per_jobs[i]
-                            ]
+                            for x in self.problem.list_jobs[i]
+                            .subjobs[cur_sub_job_per_jobs[i]]
+                            .recipes
                         ]
                     )
                     machines.append(
                         [
-                            x.machine_id
-                            for x in self.problem.list_jobs[i].sub_jobs[
-                                cur_sub_job_per_jobs[i]
-                            ]
+                            x.machine_index
+                            for x in self.problem.list_jobs[i]
+                            .subjobs[cur_sub_job_per_jobs[i]]
+                            .recipes
                         ]
                     )
                     job_id.append(i)
@@ -59,15 +59,13 @@ class DpFjspSolver(DpSolver, WarmstartMixin):
         precedence_by_index = [set() for i in range(self.problem.n_all_jobs)]
         successors_by_index = [set() for i in range(self.problem.n_all_jobs)]
         for i in range(self.problem.n_jobs):
-            for j in range(1, len(self.problem.list_jobs[i].sub_jobs)):
+            for j in range(1, self.problem.nb_subjob_per_job[i]):
                 ind = index[(i, j)]
                 ind_pred = index[(i, j - 1)]
                 precedence_by_index[ind].add(ind_pred)
                 successors_by_index[ind_pred].add(ind)
 
         task = model.add_object_type(number=self.problem.n_all_jobs)
-        job = model.add_object_type(number=self.problem.n_jobs)
-        to_job = model.add_int_table(job_id)
         done = model.add_set_var(object_type=task, target=set())
         undone = model.add_set_var(
             object_type=task, target=range(self.problem.n_all_jobs)
@@ -189,6 +187,8 @@ class DpFjspSolver(DpSolver, WarmstartMixin):
 
         schedule_per_machine = {m: [] for m in range(self.problem.n_machines)}
         schedules = {}
+        machine_index = {}
+        recipe_index = {}
         state = self.model.target_state
 
         for transition in sol.transitions:
@@ -204,14 +204,24 @@ class DpFjspSolver(DpSolver, WarmstartMixin):
                     start = max(start, schedules[(j[0], j[1] - 1)][1])
                 end = start + self.duration[t_number][choice]
                 schedule_per_machine[m].append((start, end))
-                schedules[j] = (start, end, m, choice)
+                schedules[j] = (start, end)
+                machine_index[j] = m
+                recipe_index[j] = choice
         sol = FJobShopSolution(
             problem=self.problem,
             schedule=[
+                [schedules[(i, j)] for j in range(self.problem.nb_subjob_per_job[i])]
+                for i in range(self.problem.n_jobs)
+            ],
+            machine_index=[
                 [
-                    schedules[(i, j)]
-                    for j in range(len(self.problem.list_jobs[i].sub_jobs))
+                    machine_index[(i, j)]
+                    for j in range(self.problem.nb_subjob_per_job[i])
                 ]
+                for i in range(self.problem.n_jobs)
+            ],
+            recipe_index=[
+                [recipe_index[(i, j)] for j in range(self.problem.nb_subjob_per_job[i])]
                 for i in range(self.problem.n_jobs)
             ],
         )
@@ -224,7 +234,8 @@ class DpFjspSolver(DpSolver, WarmstartMixin):
             for i in range(len(self.jobs))
         ]
         sorted_flatten = sorted(flatten_schedule, key=lambda x: (x[1][0], x[1][1]))
-        for index, (start, end, machine, i_opt) in sorted_flatten:
+        for index, (start, end) in sorted_flatten:
+            machine = solution.get_machine((self.jobs[index][0], self.jobs[index][1]))
             m_ind = self.machines[index].index(machine)
             initial_solution.append(self.transitions[(index, m_ind)])
         initial_solution.append(self.transitions["finish_"])

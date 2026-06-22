@@ -3,8 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 import pytest
 
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.problem import JobShopProblem
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.problem import JobShopProblem
 
 
 @pytest.mark.parametrize("jsp_file", get_data_available())

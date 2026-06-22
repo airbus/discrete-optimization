@@ -7,12 +7,13 @@ from typing import Any
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, dp
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution
+from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution
 
 
 class DpJspSolver(DpSolver, WarmstartMixin):
     hyperparameters = DpSolver.hyperparameters
     problem: JobShopProblem
+    transitions: dict
 
     def init_model(self, **kwargs: Any) -> None:
         model = dp.Model()
@@ -25,15 +26,19 @@ class DpJspSolver(DpSolver, WarmstartMixin):
         len_ = 0
         while len_ < self.problem.n_all_jobs:
             for i in range(self.problem.n_jobs):
-                if cur_sub_job_per_jobs[i] < len(self.problem.list_jobs[i]):
+                if cur_sub_job_per_jobs[i] < self.problem.nb_subjob_per_job[i]:
                     jobs.append((i, cur_sub_job_per_jobs[i]))
                     durations.append(
-                        self.problem.list_jobs[i][
-                            cur_sub_job_per_jobs[i]
-                        ].processing_time
+                        self.problem.list_jobs[i]
+                        .subjobs[cur_sub_job_per_jobs[i]]
+                        .recipes[0]
+                        .processing_time
                     )
                     machines.append(
-                        self.problem.list_jobs[i][cur_sub_job_per_jobs[i]].machine_id
+                        self.problem.list_jobs[i]
+                        .subjobs[cur_sub_job_per_jobs[i]]
+                        .recipes[0]
+                        .machine_index
                     )
                     job_id.append(i)
                     index[(i, cur_sub_job_per_jobs[i])] = len_
@@ -42,15 +47,13 @@ class DpJspSolver(DpSolver, WarmstartMixin):
         precedence_by_index = [set() for i in range(self.problem.n_all_jobs)]
         successors_by_index = [set() for i in range(self.problem.n_all_jobs)]
         for i in range(self.problem.n_jobs):
-            for j in range(1, len(self.problem.list_jobs[i])):
+            for j in range(1, self.problem.nb_subjob_per_job[i]):
                 ind = index[(i, j)]
                 ind_pred = index[(i, j - 1)]
                 precedence_by_index[ind].add(ind_pred)
                 successors_by_index[ind_pred].add(ind)
 
         task = model.add_object_type(number=self.problem.n_all_jobs)
-        job = model.add_object_type(number=self.problem.n_jobs)
-        to_job = model.add_int_table(job_id)
         done = model.add_set_var(object_type=task, target=set())
         undone = model.add_set_var(
             object_type=task, target=range(self.problem.n_all_jobs)
@@ -161,7 +164,7 @@ class DpJspSolver(DpSolver, WarmstartMixin):
         sol = JobShopSolution(
             problem=self.problem,
             schedule=[
-                [schedules[(i, j)] for j in range(len(self.problem.list_jobs[i]))]
+                [schedules[(i, j)] for j in range(self.problem.nb_subjob_per_job[i])]
                 for i in range(self.problem.n_jobs)
             ],
         )

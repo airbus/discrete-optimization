@@ -943,6 +943,8 @@ class GenericSchedulingAutoCpSatSolver(
         if self.use_energy_constraints:
             branches = self.prepare_energy_constraints()
             self.create_energy_constraints(branches=branches)
+        # no overlap
+        self.create_no_overlap_constraints()
 
     def _set_objective(self) -> None:
         if self.objective == Objective.CUSTOM:

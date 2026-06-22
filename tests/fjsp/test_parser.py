@@ -4,7 +4,7 @@
 
 import pytest
 
-from discrete_optimization.fjsp.parser import get_data_available
+from discrete_optimization.shop.fjsp.parser import get_data_available
 
 
 def test_no_dataset(fake_data_home):

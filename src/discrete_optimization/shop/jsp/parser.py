@@ -1,11 +1,12 @@
-#  Copyright (c) 2024 AIRBUS and its affiliates.
+#  Copyright (c) 2024-2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import os
 from typing import Optional
 
 from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
-from discrete_optimization.jsp.problem import JobShopProblem, Subjob
+from discrete_optimization.shop.base import Job, Subjob, SubjobRecipe
+from discrete_optimization.shop.jsp.problem import JobShopProblem
 
 
 def get_data_available(
@@ -35,7 +36,7 @@ def parse_file(file_path: str):
     with open(file_path, "r") as file:
         lines = file.readlines()
         processed_line = 0
-        problem = []
+        jobs = []
         for line in lines:
             if not (line.startswith("#")):
                 split_line = line.split()
@@ -49,8 +50,24 @@ def parse_file(file_path: str):
                             machine = int(n)
                         else:
                             job.append(
-                                {"machine_id": machine, "processing_time": int(n)}
+                                {"machine_index": machine, "processing_time": int(n)}
                             )
-                    problem.append(job)
+                    jobs.append(job)
                 processed_line += 1
-    return JobShopProblem(list_jobs=[[Subjob(**x) for x in y] for y in problem])
+    list_jobs = []
+    for job_index, job in enumerate(jobs):
+        subjobs = [
+            Subjob(
+                subjob_index=subjob_index,
+                job_index=job_index,
+                recipes=[
+                    SubjobRecipe(
+                        machine_index=subjob["machine_index"],
+                        processing_time=subjob["processing_time"],
+                    )
+                ],
+            )
+            for subjob_index, subjob in enumerate(job)
+        ]
+        list_jobs.append(Job(job_index=job_index, subjobs=subjobs))
+    return JobShopProblem(list_jobs=list_jobs, n_jobs=len(list_jobs))

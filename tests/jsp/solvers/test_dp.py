@@ -6,9 +6,9 @@ import didppy as dp
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.solvers.cpsat import CpSatJspSolver
-from discrete_optimization.jsp.solvers.dp import DpJspSolver
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
+from discrete_optimization.shop.jsp.solvers.dp import DpJspSolver
 
 
 def test_dp_jsp():
@@ -22,7 +22,7 @@ def test_dp_jsp_ws():
     # file_path = get_data_available()[1]
     file_path = [f for f in get_data_available() if "ta68" in f][0]
     problem = parse_file(file_path)
-    solver_ws = CpSatJspSolver(problem)
+    solver_ws = CpSatAutoJspSolver(problem)
     sol_ws = solver_ws.solve(time_limit=5, callbacks=[NbIterationStopper(1)])[0][0]
     solver = DpJspSolver(problem=problem)
     solver.init_model()

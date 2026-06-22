@@ -5,15 +5,14 @@
 import logging
 import os
 
-import discrete_optimization.fjsp.parser as fjsp_parser
-import discrete_optimization.jsp.parser as jsp_parser
-from discrete_optimization.fjsp.problem import FJobShopProblem, Job
-from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver
-from discrete_optimization.fjsp.solvers.dp import DpFjspSolver, dp
+import discrete_optimization.shop.fjsp.parser as fjsp_parser
+import discrete_optimization.shop.jsp.parser as jsp_parser
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.jsp.problem import JobShopProblem
+from discrete_optimization.shop.fjsp.solvers.cpsat_auto import CpSatAutoFjspSolver
+from discrete_optimization.shop.fjsp.solvers.dp import DpFjspSolver, dp
+from discrete_optimization.shop.jsp.problem import JobShopProblem
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,18 +22,10 @@ def test_fjsp_solver_on_jsp():
         f for f in jsp_parser.get_data_available() if os.path.basename(f) == "orb10"
     ][0]
     problem: JobShopProblem = jsp_parser.parse_file(file_path)
-    fproblem = FJobShopProblem(
-        list_jobs=[
-            Job(job_id=i, sub_jobs=[[sj] for sj in problem.list_jobs[i]])
-            for i in range(problem.n_jobs)
-        ],
-        n_jobs=problem.n_jobs,
-        n_machines=problem.n_machines,
-    )
-    solver = DpFjspSolver(problem=fproblem)
+    solver = DpFjspSolver(problem=problem)
     res = solver.solve(solver=dp.LNBS, time_limit=1)
     sol, _ = res.get_best_solution_fit()
-    assert fproblem.satisfy(sol)
+    assert problem.satisfy(sol)
 
 
 def test_dp_fjsp():
@@ -54,7 +45,7 @@ def test_dp_fjsp_ws():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
-    solver_ws = CpSatFjspSolver(problem=problem)
+    solver_ws = CpSatAutoFjspSolver(problem=problem)
     g_sol = solver_ws.solve(time_limit=1)[0][0]
     solver = DpFjspSolver(problem=problem)
     solver.init_model(add_penalty_on_inefficiency=False)

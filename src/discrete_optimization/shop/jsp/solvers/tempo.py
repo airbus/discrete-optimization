@@ -11,7 +11,7 @@ from discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools import (
     FormatEnum,
     TempoSchedulingSolver,
 )
-from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution
+from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,9 @@ def from_jsp_to_jsplib(problem: JobShopProblem) -> str:
     # --- Job lines ---
     for job in problem.list_jobs:
         line_items = []
-        for subjob in job:
-            line_items.append(str(subjob.machine_id))
-            line_items.append(str(subjob.processing_time))
+        for subjob in job.subjobs:
+            line_items.append(str(subjob.recipes[0].machine_index))
+            line_items.append(str(subjob.recipes[0].processing_time))
         output += " ".join(line_items) + "\n"
 
     return output
@@ -47,10 +47,10 @@ def parse_output(solver_output: str, problem: JobShopProblem) -> JobShopSolution
     current_index = 2
     for i in range(problem.n_jobs):
         job_i = problem.list_jobs[i]
-        len_sub = len(job_i)
+        len_sub = len(job_i.subjobs)
         sched = []
         for j in range(len_sub):
-            duration = job_i[j].processing_time
+            duration = job_i.subjobs[j].recipes[0].processing_time
             st = -x[current_index + j]
             sched.append((st, st + duration))
 
@@ -71,15 +71,16 @@ class TempoJspScheduler(TempoSchedulingSolver):
             full_sched = []
             for i in range(self.problem.n_jobs):
                 job_i = self.problem.list_jobs[i]
-                len_sub = len(job_i)
+                len_sub = len(job_i.subjobs)
                 sched = []
                 for j in range(len_sub):
-                    duration = job_i[j].processing_time
+                    duration = job_i.subjobs[j].recipes[0].processing_time
                     st = dict_["tasks"][current_index + j]["start"][0]
                     sched.append((st, st + duration))
                 full_sched.append(sched)
                 current_index += len_sub
             return JobShopSolution(problem=self.problem, schedule=full_sched)
+        return None
 
     def init_model(self, **kwargs: Any) -> None:
         self._input_format = FormatEnum.JSP

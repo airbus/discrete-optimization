@@ -4,15 +4,16 @@
 
 import logging
 
-import discrete_optimization.fjsp.parser as fjsp_parser
 import discrete_optimization.jsp.parser as jsp_parser
-from discrete_optimization.fjsp.problem import FJobShopProblem, Job
-from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver
-from discrete_optimization.fjsp.solvers.dp import DpFjspSolver, dp
+from discrete_optimization.jsp.problem import JobShopProblem
+from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
+
+import discrete_optimization.shop.fjsp.parser as fjsp_parser
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.jsp.problem import JobShopProblem
+from discrete_optimization.shop.fjsp.problem import FJobShopProblem, Job
+from discrete_optimization.shop.fjsp.solvers.dp import DpFjspSolver, dp
 
 logging.basicConfig(level=logging.INFO)
 

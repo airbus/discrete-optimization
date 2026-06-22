@@ -17,6 +17,10 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
     Penalty,
 )
+from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+    NoOverlapProblem,
+    NoOverlapSolution,
+)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
     NonRenewableResourceProblem,
@@ -54,6 +58,7 @@ class GenericSchedulingProblem(
     PrecedenceSchedulingProblem[Task],
     TimelagProblem[Task],
     TimewindowProblem[Task],
+    NoOverlapProblem[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
@@ -608,6 +613,75 @@ class GenericSchedulingProblem(
         """
         return 0
 
+    def satisfy(self, variable: "GenericSchedulingSolution") -> bool:
+        return self.satisfy_partial(variable=variable)
+
+    def satisfy_partial(
+        self,
+        variable: "GenericSchedulingSolution",
+        duration: bool = True,
+        calendar: bool = True,
+        non_renewable_capacity: bool = True,
+        precedence: bool = True,
+        skill: bool = True,
+        allocation: bool = True,
+        time_lags: bool = True,
+        time_windows: bool = True,
+        no_overlap: bool = True,
+    ) -> bool:
+        """Partial checks on solution.
+
+        One can switch off some checks by setting the corresponding parameter to False.
+
+        Args:
+            variable:
+            duration:
+            calendar:
+            non_renewable_capacity:
+            precedence:
+            skill:
+            allocation:
+            time_lags:
+            time_windows:
+            no_overlap:
+
+        Returns:
+
+        """
+        return (
+            # duration consistency
+            (not duration or variable.check_duration_constraints())
+            # calendar resources capacity violations (unary resources + skills + cumulative resources)
+            and (
+                not calendar
+                or variable.check_all_calendar_resource_capacity_constraints()
+            )
+            # non-renewable resource violation
+            and (
+                not non_renewable_capacity
+                or variable.check_all_non_renewable_resource_capacity_constraints()
+            )
+            # precedence relations
+            and (not precedence or variable.check_precedence_constraints())
+            # skill constraints
+            and (
+                not skill
+                or (
+                    variable.check_skill_constraints()
+                    and variable.check_only_one_skill_per_task_and_unary_resource()
+                    # Check consistency between compatibility/allocation/skill usage
+                    and variable.check_skill_usage_and_allocation_consistency()
+                )
+            )
+            and (not allocation or variable.check_allocation_consistency())
+            # time lags
+            and (not time_lags or variable.check_time_lags())
+            # time window
+            and (not time_windows or variable.check_time_windows())
+            # no overlap
+            and (not no_overlap or variable.check_no_overlap())
+        )
+
 
 class GenericSchedulingSolution(
     SkillSolution[
@@ -617,6 +691,7 @@ class GenericSchedulingSolution(
     PrecedenceSchedulingSolution[Task],
     TimelagSolution[Task],
     TimewindowSolution[Task],
+    NoOverlapSolution[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],

@@ -10,11 +10,9 @@ from didppy import BeamParallelizationMethod
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.solvers.cpsat import CpSatJspSolver
-from discrete_optimization.jsp.solvers.dp import DpJspSolver
-from discrete_optimization.jsp.utils import transform_jsp_to_rcpsp
-from discrete_optimization.rcpsp.solvers.dp import DpRcpspSolver
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.solvers.cpsat_auto import CpSatAutoJspSolver
+from discrete_optimization.shop.jsp.solvers.dp import DpJspSolver
 
 logging.basicConfig(level=logging.INFO)
 
@@ -78,7 +76,7 @@ def run_dp_jsp_ws():
     # file_path = get_data_available()[1]
     file_path = [f for f in get_data_available() if "ta68" in f][0]
     problem = parse_file(file_path)
-    solver_ws = CpSatJspSolver(problem)
+    solver_ws = CpSatAutoJspSolver(problem)
     sol_ws = solver_ws.solve(time_limit=2)[0][0]
     print("File path ", file_path)
     solver = DpJspSolver(problem=problem)
@@ -97,23 +95,5 @@ def run_dp_jsp_ws():
     print(problem.evaluate(sol))
 
 
-def run_dp_of_rcpsp():
-    file_path = [f for f in get_data_available() if "ta68" in f][0]
-    problem = parse_file(file_path)
-    rcpsp_problem = transform_jsp_to_rcpsp(problem)
-    solver = DpRcpspSolver(rcpsp_problem)
-    solver.init_model()
-    res = solver.solve(
-        solver=dp.LNBS,
-        time_limit=100,
-        max_beam_size=2048,
-        keep_all_layers=False,
-        parallelization_method=BeamParallelizationMethod.Hdbs2,
-    )
-    sol = res.get_best_solution_fit()[0]
-    assert rcpsp_problem.satisfy(sol)
-    print(rcpsp_problem.evaluate(sol))
-
-
 if __name__ == "__main__":
-    run_dp_of_rcpsp()
+    run_dp_jsp()

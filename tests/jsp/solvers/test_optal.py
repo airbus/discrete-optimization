@@ -5,8 +5,11 @@
 import pytest
 
 from discrete_optimization.generic_tools.do_solver import StatusSolver
-from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.solvers.optal import OptalJspSolver, optalcp_available
+from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
+from discrete_optimization.shop.jsp.solvers.optal import (
+    OptalJspSolver,
+    optalcp_available,
+)
 
 
 @pytest.mark.skipif(

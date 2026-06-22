@@ -3,41 +3,56 @@
 #  LICENSE file in the root directory of this source tree.
 
 
-from discrete_optimization.fjsp.problem import Job
-from discrete_optimization.fjsp.solvers.cpsat_auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cpm import Cpm
+from discrete_optimization.shop.base import Job, Subjob, SubjobRecipe
+from discrete_optimization.shop.fjsp.problem import (
     FJobShopProblem,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpm import Cpm
-from discrete_optimization.jsp.problem import Subjob
 
 
 def test_cpm_1_critical_path():
     problem = FJobShopProblem(
         list_jobs=[
             Job(
-                job_id=0,
-                sub_jobs=[
-                    [
-                        Subjob(machine_id=0, processing_time=1),
-                        Subjob(machine_id=1, processing_time=2),
-                    ],
-                    [
-                        Subjob(machine_id=0, processing_time=2),
-                        Subjob(machine_id=1, processing_time=1),
-                    ],
+                job_index=0,
+                subjobs=[
+                    Subjob(
+                        0,
+                        0,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=1),
+                            SubjobRecipe(machine_index=1, processing_time=2),
+                        ],
+                    ),
+                    Subjob(
+                        1,
+                        0,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=2),
+                            SubjobRecipe(machine_index=1, processing_time=1),
+                        ],
+                    ),
                 ],
             ),
             Job(
-                job_id=1,
-                sub_jobs=[
-                    [
-                        Subjob(machine_id=0, processing_time=1),
-                        Subjob(machine_id=1, processing_time=2),
-                    ],
-                    [
-                        Subjob(machine_id=0, processing_time=2),
-                        Subjob(machine_id=1, processing_time=3),
-                    ],
+                job_index=1,
+                subjobs=[
+                    Subjob(
+                        0,
+                        1,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=1),
+                            SubjobRecipe(machine_index=1, processing_time=2),
+                        ],
+                    ),
+                    Subjob(
+                        1,
+                        1,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=2),
+                            SubjobRecipe(machine_index=1, processing_time=3),
+                        ],
+                    ),
                 ],
             ),
         ]
@@ -51,29 +66,45 @@ def test_cpm_2_critical_paths():
     problem = FJobShopProblem(
         list_jobs=[
             Job(
-                job_id=0,
-                sub_jobs=[
-                    [
-                        Subjob(machine_id=0, processing_time=1),
-                        Subjob(machine_id=1, processing_time=2),
-                    ],
-                    [
-                        Subjob(machine_id=0, processing_time=2),
-                        Subjob(machine_id=1, processing_time=1),
-                    ],
+                job_index=0,
+                subjobs=[
+                    Subjob(
+                        0,
+                        0,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=1),
+                            SubjobRecipe(machine_index=1, processing_time=2),
+                        ],
+                    ),
+                    Subjob(
+                        1,
+                        0,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=2),
+                            SubjobRecipe(machine_index=1, processing_time=1),
+                        ],
+                    ),
                 ],
             ),
             Job(
-                job_id=1,
-                sub_jobs=[
-                    [
-                        Subjob(machine_id=0, processing_time=1),
-                        Subjob(machine_id=1, processing_time=2),
-                    ],
-                    [
-                        Subjob(machine_id=0, processing_time=1),
-                        Subjob(machine_id=1, processing_time=3),
-                    ],
+                job_index=1,
+                subjobs=[
+                    Subjob(
+                        0,
+                        1,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=1),
+                            SubjobRecipe(machine_index=1, processing_time=2),
+                        ],
+                    ),
+                    Subjob(
+                        1,
+                        1,
+                        [
+                            SubjobRecipe(machine_index=0, processing_time=1),
+                            SubjobRecipe(machine_index=1, processing_time=3),
+                        ],
+                    ),
                 ],
             ),
         ]
