@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.transformation.problem_transformation &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.transformation.problem_transformation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.transformation.problem_transformation</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Base class for problem transformations.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">exact_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">P1</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Problem</span><span class="p">)</span>
+<span class="n">P2</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Problem</span><span class="p">)</span>
+<span class="n">S1</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;S1&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Solution</span><span class="p">)</span>
+<span class="n">S2</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;S2&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Solution</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ProblemTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProblemTransformation</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">P1</span><span class="p">,</span> <span class="n">S1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">S2</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for transforming between two problem types.</span>
+
+<span class="sd">    A transformation defines:</span>
+<span class="sd">    1. How to convert problem P1 → P2 (required)</span>
+<span class="sd">    2. How to convert solutions S2 → S1 (required, for back-transformation)</span>
+<span class="sd">    3. How to convert solutions S1 → S2 (optional, for warmstart support)</span>
+<span class="sd">    4. Metadata documenting what&#39;s lost/gained in EACH direction (recommended)</span>
+
+<span class="sd">    The transformation is stateless and can be reused across multiple problem instances.</span>
+
+<span class="sd">    Important: Transformations can be asymmetric!</span>
+<span class="sd">    - Forward problem transformation (P1 → P2) may be lossy</span>
+<span class="sd">    - Backward solution transformation (S2 → S1) may be exact (or vice versa)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        BinPack → SALBP transformation:</span>
+<span class="sd">        - Forward (problem): Lossy (incompatibility constraints lost)</span>
+<span class="sd">        - Backward (solution): Exact (SALBP solutions map perfectly to BinPack)</span>
+
+<span class="sd">        # &gt;&gt;&gt; class BinpackToSalbpTransformation(ProblemTransformation):</span>
+<span class="sd">        # ...     def get_forward_metadata(self):</span>
+<span class="sd">        # ...         # Problem transformation: BinPack → SALBP (lossy)</span>
+<span class="sd">        # ...         return lossy_transformation(</span>
+<span class="sd">        # ...             losses=[InformationLoss(</span>
+<span class="sd">        # ...                 name=&quot;incompatibility_constraints&quot;,</span>
+<span class="sd">        # ...                 loss_type=LossType.CONSTRAINT,</span>
+<span class="sd">        # ...                 description=&quot;Item incompatibility constraints&quot;,</span>
+<span class="sd">        # ...                 reason=&quot;SALBP has no incompatibility concept&quot;,</span>
+<span class="sd">        # ...                 impact=LossImpact.MAJOR</span>
+<span class="sd">        # ...             )]</span>
+<span class="sd">        # ...         )</span>
+<span class="sd">        # ...</span>
+<span class="sd">        # ...     def get_backward_metadata(self):</span>
+<span class="sd">        # ...         # Solution transformation: SALBP solution → BinPack solution (exact)</span>
+<span class="sd">        # ...         return exact_transformation(</span>
+<span class="sd">        # ...             use_cases=[&quot;Direct mapping: stations → bins&quot;]</span>
+<span class="sd">        # ...         )</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProblemTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.transform_problem">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">P1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">P2</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform source problem to target problem.</span>
+
+<span class="sd">        This method should be deterministic: same source → same target.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: The original problem to transform</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Transformed problem instance</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.back_transform_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">S2</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">P1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">S1</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert solution from target problem back to source problem.</span>
+
+<span class="sd">        This is REQUIRED for all transformations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Solution in target problem space</span>
+<span class="sd">            source_problem: Original problem (to associate with back-transformed solution)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Corresponding solution in source problem space</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">S1</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">P2</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">S2</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert solution from source problem to target problem.</span>
+
+<span class="sd">        This is OPTIONAL - only needed for warmstart support.</span>
+<span class="sd">        Return None if transformation not supported/meaningful.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Solution in source problem space</span>
+<span class="sd">            target_problem: Transformed problem (to associate with forward-transformed solution)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Corresponding solution in target problem space, or None if not supported</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get metadata for problem transformation (P1 → P2).</span>
+
+<span class="sd">        Documents what information is lost when transforming the PROBLEM.</span>
+
+<span class="sd">        Override this method to provide detailed information about:</span>
+<span class="sd">        - Constraints that cannot be represented in target problem</span>
+<span class="sd">        - Objectives that are ignored or approximated</span>
+<span class="sd">        - Assumptions made during transformation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            TransformationMetadata documenting losses in problem transformation</span>
+
+<span class="sd">        Default:</span>
+<span class="sd">            Returns exact_transformation() (no losses documented)</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Solutions from the target problem always map back MECHANICALLY via</span>
+<span class="sd">            back_transform_solution(), but may not satisfy all constraints from</span>
+<span class="sd">            the original source problem if this transformation is lossy.</span>
+
+<span class="sd">            Example: BinPack → SALBP loses incompatibility constraints.</span>
+<span class="sd">                     Solutions from SALBP solvers map back to BinPack allocations,</span>
+<span class="sd">                     but may violate incompatibility if that constraint was present.</span>
+
+<span class="sd">            Always verify solutions in the original problem after solving via transformation!</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">exact_transformation</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.is_forward_exact">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.is_forward_exact">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_forward_exact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if forward problem transformation is exact.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if problem transformation preserves all information</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_forward_metadata</span><span class="p">()</span><span class="o">.</span><span class="n">is_exact</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.has_constraint_loss">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.has_constraint_loss">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_constraint_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if transformation loses any constraints</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if some constraints cannot be represented</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_forward_metadata</span><span class="p">()</span><span class="o">.</span><span class="n">has_constraint_loss</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.has_objective_loss">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.has_objective_loss">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_objective_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if transformation loses any objectives.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if some objectives cannot be represented</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_forward_metadata</span><span class="p">()</span><span class="o">.</span><span class="n">has_objective_loss</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.is_bidirectional">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.is_bidirectional">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_bidirectional</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">P1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if transformation supports both directions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: Problem to check bidirectionality for</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if forward_transform_solution is implemented</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_problem</span><span class="p">(</span><span class="n">source_problem</span><span class="p">)</span>
+            <span class="n">dummy_source</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">()</span>
+            <span class="n">dummy_target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_transform_solution</span><span class="p">(</span><span class="n">dummy_source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dummy_target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">NotImplementedError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="ProblemTransformation.print_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation.print_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print human-readable transformation metadata (both directions).&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+        <span class="c1"># Forward metadata</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">FORWARD: Problem Transformation (source → target)&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_forward_metadata</span><span class="p">())</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation of transformation.&quot;&quot;&quot;</span>
+        <span class="n">forward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_forward_metadata</span><span class="p">()</span>
+        <span class="n">forward_str</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span> <span class="k">if</span> <span class="n">forward</span><span class="o">.</span><span class="n">is_exact</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;lossy&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">forward_str</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

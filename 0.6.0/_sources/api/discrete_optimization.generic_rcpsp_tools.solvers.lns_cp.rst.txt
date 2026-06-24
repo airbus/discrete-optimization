@@ -1,0 +1,53 @@
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp package
+====================================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp.neighbor\_builder module
+-------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_builder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp.neighbor\_tools module
+-----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp.postpro\_ls module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.postpro_ls
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp.solution\_repair module
+------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.solution_repair
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp.solver module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp
+   :members:
+   :undoc-members:
+   :show-inheritance:

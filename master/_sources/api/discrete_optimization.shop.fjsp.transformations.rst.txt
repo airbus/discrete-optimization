@@ -1,0 +1,29 @@
+discrete\_optimization.shop.fjsp.transformations package
+========================================================
+
+Submodules
+----------
+
+discrete\_optimization.shop.fjsp.transformations.to\_rcpsp module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.shop.fjsp.transformations.to_rcpsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.shop.fjsp.transformations.to\_workforce module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.shop.fjsp.transformations.to_workforce
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.shop.fjsp.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

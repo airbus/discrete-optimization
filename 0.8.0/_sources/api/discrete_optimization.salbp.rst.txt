@@ -1,0 +1,37 @@
+discrete\_optimization.salbp package
+====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.salbp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.salbp.parser module
+------------------------------------------
+
+.. automodule:: discrete_optimization.salbp.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.salbp.problem module
+-------------------------------------------
+
+.. automodule:: discrete_optimization.salbp.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.salbp
+   :members:
+   :show-inheritance:
+   :undoc-members:

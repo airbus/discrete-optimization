@@ -1,0 +1,541 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.transformation.solver_discovery &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.transformation.solver_discovery</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.transformation.solver_discovery</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Solver discovery via transformation graph.</span>
+
+<span class="sd">This module uses the transformation graph to discover all solvers</span>
+<span class="sd">accessible for a given problem type, including those available</span>
+<span class="sd">through problem transformations.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TransformationGraph</span><span class="p">,</span>
+    <span class="n">TransformationPath</span><span class="p">,</span>
+    <span class="n">WeightingStrategy</span><span class="p">,</span>
+    <span class="n">build_transformation_graph</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="SolverOption">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.solver_discovery.SolverOption">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SolverOption</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a solver option for a problem.&quot;&quot;&quot;</span>
+
+    <span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">solver_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">SolverDO</span><span class="p">]</span>
+    <span class="n">solver_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TransformationPath</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># None if direct solver</span>
+    <span class="n">is_direct</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># True if no transformation needed</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">access_method</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get access method description.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_direct</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Direct&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Via </span><span class="si">{</span><span class="s1">&#39; → &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">problem_sequence</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_direct</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span><span class="si">}</span><span class="s2"> (Direct)&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path_str</span> <span class="o">=</span> <span class="s2">&quot; → &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">problem_sequence</span><span class="p">)</span>
+            <span class="n">exact_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot; [exact]&quot;</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">is_exact</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot; [lossy, weight: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">total_weight</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">]&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span><span class="si">}</span><span class="s2"> via </span><span class="si">{</span><span class="n">path_str</span><span class="si">}{</span><span class="n">exact_str</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SolverAccessibilityReport">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.solver_discovery.SolverAccessibilityReport">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SolverAccessibilityReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Report of all solvers accessible for a problem type.&quot;&quot;&quot;</span>
+
+    <span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">direct_solvers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SolverOption</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">transformation_solvers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SolverOption</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_solvers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Total number of solvers.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direct_solvers</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SolverAccessibilityReport.print_report">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.solver_discovery.SolverAccessibilityReport.print_report">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print_report</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print human-readable report.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Solver Accessibility Report: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Total solvers available: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_solvers</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Direct solvers: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direct_solvers</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Via transformations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solvers</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DIRECT SOLVERS (No transformation needed)&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">solver</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solvers</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  • </span><span class="si">{</span><span class="n">solver</span><span class="o">.</span><span class="n">solver_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;TRANSFORMATION-BASED SOLVERS&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+            <span class="c1"># Group by target problem</span>
+            <span class="n">by_target</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">solver</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">:</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">problem_type</span>
+                <span class="k">if</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">by_target</span><span class="p">:</span>
+                    <span class="n">by_target</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">by_target</span><span class="p">[</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">solvers</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">by_target</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  Via </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">solver</span> <span class="ow">in</span> <span class="n">solvers</span><span class="p">:</span>
+                    <span class="n">path_str</span> <span class="o">=</span> <span class="s2">&quot; → &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">problem_sequence</span><span class="p">)</span>
+                    <span class="n">exact_str</span> <span class="o">=</span> <span class="s2">&quot; [exact]&quot;</span> <span class="k">if</span> <span class="n">solver</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">is_exact</span> <span class="k">else</span> <span class="s2">&quot; [lossy]&quot;</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    • </span><span class="si">{</span><span class="n">solver</span><span class="o">.</span><span class="n">solver_name</span><span class="si">}{</span><span class="n">exact_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      Path: </span><span class="si">{</span><span class="n">path_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="discover_solvers_for_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.solver_discovery.discover_solvers_for_problem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">discover_solvers_for_problem</span><span class="p">(</span>
+    <span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">SolverDO</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discover all solver classes for a problem type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem_type: Problem class name (e.g., &quot;BinPackProblem&quot;)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict mapping solver names to solver classes</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">solvers</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Convert problem name to module name</span>
+    <span class="c1"># e.g., BinPackProblem -&gt; binpack</span>
+    <span class="n">module_name</span> <span class="o">=</span> <span class="n">_problem_name_to_module</span><span class="p">(</span><span class="n">problem_type</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">module_name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">solvers</span>
+
+    <span class="c1"># Try to import solvers module</span>
+    <span class="n">solvers_module_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;discrete_optimization.</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">.solvers&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">base_solvers_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">solvers_module_path</span><span class="p">)</span>
+        <span class="n">solvers_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">base_solvers_module</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+
+        <span class="c1"># Scan all solver modules</span>
+        <span class="k">for</span> <span class="n">solver_file</span> <span class="ow">in</span> <span class="n">solvers_path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.py&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">solver_file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">solver_module_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">solvers_module_path</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">solver_file</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">solver_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">solver_module_path</span><span class="p">)</span>
+
+                <span class="c1"># Find solver classes</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">solver_module</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">SolverDO</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="n">obj</span> <span class="o">!=</span> <span class="n">SolverDO</span>
+                        <span class="ow">and</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isabstract</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                    <span class="p">):</span>
+                        <span class="n">solvers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="c1"># Skip modules with missing dependencies</span>
+                <span class="k">pass</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># Skip problematic modules</span>
+                <span class="k">pass</span>
+
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="c1"># No solvers module for this problem</span>
+        <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">solvers</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_problem_name_to_module</span><span class="p">(</span><span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert problem class name to module name.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem_type: Problem class name (e.g., &quot;BinPackProblem&quot;)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Module name (e.g., &quot;binpack&quot;) or None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Special cases</span>
+    <span class="n">special_cases</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;BinPackProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;binpack&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SalbpProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;salbp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;RCALBPLProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;rcalbp_l&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;RcpspProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;rcpsp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;MultiskillRcpspProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;rcpsp_multiskill&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;PreemptiveRcpspProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;rcpsp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FJobShopProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;fjsp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;JobShopProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;jsp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;FacilityProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;facility&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;KnapsackProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;knapsack&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;TspProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;tsp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;VrpProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;vrp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SingleBatchProcessingProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;singlebatch&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OvenSchedulingProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;ovensched&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;TeamAllocationProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;workforce.allocation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;AllocSchedulingProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;workforce.scheduling&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ColoringProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;coloring&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ListColoringProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;coloring&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;VRPTWProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;vrptw&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;GpdpProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;gpdp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;TeamOrienteeringProblem&quot;</span><span class="p">:</span> <span class="s2">&quot;top&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">problem_type</span> <span class="ow">in</span> <span class="n">special_cases</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">special_cases</span><span class="p">[</span><span class="n">problem_type</span><span class="p">]</span>
+
+    <span class="c1"># Try to infer from name</span>
+    <span class="c1"># Remove &quot;Problem&quot; suffix and convert to lowercase</span>
+    <span class="k">if</span> <span class="n">problem_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Problem&quot;</span><span class="p">):</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">problem_type</span><span class="p">[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span>
+        <span class="c1"># Convert CamelCase to snake_case</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+        <span class="n">module</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?&lt;!^)(?=[A-Z])&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">module</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="build_solver_accessibility_report">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.solver_discovery.build_solver_accessibility_report">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_solver_accessibility_report</span><span class="p">(</span>
+    <span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">transformation_graph</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TransformationGraph</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_path_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverAccessibilityReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build comprehensive solver accessibility report.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem_type: Problem class name</span>
+<span class="sd">        transformation_graph: Optional pre-built graph (will build if None)</span>
+<span class="sd">        max_path_length: Maximum transformation path length</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        SolverAccessibilityReport</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Build transformation graph if not provided</span>
+    <span class="k">if</span> <span class="n">transformation_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">transformation_graph</span> <span class="o">=</span> <span class="n">build_transformation_graph</span><span class="p">()</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">SolverAccessibilityReport</span><span class="p">(</span><span class="n">problem_type</span><span class="o">=</span><span class="n">problem_type</span><span class="p">)</span>
+
+    <span class="c1"># 1. Find direct solvers</span>
+    <span class="n">direct_solvers</span> <span class="o">=</span> <span class="n">discover_solvers_for_problem</span><span class="p">(</span><span class="n">problem_type</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">solver_class</span> <span class="ow">in</span> <span class="n">direct_solvers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">direct_solvers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">SolverOption</span><span class="p">(</span>
+                <span class="n">problem_type</span><span class="o">=</span><span class="n">problem_type</span><span class="p">,</span>
+                <span class="n">solver_class</span><span class="o">=</span><span class="n">solver_class</span><span class="p">,</span>
+                <span class="n">solver_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">is_direct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># 2. Find solvers via transformations</span>
+    <span class="n">reachable</span> <span class="o">=</span> <span class="n">transformation_graph</span><span class="o">.</span><span class="n">get_reachable_problems</span><span class="p">(</span><span class="n">problem_type</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">target_problem</span> <span class="ow">in</span> <span class="n">reachable</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">target_problem</span> <span class="o">==</span> <span class="n">problem_type</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># Skip self</span>
+
+        <span class="c1"># Find path to this problem</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">transformation_graph</span><span class="o">.</span><span class="n">find_path</span><span class="p">(</span>
+            <span class="n">problem_type</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">,</span> <span class="n">WeightingStrategy</span><span class="o">.</span><span class="n">PREFER_EXACT</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Find solvers for target problem</span>
+        <span class="n">target_solvers</span> <span class="o">=</span> <span class="n">discover_solvers_for_problem</span><span class="p">(</span><span class="n">target_problem</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">solver_class</span> <span class="ow">in</span> <span class="n">target_solvers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SolverOption</span><span class="p">(</span>
+                    <span class="n">problem_type</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+                    <span class="n">solver_class</span><span class="o">=</span><span class="n">solver_class</span><span class="p">,</span>
+                    <span class="n">solver_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">is_direct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">report</span></div>
+
+
+
+<div class="viewcode-block" id="compare_solver_options">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.solver_discovery.compare_solver_options">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_solver_options</span><span class="p">(</span>
+    <span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">max_path_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare solver options for a problem (with transformation graph).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem_type: Problem class name</span>
+<span class="sd">        max_path_length: Maximum transformation path length</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Discovering Solvers for </span><span class="si">{</span><span class="n">problem_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+    <span class="c1"># Build graph</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Building transformation graph...&quot;</span><span class="p">)</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">build_transformation_graph</span><span class="p">()</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">print_summary</span><span class="p">()</span>
+
+    <span class="c1"># Build report</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Analyzing solver accessibility...&quot;</span><span class="p">)</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">build_solver_accessibility_report</span><span class="p">(</span><span class="n">problem_type</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">max_path_length</span><span class="p">)</span>
+
+    <span class="c1"># Print report</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">print_report</span><span class="p">()</span>
+
+    <span class="c1"># Additional analysis</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Transformation Paths to Solvers&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">:</span>
+        <span class="c1"># Show unique paths</span>
+        <span class="n">unique_paths</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">solver</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">:</span>
+            <span class="n">path_key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">problem_sequence</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unique_paths</span><span class="p">:</span>
+                <span class="n">unique_paths</span><span class="p">[</span><span class="n">path_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">path</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Unique transformation paths: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_paths</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">path_key</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unique_paths</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">exact_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;exact&quot;</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_exact</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;lossy (weight: </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">total_weight</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  Path </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">exact_str</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">edge</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">problem_sequence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">path</span><span class="o">.</span><span class="n">transformations</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">j</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">transformation_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;       </span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">source_problem</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">target_problem</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">edge</span><span class="o">.</span><span class="n">forward_exact</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;       ⚠ Forward lossy (impact: </span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">max_impact</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">No solvers accessible via transformations&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Summary statistics</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Summary&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total solvers: </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">total_solvers</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Direct: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">direct_solvers</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Via transformations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">:</span>
+        <span class="n">exact_transformations</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="mi">1</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">transformation_solvers</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">is_exact</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    • Via exact transformations: </span><span class="si">{</span><span class="n">exact_transformations</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;    • Via lossy transformations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">transformation_solvers</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">exact_transformations</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="find_best_transformation_path">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.solver_discovery.find_best_transformation_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_best_transformation_path</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">transformation_graph</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TransformationGraph</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TransformationPath</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find best transformation path between problems.</span>
+
+<span class="sd">    &quot;Best&quot; = prefer exact, then lowest weight, then shortest.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        source: Source problem type</span>
+<span class="sd">        target: Target problem type</span>
+<span class="sd">        transformation_graph: Optional pre-built graph</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Best TransformationPath or None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">transformation_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">transformation_graph</span> <span class="o">=</span> <span class="n">build_transformation_graph</span><span class="p">()</span>
+
+    <span class="c1"># Find all paths</span>
+    <span class="n">all_paths</span> <span class="o">=</span> <span class="n">transformation_graph</span><span class="o">.</span><span class="n">find_all_paths</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">all_paths</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Sort by: exact first, then by weight</span>
+    <span class="n">all_paths</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="p">(</span><span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_exact</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">total_weight</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">problem_sequence</span><span class="p">))</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">all_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

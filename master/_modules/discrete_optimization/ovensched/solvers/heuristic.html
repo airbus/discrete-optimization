@@ -1,0 +1,678 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.ovensched.solvers.heuristic &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.ovensched.solvers.heuristic</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.ovensched.solvers.heuristic</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResultStorage</span><span class="p">,</span> <span class="n">SolverDO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FloatHyperparameter</span><span class="p">,</span>
+    <span class="n">IntegerHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+    <span class="n">OvenSchedulingSolution</span><span class="p">,</span>
+    <span class="n">ScheduleInfo</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="HeuristicOvenSchedulingSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.heuristic.HeuristicOvenSchedulingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeuristicOvenSchedulingSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This solver can be evolved to use different scheduling strategies:</span>
+<span class="sd">    - Greedy batch construction</span>
+<span class="sd">    - Priority-based task ordering</span>
+<span class="sd">    - Attribute grouping strategies</span>
+<span class="sd">    - Time window optimization</span>
+<span class="sd">    - Setup cost minimization</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;num_local_search_iterations&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">1000</span>
+        <span class="p">),</span>
+        <span class="n">FloatHyperparameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;cooling_rate&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.97</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="HeuristicOvenSchedulingSolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.ovensched.solvers.html#discrete_optimization.ovensched.solvers.heuristic.HeuristicOvenSchedulingSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solve the OSP using a Large Neighborhood Search with a Simulated Annealing acceptance criterion.</span>
+
+<span class="sd">        Strategy:</span>
+<span class="sd">        1.  Initial constructive phase: Build a complete initial schedule using a greedy heuristic.</span>
+<span class="sd">        2.  Local Search / Refinement Phase: Iteratively attempt to improve the schedule.</span>
+<span class="sd">            a.  Ruin: Select a &quot;bad&quot; part of the current schedule to destroy using one of several</span>
+<span class="sd">                diversified strategies (e.g., remove a tardy batch, a high-cost batch, or a random batch).</span>
+<span class="sd">                The selected batch and all subsequent batches on that machine are removed.</span>
+<span class="sd">            b.  Recreate: The tasks from the ruined batches are put back into the unscheduled pool</span>
+<span class="sd">                and re-scheduled using the same powerful greedy constructor.</span>
+<span class="sd">            c.  Acceptance (Simulated Annealing): A new schedule is always accepted if it&#39;s better</span>
+<span class="sd">                than the previous one. Crucially, it may also be accepted if it is *worse*, based</span>
+<span class="sd">                on a probability that depends on a decreasing &quot;temperature&quot;. This allows the search</span>
+<span class="sd">                to escape local optima.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">cb</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">result_storage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">([])</span>
+
+        <span class="c1"># Objective weights (can be overridden by params_objective_function)</span>
+        <span class="n">default_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10000000</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># processing_time, nb_late_jobs, setup_cost</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">weights</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">weights</span>
+            <span class="k">else</span> <span class="n">default_weights</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Base weights for the greedy heuristic&#39;s scoring function</span>
+        <span class="n">tardiness_weight</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">initial_lookahead_penalty_weight</span> <span class="o">=</span> <span class="mi">10000</span>
+        <span class="n">setup_cost_weight</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">adaptive_lookahead_factor</span> <span class="o">=</span> <span class="mi">5</span>
+
+        <span class="c1"># Pre-sort all tasks by criticality for efficient batch building</span>
+        <span class="n">all_tasks_sorted_by_criticality</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">),</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">earliest_start</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">build_batch</span><span class="p">(</span>
+            <span class="n">pool_of_tasks_to_draw_from</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+            <span class="n">initial_tasks_in_batch_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+            <span class="n">current_machine_data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">current_batch_tasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">initial_tasks_in_batch_set</span><span class="p">)</span>
+            <span class="n">current_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">current_batch_tasks</span>
+            <span class="p">)</span>
+            <span class="n">current_max_min_d</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">current_batch_tasks</span><span class="p">),</span>
+                <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">current_min_max_d</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">current_batch_tasks</span><span class="p">),</span>
+                <span class="n">default</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">tasks_to_consider_sorted_for_batching</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">t</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">all_tasks_sorted_by_criticality</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">pool_of_tasks_to_draw_from</span> <span class="ow">and</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_batch_tasks</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">task_id</span> <span class="ow">in</span> <span class="n">tasks_to_consider_sorted_for_batching</span><span class="p">:</span>
+                <span class="n">task_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">current_size</span> <span class="o">+</span> <span class="n">task_data</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="n">current_machine_data</span><span class="o">.</span><span class="n">capacity</span><span class="p">:</span>
+                    <span class="n">new_max_min_d</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">current_max_min_d</span><span class="p">,</span> <span class="n">task_data</span><span class="o">.</span><span class="n">min_duration</span><span class="p">)</span>
+                    <span class="n">new_min_max_d</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">current_min_max_d</span><span class="p">,</span> <span class="n">task_data</span><span class="o">.</span><span class="n">max_duration</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">new_max_min_d</span> <span class="o">&lt;=</span> <span class="n">new_min_max_d</span><span class="p">:</span>
+                        <span class="n">current_batch_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+                        <span class="n">current_size</span> <span class="o">+=</span> <span class="n">task_data</span><span class="o">.</span><span class="n">size</span>
+                        <span class="n">current_max_min_d</span> <span class="o">=</span> <span class="n">new_max_min_d</span>
+                        <span class="n">current_min_max_d</span> <span class="o">=</span> <span class="n">new_min_max_d</span>
+            <span class="k">return</span> <span class="n">current_batch_tasks</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_run_greedy_scheduling_phase</span><span class="p">(</span>
+            <span class="n">initial_schedule_per_machine_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScheduleInfo</span><span class="p">]],</span>
+            <span class="n">tasks_to_schedule_in_this_pass</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="p">):</span>
+            <span class="n">schedule_per_machine</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">m</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">initial_schedule_per_machine_state</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">unscheduled_tasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tasks_to_schedule_in_this_pass</span><span class="p">)</span>
+            <span class="n">machine_end_times</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span>
+            <span class="n">last_attribute_on_machine</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">initial_attribute</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">m_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m_id</span><span class="p">]:</span>
+                    <span class="n">last_batch</span> <span class="o">=</span> <span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m_id</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">machine_end_times</span><span class="p">[</span><span class="n">m_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_batch</span><span class="o">.</span><span class="n">end_time</span>
+                    <span class="n">last_attribute_on_machine</span><span class="p">[</span><span class="n">m_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_batch</span><span class="o">.</span><span class="n">task_attribute</span>
+
+            <span class="k">while</span> <span class="n">unscheduled_tasks</span><span class="p">:</span>
+                <span class="n">num_total_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span>
+                <span class="n">num_unscheduled</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unscheduled_tasks</span><span class="p">)</span>
+                <span class="n">progress_ratio</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="n">num_total_tasks</span> <span class="o">-</span> <span class="n">num_unscheduled</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_total_tasks</span>
+                    <span class="k">if</span> <span class="n">num_total_tasks</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                    <span class="k">else</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="n">current_lookahead_penalty_weight</span> <span class="o">=</span> <span class="n">initial_lookahead_penalty_weight</span> <span class="o">*</span> <span class="p">(</span>
+                    <span class="mi">1</span> <span class="o">+</span> <span class="n">progress_ratio</span> <span class="o">*</span> <span class="n">adaptive_lookahead_factor</span>
+                <span class="p">)</span>
+                <span class="n">unscheduled_tasks_latest_ends</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">tid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span>
+                    <span class="k">for</span> <span class="n">tid</span> <span class="ow">in</span> <span class="n">unscheduled_tasks</span>
+                <span class="p">}</span>
+
+                <span class="n">best_candidate</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">best_score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">machine_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+                    <span class="n">machine_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span>
+                    <span class="n">prev_attribute</span> <span class="o">=</span> <span class="n">last_attribute_on_machine</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span>
+                    <span class="n">possible_attributes</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">unscheduled_tasks</span>
+                        <span class="k">if</span> <span class="n">machine_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span>
+                    <span class="p">}</span>
+
+                    <span class="k">for</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="n">possible_attributes</span><span class="p">:</span>
+                        <span class="n">setup_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">prev_attribute</span><span class="p">][</span><span class="n">attribute</span><span class="p">]</span>
+                        <span class="n">setup_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">prev_attribute</span><span class="p">][</span><span class="n">attribute</span><span class="p">]</span>
+                        <span class="n">machine_ready_time_for_this_batch</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">machine_end_times</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span> <span class="o">+</span> <span class="n">setup_time</span>
+                        <span class="p">)</span>
+                        <span class="n">eligible_tasks_for_attribute_machine</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                            <span class="p">[</span>
+                                <span class="n">t</span>
+                                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">unscheduled_tasks</span>
+                                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span> <span class="o">==</span> <span class="n">attribute</span>
+                                <span class="ow">and</span> <span class="n">machine_id</span>
+                                <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span>
+                            <span class="p">],</span>
+                            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">earliest_start</span><span class="p">,</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">eligible_tasks_for_attribute_machine</span><span class="p">:</span>
+                            <span class="k">continue</span>
+
+                        <span class="n">num_seed_tasks_to_consider</span> <span class="o">=</span> <span class="mi">3</span>
+                        <span class="n">unique_candidates</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">seed_task_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                            <span class="nb">min</span><span class="p">(</span>
+                                <span class="n">num_seed_tasks_to_consider</span><span class="p">,</span>
+                                <span class="nb">len</span><span class="p">(</span><span class="n">eligible_tasks_for_attribute_machine</span><span class="p">),</span>
+                            <span class="p">)</span>
+                        <span class="p">):</span>
+                            <span class="n">seed_task_id</span> <span class="o">=</span> <span class="n">eligible_tasks_for_attribute_machine</span><span class="p">[</span>
+                                <span class="n">seed_task_index</span>
+                            <span class="p">]</span>
+                            <span class="n">seed_task_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">seed_task_id</span><span class="p">]</span>
+                            <span class="n">candidate_sets_for_this_seed</span> <span class="o">=</span> <span class="p">[]</span>
+                            <span class="n">mf_tasks</span> <span class="o">=</span> <span class="n">build_batch</span><span class="p">(</span>
+                                <span class="nb">set</span><span class="p">(</span><span class="n">eligible_tasks_for_attribute_machine</span><span class="p">),</span>
+                                <span class="p">{</span><span class="n">seed_task_id</span><span class="p">},</span>
+                                <span class="n">machine_data</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="n">mf_tasks</span><span class="p">:</span>
+                                <span class="n">candidate_sets_for_this_seed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mf_tasks</span><span class="p">)</span>
+                            <span class="n">candidate_sets_for_this_seed</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">seed_task_id</span><span class="p">})</span>
+                            <span class="n">q_tasks_filtered_pool</span> <span class="o">=</span> <span class="p">{</span><span class="n">seed_task_id</span><span class="p">}</span>
+                            <span class="n">urgency_delta</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed_task_data</span><span class="o">.</span><span class="n">max_duration</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+                            <span class="n">temporal_upper_bound</span> <span class="o">=</span> <span class="p">(</span>
+                                <span class="n">seed_task_data</span><span class="o">.</span><span class="n">latest_end</span> <span class="o">+</span> <span class="n">urgency_delta</span>
+                            <span class="p">)</span>
+                            <span class="k">for</span> <span class="n">task_id</span> <span class="ow">in</span> <span class="n">eligible_tasks_for_attribute_machine</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="p">(</span>
+                                    <span class="n">task_id</span> <span class="o">!=</span> <span class="n">seed_task_id</span>
+                                    <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span>
+                                    <span class="o">&lt;=</span> <span class="n">temporal_upper_bound</span>
+                                <span class="p">):</span>
+                                    <span class="n">q_tasks_filtered_pool</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+                            <span class="n">q_tasks</span> <span class="o">=</span> <span class="n">build_batch</span><span class="p">(</span>
+                                <span class="n">q_tasks_filtered_pool</span><span class="p">,</span> <span class="p">{</span><span class="n">seed_task_id</span><span class="p">},</span> <span class="n">machine_data</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="n">q_tasks</span><span class="p">:</span>
+                                <span class="n">candidate_sets_for_this_seed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_tasks</span><span class="p">)</span>
+                            <span class="n">unique_candidates</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                                <span class="p">{</span>
+                                    <span class="nb">frozenset</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                                    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">candidate_sets_for_this_seed</span>
+                                    <span class="k">if</span> <span class="n">s</span>
+                                <span class="p">}</span>
+                            <span class="p">)</span>
+
+                        <span class="k">for</span> <span class="n">batch_tasks</span> <span class="ow">in</span> <span class="n">unique_candidates</span><span class="p">:</span>
+                            <span class="n">batch_props</span> <span class="o">=</span> <span class="p">{</span>
+                                <span class="s2">&quot;max_min_d&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span>
+                                    <span class="p">(</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span>
+                                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch_tasks</span>
+                                    <span class="p">),</span>
+                                    <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                <span class="p">),</span>
+                                <span class="s2">&quot;min_max_d&quot;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span>
+                                    <span class="p">(</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span>
+                                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch_tasks</span>
+                                    <span class="p">),</span>
+                                    <span class="n">default</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span>
+                                <span class="p">),</span>
+                                <span class="s2">&quot;max_es&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span>
+                                    <span class="p">(</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">earliest_start</span>
+                                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch_tasks</span>
+                                    <span class="p">),</span>
+                                    <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                <span class="p">),</span>
+                                <span class="s2">&quot;min_le&quot;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span>
+                                    <span class="p">(</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span>
+                                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch_tasks</span>
+                                    <span class="p">),</span>
+                                    <span class="n">default</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span>
+                                <span class="p">),</span>
+                            <span class="p">}</span>
+                            <span class="n">b_min_duration</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">batch_props</span><span class="p">[</span><span class="s2">&quot;max_min_d&quot;</span><span class="p">])</span>
+                            <span class="n">b_max_duration</span> <span class="o">=</span> <span class="n">batch_props</span><span class="p">[</span><span class="s2">&quot;min_max_d&quot;</span><span class="p">]</span>
+                            <span class="k">if</span> <span class="n">b_min_duration</span> <span class="o">&gt;</span> <span class="n">b_max_duration</span><span class="p">:</span>
+                                <span class="k">continue</span>
+                            <span class="n">earliest_start_base</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                                <span class="n">machine_ready_time_for_this_batch</span><span class="p">,</span> <span class="n">batch_props</span><span class="p">[</span><span class="s2">&quot;max_es&quot;</span><span class="p">]</span>
+                            <span class="p">)</span>
+
+                            <span class="n">found_slot_for_any_duration</span> <span class="o">=</span> <span class="kc">False</span>
+                            <span class="k">for</span> <span class="n">start_avail</span><span class="p">,</span> <span class="n">end_avail</span> <span class="ow">in</span> <span class="n">machine_data</span><span class="o">.</span><span class="n">availability</span><span class="p">:</span>
+                                <span class="n">potential_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">earliest_start_base</span><span class="p">,</span> <span class="n">start_avail</span><span class="p">)</span>
+                                <span class="n">current_durations_to_check</span> <span class="o">=</span> <span class="p">{</span><span class="n">b_min_duration</span><span class="p">}</span>
+                                <span class="k">if</span> <span class="p">(</span>
+                                    <span class="n">b_max_duration</span> <span class="o">!=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+                                    <span class="ow">and</span> <span class="n">b_max_duration</span> <span class="o">&gt;</span> <span class="n">b_min_duration</span>
+                                <span class="p">):</span>
+                                    <span class="n">current_durations_to_check</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">b_max_duration</span><span class="p">)</span>
+                                <span class="n">duration_to_hit_deadline</span> <span class="o">=</span> <span class="p">(</span>
+                                    <span class="n">batch_props</span><span class="p">[</span><span class="s2">&quot;min_le&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">potential_start</span>
+                                <span class="p">)</span>
+                                <span class="k">if</span> <span class="p">(</span>
+                                    <span class="n">b_min_duration</span>
+                                    <span class="o">&lt;=</span> <span class="n">duration_to_hit_deadline</span>
+                                    <span class="o">&lt;=</span> <span class="n">b_max_duration</span>
+                                <span class="p">):</span>
+                                    <span class="n">current_durations_to_check</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                                        <span class="n">duration_to_hit_deadline</span>
+                                    <span class="p">)</span>
+                                <span class="k">if</span> <span class="p">(</span>
+                                    <span class="n">b_max_duration</span> <span class="o">!=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+                                    <span class="ow">and</span> <span class="p">(</span><span class="n">b_max_duration</span> <span class="o">-</span> <span class="n">b_min_duration</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span>
+                                <span class="p">):</span>
+                                    <span class="n">step</span> <span class="o">=</span> <span class="p">(</span><span class="n">b_max_duration</span> <span class="o">-</span> <span class="n">b_min_duration</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span>
+                                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+                                        <span class="n">intermediate_duration</span> <span class="o">=</span> <span class="p">(</span>
+                                            <span class="n">b_min_duration</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">step</span>
+                                        <span class="p">)</span>
+                                        <span class="k">if</span> <span class="p">(</span>
+                                            <span class="n">b_min_duration</span>
+                                            <span class="o">&lt;</span> <span class="n">intermediate_duration</span>
+                                            <span class="o">&lt;</span> <span class="n">b_max_duration</span>
+                                        <span class="p">):</span>
+                                            <span class="n">current_durations_to_check</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                                                <span class="n">intermediate_duration</span>
+                                            <span class="p">)</span>
+                                <span class="n">duration_filling_slot</span> <span class="o">=</span> <span class="n">end_avail</span> <span class="o">-</span> <span class="n">potential_start</span>
+                                <span class="k">if</span> <span class="p">(</span>
+                                    <span class="n">duration_filling_slot</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                                    <span class="ow">and</span> <span class="n">b_min_duration</span>
+                                    <span class="o">&lt;=</span> <span class="n">duration_filling_slot</span>
+                                    <span class="o">&lt;=</span> <span class="n">b_max_duration</span>
+                                <span class="p">):</span>
+                                    <span class="n">current_durations_to_check</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                                        <span class="n">duration_filling_slot</span>
+                                    <span class="p">)</span>
+
+                                <span class="k">for</span> <span class="n">duration</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                                    <span class="nb">list</span><span class="p">(</span><span class="n">current_durations_to_check</span><span class="p">)</span>
+                                <span class="p">):</span>
+                                    <span class="k">if</span> <span class="p">(</span>
+                                        <span class="n">duration</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+                                        <span class="ow">or</span> <span class="n">duration</span> <span class="o">&lt;</span> <span class="n">b_min_duration</span>
+                                        <span class="ow">or</span> <span class="p">(</span>
+                                            <span class="n">b_max_duration</span> <span class="o">!=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+                                            <span class="ow">and</span> <span class="n">duration</span> <span class="o">&gt;</span> <span class="n">b_max_duration</span>
+                                        <span class="p">)</span>
+                                    <span class="p">):</span>
+                                        <span class="k">continue</span>
+                                    <span class="n">end_time</span> <span class="o">=</span> <span class="n">potential_start</span> <span class="o">+</span> <span class="n">duration</span>
+                                    <span class="k">if</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">end_avail</span><span class="p">:</span>
+                                        <span class="n">found_slot_for_any_duration</span> <span class="o">=</span> <span class="kc">True</span>
+                                        <span class="n">tardiness</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                                            <span class="mi">0</span><span class="p">,</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">batch_props</span><span class="p">[</span><span class="s2">&quot;min_le&quot;</span><span class="p">]</span>
+                                        <span class="p">)</span>
+                                        <span class="n">lookahead_penalty_value</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                                            <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">le</span><span class="p">)</span>
+                                            <span class="k">for</span> <span class="n">tid</span><span class="p">,</span> <span class="n">le</span> <span class="ow">in</span> <span class="n">unscheduled_tasks_latest_ends</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                                            <span class="k">if</span> <span class="n">tid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">batch_tasks</span>
+                                        <span class="p">)</span>
+                                        <span class="n">score</span> <span class="o">=</span> <span class="p">(</span>
+                                            <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">end_time</span>
+                                            <span class="o">+</span> <span class="n">tardiness_weight</span> <span class="o">*</span> <span class="n">tardiness</span>
+                                            <span class="o">+</span> <span class="n">current_lookahead_penalty_weight</span>
+                                            <span class="o">*</span> <span class="n">lookahead_penalty_value</span>
+                                            <span class="o">+</span> <span class="n">setup_cost_weight</span> <span class="o">*</span> <span class="n">setup_cost</span>
+                                        <span class="p">)</span>
+                                        <span class="k">if</span> <span class="n">score</span> <span class="o">&lt;</span> <span class="n">best_score</span><span class="p">:</span>
+                                            <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
+                                            <span class="n">best_candidate</span> <span class="o">=</span> <span class="p">{</span>
+                                                <span class="s2">&quot;tasks&quot;</span><span class="p">:</span> <span class="n">batch_tasks</span><span class="p">,</span>
+                                                <span class="s2">&quot;attribute&quot;</span><span class="p">:</span> <span class="n">attribute</span><span class="p">,</span>
+                                                <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">potential_start</span><span class="p">,</span>
+                                                <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">end_time</span><span class="p">,</span>
+                                                <span class="s2">&quot;machine_id&quot;</span><span class="p">:</span> <span class="n">machine_id</span><span class="p">,</span>
+                                            <span class="p">}</span>
+                                <span class="k">if</span> <span class="n">found_slot_for_any_duration</span><span class="p">:</span>
+                                    <span class="k">break</span>
+
+                <span class="k">if</span> <span class="n">best_candidate</span><span class="p">:</span>
+                    <span class="n">machine_id</span> <span class="o">=</span> <span class="n">best_candidate</span><span class="p">[</span><span class="s2">&quot;machine_id&quot;</span><span class="p">]</span>
+                    <span class="n">new_batch</span> <span class="o">=</span> <span class="n">ScheduleInfo</span><span class="p">(</span>
+                        <span class="n">tasks</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">best_candidate</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">]),</span>
+                        <span class="n">task_attribute</span><span class="o">=</span><span class="n">best_candidate</span><span class="p">[</span><span class="s2">&quot;attribute&quot;</span><span class="p">],</span>
+                        <span class="n">start_time</span><span class="o">=</span><span class="n">best_candidate</span><span class="p">[</span><span class="s2">&quot;start_time&quot;</span><span class="p">],</span>
+                        <span class="n">end_time</span><span class="o">=</span><span class="n">best_candidate</span><span class="p">[</span><span class="s2">&quot;end_time&quot;</span><span class="p">],</span>
+                        <span class="n">machine_batch_index</span><span class="o">=</span><span class="p">(</span>
+                            <span class="n">machine_id</span><span class="p">,</span>
+                            <span class="nb">len</span><span class="p">(</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]),</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_batch</span><span class="p">)</span>
+                    <span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">b</span><span class="p">:</span> <span class="n">b</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span>
+                    <span class="n">unscheduled_tasks</span> <span class="o">-=</span> <span class="n">best_candidate</span><span class="p">[</span><span class="s2">&quot;tasks&quot;</span><span class="p">]</span>
+                    <span class="n">machine_end_times</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_batch</span><span class="o">.</span><span class="n">end_time</span>
+                    <span class="n">last_attribute_on_machine</span><span class="p">[</span><span class="n">machine_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_batch</span><span class="o">.</span><span class="n">task_attribute</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">unscheduled_tasks</span><span class="p">:</span>
+                        <span class="n">most_critical_task_id</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                            <span class="nb">list</span><span class="p">(</span><span class="n">unscheduled_tasks</span><span class="p">),</span>
+                            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">earliest_start</span><span class="p">,</span>
+                            <span class="p">),</span>
+                        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Could not schedule task </span><span class="si">{</span><span class="n">most_critical_task_id</span><span class="si">}</span><span class="s2">. Removing it to proceed.&quot;</span>
+                        <span class="p">)</span>
+                        <span class="n">unscheduled_tasks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">most_critical_task_id</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">break</span>
+            <span class="k">return</span> <span class="n">schedule_per_machine</span><span class="p">,</span> <span class="n">unscheduled_tasks</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_identify_worst_batch_and_affected_tasks</span><span class="p">(</span>
+            <span class="n">solution</span><span class="p">:</span> <span class="n">OvenSchedulingSolution</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="p">):</span>
+            <span class="n">worst_batch_location</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;tardiness&quot;</span><span class="p">:</span>
+                <span class="n">worst_tardiness_score</span><span class="p">,</span> <span class="n">worst_end_time</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">for</span> <span class="n">m_id</span><span class="p">,</span> <span class="n">schedule</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">b_idx</span><span class="p">,</span> <span class="n">b_info</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">schedule</span><span class="p">):</span>
+                        <span class="n">batch_tardiness</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                            <span class="nb">max</span><span class="p">(</span>
+                                <span class="mi">0</span><span class="p">,</span>
+                                <span class="n">b_info</span><span class="o">.</span><span class="n">end_time</span>
+                                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">t_id</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="k">for</span> <span class="n">t_id</span> <span class="ow">in</span> <span class="n">b_info</span><span class="o">.</span><span class="n">tasks</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">batch_tardiness</span> <span class="o">&gt;</span> <span class="n">worst_tardiness_score</span> <span class="ow">or</span> <span class="p">(</span>
+                            <span class="n">batch_tardiness</span> <span class="o">==</span> <span class="n">worst_tardiness_score</span>
+                            <span class="ow">and</span> <span class="n">b_info</span><span class="o">.</span><span class="n">end_time</span> <span class="o">&gt;</span> <span class="n">worst_end_time</span>
+                        <span class="p">):</span>
+                            <span class="p">(</span>
+                                <span class="n">worst_tardiness_score</span><span class="p">,</span>
+                                <span class="n">worst_end_time</span><span class="p">,</span>
+                                <span class="n">worst_batch_location</span><span class="p">,</span>
+                            <span class="p">)</span> <span class="o">=</span> <span class="n">batch_tardiness</span><span class="p">,</span> <span class="n">b_info</span><span class="o">.</span><span class="n">end_time</span><span class="p">,</span> <span class="p">(</span><span class="n">m_id</span><span class="p">,</span> <span class="n">b_idx</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;latest_finish&quot;</span><span class="p">:</span>
+                <span class="n">latest_end_time</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">for</span> <span class="n">m_id</span><span class="p">,</span> <span class="n">schedule</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">schedule</span> <span class="ow">and</span> <span class="n">schedule</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end_time</span> <span class="o">&gt;</span> <span class="n">latest_end_time</span><span class="p">:</span>
+                        <span class="n">latest_end_time</span><span class="p">,</span> <span class="n">worst_batch_location</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">schedule</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end_time</span><span class="p">,</span>
+                            <span class="p">(</span><span class="n">m_id</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">schedule</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;setup_cost&quot;</span><span class="p">:</span>
+                <span class="n">max_setup_cost</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">for</span> <span class="n">m_id</span><span class="p">,</span> <span class="n">schedule</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">last_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m_id</span><span class="p">]</span><span class="o">.</span><span class="n">initial_attribute</span>
+                    <span class="k">for</span> <span class="n">b_idx</span><span class="p">,</span> <span class="n">b_info</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">schedule</span><span class="p">):</span>
+                        <span class="n">current_setup_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">last_attr</span><span class="p">][</span>
+                            <span class="n">b_info</span><span class="o">.</span><span class="n">task_attribute</span>
+                        <span class="p">]</span>
+                        <span class="k">if</span> <span class="n">current_setup_cost</span> <span class="o">&gt;</span> <span class="n">max_setup_cost</span><span class="p">:</span>
+                            <span class="n">max_setup_cost</span><span class="p">,</span> <span class="n">worst_batch_location</span> <span class="o">=</span> <span class="p">(</span>
+                                <span class="n">current_setup_cost</span><span class="p">,</span>
+                                <span class="p">(</span><span class="n">m_id</span><span class="p">,</span> <span class="n">b_idx</span><span class="p">),</span>
+                            <span class="p">)</span>
+                        <span class="n">last_attr</span> <span class="o">=</span> <span class="n">b_info</span><span class="o">.</span><span class="n">task_attribute</span>
+            <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;random&quot;</span><span class="p">:</span>
+                <span class="n">all_batches</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">m_id</span><span class="p">,</span> <span class="n">b_idx</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">m_id</span><span class="p">,</span> <span class="n">schedule</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">b_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">schedule</span><span class="p">))</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="n">all_batches</span><span class="p">:</span>
+                    <span class="n">worst_batch_location</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">all_batches</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">worst_batch_location</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">machine_id</span><span class="p">,</span> <span class="n">batch_idx</span> <span class="o">=</span> <span class="n">worst_batch_location</span>
+            <span class="n">tasks_to_reschedule_from_removal</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">(</span>
+                    <span class="n">b_info</span><span class="o">.</span><span class="n">tasks</span>
+                    <span class="k">for</span> <span class="n">b_info</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine_id</span><span class="p">][</span><span class="n">batch_idx</span><span class="p">:]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">machine_id</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="n">tasks_to_reschedule_from_removal</span>
+
+        <span class="c1"># --- Main solve logic with Simulated Annealing ---</span>
+        <span class="n">initial_schedule_per_machine</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)}</span>
+        <span class="n">initial_schedule</span><span class="p">,</span> <span class="n">initial_unscheduled</span> <span class="o">=</span> <span class="n">_run_greedy_scheduling_phase</span><span class="p">(</span>
+            <span class="n">initial_schedule_per_machine</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="n">best_solution</span> <span class="o">=</span> <span class="n">OvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">schedule_per_machine</span><span class="o">=</span><span class="n">initial_schedule</span>
+        <span class="p">)</span>
+        <span class="n">best_fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">best_solution</span><span class="p">)</span>
+        <span class="n">result_storage</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">best_solution</span><span class="p">,</span> <span class="n">best_fit</span><span class="p">))</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">result_storage</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">current_solution</span> <span class="o">=</span> <span class="n">best_solution</span>
+        <span class="n">current_fit</span> <span class="o">=</span> <span class="n">best_fit</span>
+        <span class="n">current_unscheduled</span> <span class="o">=</span> <span class="n">initial_unscheduled</span>
+
+        <span class="n">num_local_search_iterations</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;num_local_search_iterations&quot;</span><span class="p">]</span>
+        <span class="n">ruin_strategies</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;tardiness&quot;</span><span class="p">,</span> <span class="s2">&quot;latest_finish&quot;</span><span class="p">,</span> <span class="s2">&quot;setup_cost&quot;</span><span class="p">,</span> <span class="s2">&quot;random&quot;</span><span class="p">]</span>
+        <span class="n">initial_temperature</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">best_fit</span><span class="p">)</span> <span class="k">if</span> <span class="n">best_fit</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1000.0</span>
+        <span class="n">cooling_rate</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;cooling_rate&quot;</span><span class="p">]</span>
+        <span class="n">temperature</span> <span class="o">=</span> <span class="n">initial_temperature</span>
+
+        <span class="k">for</span> <span class="n">iter_ls</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_local_search_iterations</span><span class="p">):</span>
+            <span class="n">current_ruin_strategy</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">ruin_strategies</span><span class="p">)</span>
+            <span class="n">worst_batch_info</span> <span class="o">=</span> <span class="n">_identify_worst_batch_and_affected_tasks</span><span class="p">(</span>
+                <span class="n">current_solution</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">current_ruin_strategy</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">worst_batch_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">machine_id_to_clear</span><span class="p">,</span> <span class="n">batch_index_to_clear</span><span class="p">,</span> <span class="n">tasks_to_reschedule</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">worst_batch_info</span>
+            <span class="p">)</span>
+            <span class="n">temp_schedule</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">m</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">current_solution</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">temp_schedule</span><span class="p">[</span><span class="n">machine_id_to_clear</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_schedule</span><span class="p">[</span><span class="n">machine_id_to_clear</span><span class="p">][</span>
+                <span class="p">:</span><span class="n">batch_index_to_clear</span>
+            <span class="p">]</span>
+            <span class="n">tasks_for_next_pass</span> <span class="o">=</span> <span class="n">current_unscheduled</span> <span class="o">|</span> <span class="n">tasks_to_reschedule</span>
+
+            <span class="n">new_schedule</span><span class="p">,</span> <span class="n">new_unscheduled</span> <span class="o">=</span> <span class="n">_run_greedy_scheduling_phase</span><span class="p">(</span>
+                <span class="n">temp_schedule</span><span class="p">,</span> <span class="n">tasks_for_next_pass</span>
+            <span class="p">)</span>
+            <span class="n">new_solution</span> <span class="o">=</span> <span class="n">OvenSchedulingSolution</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">schedule_per_machine</span><span class="o">=</span><span class="n">new_schedule</span>
+            <span class="p">)</span>
+            <span class="n">new_fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">new_solution</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">new_fit</span> <span class="o">&lt;</span> <span class="n">best_fit</span><span class="p">:</span>
+                <span class="n">best_solution</span> <span class="o">=</span> <span class="n">new_solution</span>
+                <span class="n">best_fit</span> <span class="o">=</span> <span class="n">new_fit</span>
+                <span class="n">result_storage</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">best_solution</span><span class="p">,</span> <span class="n">best_fit</span><span class="p">))</span>
+
+            <span class="c1"># SA Acceptance Criterion</span>
+            <span class="k">if</span> <span class="n">new_fit</span> <span class="o">&lt;</span> <span class="n">current_fit</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">temperature</span> <span class="o">&gt;</span> <span class="mf">1e-6</span>
+                <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">new_fit</span> <span class="o">-</span> <span class="n">current_fit</span><span class="p">)</span> <span class="o">/</span> <span class="n">temperature</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">current_solution</span> <span class="o">=</span> <span class="n">new_solution</span>
+                <span class="n">current_fit</span> <span class="o">=</span> <span class="n">new_fit</span>
+                <span class="n">current_unscheduled</span> <span class="o">=</span> <span class="n">new_unscheduled</span>
+
+            <span class="n">temperature</span> <span class="o">*=</span> <span class="n">cooling_rate</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span><span class="n">iter_ls</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">result_storage</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">result_storage</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result_storage</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.alb.salbp.transformations.to_rcalbp_l &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.alb.salbp.transformations.to_rcalbp_l</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.alb.salbp.transformations.to_rcalbp_l</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from SALBP to RCALBP_L (Resource-Constrained Assembly Line Balancing with Learning).&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.rcalbp_l.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RCALBPLProblem</span><span class="p">,</span>
+    <span class="n">RCALBPLSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.salbp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">SalbpProblem</span><span class="p">,</span> <span class="n">SalbpSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">subset_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="SalbpToRcalbpLTransformation">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.salbp.transformations.html#discrete_optimization.alb.salbp.transformations.to_rcalbp_l.SalbpToRcalbpLTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SalbpToRcalbpLTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span><span class="n">SalbpProblem</span><span class="p">,</span> <span class="n">SalbpSolution</span><span class="p">,</span> <span class="n">RCALBPLProblem</span><span class="p">,</span> <span class="n">RCALBPLSolution</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform SALBP to RCALBP_L.</span>
+
+<span class="sd">    Mapping:</span>
+<span class="sd">    - SALBP tasks → RCALBP_L tasks (single period, no learning)</span>
+<span class="sd">    - SALBP stations → RCALBP_L workstations</span>
+<span class="sd">    - SALBP cycle time → RCALBP_L target cycle time</span>
+<span class="sd">    - SALBP precedence → RCALBP_L precedence</span>
+<span class="sd">    - No resources, no zones (empty sets)</span>
+<span class="sd">    - Single period (no learning effect)</span>
+<span class="sd">    - Task durations remain constant across workstations</span>
+
+<span class="sd">    This is a SUBSET transformation: SALBP is a special case of RCALBP_L where:</span>
+<span class="sd">    - nb_resources = 0</span>
+<span class="sd">    - nb_zones = 0</span>
+<span class="sd">    - nb_periods = 1</span>
+<span class="sd">    - No learning effect (durations constant)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nb_stations_upper_bound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize transformation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nb_stations_upper_bound: Upper bound on number of stations</span>
+<span class="sd">                (default: number of tasks)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_stations_upper_bound</span> <span class="o">=</span> <span class="n">nb_stations_upper_bound</span>
+
+<div class="viewcode-block" id="SalbpToRcalbpLTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.salbp.transformations.html#discrete_optimization.alb.salbp.transformations.to_rcalbp_l.SalbpToRcalbpLTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metadata for forward transformation (SALBP → RCALBP_L).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">subset_transformation</span><span class="p">(</span>
+            <span class="n">use_cases</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Use RCALBP_L solvers for SALBP problems&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;SALBP is a special case of RCALBP_L (no resources, single period)&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Benchmark RCALBP_L algorithms on simpler SALBP instances&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">assumptions</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;No resource constraints&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;No zone constraints&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Single period (no learning effect)&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Durations constant across workstations&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SalbpToRcalbpLTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.salbp.transformations.html#discrete_optimization.alb.salbp.transformations.to_rcalbp_l.SalbpToRcalbpLTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">SalbpProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RCALBPLProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform SALBP to RCALBP_L.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: SALBP problem instance</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent RCALBP_L problem (no resources, single period)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Parameters</span>
+        <span class="n">nb_tasks</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">nb_tasks</span>
+        <span class="n">nb_stations</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nb_stations_upper_bound</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_stations_upper_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">nb_tasks</span>
+        <span class="p">)</span>
+        <span class="n">nb_periods</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Single period (no learning)</span>
+        <span class="n">nb_resources</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># No resources</span>
+        <span class="n">nb_zones</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># No zones</span>
+
+        <span class="c1"># Cycle time constraints</span>
+        <span class="n">c_target</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">cycle_time</span>
+        <span class="n">c_max</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">cycle_time</span>  <span class="c1"># Same as target for SALBP</span>
+
+        <span class="c1"># Precedence constraints</span>
+        <span class="c1"># SALBP precedence: list of (pred, succ) pairs</span>
+        <span class="c1"># RCALBP_L precedence: list of ((pred, period), (succ, period)) pairs</span>
+        <span class="c1"># Since we have single period, all tasks are in period 0</span>
+        <span class="n">precedences</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">pred</span><span class="p">],</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">succ</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">precedence</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Durations: RCALBP_L uses durations[task][experience_level]</span>
+        <span class="c1"># For SALBP, no learning effect, so duration is constant</span>
+        <span class="c1"># durations[t][0] = task time for task t (no experience)</span>
+        <span class="n">durations</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="n">source_problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span> <span class="o">*</span> <span class="n">nb_stations</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Empty resource/zone arrays</span>
+        <span class="n">capa_resources</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">cons_resources</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_tasks</span><span class="p">)]]</span>
+        <span class="n">capa_zones</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cons_zones</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">neutr_zones</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_tasks</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">RCALBPLProblem</span><span class="p">(</span>
+            <span class="n">c_target</span><span class="o">=</span><span class="n">c_target</span><span class="p">,</span>
+            <span class="n">c_max</span><span class="o">=</span><span class="n">c_max</span><span class="p">,</span>
+            <span class="n">nb_stations</span><span class="o">=</span><span class="n">nb_stations</span><span class="p">,</span>
+            <span class="n">nb_periods</span><span class="o">=</span><span class="n">nb_periods</span><span class="p">,</span>
+            <span class="n">nb_tasks</span><span class="o">=</span><span class="n">nb_tasks</span><span class="p">,</span>
+            <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+            <span class="n">durations</span><span class="o">=</span><span class="n">durations</span><span class="p">,</span>
+            <span class="n">nb_resources</span><span class="o">=</span><span class="n">nb_resources</span><span class="p">,</span>
+            <span class="n">capa_resources</span><span class="o">=</span><span class="n">capa_resources</span><span class="p">,</span>
+            <span class="n">cons_resources</span><span class="o">=</span><span class="n">cons_resources</span><span class="p">,</span>
+            <span class="n">nb_zones</span><span class="o">=</span><span class="n">nb_zones</span><span class="p">,</span>
+            <span class="n">capa_zones</span><span class="o">=</span><span class="n">capa_zones</span><span class="p">,</span>
+            <span class="n">cons_zones</span><span class="o">=</span><span class="n">cons_zones</span><span class="p">,</span>
+            <span class="n">neutr_zones</span><span class="o">=</span><span class="n">neutr_zones</span><span class="p">,</span>
+            <span class="n">p_start</span><span class="o">=</span><span class="n">nb_stations</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">p_end</span><span class="o">=</span><span class="n">nb_stations</span><span class="p">,</span>  <span class="c1"># Single period [0, 1)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SalbpToRcalbpLTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.salbp.transformations.html#discrete_optimization.alb.salbp.transformations.to_rcalbp_l.SalbpToRcalbpLTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RCALBPLSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">SalbpProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SalbpSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform RCALBP_L solution back to SALBP solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: RCALBP_L solution</span>
+<span class="sd">            source_problem: Original SALBP problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent SALBP solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract workstation assignments from RCALBP_L solution</span>
+        <span class="c1"># RCALBP_L: wks[task_id] = workstation</span>
+        <span class="c1"># SALBP: allocation_to_station[task_index] = station</span>
+
+        <span class="c1"># Map task IDs to indices</span>
+        <span class="n">allocation_to_station</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">wks</span><span class="p">[</span><span class="n">source_problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">SalbpSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span>
+            <span class="n">allocation_to_station</span><span class="o">=</span><span class="n">allocation_to_station</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SalbpToRcalbpLTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.salbp.transformations.html#discrete_optimization.alb.salbp.transformations.to_rcalbp_l.SalbpToRcalbpLTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SalbpSolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">RCALBPLProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RCALBPLSolution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform SALBP solution to RCALBP_L solution (for warmstart).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: SALBP solution</span>
+<span class="sd">            target_problem: Target RCALBP_L problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent RCALBP_L solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build workstation assignments</span>
+        <span class="c1"># SALBP: allocation_to_station[task_index] = station</span>
+        <span class="c1"># RCALBP_L: wks[task_id] = workstation</span>
+        <span class="n">wks</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">target_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">solution</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">))</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Empty resource allocation (no resources)</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Build schedule using RCALBP_L&#39;s scheduling algorithm</span>
+        <span class="c1"># We use a simple greedy schedule for period 0</span>
+        <span class="c1"># Target starts: use station assignment as priority</span>
+        <span class="n">target_starts</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="n">wks</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">wks</span><span class="p">}</span>
+
+        <span class="c1"># Build full solution using RCALBP_L&#39;s built-in scheduler</span>
+        <span class="k">return</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">build_full_solution</span><span class="p">(</span>
+            <span class="n">wks</span><span class="o">=</span><span class="n">wks</span><span class="p">,</span>
+            <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">,</span>
+            <span class="n">target_starts</span><span class="o">=</span><span class="n">target_starts</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

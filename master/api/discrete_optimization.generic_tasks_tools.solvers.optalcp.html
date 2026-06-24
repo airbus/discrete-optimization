@@ -1,0 +1,509 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers.optalcp package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.generic_tools package" href="discrete_optimization.generic_tools.html" />
+    <link rel="prev" title="discrete_optimization.generic_tasks_tools.solvers.lns_cp package" href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.generic_tasks_tools.solvers.html">discrete_optimization.generic_tasks_tools.solvers package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers.optalcp package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-generic-tasks-tools-solvers-optalcp-package">
+<h1>discrete_optimization.generic_tasks_tools.solvers.optalcp package<a class="headerlink" href="#discrete-optimization-generic-tasks-tools-solvers-optalcp-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation">
+<span id="discrete-optimization-generic-tasks-tools-solvers-optalcp-allocation-module"></span><h2>discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation module<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.</span></span><span class="sig-name descname"><span class="pre">AllocationOptalSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver" title="discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptalCpSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationCpSolver" title="discrete_optimization.generic_tasks_tools.allocation.AllocationCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationCpSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">UnaryResource</span></code>]</p>
+<p>Base class for allocation cp-sat solvers using a binary modelling.
+I.e. using 0-1 variables to model allocation status of each couple (task, unary_resource)
+This is a more general modelisation thant the integer one as it allows allocation of multiple resources.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_allocation_changes_constraints">
+<span class="sig-name descname"><span class="pre">add_allocation_changes_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><span class="pre">AllocationSolution</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.add_allocation_changes_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_allocation_changes_constraints" title="Link to this definition"></a></dt>
+<dd><p>Add and return constraints so that change variables reflect diff to ref.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_nb_unary_resource_usages">
+<span class="sig-name descname"><span class="pre">add_constraint_nb_unary_resource_usages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.add_constraint_nb_unary_resource_usages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_nb_unary_resource_usages" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_nb_allocation_changes">
+<span class="sig-name descname"><span class="pre">add_constraint_on_nb_allocation_changes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.allocation.AllocationSolution" title="discrete_optimization.generic_tasks_tools.allocation.AllocationSolution"><span class="pre">AllocationSolution</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_changes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">SignEnum.LEQ</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.add_constraint_on_nb_allocation_changes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_nb_allocation_changes" title="Link to this definition"></a></dt>
+<dd><p>Add contraint on maximal number of allocation changes from the given reference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref</strong></p></li>
+<li><p><strong>nb_changes</strong> – maximal number of changes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_task_unary_resource_allocation">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task_unary_resource_allocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">used</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.add_constraint_on_task_unary_resource_allocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_task_unary_resource_allocation" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on allocation of given unary resource for the given task</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>unary_resource</strong></p></li>
+<li><p><strong>used</strong> – if True, we enforce the allocation of <cite>unary_resource</cite> to <cite>task</cite>, else we prevent it</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_total_nb_usages">
+<span class="sig-name descname"><span class="pre">add_constraint_on_total_nb_usages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.add_constraint_on_total_nb_usages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_total_nb_usages" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_unary_resource_nb_usages">
+<span class="sig-name descname"><span class="pre">add_constraint_on_unary_resource_nb_usages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.add_constraint_on_unary_resource_nb_usages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.add_constraint_on_unary_resource_nb_usages" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.allocation_changes_variables">
+<span class="sig-name descname"><span class="pre">allocation_changes_variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.shop.html#discrete_optimization.shop.base.Task" title="discrete_optimization.shop.base.Task"><span class="pre">Task</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cp.IntExpr'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.allocation_changes_variables" title="Link to this definition"></a></dt>
+<dd><p>Variables tracking allocation changes from a given reference.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.allocation_changes_variables_created">
+<span class="sig-name descname"><span class="pre">allocation_changes_variables_created</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.allocation_changes_variables_created" title="Link to this definition"></a></dt>
+<dd><p>Flag telling whether ‘allocation changes variables’ have been created</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.at_most_one_unary_resource_per_task">
+<span class="sig-name descname"><span class="pre">at_most_one_unary_resource_per_task</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.at_most_one_unary_resource_per_task" title="Link to this definition"></a></dt>
+<dd><p>Flag telling if the problem accept at most one unary_resource per task.</p>
+<p>Default to False, ie several resources allowed per task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.create_allocation_changes_variables">
+<span class="sig-name descname"><span class="pre">create_allocation_changes_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.create_allocation_changes_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.create_allocation_changes_variables" title="Link to this definition"></a></dt>
+<dd><p>Create variables necessary for constraint on nb of changes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.create_done_variables">
+<span class="sig-name descname"><span class="pre">create_done_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.create_done_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.create_done_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.create_used_variables">
+<span class="sig-name descname"><span class="pre">create_used_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.create_used_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.create_used_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.done_variables">
+<span class="sig-name descname"><span class="pre">done_variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.shop.html#discrete_optimization.shop.base.Task" title="discrete_optimization.shop.base.Task"><span class="pre">Task</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">cp.BoolExpr</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.done_variables" title="Link to this definition"></a></dt>
+<dd><p>Variables tracking whether a task has at least one unary resource allocated.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.done_variables_created">
+<span class="sig-name descname"><span class="pre">done_variables_created</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.done_variables_created" title="Link to this definition"></a></dt>
+<dd><p>Flag telling whether ‘done variables’ have been created</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_default_tasks_n_unary_resources">
+<span class="sig-name descname"><span class="pre">get_default_tasks_n_unary_resources</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.get_default_tasks_n_unary_resources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_default_tasks_n_unary_resources" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_nb_tasks_done_variable">
+<span class="sig-name descname"><span class="pre">get_nb_tasks_done_variable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.get_nb_tasks_done_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_nb_tasks_done_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking number of tasks with at least a resource allocated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_nb_unary_resources_used_variable">
+<span class="sig-name descname"><span class="pre">get_nb_unary_resources_used_variable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.get_nb_unary_resources_used_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_nb_unary_resources_used_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking number of tasks with at least a resource allocated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_task_unary_resource_is_present_variable">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.shop.html#discrete_optimization.shop.base.Task" title="discrete_optimization.shop.base.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UnaryResource</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.BoolExpr</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/allocation.html#AllocationOptalSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.subset_tasks_of_interest">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">subset_tasks_of_interest</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.subset_tasks_of_interest" title="Link to this definition"></a></dt>
+<dd><p>Subset of tasks of interest used for the objective.</p>
+<p>By default, all tasks.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.subset_unaryresources_allowed">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">subset_unaryresources_allowed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.subset_unaryresources_allowed" title="Link to this definition"></a></dt>
+<dd><p>Unary resources allowed to solve the problem.</p>
+<p>By default, all unary resources.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.used_variables">
+<span class="sig-name descname"><span class="pre">used_variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">UnaryResource</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">cp.BoolVar</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.used_variables" title="Link to this definition"></a></dt>
+<dd><p>Variables tracking whether a unary resource has been used at least once.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.used_variables_created">
+<span class="sig-name descname"><span class="pre">used_variables_created</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation.AllocationOptalSolver.used_variables_created" title="Link to this definition"></a></dt>
+<dd><p>Flag telling whether ‘used variables’ have been created</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode">
+<span id="discrete-optimization-generic-tasks-tools-solvers-optalcp-multimode-module"></span><h2>discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode module<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode.MultimodeOptalSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode.</span></span><span class="sig-name descname"><span class="pre">MultimodeOptalSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/multimode.html#MultimodeOptalSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode.MultimodeOptalSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver" title="discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptalCpSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.multimode.MultimodeCpSolver" title="discrete_optimization.generic_tasks_tools.multimode.MultimodeCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultimodeCpSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode.MultimodeOptalSolver.add_constraint_on_task_mode">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/multimode.html#MultimodeOptalSolver.add_constraint_on_task_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode.MultimodeOptalSolver.add_constraint_on_task_mode" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on task mode</p>
+<p>The mode of <cite>task</cite> is fixed to <cite>mode</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>mode</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode.MultimodeOptalSolver.get_task_mode_is_present_variable">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_task_mode_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.shop.html#discrete_optimization.shop.base.Task" title="discrete_optimization.shop.base.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.BoolExpr</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/multimode.html#MultimodeOptalSolver.get_task_mode_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode.MultimodeOptalSolver.get_task_mode_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the 0-1 variable/expression telling if the mode is used for the task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>mode</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling">
+<span id="discrete-optimization-generic-tasks-tools-solvers-optalcp-scheduling-module"></span><h2>discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling module<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.</span></span><span class="sig-name descname"><span class="pre">SchedulingOptalSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver" title="discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptalCpSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.scheduling.SchedulingCpSolver" title="discrete_optimization.generic_tasks_tools.scheduling.SchedulingCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingCpSolver</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Task</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.add_constraint_chaining_tasks">
+<span class="sig-name descname"><span class="pre">add_constraint_chaining_tasks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Task</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver.add_constraint_chaining_tasks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.add_constraint_chaining_tasks" title="Link to this definition"></a></dt>
+<dd><p>Add constraint chaining task1 with task2</p>
+<p>task2 start == task1 end</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task1</strong></p></li>
+<li><p><strong>task2</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.add_constraint_on_task">
+<span class="sig-name descname"><span class="pre">add_constraint_on_task</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.shop.html#discrete_optimization.shop.base.Task" title="discrete_optimization.shop.base.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum" title="discrete_optimization.generic_tools.cp_tools.SignEnum"><span class="pre">SignEnum</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'cp.BoolExpr'</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver.add_constraint_on_task"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.add_constraint_on_task" title="Link to this definition"></a></dt>
+<dd><p>Add constraint on given task start or end</p>
+<p>task start or end must compare to <cite>time</cite> according to <cite>sign</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+<li><p><strong>sign</strong></p></li>
+<li><p><strong>time</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resulting constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_subtasks_makespan_variable">
+<span class="sig-name descname"><span class="pre">get_subtasks_makespan_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subtasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver.get_subtasks_makespan_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_subtasks_makespan_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking the makespan on a subset of tasks.</p>
+<p>Beware: a further call to <cite>get_subtasks_makespan_variable</cite> with another subset of tasks can
+change the constraints on this variable and thus make it obsolete.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subtasks</strong></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_subtasks_sum_end_time_variable">
+<span class="sig-name descname"><span class="pre">get_subtasks_sum_end_time_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subtasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver.get_subtasks_sum_end_time_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_subtasks_sum_end_time_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking the sum of end times on a subset of tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subtasks</strong></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_subtasks_sum_start_time_variable">
+<span class="sig-name descname"><span class="pre">get_subtasks_sum_start_time_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subtasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Task</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver.get_subtasks_sum_start_time_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_subtasks_sum_start_time_variable" title="Link to this definition"></a></dt>
+<dd><p>Construct and get the variable tracking the sum of start times on a subset of tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subtasks</strong></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>objective variable to minimize</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_task_interval_variable">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_task_interval_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.shop.html#discrete_optimization.shop.base.Task" title="discrete_optimization.shop.base.Task"><span class="pre">Task</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.IntervalVar</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver.get_task_interval_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_task_interval_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the interval variable of given task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_task_start_or_end_variable">
+<span class="sig-name descname"><span class="pre">get_task_start_or_end_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.shop.html#discrete_optimization.shop.base.Task" title="discrete_optimization.shop.base.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.IntExpr</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/solvers/optalcp/scheduling.html#SchedulingOptalSolver.get_task_start_or_end_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling.SchedulingOptalSolver.get_task_start_or_end_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the variable storing the start or end time of given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.solvers.optalcp">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.solvers.optalcp" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.generic_tasks_tools.solvers.lns_cp.html" class="btn btn-neutral float-left" title="discrete_optimization.generic_tasks_tools.solvers.lns_cp package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.generic_tools.html" class="btn btn-neutral float-right" title="discrete_optimization.generic_tools package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

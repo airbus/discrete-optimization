@@ -1,0 +1,21 @@
+discrete\_optimization.vrp.plots package
+========================================
+
+Submodules
+----------
+
+discrete\_optimization.vrp.plots.plot\_vrp module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.plots.plot_vrp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrp.plots
+   :members:
+   :undoc-members:
+   :show-inheritance:

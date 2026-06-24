@@ -1,0 +1,78 @@
+discrete\_optimization.rcpsp\_multiskill package
+================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.rcpsp_multiskill.plots
+   discrete_optimization.rcpsp_multiskill.solvers
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_multiskill.fast\_function\_ms\_rcpsp module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.fast_function_ms_rcpsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.multiskill\_to\_rcpsp module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.parser\_imopse module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.parser_imopse
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.parser\_mslib module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.parser_mslib
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.parser\_mspsp module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.parser_mspsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.problem module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_multiskill.solvers\_map module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.solvers_map
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill
+   :members:
+   :show-inheritance:
+   :undoc-members:

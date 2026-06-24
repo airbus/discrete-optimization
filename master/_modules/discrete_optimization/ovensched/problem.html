@@ -1,0 +1,635 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.ovensched.problem &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.ovensched.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.ovensched.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationProblem</span><span class="p">,</span>
+    <span class="n">AllocationSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchedulingProblem</span><span class="p">,</span>
+    <span class="n">SchedulingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.encoding_register</span><span class="w"> </span><span class="kn">import</span> <span class="n">Permutation</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">Task</span> <span class="o">=</span> <span class="nb">int</span>
+<span class="n">TaskAttribute</span> <span class="o">=</span> <span class="nb">int</span>
+<span class="n">Machine</span> <span class="o">=</span> <span class="nb">int</span>
+<span class="n">Batch</span> <span class="o">=</span> <span class="nb">int</span>
+<span class="n">UnaryResource</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Machine</span><span class="p">,</span> <span class="n">Batch</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ScheduleInfo">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.ScheduleInfo">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScheduleInfo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Describe the batch</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tasks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="n">task_attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span>
+    <span class="n">start_time</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">end_time</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">machine_batch_index</span><span class="p">:</span> <span class="n">UnaryResource</span>  <span class="c1"># tuple of (machine index, batch index)</span></div>
+
+
+
+<div class="viewcode-block" id="OvenSchedulingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenSchedulingSolution</span><span class="p">(</span>
+    <span class="n">SchedulingSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a solution to the Oven Scheduling Problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">OvenSchedulingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;OvenSchedulingProblem&quot;</span><span class="p">,</span>
+        <span class="n">schedule_per_machine</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Machine</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScheduleInfo</span><span class="p">]],</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes a solution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span> <span class="o">=</span> <span class="n">schedule_per_machine</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_task</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_task</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">start_time</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">end_time</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OvenSchedulingSolution.copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OvenSchedulingSolution&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates a deep copy of the solution.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">OvenSchedulingSolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingSolution.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_task</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingSolution.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_task</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingSolution.get_summary_string">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_summary_string">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_summary_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a human-readable summary of the solution.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A formatted string describing the solution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;OVEN SCHEDULING SOLUTION SUMMARY&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+        <span class="c1"># Evaluate the solution</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Objective Values:&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Processing time: </span><span class="si">{</span><span class="n">evaluation</span><span class="p">[</span><span class="s1">&#39;processing_time&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Late jobs: </span><span class="si">{</span><span class="n">evaluation</span><span class="p">[</span><span class="s1">&#39;nb_late_jobs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Setup cost: </span><span class="si">{</span><span class="n">evaluation</span><span class="p">[</span><span class="s1">&#39;setup_cost&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Feasibility check</span>
+        <span class="n">is_feasible</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Solution is feasible: </span><span class="si">{</span><span class="n">is_feasible</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Schedule details</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Schedule Details:&quot;</span><span class="p">)</span>
+        <span class="n">total_batches</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span> <span class="k">for</span> <span class="n">batches</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Total batches: </span><span class="si">{</span><span class="n">total_batches</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Total tasks: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_jobs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Per-Machine Schedule:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">):</span>
+            <span class="n">batches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine</span><span class="p">]</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  Machine </span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span><span class="si">}</span><span class="s2"> batches&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batches</span><span class="p">):</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Batch </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;      Tasks: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)&quot;</span>
+                <span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      Attribute: </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">task_attribute</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;      Time window: [</span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">start_time</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">end_time</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      Duration: </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">batch</span><span class="o">.</span><span class="n">start_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Calculate setup for this batch</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">prev_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">machine</span><span class="p">]</span><span class="o">.</span><span class="n">initial_attribute</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">prev_attr</span> <span class="o">=</span> <span class="n">batches</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">task_attribute</span>
+                <span class="n">setup_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">batch</span><span class="o">.</span><span class="n">task_attribute</span><span class="p">]</span>
+                <span class="n">setup_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">prev_attr</span><span class="p">][</span><span class="n">batch</span><span class="o">.</span><span class="n">task_attribute</span><span class="p">]</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;      Setup time: </span><span class="si">{</span><span class="n">setup_time</span><span class="si">}</span><span class="s2">, Setup cost: </span><span class="si">{</span><span class="n">setup_cost</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingSolution.print_summary">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution.print_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print a human-readable summary of the solution.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_summary_string</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingSolution.is_allocated">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution.is_allocated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">machine</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="n">unary_resource</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">machine</span><span class="p">][</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingSolution.get_max_nb_batch_per_machine">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution.get_max_nb_batch_per_machine">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_max_nb_batch_per_machine</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the maximum number of batches used on any machine in this solution.</span>
+
+<span class="sd">        This is useful for configuring CP-SAT models with warm-start: instead of</span>
+<span class="sd">        using a large default, we can set max_nb_batch close to what the warm-start</span>
+<span class="sd">        solution uses, reducing the model size.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Maximum number of batches across all machines</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">[]))</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TaskData">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.TaskData">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskData</span><span class="p">:</span>
+    <span class="n">attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span>
+    <span class="n">min_duration</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">max_duration</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">earliest_start</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">latest_end</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">eligible_machines</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Machine</span><span class="p">]</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="MachineData">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.MachineData">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MachineData</span><span class="p">:</span>
+    <span class="n">capacity</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">initial_attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span>
+    <span class="n">availability</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span></div>
+
+
+
+<div class="viewcode-block" id="OvenSchedulingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OvenSchedulingProblem</span><span class="p">(</span>
+    <span class="n">SchedulingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">AllocationProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines an instance of the Oven Scheduling Problem (OSP) and its evaluation logic.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OvenSchedulingProblem.get_makespan_upper_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_makespan_upper_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">100000</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unary_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">machine</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_machines</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasks_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">))</span>
+
+<div class="viewcode-block" id="OvenSchedulingProblem.get_set_task_attributes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_set_task_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_set_task_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">TaskAttribute</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">([</span><span class="n">td</span><span class="o">.</span><span class="n">attribute</span> <span class="k">for</span> <span class="n">td</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">])</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">n_machines</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tasks_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TaskData</span><span class="p">],</span>
+        <span class="n">machines_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MachineData</span><span class="p">],</span>
+        <span class="n">setup_costs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+        <span class="n">setup_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the problem with all its parameters.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_machines</span> <span class="o">=</span> <span class="n">n_machines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span> <span class="o">=</span> <span class="n">tasks_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">machines_data</span> <span class="o">=</span> <span class="n">machines_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_availability_intervals</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_costs</span> <span class="o">=</span> <span class="n">setup_costs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_times</span> <span class="o">=</span> <span class="n">setup_times</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">additional_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="OvenSchedulingProblem.fix_availability_intervals">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.fix_availability_intervals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fix_availability_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">m_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">machines_data</span><span class="p">:</span>
+            <span class="n">fixed_m</span> <span class="o">=</span> <span class="p">[</span><span class="n">m_data</span><span class="o">.</span><span class="n">availability</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">m_data</span><span class="o">.</span><span class="n">availability</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="n">slot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">fixed_m</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">fixed_m</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fixed_m</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">slot</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fixed_m</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slot</span><span class="p">)</span>
+            <span class="n">m_data</span><span class="o">.</span><span class="n">availability</span> <span class="o">=</span> <span class="n">fixed_m</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingProblem.get_solution_type">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the solution class type.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.solution_vector</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">VectorOvenSchedulingSolution</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">VectorOvenSchedulingSolution</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingProblem.get_objective_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines the problem&#39;s objectives.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;additional_data&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_data</span><span class="p">:</span>
+            <span class="n">add</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_data</span>
+            <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+                <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+                <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+                <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;processing_time&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span>
+                        <span class="n">default_weight</span><span class="o">=</span><span class="n">add</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight_processing&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span>
+                        <span class="n">default_weight</span><span class="o">=</span><span class="n">add</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight_tardiness&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;setup_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span>
+                        <span class="n">default_weight</span><span class="o">=</span><span class="n">add</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight_setup_cost&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+                <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+                <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+                <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;processing_time&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">1</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">1</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;setup_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">1</span>
+                    <span class="p">),</span>
+                <span class="p">},</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines the solution&#39;s encoding.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span>
+            <span class="n">dict_attribute_to_type</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;permutation&quot;</span><span class="p">:</span> <span class="n">Permutation</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">))}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingProblem.get_dummy_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.get_dummy_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a dummy (random) solution using the vector-based encoding.</span>
+
+<span class="sd">        This creates a VectorOvenSchedulingSolution with a random permutation,</span>
+<span class="sd">        which is then decoded into a feasible schedule using the greedy decoder.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: Optional arguments:</span>
+<span class="sd">                - random_seed: Random seed for reproducibility</span>
+<span class="sd">                - max_open_batches: Max open batches for decoder (default: use class default)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            VectorOvenSchedulingSolution with random permutation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.ovensched.solution_vector</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">VectorOvenSchedulingSolution</span><span class="p">,</span>
+            <span class="n">generate_random_permutation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Set random seed if provided</span>
+        <span class="k">if</span> <span class="s2">&quot;random_seed&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;random_seed&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Generate random permutation</span>
+        <span class="n">permutation</span> <span class="o">=</span> <span class="n">generate_random_permutation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># Create vector solution (will be decoded lazily)</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">VectorOvenSchedulingSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">permutation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">OvenSchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if a solution is feasible by verifying static and temporal constraints.</span>
+
+<span class="sd">        If a timed_schedule is already cached in the solution, this function will</span>
+<span class="sd">        validate the cached timings. Otherwise, it will attempt to compute them.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 1. Perform all static checks first (job uniqueness, attributes, capacity, etc.)</span>
+        <span class="n">all_jobs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">))</span>
+        <span class="n">scheduled_jobs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">:</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span>
+            <span class="k">for</span> <span class="n">i_batch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">])):</span>
+                <span class="n">schedule_info</span><span class="p">:</span> <span class="n">ScheduleInfo</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">]</span>
+                <span class="n">batch_tasks</span> <span class="o">=</span> <span class="n">schedule_info</span><span class="o">.</span><span class="n">tasks</span>
+                <span class="c1"># 1. Check if tasks are not already scheduled</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">batch_tasks</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">scheduled_jobs</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Some tasks are scheduled several time&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="n">scheduled_jobs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">batch_tasks</span><span class="p">)</span>
+                <span class="n">attribute_batch</span> <span class="o">=</span> <span class="n">schedule_info</span><span class="o">.</span><span class="n">task_attribute</span>
+                <span class="n">attributes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">batch_tasks</span><span class="p">]</span>
+                <span class="c1"># 2. Check that all the tasks in the batch have the same attribute</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="n">attribute_batch</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Different attributes in a given batch </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="c1"># 3. Check capacity of the batch.</span>
+                <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">batch_tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">capacity</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Capacity of the </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2"> batch is broken&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="c1"># 4. Check task eligibility to the machine</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">batch_tasks</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">m</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">eligible_machines</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Machine </span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2"> is not eligible for task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                <span class="c1"># 5. Check duration compatibility inside the batch</span>
+                <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">batch_tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">min</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">batch_tasks</span>
+                <span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duration incompatible in the </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2"> batch&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="c1"># 6. Check if batch duration is coherent with the tasks inside :</span>
+                <span class="n">dur</span> <span class="o">=</span> <span class="n">schedule_info</span><span class="o">.</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">schedule_info</span><span class="o">.</span><span class="n">start_time</span>
+                <span class="k">if</span> <span class="n">dur</span> <span class="o">&gt;</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">max_duration</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">batch_tasks</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duration of batch </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2"> is too high&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">dur</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">min_duration</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">batch_tasks</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Duration of batch </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2"> is too low for one task in the batch&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="c1"># 7. Check if the batch is done at an availability interval.</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">schedule_info</span><span class="o">.</span><span class="n">start_time</span>
+                <span class="n">end_time</span> <span class="o">=</span> <span class="n">schedule_info</span><span class="o">.</span><span class="n">end_time</span>
+                <span class="n">is_in_valid_window</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="n">avail_start</span> <span class="o">&lt;=</span> <span class="n">start_time</span> <span class="ow">and</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">avail_end</span>
+                    <span class="k">for</span> <span class="n">avail_start</span><span class="p">,</span> <span class="n">avail_end</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_in_valid_window</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">availability</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Batch </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2"> is not in valid window for machine </span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="n">start_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">earliest_start</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">batch_tasks</span>
+                <span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Batch </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2"> starts earlier than one task earliest start&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">i_batch</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">prev_batch_attribute</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">][</span>
+                        <span class="n">i_batch</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">task_attribute</span>
+                    <span class="n">prev_time</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end_time</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">prev_batch_attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">initial_attribute</span>
+                    <span class="n">prev_time</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">setup_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">prev_batch_attribute</span><span class="p">][</span><span class="n">attribute_batch</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">start_time</span> <span class="o">&lt;</span> <span class="n">prev_time</span> <span class="o">+</span> <span class="n">setup_time</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Batch </span><span class="si">{</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i_batch</span><span class="si">}</span><span class="s2"> starts earlier previous batch + setup time&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">scheduled_jobs</span> <span class="o">!=</span> <span class="n">all_jobs</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Some jobs are missing&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="OvenSchedulingProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">OvenSchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluates a solution&#39;s performance.&quot;&quot;&quot;</span>
+        <span class="n">nb_late_tasks</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">processing_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">setup_cost</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i_batch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">])):</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">i_batch</span><span class="p">]</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">start_time</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">end_time</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">batch</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">end</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">latest_end</span><span class="p">:</span>
+                        <span class="n">nb_late_tasks</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">processing_time</span> <span class="o">+=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span>
+                <span class="n">attribute_i_batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">task_attribute</span>
+                <span class="k">if</span> <span class="n">i_batch</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">prev_attribute</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">schedule_per_machine</span><span class="p">[</span><span class="n">m</span><span class="p">][</span>
+                        <span class="n">i_batch</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">task_attribute</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">prev_attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">machines_data</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">initial_attribute</span>
+                <span class="n">setup_cost</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">prev_attribute</span><span class="p">][</span><span class="n">attribute_i_batch</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;processing_time&quot;</span><span class="p">:</span> <span class="n">processing_time</span><span class="p">,</span>
+            <span class="s2">&quot;nb_late_jobs&quot;</span><span class="p">:</span> <span class="n">nb_late_tasks</span><span class="p">,</span>
+            <span class="s2">&quot;setup_cost&quot;</span><span class="p">:</span> <span class="n">setup_cost</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
