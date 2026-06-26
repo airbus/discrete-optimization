@@ -40,7 +40,17 @@ class TemperatureScheduling:
     temperature: float
 
     @abstractmethod
-    def next_temperature(self) -> float: ...
+    def next_temperature(self, move_accepted: bool = False) -> float:
+        """Update and return the next temperature.
+
+        Args:
+            move_accepted: Whether the last move was accepted.
+                          Used by threshold-based schedulers.
+
+        Returns:
+            The updated temperature
+        """
+        ...
 
 
 class SimulatedAnnealing(SolverDO, WarmstartMixin):
@@ -165,8 +175,8 @@ class SimulatedAnnealing(SolverDO, WarmstartMixin):
                 cur_best_objective = objective
                 if not self.store_solution:
                     store.append((cur_variable.copy(), objective))
-            self.temperature_handler.next_temperature()
-            # Update the temperature
+            # Update the temperature (pass acceptance info for threshold-based schedulers)
+            self.temperature_handler.next_temperature(move_accepted=accept)
             self.restart_handler.update(
                 nv, objective, global_improvement, local_improvement
             )
@@ -190,16 +200,155 @@ class SimulatedAnnealing(SolverDO, WarmstartMixin):
 
 
 class TemperatureSchedulingFactor(TemperatureScheduling):
+    """Geometric cooling schedule: T ← coefficient × T every iteration.
+
+    This scheduler cools the temperature by a constant factor at every iteration,
+    regardless of acceptance rate. This is simpler but may cool too quickly compared
+    to threshold-based approaches.
+
+    Args:
+        initial_temperature: Starting temperature (T0)
+        restart_handler: Handler for restarts
+        cooling_factor: Multiplicative factor (typically 0.95-0.9999)
+                       T_new = cooling_factor × T_old
+    """
+
     def __init__(
         self,
-        temperature: float,
+        initial_temperature: float,
         restart_handler: RestartHandler,
-        coefficient: float = 0.99,
+        cooling_factor: float = 0.99,
+        temperature: float = None,  # Deprecated, kept for backwards compatibility
+        coefficient: float = None,  # Deprecated, kept for backwards compatibility
     ):
-        self.temperature = temperature
-        self.restart_handler = restart_handler
-        self.coefficient = coefficient
+        # Handle backwards compatibility
+        if temperature is not None:
+            initial_temperature = temperature
+        if coefficient is not None:
+            cooling_factor = coefficient
 
-    def next_temperature(self) -> float:
-        self.temperature *= self.coefficient
+        self.temperature = initial_temperature
+        self.initial_temperature = initial_temperature
+        self.restart_handler = restart_handler
+        self.cooling_factor = cooling_factor
+
+    def next_temperature(self, move_accepted: bool = False) -> float:
+        """Cool temperature by constant factor (ignores move_accepted)."""
+        self.temperature *= self.cooling_factor
         return self.temperature
+
+
+class TemperatureSchedulingThresholdBased(TemperatureScheduling):
+    """Threshold-based geometric cooling: cool only when thresholds are reached.
+
+    This is the classic SA cooling schedule from Kirkpatrick et al. (1983) and
+    used in many SA implementations. Temperature stays constant while exploring
+    at each "temperature level", and only decreases when enough moves have been
+    sampled or accepted.
+
+    This approach allows more thorough exploration at each temperature level
+    before cooling, often leading to better quality solutions compared to
+    per-iteration cooling.
+
+    Implementation based on:
+    - Kirkpatrick et al. (1983) - "Optimization by Simulated Annealing"
+    - Ceschia et al. (2017) - "Solving discrete lot-sizing and scheduling..."
+
+    Args:
+        initial_temperature: Starting temperature (T0)
+        restart_handler: Handler for restarts
+        cooling_factor: Multiplicative factor when cooling (alpha, typically 0.95-0.99)
+        n_moves_sampled_before_cooling: Number of moves to sample before cooling (n_s)
+                                       Temperature cools when this threshold is reached
+        n_moves_accepted_before_cooling: Number of accepted moves before cooling (n_a)
+                                        Temperature cools when this threshold is reached
+                                        (if reached before n_moves_sampled)
+
+    Example:
+        >>> # Paper's parameters for lot-sizing
+        >>> scheduler = TemperatureSchedulingThresholdBased(
+        ...     initial_temperature=37.0,
+        ...     restart_handler=restart_handler,
+        ...     cooling_factor=0.99,
+        ...     n_moves_sampled_before_cooling=60240,
+        ...     n_moves_accepted_before_cooling=12049
+        ... )
+
+    Note:
+        Temperature cools when EITHER threshold is reached (OR condition).
+        Typically n_moves_accepted < n_moves_sampled, so high acceptance early
+        in search triggers faster cooling, while low acceptance later maintains
+        temperature longer for continued exploration.
+    """
+
+    def __init__(
+        self,
+        initial_temperature: float,
+        restart_handler: RestartHandler,
+        cooling_factor: float = 0.99,
+        n_moves_sampled_before_cooling: int = 60240,
+        n_moves_accepted_before_cooling: int = 12049,
+    ):
+        self.temperature = initial_temperature
+        self.initial_temperature = initial_temperature
+        self.restart_handler = restart_handler
+        self.cooling_factor = cooling_factor
+        self.n_moves_sampled_before_cooling = n_moves_sampled_before_cooling
+        self.n_moves_accepted_before_cooling = n_moves_accepted_before_cooling
+
+        # Internal counters
+        self._n_moves_sampled_current_level = 0
+        self._n_moves_accepted_current_level = 0
+        self._n_cooling_events = 0
+
+    def next_temperature(self, move_accepted: bool = False) -> float:
+        """Update temperature based on acceptance thresholds.
+
+        Args:
+            move_accepted: Whether the last move was accepted
+
+        Returns:
+            The current temperature (may or may not have changed)
+        """
+        # Increment counters
+        self._n_moves_sampled_current_level += 1
+        if move_accepted:
+            self._n_moves_accepted_current_level += 1
+
+        # Check if we should cool
+        should_cool = (
+            self._n_moves_sampled_current_level >= self.n_moves_sampled_before_cooling
+            or self._n_moves_accepted_current_level
+            >= self.n_moves_accepted_before_cooling
+        )
+
+        if should_cool:
+            # Cool the temperature
+            self.temperature *= self.cooling_factor
+            self._n_cooling_events += 1
+
+            # Reset counters for next temperature level
+            self._n_moves_sampled_current_level = 0
+            self._n_moves_accepted_current_level = 0
+
+            logger.debug(
+                f"Temperature cooled to {self.temperature:.4f} "
+                f"(cooling event #{self._n_cooling_events})"
+            )
+
+        return self.temperature
+
+    def get_statistics(self) -> dict:
+        """Get statistics about the cooling schedule.
+
+        Returns:
+            Dictionary with cooling statistics
+        """
+        return {
+            "current_temperature": self.temperature,
+            "initial_temperature": self.initial_temperature,
+            "n_cooling_events": self._n_cooling_events,
+            "n_moves_sampled_at_current_level": self._n_moves_sampled_current_level,
+            "n_moves_accepted_at_current_level": self._n_moves_accepted_current_level,
+            "cooling_factor": self.cooling_factor,
+        }

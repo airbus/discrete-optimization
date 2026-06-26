@@ -120,6 +120,7 @@ FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
 
+LOT_SIZING_URL = "https://www.csplib.org/Problems/prob058/data/pspInstances.zip"
 
 ERROR_MSG_MISSING_DATASETS = (
     "\nYou probably have not downloaded the needed dataset.\n"
@@ -874,6 +875,28 @@ def fetch_data_from_multibatching(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_lotsizing(data_home: Optional[str] = None):
+    """Fetch lot-sizing dataset from csplib website"""
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get rcpsp_multiskill data directory
+    lotsizing_dir = f"{data_home}/lotsizing"
+    os.makedirs(lotsizing_dir, exist_ok=True)
+
+    try:
+        # download dataset
+        local_file_path, headers = urlretrieve(LOT_SIZING_URL)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with zipfile.ZipFile(local_file_path) as zipf:
+                zipf.extractall(path=lotsizing_dir)
+    finally:
+        # remove temporary files
+        urlcleanup()
+    for folder in glob.glob(f"{lotsizing_dir}/__MACOSX"):
+        shutil.rmtree(folder)
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -903,4 +926,4 @@ def fetch_all_datasets(data_home: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    fetch_all_datasets()
+    fetch_data_lotsizing()
