@@ -923,7 +923,8 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_rcalb_l(data_home=data_home)
     fetch_data_from_ovensched_repo(data_home=data_home)
     fetch_data_from_multibatching(data_home=data_home)
+    fetch_data_lotsizing(data_home=data_home)
 
 
 if __name__ == "__main__":
-    fetch_data_lotsizing()
+    fetch_all_datasets()
