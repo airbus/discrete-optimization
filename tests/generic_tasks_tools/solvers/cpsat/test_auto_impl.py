@@ -213,6 +213,25 @@ def test_auto(
     assert sol.raw_sol.task_variables == bad_sol.raw_sol.task_variables
 
 
+def test_start_to_end_time_lag():
+    problem = GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        start_to_end_min_time_lags=[("task-1", "task-2", 8)],
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
+    solution: GenericSchedulingImplSolution = result.get_best_solution()
+    assert problem.satisfy(solution)
+
+
 def test_rcpsp_simple():
     mode_details = {
         1: {1: {"duration": 0}},  # dummy start
