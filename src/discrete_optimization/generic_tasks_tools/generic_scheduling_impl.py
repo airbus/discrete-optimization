@@ -3,13 +3,18 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
-from collections.abc import Callable, Hashable, Iterable
+from collections.abc import Callable, Container, Hashable, Iterable
 from copy import deepcopy
 from typing import Optional
 
+import numpy as np
 import wrapt
 
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    convert_availability_intervals_to_calendar,
+    convert_calendar_to_availability_intervals,
+)
+from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -434,10 +439,6 @@ class GenericSchedulingImplProblem(
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
 
-    def satisfy(self, variable: Solution) -> bool:
-        assert isinstance(variable, GenericSchedulingImplSolution)
-        return self.satisfy_partial(variable=variable)
-
     def get_solution_type(self) -> type[Solution]:
         return GenericSchedulingImplSolution
 
@@ -523,6 +524,231 @@ class GenericSchedulingImplProblem(
             return self.unary_resource_costs[task][mode][unary_resource]
         except KeyError:
             return super().get_unary_resource_cost(task, mode, unary_resource)
+
+    def create_subproblem_from_partial_solution(
+        self, partial_solution: RawSolution[Task, UnaryResource, Skill]
+    ) -> GenericSchedulingImplProblem:
+        """Create a subproblem according to a partial solution.
+
+        - Tasks already scheduled are removed from subproblem.
+        - Add time windows constraints to model timelags/precedence constraints with removed tasks.
+        - Update resource calendars with scheduled allocations
+        - Update non-renewable resources max capacities
+        - Transform no_overlap constraints into forbidden intervals constraints
+
+        """
+        scheduled_tasks = partial_solution.task_variables
+
+        # restrict tasks list
+        new_tasks_list = [
+            task for task in self.tasks_list if task not in scheduled_tasks
+        ]
+        new_durations_per_mode = {
+            task: self.durations_per_mode[task] for task in new_tasks_list
+        }
+        new_successors = {
+            task: [
+                next_task
+                for next_task in next_tasks
+                if next_task not in scheduled_tasks
+            ]
+            for task, next_tasks in self.successors.items()
+            if task not in scheduled_tasks
+        }
+        new_start_to_start_min_time_lags = _restrict_timelags(
+            self.start_to_start_min_time_lags, tasks_to_remove=scheduled_tasks
+        )
+        new_end_to_start_min_time_lags = _restrict_timelags(
+            self.end_to_start_min_time_lags, tasks_to_remove=scheduled_tasks
+        )
+        new_start_to_end_min_time_lags = _restrict_timelags(
+            self.start_to_end_min_time_lags, tasks_to_remove=scheduled_tasks
+        )
+        new_end_to_end_min_time_lags = _restrict_timelags(
+            self.end_to_end_min_time_lags, tasks_to_remove=scheduled_tasks
+        )
+
+        # translate time lags/precedence constraints involving missing tasks into time windows constraints
+        new_time_windows_nested: dict[tuple[Task, StartOrEnd, MinOrMax], set[int]] = {
+            (task, start_or_end, min_or_max): {
+                # at least the original bound
+                self.get_task_bound(
+                    task=task,
+                    start_or_end=start_or_end,
+                    min_or_max=min_or_max,
+                )
+            }
+            for task in new_tasks_list
+            for start_or_end in StartOrEnd
+            for min_or_max in MinOrMax
+        }
+        for task1_start_or_end in StartOrEnd:
+            for task2_start_or_end in StartOrEnd:
+                for min_or_max in MinOrMax:
+                    for task1, task2, offset in self.get_consolidated_time_lags(
+                        task1_start_or_end=task1_start_or_end,
+                        task2_start_or_end=task2_start_or_end,
+                        min_or_max=min_or_max,
+                    ):
+                        if task1 in scheduled_tasks and task2 not in scheduled_tasks:
+                            scheduled_task = task1
+                            task = task2
+                            scheduled_task_start_or_end = task1_start_or_end
+                            task_start_or_end = task2_start_or_end
+                            scheduled_offset = offset
+                            task_min_or_max = min_or_max
+                        elif task1 not in scheduled_tasks and task2 in scheduled_tasks:
+                            scheduled_task = task2
+                            task = task1
+                            scheduled_task_start_or_end = task2_start_or_end
+                            task_start_or_end = task1_start_or_end
+                            scheduled_offset = -offset
+                            task_min_or_max = ~min_or_max
+
+                        else:
+                            continue
+
+                        bound_from_schedule = (
+                            scheduled_tasks[scheduled_task].get_start_or_end(
+                                scheduled_task_start_or_end
+                            )
+                            + scheduled_offset
+                        )
+                        new_time_windows_nested[
+                            (task, task_start_or_end, task_min_or_max)
+                        ].add(bound_from_schedule)
+        new_time_windows = {
+            task: (
+                max(new_time_windows_nested[(task, StartOrEnd.START, MinOrMax.MIN)]),
+                max(new_time_windows_nested[(task, StartOrEnd.END, MinOrMax.MIN)]),
+                min(new_time_windows_nested[(task, StartOrEnd.START, MinOrMax.MAX)]),
+                min(new_time_windows_nested[(task, StartOrEnd.END, MinOrMax.MAX)]),
+            )
+            for task in new_tasks_list
+        }
+
+        # Update non-renewable resources max capacities
+        new_non_renewable_resources = {
+            resource: old_max_capacity
+            - sum(
+                self.get_non_renewable_resource_consumption(
+                    resource=resource, task=task, mode=task_variable.mode
+                )
+                for task, task_variable in scheduled_tasks.items()
+            )
+            for resource, old_max_capacity in self.non_renewable_resources.items()
+        }
+
+        # Update resources availabilities
+        calendar_resources = (
+            self.unary_resources_list + self.non_skill_cumulative_resources_list
+        )
+        resources_calendars = {
+            resource: np.array(
+                convert_availability_intervals_to_calendar(
+                    intervals=self.get_resource_availabilities(resource=resource),
+                    horizon=self.horizon,
+                ),
+                dtype=int,
+            )
+            for resource in calendar_resources
+        }
+        for task, task_variable in scheduled_tasks.items():
+            start = task_variable.start
+            end = task_variable.end
+            for resource in self.unary_resources_list:
+                if resource in task_variable.allocated:
+                    resources_calendars[resource][start:end] -= 1
+            for resource in self.non_skill_cumulative_resources_list:
+                conso = self.get_cumulative_resource_consumption(
+                    resource=resource, task=task, mode=task_variable.mode
+                )
+                resources_calendars[resource][start:end] -= conso
+        new_non_skill_cumulative_resources = {
+            resource: convert_calendar_to_availability_intervals(
+                calendar=resources_calendars[resource],
+                horizon=self.horizon,
+            )
+            for resource in self.non_skill_cumulative_resources_list
+        }
+        new_unary_resources_availabilities = {
+            resource: [
+                (start, end)
+                for start, end, value in convert_calendar_to_availability_intervals(
+                    calendar=resources_calendars[resource],
+                    horizon=self.horizon,
+                )
+                if value > 0
+            ]
+            for resource in self.unary_resources_list
+        }
+
+        # Transform no_overlap constraints into forbidden intervals constraints
+        new_no_overlap_sets: set[frozenset[Task]] = set()
+        new_forbidden_intervals: dict[Task, list[tuple[int, int]]] = {
+            task: list(self.get_forbidden_intervals(task=task))
+            for task in self.tasks_list
+        }
+        for not_overlapping_tasks in self.get_no_overlap():
+            if not_overlapping_tasks.isdisjoint(scheduled_tasks):
+                # no removed tasks in it => ok
+                new_no_overlap_sets.add(not_overlapping_tasks)
+            else:
+                # remove scheduled tasks and replace them by forbidden intervals
+                new_not_overlapping_tasks = not_overlapping_tasks.difference(
+                    scheduled_tasks
+                )
+                scheduled_tasks_in_not_overlapping_tasks = (
+                    not_overlapping_tasks.difference(new_not_overlapping_tasks)
+                )
+                new_no_overlap_sets.add(new_not_overlapping_tasks)
+                for task in new_not_overlapping_tasks:
+                    new_forbidden_intervals[task].extend(
+                        [
+                            (
+                                scheduled_tasks[scheduled_task].start,
+                                scheduled_tasks[scheduled_task].end,
+                            )
+                            for scheduled_task in scheduled_tasks_in_not_overlapping_tasks
+                        ]
+                    )
+
+        return GenericSchedulingImplProblem(
+            horizon=self.horizon,
+            durations_per_mode=new_durations_per_mode,
+            resource_consumptions=self.resource_consumptions,
+            successors=new_successors,
+            unary_resources=self.unary_resources,
+            unary_resources_skills=self.unary_resources_skills,
+            unary_resources_availabilities=new_unary_resources_availabilities,
+            unary_resources_task_compatibility=self.unary_resources_task_compatibility,
+            skills=self.skills,
+            non_skill_cumulative_resources=new_non_skill_cumulative_resources,
+            non_renewable_resources=new_non_renewable_resources,
+            time_windows=new_time_windows,
+            start_to_start_min_time_lags=new_start_to_start_min_time_lags,
+            start_to_end_min_time_lags=new_start_to_end_min_time_lags,
+            end_to_start_min_time_lags=new_end_to_start_min_time_lags,
+            end_to_end_min_time_lags=new_end_to_end_min_time_lags,
+            no_overlap_sets=new_no_overlap_sets,
+            forbidden_intervals=new_forbidden_intervals,
+            objective=self.weighted_objectives,
+            custom_evaluate_fn=self.custom_evaluate_fn,
+            objective_resource_weights=self.objective_resource_weights,
+            mode_costs=self.mode_costs,
+            unary_resource_costs=self.unary_resource_costs,
+            compute_time_penalty=self.compute_time_penalty,
+        )
+
+
+def _restrict_timelags(
+    timelags: list[tuple[Task, Task, int]], tasks_to_remove: Container[Task]
+) -> list[tuple[Task, Task, int]]:
+    return [
+        (task1, task2, offset)
+        for task1, task2, offset in timelags
+        if (task1 not in tasks_to_remove) and (task2 not in tasks_to_remove)
+    ]
 
 
 class GenericSchedulingImplSolution(

@@ -5,7 +5,7 @@ import logging
 from typing import Generic
 
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -16,6 +16,28 @@ logger = logging.getLogger(__name__)
 
 class TimewindowProblem(SchedulingProblem[Task], Generic[Task]):
     """Class for problem having time windows between tasks."""
+
+    def get_task_bound(
+        self, task: Task, start_or_end: StartOrEnd, min_or_max: MinOrMax
+    ) -> int:
+        """Get a lower or upper bound on a task start or end.
+
+        Args:
+            task:
+            start_or_end:
+            min_or_max: min -> lower bound, max -> upper bound
+
+        Returns:
+
+        """
+        if min_or_max == MinOrMax.MIN:
+            return self.get_task_start_or_end_lower_bound(
+                task=task, start_or_end=start_or_end
+            )
+        else:
+            return self.get_task_start_or_end_upper_bound(
+                task=task, start_or_end=start_or_end
+            )
 
     def get_task_start_or_end_lower_bound(
         self, task: Task, start_or_end: StartOrEnd

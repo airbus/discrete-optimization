@@ -10,6 +10,7 @@ from typing import Any, Generic
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.skill import Skill
 
 
@@ -27,6 +28,12 @@ class TaskVariable(Generic[UnaryResource, Skill]):
         default_factory=dict
     )  # additional information if needed
 
+    def get_start_or_end(self, start_or_end: StartOrEnd) -> int:
+        if start_or_end == StartOrEnd.START:
+            return self.start
+        else:
+            return self.end
+
 
 @dataclass
 class RawSolution(Generic[Task, UnaryResource, Skill]):
@@ -34,10 +41,20 @@ class RawSolution(Generic[Task, UnaryResource, Skill]):
 
     Does not inherit from d-o `Solution` class.
 
+    You can do `raw_sol_1 | raw_sol_2`, it will return another raw solution merging both `task_variables` dictionaries,
+    but dropping metadata.
+
     ."""
 
     task_variables: dict[Task, TaskVariable[UnaryResource, Skill]]
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __or__(
+        self, other: RawSolution[Task, UnaryResource, Skill]
+    ) -> RawSolution[Task, UnaryResource, Skill]:
+        return RawSolution(
+            task_variables=self.task_variables | other.task_variables,
+        )
 
 
 class Objective(Enum):

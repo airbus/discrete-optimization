@@ -9,6 +9,7 @@ from collections.abc import Hashable, Iterable
 from typing import Generic, Optional, TypeVar
 
 import numpy as np
+import numpy.typing as npt
 import wrapt
 
 from discrete_optimization.generic_tasks_tools.base import Task
@@ -367,7 +368,7 @@ class WithoutCalendarResourceSolution(
 
 
 def convert_calendar_to_availability_intervals(
-    calendar: int | list[int], horizon: int
+    calendar: int | list[int] | npt.NDArray[int], horizon: int
 ) -> list[tuple[int, int, int]]:
     """Convert a calendar into availability intervals.
 
@@ -392,10 +393,10 @@ def convert_calendar_to_availability_intervals(
         for t in range(1, end_calendar):
             if calendar[t] != value:
                 # ends current interval, starts the next one
-                intervals.append((start, t, value))
+                intervals.append((start, t, int(value)))
                 start = t
                 value = calendar[t]
-        intervals.append((start, end_calendar, value))
+        intervals.append((start, end_calendar, int(value)))
         return intervals
 
 
