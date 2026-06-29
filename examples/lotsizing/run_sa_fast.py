@@ -25,7 +25,7 @@ def run_fast_sa(iteration=10**6):
     instances = get_data_available()
 
     # Use a medium-hard instance
-    instance_file = [inst for inst in instances if "PSP_200_4" in inst][0]
+    instance_file = [inst for inst in instances if "PSP_100_1" in inst][0]
 
     print("=" * 70)
     print("FAST SA (numpy/numba) - High-Performance Solver")
@@ -88,6 +88,11 @@ def run_fast_sa(iteration=10**6):
     )
     print(f"Solution valid: {valid}")
 
+    if problem.known_bound is not None:
+        print(
+            f"{solver.aggreg_from_sol(result[-1][0]) / problem.known_bound} relative perf"
+        )
+
     return result
 
 
@@ -95,4 +100,4 @@ if __name__ == "__main__":
     # Run fast SA with live logging
     # Note: First run includes JIT compilation (~2s overhead)
     #       Subsequent runs use cached code (100x faster!)
-    run_fast_sa(3 * 10**8)
+    run_fast_sa(10**8)

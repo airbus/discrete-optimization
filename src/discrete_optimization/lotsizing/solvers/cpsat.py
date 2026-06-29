@@ -430,10 +430,12 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
     def init_model(self, **kwargs: Any) -> None:
         """Initialize the CP-SAT model."""
         super().init_model(**kwargs)
-        self._create_main_vars()
-        self._set_objective()
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        relax_delays = kwargs["relax_delays"]
+        self._create_main_vars(relax_delays=relax_delays)
+        self._set_objective(relax_delays=relax_delays)
 
-    def _create_main_vars(self):
+    def _create_main_vars(self, relax_delays: bool = False):
         self.variables = {}
         total_demands_per_item = {
             item: sum(self.problem.demands[item]) for item in self.problem.items_range
@@ -450,7 +452,9 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
                     # We assume it's 1 here
                     self.deadlines[(item, nb)] = i
                     starts[(item, nb)] = self.cp_model.new_int_var(
-                        lb=nb, ub=i, name=f"start_{item, nb}"
+                        lb=nb,
+                        ub=i if not relax_delays else horizon - 1,
+                        name=f"start_{item, nb}",
                     )
                     intervals[(item, nb)] = self.cp_model.new_fixed_size_interval_var(
                         start=starts[(item, nb)], size=1, name=f"intervals_{item, nb}"
@@ -462,7 +466,7 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         self.variables["starts"] = starts
         self.variables["intervals"] = intervals
 
-    def _set_objective(self):
+    def _set_objective(self, relax_delays: bool = False):
         horizon = self.problem.horizon
         objectives = []
         self.variables["objectives"] = {}
@@ -475,8 +479,36 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
                 #                 * self.problem.delay_cost_per_type_per_time_per_unit[item]
                 #                 for t in range(horizon)
                 #                for item in self.problem.items_range])
-                self.variables["objectives"][obj] = 0
-                objectives.append(weight * 0)
+                if relax_delays:
+                    delays = {
+                        (item, nb): self.cp_model.new_int_var(
+                            lb=0,
+                            ub=self.problem.horizon - self.deadlines[(item, nb)],
+                            name=f"delay_{item, nb}",
+                        )
+                        for item, nb in self.variables["starts"]
+                    }
+                    self.variables["delays"] = delays
+                    for item, nb in delays:
+                        self.cp_model.add_max_equality(
+                            delays[(item, nb)],
+                            [
+                                self.variables["starts"][(item, nb)]
+                                - self.deadlines[(item, nb)],
+                                0,
+                            ],
+                        )
+                    self.variables["objectives"][obj] = sum(
+                        [
+                            self.problem.delay_cost_per_type_per_time_per_unit[item]
+                            * delays[(item, nb)]
+                            for item, nb in delays
+                        ]
+                    )
+                else:
+                    self.variables["objectives"][obj] = 0
+                print("weights on delay", weight)
+                objectives.append(weight * self.variables["objectives"][obj])
             if obj == "stock":
                 stock_obj = sum(
                     [
@@ -505,12 +537,6 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             for j in range(len(nodes)):
                 if i == j:
                     continue
-                if False:
-                    if nodes[i][0] != "dummy" and nodes[j][0] != "dummy":
-                        if self.deadlines[nodes[j]] < self.deadlines[nodes[i]] - 5:
-                            continue
-                        if self.deadlines[nodes[j]] > self.deadlines[nodes[i]] + 30:
-                            continue
                 item_j, ind_j = nodes[j]
                 if item_i == item_j and ind_j != ind_i + 1:
                     # convention order..
@@ -537,6 +563,7 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             ]
         )
         self.variables["objectives"]["changeover"] = cost
+        self.variables["nodes_convention"] = nodes
         self.variables["next"] = next_node_vars
 
     def set_warm_start(self, solution: LotSizingSolution) -> None:
@@ -545,9 +572,6 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         Args:
             solution: A LotSizingSolution to use as warm-start
         """
-        if not hasattr(self, "variables") or "starts" not in self.variables:
-            raise RuntimeError("You must call init_model() before set_warm_start()")
-
         # Build mapping from (item_type, occurrence) to production time
         # Group productions by item type and sort by time
         productions_by_type = {}
@@ -562,18 +586,9 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
 
         # Map (item_type, nb) to production time
         production_times = {}
-        for item_type in self.problem.items_range:
-            # Get all occurrences for this type (sorted by deadline)
-            items_of_type = [
-                (item, nb) for item, nb in self.deadlines.keys() if item == item_type
-            ]
-            items_of_type.sort(key=lambda x: self.deadlines[x])
-
-            if item_type in productions_by_type:
-                prod_times = productions_by_type[item_type]
-                for idx, (item, nb) in enumerate(items_of_type):
-                    if idx < len(prod_times):
-                        production_times[(item, nb)] = prod_times[idx]
+        for item_type in productions_by_type:
+            for nb in range(len(productions_by_type[item_type])):
+                production_times[(item_type, nb)] = productions_by_type[item_type][nb]
 
         # Set hints for start variables
         self.cp_model.ClearHints()
@@ -582,14 +597,41 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             if key in production_times:
                 hint_value = production_times[key]
                 # Ensure hint is within variable bounds
-                if hint_value >= 0 and hint_value <= self.deadlines[key]:
-                    self.cp_model.AddHint(start_var, hint_value)
-                    num_hints += 1
-                    logger.debug(f"Warm-start hint: {key} -> {hint_value}")
-
-        logger.info(
-            f"Set {num_hints} warm-start hints (out of {len(self.variables['starts'])} variables)"
-        )
+                self.cp_model.AddHint(start_var, hint_value)
+                num_hints += 1
+                logger.debug(f"Warm-start hint: {key} -> {hint_value}")
+        if "next" in self.variables:
+            nodes_convention = self.variables["nodes_convention"]
+            node_to_index = {
+                nodes_convention[i]: i for i in range(len(nodes_convention))
+            }
+            sorted_production_full = sorted(solution.productions, key=lambda p: p.time)
+            sorted_node = [0]
+            count_per_item_type = {item_type: 0 for item_type in productions_by_type}
+            for p in sorted_production_full:
+                sorted_node.append(
+                    node_to_index[(p.item_type, count_per_item_type[p.item_type])]
+                )
+                count_per_item_type[p.item_type] += 1
+            arcs_actives = set(
+                [(n0, n1) for n0, n1 in zip(sorted_node[:-1], sorted_node[1:])]
+                + [(sorted_node[-1], 0)]
+            )
+            for i, j in self.variables["next"]:
+                if (i, j) in arcs_actives:
+                    self.cp_model.AddHint(self.variables["next"][(i, j)], 1)
+                else:
+                    self.cp_model.AddHint(self.variables["next"][(i, j)], 0)
+        if "delays" in self.variables:
+            for key in self.variables["delays"]:
+                delay = production_times[key]
+                deadline = self.deadlines[key]
+                if delay > deadline:
+                    self.cp_model.AddHint(
+                        self.variables["delays"][key], delay - deadline
+                    )
+                else:
+                    self.cp_model.AddHint(self.variables["delays"][key], 0)
 
     def retrieve_solution(
         self, cpsolvercb: CpSolverSolutionCallback

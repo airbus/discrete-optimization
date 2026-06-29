@@ -79,6 +79,33 @@ def run_scheduling():
     print(problem.evaluate(sol), problem.satisfy(sol))
 
 
+def run_scheduling_ws():
+    instances = get_data_available()
+    instance_sizes = [(inst, os.path.getsize(inst)) for inst in instances]
+    instance_sizes.sort(key=lambda x: x[1], reverse=True)
+    instance = [inst for inst in instances if "PSP_100_1" in inst][0]
+    print(f"Available instances: {len(instances)}")
+    print(f"\nChosen instance: {instance}")
+    problem = parse_file(instance)
+    greedy_solver = GreedyLotSizingSolver(problem)
+    res = greedy_solver.solve(strategy=GreedyStrategy.EARLIEST_DEMAND_FIRST)
+    sol = res[-1][0]
+    print("Warm start : ", problem.evaluate(sol), problem.satisfy(sol))
+    solver = CpSatSchedLotSizingSolver(problem)
+    solver.init_model(relax_delays=True)
+    solver.set_warm_start(sol)
+    params_cp = ParametersCp.default_cpsat()
+    params_cp.nb_process = 10
+    res = solver.solve(
+        callbacks=[ProblemEvaluateLogger(logging.INFO, logging.INFO)],
+        parameters_cp=params_cp,
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+        time_limit=1000,
+    )
+    sol = res[-1][0]
+    print(problem.evaluate(sol), problem.satisfy(sol))
+
+
 def run_cpsat():
     instances = get_data_available()
     instance_sizes = [(inst, os.path.getsize(inst)) for inst in instances]
@@ -137,4 +164,4 @@ def run_cpsat():
 
 
 if __name__ == "__main__":
-    run_cpsat()
+    run_scheduling_ws()

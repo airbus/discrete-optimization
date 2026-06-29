@@ -54,7 +54,103 @@ class MilpLotSizingSolver(GurobiMilpSolver):
     def convert_to_variable_values(
         self, solution: Solution
     ) -> dict[gurobipy.Var, float]:
-        pass
+        """Convert a LotSizingSolution to Gurobi variable values for warmstart.
+
+        Args:
+            solution: LotSizingSolution to convert
+
+        Returns:
+            Dictionary mapping Gurobi variables to their values
+        """
+        if not isinstance(solution, LotSizingSolution):
+            raise TypeError(f"Expected LotSizingSolution, got {type(solution)}")
+
+        sol = solution
+        var_values = {}
+
+        # Get variables
+        x = self.variables["x"]
+        y = self.variables["y"]
+        s = self.variables["s"]
+        z = self.variables["z"]
+
+        items = list(self.problem.items_range)
+        horizon = self.problem.horizon
+
+        # Build production schedule from solution
+        prod_at_time = {}  # {time: item_type}
+        for prod in sol.productions:
+            if prod.time in prod_at_time:
+                logger.warning(
+                    f"Multiple productions at time {prod.time}, using last one"
+                )
+            prod_at_time[prod.time] = prod.item_type
+
+        # Determine which item the machine is "ready" for at each period
+        # During idle periods, keep machine ready for last produced item
+        ready_item = [None] * horizon
+        last_produced = items[0]  # Default: first item
+
+        for t in range(horizon):
+            if t in prod_at_time:
+                # Production period: machine ready for this item
+                ready_item[t] = prod_at_time[t]
+                last_produced = prod_at_time[t]
+            else:
+                # Idle period: keep machine ready for last produced item (no changeover)
+                ready_item[t] = last_produced
+
+        # Set x and y variables
+        for i in items:
+            for t in range(horizon):
+                # x[i,t]: production
+                if t in prod_at_time and prod_at_time[t] == i:
+                    var_values[x[i, t]] = 1.0
+                else:
+                    var_values[x[i, t]] = 0.0
+
+                # y[i,t]: machine ready for item i
+                if ready_item[t] == i:
+                    var_values[y[i, t]] = 1.0
+                else:
+                    var_values[y[i, t]] = 0.0
+
+        # Compute stock levels by simulating inventory flow
+        stock = {i: 0.0 for i in items}  # Current stock
+
+        for t in range(horizon):
+            # Production this period
+            for i in items:
+                if var_values[x[i, t]] > 0.5:
+                    stock[i] += 1.0  # Binary lot sizing: produce 1 unit
+
+            # Satisfy demands
+            for i in items:
+                demand = self.problem.demands[i][t]
+                if stock[i] >= demand:
+                    stock[i] -= demand
+                else:
+                    # Shortage - set stock to 0 (this will be infeasible but best we can do)
+                    stock[i] = 0.0
+
+            # Set stock variables
+            for i in items:
+                var_values[s[i, t]] = stock[i]
+
+        # Set changeover variables z[i,j,t]
+        # z[i,j,t] = 1 if y[i,t-1]=1 and y[j,t]=1 (changeover from i to j in ready state)
+        # This is based on ready_item, not just actual production
+        for i in items:
+            for j in items:
+                if i != j:
+                    for t in range(1, horizon):
+                        # Changeover happens if machine was ready for i at t-1 and ready for j at t
+                        if ready_item[t - 1] == i and ready_item[t] == j:
+                            var_values[z[i, j, t]] = 1.0
+                        else:
+                            var_values[z[i, j, t]] = 0.0
+
+        return var_values
 
     problem: LotSizingProblem
 
@@ -233,8 +329,13 @@ class MilpLotSizingSolver(GurobiMilpSolver):
 
         # Pass deliveries=None to trigger recompute_deliveries()
         # which properly handles inventory flow and demand satisfaction
-        return LotSizingSolution(
+        sol = LotSizingSolution(
             problem=self.problem,
             productions=productions,
             deliveries=None,
         )
+        if self.problem.known_bound is not None:
+            logger.info(
+                f"{self.aggreg_from_sol(sol) / self.problem.known_bound} relative perf"
+            )
+        return sol
