@@ -74,6 +74,23 @@ def problem_wo_skills():
     )
 
 
+@fixture
+def problem_no_overlap():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 2,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        no_overlap_sets={frozenset({"task-1", "task-2"})},
+        forbidden_intervals={"task-1": [(4, 6)]},
+    )
+
+
 def test_problem(problem_wo_skills, caplog):
     problem = problem_wo_skills
     sol = GenericSchedulingImplSolution(
@@ -245,20 +262,8 @@ def test_task_bounds_cpm(problem_wo_skills):
     }
 
 
-def test_no_overlap(caplog):
-    problem = GenericSchedulingImplProblem(
-        horizon=10,
-        durations_per_mode={
-            "task-1": {
-                0: 2,
-            },
-            "task-2": {
-                0: 4,
-            },
-        },
-        no_overlap_sets={frozenset({"task-1", "task-2"})},
-        forbidden_intervals={"task-1": [(4, 6)]},
-    )
+def test_no_overlap(problem_no_overlap, caplog):
+    problem = problem_no_overlap
     # nok no overlap
     sol = GenericSchedulingImplSolution(
         problem=problem,
@@ -310,3 +315,234 @@ def test_no_overlap(caplog):
         ),
     )
     assert problem.satisfy(sol)
+
+
+def test_subproblem_from_partial_solution(caplog):
+    problem = GenericSchedulingImplProblem(
+        horizon=20,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+            "task-3": {
+                0: 2,
+                1: 2,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
+            },
+            "task-3": {
+                0: {
+                    "cumulative_resource": 1,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+        },
+        successors={"task-1": ["task-2", "task-3"]},
+        end_to_end_min_time_lags=[("task-3", "task-2", -1)],
+        unary_resources={"worker1", "worker2"},
+        unary_resources_availabilities={
+            "worker1": [(1, 4)],
+            "worker2": [(3, 18)],
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 12, 2),
+                (12, 20, 3),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 1,
+        },
+    )
+
+    # create subproblem
+    partial_solution = RawSolution(
+        task_variables={
+            "task-1": TaskVariable(
+                start=3, end=6, mode=1, allocated={"worker2": set()}
+            ),
+            "task-2": TaskVariable(
+                start=10, end=14, mode=0, allocated={"worker2": set()}
+            ),
+        }
+    )
+    subproblem = problem.create_subproblem_from_partial_solution(partial_solution)
+    assert "task-1" not in subproblem.tasks_list
+    assert "task-3" in subproblem.tasks_list
+    print(subproblem.time_windows)
+    print(subproblem.unary_resources_availabilities)
+    print(subproblem.non_skill_cumulative_resources)
+
+    # subsol ok
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-3": TaskVariable(
+                    start=6, end=8, mode=0, allocated={"worker2": set()}
+                ),
+            }
+        ),
+    )
+    assert subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    assert problem.satisfy(complete_sol)
+
+    # subsol nok precedence
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-3": TaskVariable(start=5, end=7, mode=0, allocated={}),
+            }
+        ),
+    )
+    assert not subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(complete_sol)
+    assert "precedence" in caplog.text
+
+    # subsol nok unary_resource
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-3": TaskVariable(
+                    start=11, end=13, mode=0, allocated={"worker2": set()}
+                ),
+            }
+        ),
+    )
+    assert not subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(complete_sol)
+    assert "worker2" in caplog.text
+
+    # subsol nok non-renewable ressource
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-3": TaskVariable(start=9, end=11, mode=1),
+            }
+        ),
+    )
+    assert not subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(complete_sol)
+    assert "non_renewable_resource" in caplog.text
+
+    # subsol nok cumulative ressource
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-3": TaskVariable(start=9, end=11, mode=0),
+            }
+        ),
+    )
+    assert not subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(complete_sol)
+    assert "cumulative_resource" in caplog.text
+
+    # subsol nok time lag
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-3": TaskVariable(start=14, end=16, mode=0),
+            }
+        ),
+    )
+    assert not subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(complete_sol)
+    assert "time lag" in caplog.text
+
+
+def test_subproblem_with_no_overlap_from_partial_solution(problem_no_overlap, caplog):
+    problem = problem_no_overlap
+
+    # create subproblem
+    partial_solution = RawSolution(
+        task_variables={
+            "task-1": TaskVariable(start=1, end=3, mode=0),
+        }
+    )
+    subproblem = problem.create_subproblem_from_partial_solution(partial_solution)
+
+    # subsol ok
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-2": TaskVariable(start=3, end=7, mode=0),
+            }
+        ),
+    )
+    assert subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    assert problem.satisfy(complete_sol)
+
+    # subsol nok no_overlap
+    subsol = GenericSchedulingImplSolution(
+        problem=subproblem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-2": TaskVariable(start=2, end=6, mode=0),
+            }
+        ),
+    )
+    assert not subproblem.satisfy(subsol)
+    complete_sol = GenericSchedulingImplSolution(
+        problem=problem, raw_sol=partial_solution | subsol.raw_sol
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(complete_sol)
+    assert "overlap" in caplog.text
