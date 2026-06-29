@@ -1,0 +1,21 @@
+discrete\_optimization.alb.rcalbp.solvers package
+=================================================
+
+Submodules
+----------
+
+discrete\_optimization.alb.rcalbp.solvers.cpsat module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.rcalbp.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.alb.rcalbp.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

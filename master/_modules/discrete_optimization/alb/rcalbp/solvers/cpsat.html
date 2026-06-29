@@ -1,0 +1,680 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.alb.rcalbp.solvers.cpsat &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.alb.rcalbp.solvers.cpsat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.alb.rcalbp.solvers.cpsat</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">CP-SAT Solvers for RC-ALBP with Shared Resources</span>
+
+<span class="sd">This module shows how each modeling approach handles shared resources:</span>
+<span class="sd">- FOLDED: Works naturally ✓</span>
+<span class="sd">- CALENDAR: Works naturally ✓</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSolverSolutionCallback</span><span class="p">,</span>
+    <span class="n">IntervalVar</span><span class="p">,</span>
+    <span class="n">LinearExprT</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.rcalbp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RCALBPProblem</span><span class="p">,</span>
+    <span class="n">RCALBPSolution</span><span class="p">,</span>
+    <span class="n">Resource</span><span class="p">,</span>
+    <span class="n">Task</span><span class="p">,</span>
+    <span class="n">UnaryResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationCpSatSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EnumHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ModelingShared">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.ModelingShared">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelingShared</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">FOLDED</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">CALENDAR</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CpSatRcAlbpSolver</span><span class="p">(</span>
+    <span class="n">AllocationCpSatSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CP-SAT Solver for RC-ALBP with shared resources.</span>
+<span class="sd">    Implements FOLDED and CALENDAR approaches.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># def get_binary_allocation_variable(self, task: Task, unary_resource: UnaryResource) -&gt; LinearExprT:</span>
+    <span class="c1">#    if self.modeling == ModelingShared.FOLDED:</span>
+    <span class="c1">#        station_to_idx = {s: i for i, s in enumerate(self.problem.stations)}</span>
+    <span class="c1">#        return self.variables[&quot;task_station_binary&quot;][task, station_to_idx[unary_resource]]</span>
+    <span class="c1">#    raise NotImplementedError</span>
+
+    <span class="c1"># def get_integer_allocation_variable(self, task: Task) -&gt; LinearExprT:</span>
+    <span class="c1">#    if self.modeling == ModelingShared.FOLDED:</span>
+    <span class="c1">#        return self.variables[&quot;task_station&quot;][task]</span>
+    <span class="c1">#    raise NotImplementedError</span>
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.get_resource_consumption_intervals">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.get_resource_consumption_intervals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_consumption_intervals</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">IntervalVar</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeling</span> <span class="o">==</span> <span class="n">ModelingShared</span><span class="o">.</span><span class="n">FOLDED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;intervals&quot;</span><span class="p">][</span><span class="n">t</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">resource</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span>
+            <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.get_task_start_or_end_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.get_task_start_or_end_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;ends&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.get_task_unary_resource_is_present_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.get_task_unary_resource_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeling</span> <span class="o">==</span> <span class="n">ModelingShared</span><span class="o">.</span><span class="n">FOLDED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_station_binary&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">EnumHyperparameter</span><span class="p">(</span>
+            <span class="n">enum</span><span class="o">=</span><span class="n">ModelingShared</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;modeling&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">ModelingShared</span><span class="o">.</span><span class="n">FOLDED</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">RCALBPProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">RCALBPProblem</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modeling</span><span class="p">:</span> <span class="n">ModelingShared</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modeling</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;modeling&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeling</span> <span class="o">==</span> <span class="n">ModelingShared</span><span class="o">.</span><span class="n">FOLDED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model_folded</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeling</span> <span class="o">==</span> <span class="n">ModelingShared</span><span class="o">.</span><span class="n">CALENDAR</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model_calendar</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.init_model_folded">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.init_model_folded">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model_folded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        FOLDED model with shared resources.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">horizon</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">station_to_idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)}</span>
+        <span class="n">idx_to_station</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">station_to_idx</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 1. Task Assignment Variables</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="n">task_station_binary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_allocation</span><span class="p">()</span>
+        <span class="n">task_station</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">task</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">station_to_idx</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">*</span> <span class="n">task_station_binary</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">s</span><span class="p">)]</span>
+                    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_exactly_one</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">task_station_binary</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">station</span><span class="p">)]</span>
+                    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 2. Start Time and Interval Variables</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">intervals</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;start_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;end_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                <span class="n">start</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;interval_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">start</span>
+            <span class="n">ends</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">end</span>
+            <span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">interval</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 3. Station Precedence Constraints</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">precedences</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">task_station</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">task_station</span><span class="p">[</span><span class="n">succ</span><span class="p">])</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 4. Temporal Precedence (Same Station)</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">precedences</span><span class="p">:</span>
+            <span class="n">same_station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;same_</span><span class="si">{</span><span class="n">pred</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">succ</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">task_station</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">==</span> <span class="n">task_station</span><span class="p">[</span><span class="n">succ</span><span class="p">])</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                <span class="n">same_station</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">task_station</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">!=</span> <span class="n">task_station</span><span class="p">[</span><span class="n">succ</span><span class="p">])</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                <span class="n">same_station</span><span class="o">.</span><span class="n">Not</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">ends</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">starts</span><span class="p">[</span><span class="n">succ</span><span class="p">])</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">same_station</span><span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 5. STATION-SPECIFIC Resource Constraints (Optional Intervals)</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="n">optional_intervals</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">station_specific_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_specific_resources</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">station_idx</span><span class="p">,</span> <span class="n">station</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">):</span>
+                <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="n">opt_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewOptionalIntervalVar</span><span class="p">(</span>
+                    <span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">],</span>
+                    <span class="n">duration</span><span class="p">,</span>
+                    <span class="n">ends</span><span class="p">[</span><span class="n">task</span><span class="p">],</span>
+                    <span class="n">task_station_binary</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">station</span><span class="p">)],</span>
+                    <span class="sa">f</span><span class="s2">&quot;opt_interval_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">optional_intervals</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">station_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">opt_interval</span>
+
+        <span class="c1"># Cumulative constraints for station-specific resources</span>
+        <span class="k">for</span> <span class="n">station_idx</span><span class="p">,</span> <span class="n">station</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">station_specific_resources</span><span class="p">:</span>
+                <span class="n">station_intervals</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">station_demands</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">station_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">optional_intervals</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">station_idx</span><span class="p">)]</span>
+                        <span class="p">)</span>
+                        <span class="n">station_demands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="p">)</span>
+
+                <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">station_intervals</span> <span class="ow">and</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                        <span class="n">station_intervals</span><span class="p">,</span> <span class="n">station_demands</span><span class="p">,</span> <span class="n">capacity</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 6. SHARED Resource Constraints (Global Cumulative)</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># This is the key difference: shared resources use ALL task intervals,</span>
+        <span class="c1"># not just those assigned to a specific station</span>
+
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">:</span>
+            <span class="n">global_intervals</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">global_demands</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">global_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                    <span class="n">global_demands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="p">)</span>
+
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resource_capacities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">global_intervals</span> <span class="ow">and</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span><span class="n">global_intervals</span><span class="p">,</span> <span class="n">global_demands</span><span class="p">,</span> <span class="n">capacity</span><span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 7. Objective: Minimize Cycle Time</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="s2">&quot;makespan&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span><span class="n">makespan</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">ends</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="n">makespan</span><span class="p">)</span>
+
+        <span class="c1"># Store variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">starts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;ends&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ends</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;intervals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">intervals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;opt_intervals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optional_intervals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_station_binary&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_station_binary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_station&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_station</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;idx_to_station&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">idx_to_station</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;makespan&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">makespan</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.create_allocation">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.create_allocation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_allocation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tasks</span><span class="p">,</span> <span class="n">unary_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_tasks_n_unary_resources</span><span class="p">()</span>
+        <span class="n">task_to_station</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="n">unary_resources</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_compatible_task_unary_resource</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                <span class="p">):</span>
+                    <span class="n">boolvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">new_bool_var</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;is_present_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">unary_resource</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">task_to_station</span><span class="p">[(</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">)]</span> <span class="o">=</span> <span class="n">boolvar</span>
+        <span class="k">return</span> <span class="n">task_to_station</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.init_model_calendar">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.init_model_calendar">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model_calendar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        CALENDAR model - optimized based on shared resource presence.</span>
+
+<span class="sd">        Two paths:</span>
+<span class="sd">        1. NO shared resources: Simple calendar model with absolute time</span>
+<span class="sd">        2. WITH shared resources: Complex model with cycle-time decomposition</span>
+
+<span class="sd">        Key insight for shared resources:</span>
+<span class="sd">        We need TWO sets of intervals:</span>
+<span class="sd">        1. Absolute time intervals [start, end) for NoOverlap and station assignment</span>
+<span class="sd">        2. Cycle time intervals [cycle_start, cycle_end) for shared resources</span>
+
+<span class="sd">        Where: cycle_start = start % cycle_time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">horizon</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">station_to_idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)}</span>
+        <span class="n">idx_to_station</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">station_to_idx</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">cycle_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cycle_time&quot;</span><span class="p">)</span>
+        <span class="n">nb_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 1. Task Variables (Absolute Time)</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">intervals</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;start_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;end_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                <span class="n">start</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;interval_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">start</span>
+            <span class="n">ends</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">end</span>
+            <span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">interval</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 2. STATION-SPECIFIC Resources: Calendar Tasks</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="n">station_specific_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_specific_resources</span><span class="p">()</span>
+
+        <span class="c1"># Compute max capacity per station-specific resource</span>
+        <span class="n">max_capacity_station</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">station_specific_resources</span><span class="p">:</span>
+            <span class="n">max_cap</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+                <span class="n">cap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="n">max_cap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_cap</span><span class="p">,</span> <span class="n">cap</span><span class="p">)</span>
+            <span class="n">max_capacity_station</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_cap</span>
+
+        <span class="c1"># Create calendar tasks for station-specific resources</span>
+        <span class="n">calendar_intervals</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">calendar_demands</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">station_idx</span><span class="p">,</span> <span class="n">station</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">station_specific_resources</span><span class="p">:</span>
+                <span class="n">station_cap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="n">max_cap</span> <span class="o">=</span> <span class="n">max_capacity_station</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+                <span class="n">blocking_demand</span> <span class="o">=</span> <span class="n">max_cap</span> <span class="o">-</span> <span class="n">station_cap</span>
+
+                <span class="k">if</span> <span class="n">blocking_demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">cal_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                        <span class="n">station_idx</span> <span class="o">*</span> <span class="n">cycle_time</span><span class="p">,</span>
+                        <span class="n">cycle_time</span><span class="p">,</span>
+                        <span class="p">(</span><span class="n">station_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cycle_time</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;cal_interval_</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">calendar_intervals</span><span class="p">[(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)]</span> <span class="o">=</span> <span class="n">cal_interval</span>
+                    <span class="n">calendar_demands</span><span class="p">[(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)]</span> <span class="o">=</span> <span class="n">blocking_demand</span>
+
+        <span class="c1"># Add cumulative constraints for station-specific resources</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">station_specific_resources</span><span class="p">:</span>
+            <span class="n">max_cap</span> <span class="o">=</span> <span class="n">max_capacity_station</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">max_cap</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">resource_intervals</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">resource_demands</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># Real task intervals</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">resource_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">intervals</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                    <span class="n">resource_demands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="p">)</span>
+
+            <span class="c1"># Calendar blocking intervals</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">res</span><span class="p">),</span> <span class="n">cal_interval</span> <span class="ow">in</span> <span class="n">calendar_intervals</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="n">resource</span><span class="p">:</span>
+                    <span class="n">resource_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cal_interval</span><span class="p">)</span>
+                    <span class="n">resource_demands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">calendar_demands</span><span class="p">[(</span><span class="n">station</span><span class="p">,</span> <span class="n">res</span><span class="p">)])</span>
+
+            <span class="k">if</span> <span class="n">resource_intervals</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                    <span class="n">resource_intervals</span><span class="p">,</span> <span class="n">resource_demands</span><span class="p">,</span> <span class="n">max_cap</span>
+                <span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 3. SHARED Resources: Cycle Time Intervals</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># OPTIMIZATION: Only create cycle-time decomposition if there are shared resources</span>
+        <span class="c1"># This saves variables and constraints when not needed</span>
+
+        <span class="n">has_shared_resources</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">has_shared_resources</span><span class="p">:</span>
+            <span class="c1"># Complex path: Create cycle-time decomposition for shared resources</span>
+            <span class="n">station_vars</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">cycle_starts</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">cycle_ends</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">cycle_intervals</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+
+                <span class="c1"># Station assignment variable (implicit in absolute time)</span>
+                <span class="n">station_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                    <span class="mi">0</span><span class="p">,</span> <span class="n">nb_stations</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;station_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">station_vars</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">station_var</span>
+
+                <span class="c1"># Cycle time coordinates: cycle_start = start % cycle_time</span>
+                <span class="n">cycle_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;cycle_start_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">cycle_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;cycle_end_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Bounds: cycle_start ∈ [0, cycle_time), cycle_end ≤ cycle_time</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">cycle_start</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">cycle_start</span> <span class="o">&lt;</span> <span class="n">cycle_time</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">cycle_end</span> <span class="o">&lt;=</span> <span class="n">cycle_time</span><span class="p">)</span>
+
+                <span class="c1"># Link: start = station * cycle_time + cycle_start</span>
+                <span class="n">station_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;offset_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMultiplicationEquality</span><span class="p">(</span>
+                    <span class="n">station_offset</span><span class="p">,</span> <span class="p">[</span><span class="n">station_var</span><span class="p">,</span> <span class="n">cycle_time</span><span class="p">]</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Enforce: start = station_offset + cycle_start</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">==</span> <span class="n">station_offset</span> <span class="o">+</span> <span class="n">cycle_start</span><span class="p">)</span>
+
+                <span class="c1"># Enforce: end = station_offset + cycle_end</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">ends</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">==</span> <span class="n">station_offset</span> <span class="o">+</span> <span class="n">cycle_end</span><span class="p">)</span>
+
+                <span class="c1"># Interval duration constraint</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">cycle_end</span> <span class="o">==</span> <span class="n">cycle_start</span> <span class="o">+</span> <span class="n">duration</span><span class="p">)</span>
+
+                <span class="c1"># Create cycle interval for shared resources</span>
+                <span class="n">cycle_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                    <span class="n">cycle_start</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">cycle_end</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;cycle_interval_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+                <span class="n">cycle_starts</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">cycle_start</span>
+                <span class="n">cycle_ends</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">cycle_end</span>
+                <span class="n">cycle_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">cycle_interval</span>
+
+            <span class="c1"># Add cumulative constraints on CYCLE intervals for shared resources</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">:</span>
+                <span class="n">global_intervals</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">global_demands</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">global_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cycle_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                        <span class="n">global_demands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="p">)</span>
+
+                <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resource_capacities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">global_intervals</span> <span class="ow">and</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCumulative</span><span class="p">(</span>
+                        <span class="n">global_intervals</span><span class="p">,</span> <span class="n">global_demands</span><span class="p">,</span> <span class="n">capacity</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 4. NoOverlap Constraint (Prevent Spanning Boundaries)</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># Create dummy intervals at station boundaries</span>
+        <span class="n">dummy_intervals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">station_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)):</span>
+            <span class="n">dummy_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                <span class="n">station_idx</span> <span class="o">*</span> <span class="n">cycle_time</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>
+                <span class="n">station_idx</span> <span class="o">*</span> <span class="n">cycle_time</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;dummy_interval_</span><span class="si">{</span><span class="n">station_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">dummy_intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dummy_interval</span><span class="p">)</span>
+
+        <span class="c1"># For EACH task, add NoOverlap with dummy intervals</span>
+        <span class="c1"># This prevents that task from spanning station boundaries</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">intervals</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_no_overlap</span><span class="p">([</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">dummy_intervals</span><span class="p">)</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 5. Precedence Constraints</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">precedences</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">ends</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">starts</span><span class="p">[</span><span class="n">succ</span><span class="p">])</span>
+
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="c1"># 6. Objective: Minimize Cycle Time</span>
+        <span class="c1"># ------------------------------------------------------------------</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">ends</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)</span> <span class="o">*</span> <span class="n">cycle_time</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="n">cycle_time</span><span class="p">)</span>
+
+        <span class="c1"># Store variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">starts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;ends&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ends</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;cycle_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cycle_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;idx_to_station&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">idx_to_station</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;has_shared_resources&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">has_shared_resources</span></div>
+
+
+<div class="viewcode-block" id="CpSatRcAlbpSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.alb.rcalbp.solvers.html#discrete_optimization.alb.rcalbp.solvers.cpsat.CpSatRcAlbpSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RCALBPSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract solution from solver.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modeling</span> <span class="o">==</span> <span class="n">ModelingShared</span><span class="o">.</span><span class="n">FOLDED</span><span class="p">:</span>
+            <span class="n">starts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">]</span>
+            <span class="n">task_station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;task_station&quot;</span><span class="p">]</span>
+            <span class="n">idx_to_station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;idx_to_station&quot;</span><span class="p">]</span>
+
+            <span class="n">task_assignment</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">task_schedule</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="n">station_idx</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">task_station</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="n">idx_to_station</span><span class="p">[</span><span class="n">station_idx</span><span class="p">]</span>
+                <span class="n">task_assignment</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">station</span>
+
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">starts</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                <span class="n">task_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_time</span>
+
+            <span class="n">cycle_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cpsolvercb</span><span class="o">.</span><span class="n">ObjectiveValue</span><span class="p">())</span>
+
+            <span class="k">return</span> <span class="n">RCALBPSolution</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">task_assignment</span><span class="o">=</span><span class="n">task_assignment</span><span class="p">,</span>
+                <span class="n">task_schedule</span><span class="o">=</span><span class="n">task_schedule</span><span class="p">,</span>
+                <span class="n">cycle_time</span><span class="o">=</span><span class="n">cycle_time</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># ModelingShared.CALENDAR</span>
+            <span class="n">cycle_time</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;cycle_time&quot;</span><span class="p">])</span>
+            <span class="n">task_assignment</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">task_schedule</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">])</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;ends&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">])</span>
+                <span class="n">station_idx</span> <span class="o">=</span> <span class="n">start</span> <span class="o">//</span> <span class="n">cycle_time</span>
+
+                <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="n">end</span> <span class="ow">and</span> <span class="n">station_idx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">):</span>
+                    <span class="n">station_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="n">start_modulo</span> <span class="o">=</span> <span class="n">cycle_time</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">start_modulo</span> <span class="o">=</span> <span class="n">start</span> <span class="o">%</span> <span class="n">cycle_time</span>
+
+                <span class="n">task_assignment</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">[</span><span class="n">station_idx</span><span class="p">]</span>
+                <span class="n">task_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_modulo</span>
+
+            <span class="k">return</span> <span class="n">RCALBPSolution</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">task_assignment</span><span class="o">=</span><span class="n">task_assignment</span><span class="p">,</span>
+                <span class="n">task_schedule</span><span class="o">=</span><span class="n">task_schedule</span><span class="p">,</span>
+                <span class="n">cycle_time</span><span class="o">=</span><span class="n">cycle_time</span><span class="p">,</span>
+            <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

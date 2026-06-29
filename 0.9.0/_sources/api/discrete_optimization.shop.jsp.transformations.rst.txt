@@ -1,0 +1,21 @@
+discrete\_optimization.shop.jsp.transformations package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.shop.jsp.transformations.to\_fjsp module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.shop.jsp.transformations.to_fjsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.shop.jsp.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

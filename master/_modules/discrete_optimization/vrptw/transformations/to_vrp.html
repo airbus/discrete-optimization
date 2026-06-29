@@ -1,0 +1,330 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.vrptw.transformations.to_vrp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.vrptw.transformations.to_vrp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.vrptw.transformations.to_vrp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from VRPTW to VRP (lossy - drops time windows).&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InformationLoss</span><span class="p">,</span>
+    <span class="n">LossImpact</span><span class="p">,</span>
+    <span class="n">LossType</span><span class="p">,</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">lossy_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Customer2D</span><span class="p">,</span>
+    <span class="n">Customer2DVrpProblem</span><span class="p">,</span>
+    <span class="n">VrpSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrptw.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">VRPTWProblem</span><span class="p">,</span> <span class="n">VRPTWSolution</span>
+
+
+<div class="viewcode-block" id="VrptwToVrpTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrptw.transformations.html#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VrptwToVrpTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span>
+        <span class="n">VRPTWProblem</span><span class="p">,</span> <span class="n">VRPTWSolution</span><span class="p">,</span> <span class="n">Customer2DVrpProblem</span><span class="p">,</span> <span class="n">VrpSolution</span>
+    <span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform VRPTW to VRP (LOSSY transformation).</span>
+
+<span class="sd">    Mapping:</span>
+<span class="sd">    - Vehicle routes with time windows → Vehicle routes (no time constraints)</span>
+<span class="sd">    - Customer demands → Customer demands</span>
+<span class="sd">    - Vehicle capacities → Vehicle capacities</span>
+<span class="sd">    - Time windows → LOST</span>
+<span class="sd">    - Service times → LOST</span>
+
+<span class="sd">    This is a LOSSY transformation because:</span>
+<span class="sd">    - Time window constraints are dropped</span>
+<span class="sd">    - Service times are ignored</span>
+<span class="sd">    - Solutions from VRP may violate time windows in original VRPTW</span>
+
+<span class="sd">    Use cases:</span>
+<span class="sd">    - Get initial solutions from VRP solvers (faster, simpler)</span>
+<span class="sd">    - Benchmark VRP solvers on VRPTW instances (ignoring time)</span>
+<span class="sd">    - Analyze impact of time windows by comparing with unconstrained VRP</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="VrptwToVrpTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrptw.transformations.html#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metadata for forward transformation (VRPTW → VRP).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">lossy_transformation</span><span class="p">(</span>
+            <span class="n">losses</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">InformationLoss</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;time_windows&quot;</span><span class="p">,</span>
+                    <span class="n">loss_type</span><span class="o">=</span><span class="n">LossType</span><span class="o">.</span><span class="n">CONSTRAINT</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Customer time window constraints [earliest, latest]&quot;</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;VRP has no concept of time or temporal constraints&quot;</span><span class="p">,</span>
+                    <span class="n">impact</span><span class="o">=</span><span class="n">LossImpact</span><span class="o">.</span><span class="n">MAJOR</span><span class="p">,</span>
+                    <span class="n">workaround</span><span class="o">=</span><span class="s2">&quot;Post-process VRP solution to check time window feasibility&quot;</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">InformationLoss</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;service_times&quot;</span><span class="p">,</span>
+                    <span class="n">loss_type</span><span class="o">=</span><span class="n">LossType</span><span class="o">.</span><span class="n">PARAMETER</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Service time at each customer location&quot;</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;VRP doesn&#39;t model service times&quot;</span><span class="p">,</span>
+                    <span class="n">impact</span><span class="o">=</span><span class="n">LossImpact</span><span class="o">.</span><span class="n">MODERATE</span><span class="p">,</span>
+                    <span class="n">workaround</span><span class="o">=</span><span class="s2">&quot;Add service times to route evaluation post-hoc&quot;</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">use_cases</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Get quick initial solutions from VRP solvers&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Benchmark VRP algorithms on VRPTW instances&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Analyze impact of time windows on routing decisions&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">warnings</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;VRP solutions may violate time windows&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Service times are ignored in VRP optimization&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Route feasibility must be verified against time constraints&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VrptwToVrpTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrptw.transformations.html#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">VRPTWProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Customer2DVrpProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform VRPTW to VRP.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: VRPTW problem instance</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            VRP problem (time windows and service times dropped)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract 2D coordinates from distance matrix</span>
+        <span class="c1"># VRPTW uses distance_matrix, we need to create Customer2D objects</span>
+        <span class="n">nb_nodes</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">nb_nodes</span>
+
+        <span class="c1"># Reconstruct 2D coordinates using MDS (Multi-Dimensional Scaling) approximation</span>
+        <span class="c1"># For simplicity, we&#39;ll use a heuristic: place nodes on a grid</span>
+        <span class="c1"># In practice, you might need the original coordinates if available</span>
+        <span class="n">customers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">grid_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nb_nodes</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes</span><span class="p">):</span>
+            <span class="c1"># Simple grid layout (can be improved with MDS)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">%</span> <span class="n">grid_size</span><span class="p">)</span> <span class="o">*</span> <span class="mf">100.0</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">//</span> <span class="n">grid_size</span><span class="p">)</span> <span class="o">*</span> <span class="mf">100.0</span>
+            <span class="n">demand</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="n">customers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Customer2D</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">demand</span><span class="o">=</span><span class="n">demand</span><span class="p">,</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Note: This is a heuristic layout. In practice, VRPTW problems</span>
+        <span class="c1"># often come from files that include coordinates. Users should</span>
+        <span class="c1"># provide coordinates if available.</span>
+
+        <span class="c1"># Vehicle parameters</span>
+        <span class="n">vehicle_count</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">nb_vehicles</span>
+        <span class="n">vehicle_capacities</span> <span class="o">=</span> <span class="p">[</span><span class="n">source_problem</span><span class="o">.</span><span class="n">vehicle_capacity</span><span class="p">]</span> <span class="o">*</span> <span class="n">vehicle_count</span>
+
+        <span class="c1"># Depot: VRPTW depot_node becomes start/end index for all vehicles</span>
+        <span class="n">depot</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">depot_node</span>
+        <span class="n">start_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">depot</span><span class="p">]</span> <span class="o">*</span> <span class="n">vehicle_count</span>
+        <span class="n">end_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">depot</span><span class="p">]</span> <span class="o">*</span> <span class="n">vehicle_count</span>
+
+        <span class="k">return</span> <span class="n">Customer2DVrpProblem</span><span class="p">(</span>
+            <span class="n">vehicle_count</span><span class="o">=</span><span class="n">vehicle_count</span><span class="p">,</span>
+            <span class="n">vehicle_capacities</span><span class="o">=</span><span class="n">vehicle_capacities</span><span class="p">,</span>
+            <span class="n">customer_count</span><span class="o">=</span><span class="n">nb_nodes</span><span class="p">,</span>
+            <span class="n">customers</span><span class="o">=</span><span class="n">customers</span><span class="p">,</span>
+            <span class="n">start_indexes</span><span class="o">=</span><span class="n">start_indexes</span><span class="p">,</span>
+            <span class="n">end_indexes</span><span class="o">=</span><span class="n">end_indexes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VrptwToVrpTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrptw.transformations.html#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">VrpSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">VRPTWProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VRPTWSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform VRP solution back to VRPTW solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: VRP solution</span>
+<span class="sd">            source_problem: Original VRPTW problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            VRPTW solution (may violate time windows!)</span>
+
+<span class="sd">        Warning:</span>
+<span class="sd">            The returned solution may not satisfy time window constraints.</span>
+<span class="sd">            Use problem.satisfy() to check feasibility.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract routes from VRP solution</span>
+        <span class="n">routes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">list_paths</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">VRPTWSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span>
+            <span class="n">routes</span><span class="o">=</span><span class="n">routes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VrptwToVrpTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.vrptw.transformations.html#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">VRPTWSolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">Customer2DVrpProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">VrpSolution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform VRPTW solution to VRP solution (for warmstart).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: VRPTW solution</span>
+<span class="sd">            target_problem: Target VRP problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent VRP solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert VRPTW routes to VRP routes</span>
+        <span class="n">list_paths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">route</span><span class="p">)</span> <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">routes</span><span class="p">]</span>
+
+        <span class="c1"># Start and end indices from target problem</span>
+        <span class="n">list_start_index</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">target_problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">)</span>
+        <span class="n">list_end_index</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">target_problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">VrpSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+            <span class="n">list_start_index</span><span class="o">=</span><span class="n">list_start_index</span><span class="p">,</span>
+            <span class="n">list_end_index</span><span class="o">=</span><span class="n">list_end_index</span><span class="p">,</span>
+            <span class="n">list_paths</span><span class="o">=</span><span class="n">list_paths</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

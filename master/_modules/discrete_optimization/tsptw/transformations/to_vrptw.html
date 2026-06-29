@@ -1,0 +1,297 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.tsptw.transformations.to_vrptw &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.tsptw.transformations.to_vrptw</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.tsptw.transformations.to_vrptw</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from TSPTW to VRPTW.</span>
+
+<span class="sd">TSP with Time Windows is a special case of VRP with Time Windows:</span>
+<span class="sd">- Single vehicle</span>
+<span class="sd">- No capacity constraints (zero demands)</span>
+<span class="sd">- Time windows for each customer</span>
+<span class="sd">- All customers must be visited</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">exact_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.tsptw.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">TSPTWProblem</span><span class="p">,</span> <span class="n">TSPTWSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrptw.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">VRPTWProblem</span><span class="p">,</span> <span class="n">VRPTWSolution</span>
+
+
+<div class="viewcode-block" id="TsptwToVrptwTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_vrptw.TsptwToVrptwTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TsptwToVrptwTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span><span class="n">TSPTWProblem</span><span class="p">,</span> <span class="n">TSPTWSolution</span><span class="p">,</span> <span class="n">VRPTWProblem</span><span class="p">,</span> <span class="n">VRPTWSolution</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform TSPTW to VRPTW.</span>
+
+<span class="sd">    Mapping:</span>
+<span class="sd">    - Single tour → Single vehicle route</span>
+<span class="sd">    - Time windows → Customer time windows</span>
+<span class="sd">    - All customers must be visited → All customers served</span>
+<span class="sd">    - No capacity constraints → Zero demands + infinite capacity</span>
+<span class="sd">    - Depot with time window → VRPTW depot with time window</span>
+
+<span class="sd">    This transformation is EXACT in both directions:</span>
+<span class="sd">    - TSPTW is exactly VRPTW with 1 vehicle and no capacity constraints</span>
+<span class="sd">    - All TSPTW constraints (time windows) are preserved in VRPTW</span>
+<span class="sd">    - Solution mapping is exact both ways</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_service_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize transformation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            default_service_time: Service time for each customer (default: 0.0).</span>
+<span class="sd">                                 Note: In TSPTW, service time is often included in the</span>
+<span class="sd">                                 distance matrix. Set to 0.0 if already included in distances.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_service_time</span> <span class="o">=</span> <span class="n">default_service_time</span>
+
+<div class="viewcode-block" id="TsptwToVrptwTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_vrptw.TsptwToVrptwTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metadata for forward problem transformation (TSPTW → VRPTW).</span>
+
+<span class="sd">        This direction is EXACT: TSPTW is exactly VRPTW with 1 vehicle, no capacity,</span>
+<span class="sd">        and time windows.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">exact_transformation</span><span class="p">(</span>
+            <span class="n">use_cases</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Use VRPTW solvers to solve TSPTW problems&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;TSPTW is exactly VRPTW with 1 vehicle and infinite capacity&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;All TSPTW constraints (time windows) preserved in VRPTW&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Time windows constrain arrival/service times at each customer&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TsptwToVrptwTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_vrptw.TsptwToVrptwTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">TSPTWProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VRPTWProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform TSPTW to VRPTW.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: TSPTW problem instance</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent VRPTW problem with 1 vehicle and no capacity constraints</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nb_nodes</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">nb_nodes</span>
+
+        <span class="c1"># Use existing distance matrix from TSPTW</span>
+        <span class="n">distance_matrix</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">distance_matrix</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Time windows from TSPTW</span>
+        <span class="n">time_windows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">time_windows</span><span class="p">)</span>
+
+        <span class="c1"># Service times: zero or default (TSPTW often includes service in distance)</span>
+        <span class="n">service_times</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">default_service_time</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes</span><span class="p">)]</span>
+
+        <span class="c1"># Demands: zero (no capacity constraints in TSPTW)</span>
+        <span class="n">demands</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_nodes</span><span class="p">)]</span>
+
+        <span class="c1"># Single vehicle with infinite capacity</span>
+        <span class="n">nb_vehicles</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">vehicle_capacity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Depot node from TSPTW</span>
+        <span class="n">depot_node</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">depot_node</span>
+
+        <span class="k">return</span> <span class="n">VRPTWProblem</span><span class="p">(</span>
+            <span class="n">nb_vehicles</span><span class="o">=</span><span class="n">nb_vehicles</span><span class="p">,</span>
+            <span class="n">vehicle_capacity</span><span class="o">=</span><span class="n">vehicle_capacity</span><span class="p">,</span>
+            <span class="n">nb_nodes</span><span class="o">=</span><span class="n">nb_nodes</span><span class="p">,</span>
+            <span class="n">distance_matrix</span><span class="o">=</span><span class="n">distance_matrix</span><span class="p">,</span>
+            <span class="n">time_windows</span><span class="o">=</span><span class="n">time_windows</span><span class="p">,</span>
+            <span class="n">service_times</span><span class="o">=</span><span class="n">service_times</span><span class="p">,</span>
+            <span class="n">demands</span><span class="o">=</span><span class="n">demands</span><span class="p">,</span>
+            <span class="n">depot_node</span><span class="o">=</span><span class="n">depot_node</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TsptwToVrptwTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_vrptw.TsptwToVrptwTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">VRPTWSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">TSPTWProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TSPTWSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform VRPTW solution back to TSPTW solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: VRPTW solution (should have 1 vehicle)</span>
+<span class="sd">            source_problem: Original TSPTW problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent TSPTW solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract the single vehicle route</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">solution</span><span class="o">.</span><span class="n">routes</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">routes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Empty solution - use customer order</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Get first route (single vehicle)</span>
+            <span class="n">route</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">routes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Filter out depot if present (should not be in TSPTW permutation)</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">route</span> <span class="k">if</span> <span class="n">node</span> <span class="o">!=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">depot_node</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">TSPTWSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">permutation</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TsptwToVrptwTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_vrptw.TsptwToVrptwTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">TSPTWSolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">VRPTWProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">VRPTWSolution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform TSPTW solution to VRPTW solution (for warmstart).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: TSPTW solution</span>
+<span class="sd">            target_problem: Target VRPTW problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent VRPTW solution with single vehicle route</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TSPTW permutation becomes the single vehicle route</span>
+        <span class="n">routes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">VRPTWSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+            <span class="n">routes</span><span class="o">=</span><span class="n">routes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

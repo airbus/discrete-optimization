@@ -1,0 +1,45 @@
+discrete\_optimization.rcalbp\_l.solvers package
+================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcalbp\_l.solvers.cpsat module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.rcalbp_l.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcalbp\_l.solvers.meta\_solvers module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcalbp_l.solvers.meta_solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcalbp\_l.solvers.optal module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.rcalbp_l.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcalbp\_l.solvers.pareto\_postprocess module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcalbp_l.solvers.pareto_postprocess
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcalbp_l.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

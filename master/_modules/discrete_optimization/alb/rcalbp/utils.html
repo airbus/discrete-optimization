@@ -1,0 +1,986 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.alb.rcalbp.utils &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.alb.rcalbp.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.alb.rcalbp.utils</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utility functions for RC-ALBP-Problem</span>
+<span class="sd">Provides helpers for:</span>
+<span class="sd">- Creating problem instances (from rcpsp)</span>
+<span class="sd">- Visualizing solutions</span>
+<span class="sd">- Computing lower bounds</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">Slider</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.base.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResourceTaskData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.rcalbp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RCALBPProblem</span><span class="p">,</span>
+    <span class="n">RCALBPSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">fetch_data_from_psplib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_data_available</span><span class="p">,</span> <span class="n">parse_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_task_lanes</span><span class="p">(</span><span class="n">tasks_with_times</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute lanes (vertical stacking) for tasks to avoid visual overlap.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tasks_with_times: List of (task_id, start, end) tuples</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple of (task_lanes dict, num_lanes int)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks_with_times</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{},</span> <span class="mi">0</span>
+
+    <span class="c1"># Sort tasks by start time</span>
+    <span class="n">sorted_tasks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tasks_with_times</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Track end time of last task in each lane</span>
+    <span class="n">lanes</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Each element is the end time of the last task in that lane</span>
+    <span class="n">task_lanes</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Maps task_id to lane number</span>
+
+    <span class="k">for</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">sorted_tasks</span><span class="p">:</span>
+        <span class="c1"># Find first lane where this task fits (doesn&#39;t overlap)</span>
+        <span class="n">assigned</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">lane_idx</span><span class="p">,</span> <span class="n">lane_end_time</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lanes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">lane_end_time</span><span class="p">:</span>  <span class="c1"># No overlap</span>
+                <span class="n">lanes</span><span class="p">[</span><span class="n">lane_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">end</span>
+                <span class="n">task_lanes</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">lane_idx</span>
+                <span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">assigned</span><span class="p">:</span>
+            <span class="c1"># Create new lane</span>
+            <span class="n">lanes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+            <span class="n">task_lanes</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lanes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">task_lanes</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lanes</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="visualize_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.utils.visualize_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_solution</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">RCALBPProblem</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RCALBPSolution</span><span class="p">,</span>
+    <span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visualize the assembly line solution as a Gantt chart with stacked tasks.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem: Problem instance</span>
+<span class="sd">        solution: Solution to visualize</span>
+<span class="sd">        show: Whether to display the plot</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Matplotlib figure</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Color map for tasks</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">Set3</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">))</span>
+    <span class="n">task_colors</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">colors</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">colors</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">)}</span>
+
+    <span class="c1"># Compute lanes for each station to handle overlapping tasks</span>
+    <span class="n">station_lanes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">station_num_lanes</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+        <span class="n">station_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">station</span><span class="p">]</span>
+
+        <span class="c1"># Get task timing info</span>
+        <span class="n">tasks_with_times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">station_tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_schedule</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="n">tasks_with_times</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">task</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
+        <span class="n">task_lanes</span><span class="p">,</span> <span class="n">num_lanes</span> <span class="o">=</span> <span class="n">_compute_task_lanes</span><span class="p">(</span><span class="n">tasks_with_times</span><span class="p">)</span>
+        <span class="n">station_lanes</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_lanes</span>
+        <span class="n">station_num_lanes</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_lanes</span>
+
+    <span class="c1"># Calculate figure height based on total lanes</span>
+    <span class="n">total_lanes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">station_num_lanes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">fig_height</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">total_lanes</span> <span class="o">*</span> <span class="mf">0.8</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="n">fig_height</span><span class="p">))</span>
+
+    <span class="c1"># Track y positions for stations</span>
+    <span class="n">y_pos</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">station_y_positions</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">station_y_centers</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">):</span>
+        <span class="n">num_lanes</span> <span class="o">=</span> <span class="n">station_num_lanes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">lane_height</span> <span class="o">=</span> <span class="mf">0.8</span>
+
+        <span class="n">station_y_positions</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_pos</span>
+        <span class="n">station_y_centers</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_pos</span> <span class="o">+</span> <span class="p">(</span><span class="n">num_lanes</span> <span class="o">*</span> <span class="n">lane_height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="n">station_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">station</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">station_tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_schedule</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">start</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+
+            <span class="c1"># Get lane for this task</span>
+            <span class="n">lane</span> <span class="o">=</span> <span class="n">station_lanes</span><span class="p">[</span><span class="n">station</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">y_position</span> <span class="o">=</span> <span class="n">y_pos</span> <span class="o">+</span> <span class="n">lane</span> <span class="o">*</span> <span class="n">lane_height</span>
+
+            <span class="c1"># Draw task bar</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span>
+                <span class="n">y_position</span><span class="p">,</span>
+                <span class="n">duration</span><span class="p">,</span>
+                <span class="n">left</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">lane_height</span> <span class="o">*</span> <span class="mf">0.85</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">task_colors</span><span class="p">[</span><span class="n">task</span><span class="p">],</span>
+                <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Add task label</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="n">start</span> <span class="o">+</span> <span class="n">duration</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">y_position</span><span class="p">,</span>
+                <span class="n">task</span><span class="p">,</span>
+                <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">y_pos</span> <span class="o">+=</span> <span class="n">num_lanes</span> <span class="o">*</span> <span class="n">lane_height</span> <span class="o">+</span> <span class="mf">0.3</span>  <span class="c1"># Add spacing between stations</span>
+
+    <span class="c1"># Format plot</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Station&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Assembly Line Schedule (Cycle Time: </span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">cycle_time</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Set y-axis labels at station centers</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">station_y_centers</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;Station </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)])</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y_pos</span> <span class="o">-</span> <span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+    <span class="c1"># Add cycle time line</span>
+    <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">cycle_time</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">cycle_time</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Cycle Time: </span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">cycle_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="visualize_interactive_flow">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.utils.visualize_interactive_flow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_interactive_flow</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">RCALBPProblem</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RCALBPSolution</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an interactive visualization of assembly line flow with time slider.</span>
+
+<span class="sd">    Shows:</span>
+<span class="sd">    - Aircraft/product flow through stations over time</span>
+<span class="sd">    - Active tasks at each station</span>
+<span class="sd">    - Resource usage tracking per station</span>
+<span class="sd">    - Constraint violation warnings</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem: Problem instance</span>
+<span class="sd">        solution: Solution to visualize</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Validate solution first</span>
+    <span class="n">eval_dict</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+    <span class="n">has_violations</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_precedence&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="ow">or</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_resource_station&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="ow">or</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_resource_shared&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="ow">or</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_unscheduled&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">has_violations</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[!] WARNING: Solution has constraint violations!&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_precedence&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   - Precedence violations: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_precedence&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_resource_station&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;   - Station resource violations: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_resource_station&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_resource_shared&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;   - Shared resource violations: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_resource_shared&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_unscheduled&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   - Unscheduled tasks: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_unscheduled&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span>
+
+    <span class="n">cycle_time</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">cycle_time</span>
+    <span class="n">nb_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)</span>
+    <span class="n">nb_periods</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># Show 5 cycles</span>
+
+    <span class="c1"># Create dynamic layout that adapts to number of stations</span>
+    <span class="c1"># Calculate resource plot grid (max 3 columns)</span>
+    <span class="n">n_res_cols</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">nb_stations</span><span class="p">)</span>
+    <span class="n">n_res_rows</span> <span class="o">=</span> <span class="p">(</span><span class="n">nb_stations</span> <span class="o">+</span> <span class="n">n_res_cols</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">n_res_cols</span>  <span class="c1"># Ceiling division</span>
+
+    <span class="c1"># Create figure with dynamic grid</span>
+    <span class="c1"># Rows: [Gantt (tall), Resource rows (shorter), Slider (thin)]</span>
+    <span class="n">total_rows</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">n_res_rows</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+    <span class="c1"># Height ratios: Gantt gets most space, resources get less, slider minimal</span>
+    <span class="n">height_ratios</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_res_rows</span> <span class="o">+</span> <span class="p">[</span><span class="mf">0.25</span><span class="p">]</span>
+
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_gridspec</span><span class="p">(</span>
+        <span class="n">total_rows</span><span class="p">,</span> <span class="n">n_res_cols</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="n">height_ratios</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.3</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Gantt chart: full width at top (spans all columns)</span>
+    <span class="n">ax_gantt</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+
+    <span class="c1"># Resource usage plots: dynamic grid for ALL stations</span>
+    <span class="n">ax_resources</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_stations</span><span class="p">):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">//</span> <span class="n">n_res_cols</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">n_res_cols</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">])</span>
+        <span class="n">ax_resources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+
+    <span class="c1"># Time slider: spans all columns at bottom</span>
+    <span class="n">ax_slider</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+
+    <span class="c1"># Prepare data structures</span>
+    <span class="c1"># Map tasks to stations</span>
+    <span class="n">station_to_tasks</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">station_to_tasks</span><span class="p">[</span><span class="n">station</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;task&quot;</span><span class="p">:</span> <span class="n">task</span><span class="p">,</span>
+                <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">),</span>
+                <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">),</span>
+                <span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">station_to_tasks</span><span class="p">)</span>
+    <span class="c1"># Sort tasks by start time</span>
+    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">station_to_tasks</span><span class="p">:</span>
+        <span class="n">station_to_tasks</span><span class="p">[</span><span class="n">station</span><span class="p">]</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Color map for tasks</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">Set3</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">))</span>
+    <span class="n">task_colors</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">colors</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">colors</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">)}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_active_tasks_at_time</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get tasks active at given time on station.&quot;&quot;&quot;</span>
+        <span class="n">active</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task_info</span> <span class="ow">in</span> <span class="n">station_to_tasks</span><span class="p">[</span><span class="n">station</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">time</span> <span class="o">&lt;</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]:</span>
+                <span class="n">active</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task_info</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">active</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_usage_at_time</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get resource usage at given time on station.&quot;&quot;&quot;</span>
+        <span class="n">active_tasks</span> <span class="o">=</span> <span class="n">get_active_tasks_at_time</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="n">usage</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">task_info</span> <span class="ow">in</span> <span class="n">active_tasks</span><span class="p">:</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+                <span class="n">usage</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">+=</span> <span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">usage</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_plot</span><span class="p">(</span><span class="n">current_time</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update visualization for current time.&quot;&quot;&quot;</span>
+        <span class="c1"># Clear axes</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">ax_resources</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="c1"># Calculate current period and time within cycle</span>
+        <span class="n">period_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">current_time</span> <span class="o">//</span> <span class="n">cycle_time</span><span class="p">)</span>
+        <span class="n">time_in_cycle</span> <span class="o">=</span> <span class="n">current_time</span> <span class="o">%</span> <span class="n">cycle_time</span>
+
+        <span class="c1"># =====================================================================</span>
+        <span class="c1"># Update Resource Usage Plots (ALL STATIONS)</span>
+        <span class="c1"># =====================================================================</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ax_resources</span><span class="p">):</span>
+            <span class="n">station</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">usage</span> <span class="o">=</span> <span class="n">get_resource_usage_at_time</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">time_in_cycle</span><span class="p">)</span>
+
+            <span class="c1"># Plot bar chart</span>
+            <span class="n">resource_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span>
+            <span class="n">usages</span> <span class="o">=</span> <span class="p">[</span><span class="n">usage</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resource_names</span><span class="p">]</span>
+            <span class="n">capacities</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resource_names</span>
+            <span class="p">]</span>
+
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">resource_names</span><span class="p">))</span>
+            <span class="n">bars1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">usages</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Usage&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;steelblue&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span>
+            <span class="p">)</span>
+            <span class="n">bars2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span>
+                <span class="n">capacities</span><span class="p">,</span>
+                <span class="mf">0.4</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Capacity&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightcoral&quot;</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Highlight violations</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">usages</span><span class="p">,</span> <span class="n">capacities</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">u</span> <span class="o">&gt;</span> <span class="n">c</span><span class="p">:</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                        <span class="n">i</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">,</span>
+                        <span class="n">u</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span>
+                        <span class="s2">&quot;[!]&quot;</span><span class="p">,</span>
+                        <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                        <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
+                        <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Units&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s2"> - Resource Usage (t=</span><span class="si">{</span><span class="n">time_in_cycle</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">resource_names</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper right&quot;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">capacities</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">capacities</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># =====================================================================</span>
+        <span class="c1"># Draw Gantt Chart with Current Time Indicator and Lane-based Stacking</span>
+        <span class="c1"># =====================================================================</span>
+
+        <span class="c1"># Compute lanes for each station</span>
+        <span class="n">station_task_lanes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">station_num_lanes</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+            <span class="n">tasks_with_times</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">station_to_tasks</span><span class="p">[</span><span class="n">station</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">task_lanes</span><span class="p">,</span> <span class="n">num_lanes</span> <span class="o">=</span> <span class="n">_compute_task_lanes</span><span class="p">(</span><span class="n">tasks_with_times</span><span class="p">)</span>
+            <span class="n">station_task_lanes</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_lanes</span>
+            <span class="n">station_num_lanes</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_lanes</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Draw tasks with lane-based stacking</span>
+        <span class="n">y_pos</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">station_y_positions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">station_y_centers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">lane_height</span> <span class="o">=</span> <span class="mf">0.7</span>
+
+        <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">):</span>
+            <span class="n">num_lanes</span> <span class="o">=</span> <span class="n">station_num_lanes</span><span class="p">[</span><span class="n">station</span><span class="p">]</span>
+            <span class="n">station_y_positions</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_pos</span>
+            <span class="n">station_y_centers</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_pos</span> <span class="o">+</span> <span class="p">(</span><span class="n">num_lanes</span> <span class="o">*</span> <span class="n">lane_height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+            <span class="c1"># Get active tasks at current time</span>
+            <span class="n">active_tasks_now</span> <span class="o">=</span> <span class="n">get_active_tasks_at_time</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">time_in_cycle</span><span class="p">)</span>
+            <span class="n">active_task_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">active_tasks_now</span><span class="p">}</span>
+
+            <span class="c1"># Get tasks for this station</span>
+            <span class="n">tasks_in_station</span> <span class="o">=</span> <span class="n">station_to_tasks</span><span class="p">[</span><span class="n">station</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">task_info</span> <span class="ow">in</span> <span class="n">tasks_in_station</span><span class="p">:</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+                <span class="n">duration</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span>
+
+                <span class="c1"># Get lane for this task</span>
+                <span class="n">lane</span> <span class="o">=</span> <span class="n">station_task_lanes</span><span class="p">[</span><span class="n">station</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">y_position</span> <span class="o">=</span> <span class="n">y_pos</span> <span class="o">+</span> <span class="n">lane</span> <span class="o">*</span> <span class="n">lane_height</span>
+
+                <span class="c1"># Check if task is active</span>
+                <span class="n">is_active</span> <span class="o">=</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">active_task_ids</span>
+
+                <span class="c1"># Choose color and style based on activity</span>
+                <span class="k">if</span> <span class="n">is_active</span><span class="p">:</span>
+                    <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;gold&quot;</span>  <span class="c1"># Highlight active tasks</span>
+                    <span class="n">edge_color</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span>
+                    <span class="n">edge_width</span> <span class="o">=</span> <span class="mf">2.5</span>
+                    <span class="n">alpha</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">color</span> <span class="o">=</span> <span class="n">task_colors</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                    <span class="n">edge_color</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span>
+                    <span class="n">edge_width</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.7</span>
+
+                <span class="c1"># Draw task bar</span>
+                <span class="n">ax_gantt</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span>
+                    <span class="n">y_position</span><span class="p">,</span>
+                    <span class="n">duration</span><span class="p">,</span>
+                    <span class="n">left</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">height</span><span class="o">=</span><span class="n">lane_height</span> <span class="o">*</span> <span class="mf">0.85</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                    <span class="n">edgecolor</span><span class="o">=</span><span class="n">edge_color</span><span class="p">,</span>
+                    <span class="n">linewidth</span><span class="o">=</span><span class="n">edge_width</span><span class="p">,</span>
+                    <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Add task label</span>
+                <span class="n">ax_gantt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                    <span class="n">start</span> <span class="o">+</span> <span class="n">duration</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                    <span class="n">y_position</span><span class="p">,</span>
+                    <span class="n">task</span><span class="p">,</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                    <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                    <span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+                    <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span> <span class="k">if</span> <span class="n">is_active</span> <span class="k">else</span> <span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">y_pos</span> <span class="o">+=</span> <span class="n">num_lanes</span> <span class="o">*</span> <span class="n">lane_height</span> <span class="o">+</span> <span class="mf">0.3</span>
+
+        <span class="c1"># Draw vertical line at current time in cycle (resets at each cycle)</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span>
+            <span class="n">time_in_cycle</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;t=</span><span class="si">{</span><span class="n">time_in_cycle</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Draw cycle time boundary</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span>
+            <span class="n">cycle_time</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkgreen&quot;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Cycle=</span><span class="si">{</span><span class="n">cycle_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Format Gantt chart</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">station_y_centers</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">)],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time within Cycle&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Assembly Line Schedule - Time: </span><span class="si">{</span><span class="n">current_time</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> (Cycle </span><span class="si">{</span><span class="n">period_idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">, t=</span><span class="si">{</span><span class="n">time_in_cycle</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">cycle_time</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+            <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cycle_time</span> <span class="o">*</span> <span class="mf">1.05</span><span class="p">)</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y_pos</span> <span class="o">-</span> <span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax_gantt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper right&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create slider</span>
+    <span class="n">slider</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span>
+        <span class="n">ax_slider</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">cycle_time</span> <span class="o">*</span> <span class="n">nb_periods</span><span class="p">,</span> <span class="n">valinit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">valstep</span><span class="o">=</span><span class="mf">0.1</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="n">update_plot</span><span class="p">(</span><span class="n">slider</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
+
+    <span class="n">slider</span><span class="o">.</span><span class="n">on_changed</span><span class="p">(</span><span class="n">update</span><span class="p">)</span>
+
+    <span class="c1"># Initial plot</span>
+    <span class="n">update_plot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+    <span class="c1"># Show the interactive plot</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;  [Interactive plot ready - use the slider to explore different time periods]&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;  [Gantt chart shows active tasks (highlighted in gold) and time indicator (red line)]&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [Resource plots show usage vs capacity for all </span><span class="si">{</span><span class="n">nb_stations</span><span class="si">}</span><span class="s2"> stations]&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="create_from_rcpsp">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.utils.create_from_rcpsp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_from_rcpsp</span><span class="p">(</span>
+    <span class="n">rcpsp_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+    <span class="n">nb_stations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RCALBPProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a realistic RC-ALBP instance from an RCPSP problem.</span>
+
+<span class="sd">    This converts a project scheduling problem into an assembly line balancing</span>
+<span class="sd">    problem by:</span>
+<span class="sd">    - Using RCPSP tasks, durations, and precedences</span>
+<span class="sd">    - Splitting RCPSP global resources across stations</span>
+<span class="sd">    - Using RCPSP resource consumption per task</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rcpsp_problem: RCPSP problem instance</span>
+<span class="sd">        nb_stations: Number of assembly line stations</span>
+<span class="sd">        seed: Random seed for resource allocation</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        RCALBPProblem instance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># Create ResourceTaskData for each RCPSP task</span>
+    <span class="n">tasks_data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+        <span class="n">task_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;T</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">processing_time</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Build resource consumption dict</span>
+        <span class="n">resource_consumption</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">r_name</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">:</span>
+            <span class="n">consumption</span> <span class="o">=</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">r_name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">consumption</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Only store non-zero consumption</span>
+                <span class="n">resource_consumption</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;R</span><span class="si">{</span><span class="n">r_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consumption</span>
+
+        <span class="n">tasks_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ResourceTaskData</span><span class="p">(</span>
+                <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+                <span class="n">processing_time</span><span class="o">=</span><span class="n">processing_time</span><span class="p">,</span>
+                <span class="n">resource_consumption</span><span class="o">=</span><span class="n">resource_consumption</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Precedences: Convert RCPSP precedences</span>
+    <span class="n">precedences</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">successors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">precedences</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;T</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;T</span><span class="si">{</span><span class="n">succ</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Stations: Create station names</span>
+    <span class="n">stations</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;WS</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_stations</span><span class="p">)]</span>
+
+    <span class="c1"># Resources: Use RCPSP resources</span>
+    <span class="n">resources</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;R</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">]</span>
+
+    <span class="c1"># Resource allocation: Create tighter constraints</span>
+    <span class="c1"># Strategy: Find max task requirement and set station capacity slightly above it</span>
+    <span class="c1"># This makes the problem more challenging and realistic</span>
+    <span class="n">station_resources</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">stations</span><span class="p">:</span>
+        <span class="n">station_resources</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">r_idx</span><span class="p">,</span> <span class="n">r_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">):</span>
+            <span class="c1"># Find maximum task requirement for this resource</span>
+            <span class="n">max_task_requirement</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">r_name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Set station capacity to max_requirement + small buffer (20-40%)</span>
+            <span class="c1"># This ensures at least one task can run, but limits parallelism</span>
+            <span class="k">if</span> <span class="n">max_task_requirement</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">buffer_factor</span> <span class="o">=</span> <span class="mf">1.2</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.2</span>  <span class="c1"># 1.2 to 1.4</span>
+                <span class="n">station_capacity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">max_task_requirement</span> <span class="o">*</span> <span class="n">buffer_factor</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">station_capacity</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Minimal capacity if no tasks use this resource</span>
+
+            <span class="c1"># Add some variation between stations (±10%)</span>
+            <span class="n">variation</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">)</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">station_capacity</span> <span class="o">*</span> <span class="n">variation</span><span class="p">))</span>
+            <span class="n">station_resources</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="sa">f</span><span class="s2">&quot;R</span><span class="si">{</span><span class="n">r_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">capacity</span>
+
+    <span class="k">return</span> <span class="n">RCALBPProblem</span><span class="p">(</span>
+        <span class="n">tasks_data</span><span class="o">=</span><span class="n">tasks_data</span><span class="p">,</span>
+        <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+        <span class="n">stations</span><span class="o">=</span><span class="n">stations</span><span class="p">,</span>
+        <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">,</span>
+        <span class="n">station_resources</span><span class="o">=</span><span class="n">station_resources</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_rcpsp_as_albp">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.utils.load_rcpsp_as_albp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_rcpsp_as_albp</span><span class="p">(</span>
+    <span class="n">instance_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;j301_1&quot;</span><span class="p">,</span>
+    <span class="n">nb_stations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RCALBPProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load an RCPSP instance from PSPLib and convert to RC-ALBP.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        instance_name: Name of RCPSP instance (e.g., &quot;j301_1&quot;)</span>
+<span class="sd">        nb_stations: Number of assembly line stations</span>
+<span class="sd">        seed: Random seed for resource allocation</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        RCALBPProblem instance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Load RCPSP instance</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">get_data_available</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">fetch_data_from_psplib</span><span class="p">()</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">get_data_available</span><span class="p">()</span>
+
+    <span class="n">matching_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">instance_name</span> <span class="ow">in</span> <span class="n">f</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">matching_files</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No RCPSP instance found matching &#39;</span><span class="si">{</span><span class="n">instance_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+    <span class="n">filepath</span> <span class="o">=</span> <span class="n">matching_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">rcpsp_problem</span> <span class="o">=</span> <span class="n">parse_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+    <span class="c1"># Convert to RC-ALBP</span>
+    <span class="k">return</span> <span class="n">create_from_rcpsp</span><span class="p">(</span><span class="n">rcpsp_problem</span><span class="p">,</span> <span class="n">nb_stations</span><span class="o">=</span><span class="n">nb_stations</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="print_solution_info">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.utils.print_solution_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_solution_info</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">RCALBPProblem</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RCALBPSolution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print detailed information about a solution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem: Problem instance</span>
+<span class="sd">        solution: Solution to analyze</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SOLUTION INFORMATION&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+    <span class="c1"># Evaluation</span>
+    <span class="n">eval_dict</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Cycle Time: </span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">cycle_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valid: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_precedence&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠ Precedence violations: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_precedence&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_resource_station&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠ Station resource violations: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_resource_station&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_resource_shared&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠ Shared resource violations: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_resource_shared&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eval_dict</span><span class="p">[</span><span class="s2">&quot;penalty_unscheduled&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠ Unscheduled tasks: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;penalty_unscheduled&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Station workload</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Station Workloads:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+        <span class="n">station_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">station</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">station_tasks</span><span class="p">:</span>
+            <span class="n">makespan</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">task_schedule</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">station_tasks</span>
+            <span class="p">)</span>
+            <span class="n">total_work</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">station_tasks</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;  Station </span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">station_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;total work=</span><span class="si">{</span><span class="n">total_work</span><span class="si">}</span><span class="s2">, makespan=</span><span class="si">{</span><span class="n">makespan</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Resource usage</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+                <span class="n">max_usage</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">station_tasks</span><span class="p">:</span>
+                    <span class="n">usage</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                    <span class="n">max_usage</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_usage</span><span class="p">,</span> <span class="n">usage</span><span class="p">)</span>
+                <span class="n">capacity</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;    Resource </span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2">: max_usage=</span><span class="si">{</span><span class="n">max_usage</span><span class="si">}</span><span class="s2">, capacity=</span><span class="si">{</span><span class="n">capacity</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_shared_resource_example">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.utils.create_shared_resource_example">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_shared_resource_example</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RCALBPProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a small example with both station-specific and shared resources.</span>
+
+<span class="sd">    Resources:</span>
+<span class="sd">    - R1, R2: Station-specific (different capacity per station)</span>
+<span class="sd">    - R_AGV: Shared mobile robot (capacity = 2 across all stations)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        RCALBPProblem instance with shared resources</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 3 stations</span>
+    <span class="n">stations</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;S1&quot;</span><span class="p">,</span> <span class="s2">&quot;S2&quot;</span><span class="p">,</span> <span class="s2">&quot;S3&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Create tasks with resource requirements</span>
+    <span class="n">tasks_data</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T1&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R1&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T2&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R2&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T3&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R1&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;R_AGV&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T4&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R2&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T5&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R1&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;R_AGV&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T6&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R2&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T7&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R1&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;R_AGV&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">ResourceTaskData</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;T8&quot;</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">resource_consumption</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;R2&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Precedences</span>
+    <span class="n">precedences</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;T1&quot;</span><span class="p">,</span> <span class="s2">&quot;T3&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;T2&quot;</span><span class="p">,</span> <span class="s2">&quot;T3&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;T3&quot;</span><span class="p">,</span> <span class="s2">&quot;T5&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;T4&quot;</span><span class="p">,</span> <span class="s2">&quot;T6&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;T5&quot;</span><span class="p">,</span> <span class="s2">&quot;T7&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;T6&quot;</span><span class="p">,</span> <span class="s2">&quot;T7&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;T7&quot;</span><span class="p">,</span> <span class="s2">&quot;T8&quot;</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Station-specific resources (R1, R2) - R_AGV is shared, not here!</span>
+    <span class="n">resources</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;R2&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Station capacities for station-specific resources {station: {resource: capacity}}</span>
+    <span class="n">station_resources</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;S1&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R1&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;R2&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="s2">&quot;S2&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R1&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;R2&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+        <span class="s2">&quot;S3&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;R1&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;R2&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Shared resources and their global capacities</span>
+    <span class="n">shared_resources</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;R_AGV&quot;</span><span class="p">}</span>
+    <span class="n">shared_resource_capacities</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;R_AGV&quot;</span><span class="p">:</span> <span class="mi">2</span>  <span class="c1"># Only 2 AGVs available globally</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">RCALBPProblem</span><span class="p">(</span>
+        <span class="n">tasks_data</span><span class="o">=</span><span class="n">tasks_data</span><span class="p">,</span>
+        <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+        <span class="n">stations</span><span class="o">=</span><span class="n">stations</span><span class="p">,</span>
+        <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">,</span>
+        <span class="n">station_resources</span><span class="o">=</span><span class="n">station_resources</span><span class="p">,</span>
+        <span class="n">shared_resources</span><span class="o">=</span><span class="n">shared_resources</span><span class="p">,</span>
+        <span class="n">shared_resource_capacities</span><span class="o">=</span><span class="n">shared_resource_capacities</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_large_shared_resource_instance">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.utils.create_large_shared_resource_instance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_large_shared_resource_instance</span><span class="p">(</span>
+    <span class="n">base_instance_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nb_stations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shared_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RCALBPProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a large instance with shared resources from an RCPSP instance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        base_instance_name: Name of RCPSP instance to load</span>
+<span class="sd">        nb_stations: Number of stations</span>
+<span class="sd">        shared_ratio: Fraction of resources that should be shared (default 0.25 = 25%)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        RCALBPProblem instance with both station-specific and shared resources</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Load base problem (without shared resources)</span>
+    <span class="n">base_problem</span> <span class="o">=</span> <span class="n">load_rcpsp_as_albp</span><span class="p">(</span><span class="n">base_instance_name</span><span class="p">,</span> <span class="n">nb_stations</span><span class="p">)</span>
+
+    <span class="c1"># Determine which resources should be shared</span>
+    <span class="n">all_resources</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span>
+    <span class="n">num_shared</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_resources</span><span class="p">)</span> <span class="o">*</span> <span class="n">shared_ratio</span><span class="p">))</span>
+
+    <span class="c1"># Make the first num_shared resources shared</span>
+    <span class="n">shared_resource_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">all_resources</span><span class="p">[:</span><span class="n">num_shared</span><span class="p">])</span>
+    <span class="n">station_specific_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">all_resources</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">shared_resource_names</span>
+    <span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Creating instance with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">shared_resource_names</span><span class="p">)</span><span class="si">}</span><span class="s2"> shared resources: </span><span class="si">{</span><span class="n">shared_resource_names</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Station-specific resources: </span><span class="si">{</span><span class="n">station_specific_names</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Compute global capacities for shared resources</span>
+    <span class="c1"># Use the sum of capacities across all stations as the global pool</span>
+    <span class="n">shared_resource_capacities</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">shared_resource_names</span><span class="p">:</span>
+        <span class="n">total_capacity</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+            <span class="n">total_capacity</span> <span class="o">+=</span> <span class="n">capacity</span>
+        <span class="n">shared_resource_capacities</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_capacity</span>
+
+    <span class="c1"># Remove shared resources from station_resources</span>
+    <span class="n">new_station_resources</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+        <span class="n">new_station_resources</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">station_specific_names</span><span class="p">:</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">new_station_resources</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">capacity</span>
+
+    <span class="k">return</span> <span class="n">RCALBPProblem</span><span class="p">(</span>
+        <span class="n">tasks_data</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">,</span>  <span class="c1"># Reuse existing ResourceTaskData objects</span>
+        <span class="n">precedences</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">precedences</span><span class="p">,</span>
+        <span class="n">stations</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">stations</span><span class="p">,</span>
+        <span class="n">resources</span><span class="o">=</span><span class="n">station_specific_names</span><span class="p">,</span>  <span class="c1"># Only station-specific!</span>
+        <span class="n">station_resources</span><span class="o">=</span><span class="n">new_station_resources</span><span class="p">,</span>
+        <span class="n">shared_resources</span><span class="o">=</span><span class="n">shared_resource_names</span><span class="p">,</span>
+        <span class="n">shared_resource_capacities</span><span class="o">=</span><span class="n">shared_resource_capacities</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

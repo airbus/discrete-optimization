@@ -1,0 +1,784 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.flex_scheduling.simulator &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.flex_scheduling.simulator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.flex_scheduling.simulator</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.flex_scheduling.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RESOURCE_KEY</span><span class="p">,</span>
+    <span class="n">FlexProblem</span><span class="p">,</span>
+    <span class="n">GroupType</span><span class="p">,</span>
+    <span class="n">ScheduleSolution</span><span class="p">,</span>
+    <span class="n">ScheduleSolutionPreemptive</span><span class="p">,</span>
+    <span class="n">TaskGroupAbstraction</span><span class="p">,</span>
+    <span class="n">TasksGroups</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="init_capacity_resource">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.init_capacity_resource">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_capacity_resource</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">):</span>
+    <span class="n">nb_resources</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_resources</span>
+    <span class="n">max_len_calendar</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">calendar_availability</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">resources</span>
+    <span class="p">)</span>
+    <span class="n">capacity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nb_resources</span><span class="p">,</span> <span class="n">max_len_calendar</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">r_idx</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">calendar_availability</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">capacity</span><span class="p">[</span><span class="n">r_idx</span><span class="p">,</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">arr</span>
+    <span class="k">return</span> <span class="n">capacity</span></div>
+
+
+
+<div class="viewcode-block" id="resource_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.resource_consumption">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resource_consumption</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ScheduleSolution</span><span class="p">):</span>
+    <span class="c1"># Build an array resource_consumptions[i, r]</span>
+    <span class="n">resource_consumptions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">,</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_resources</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">):</span>
+        <span class="n">mode_i</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">consumption_dict</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">mode_i</span><span class="p">]</span><span class="o">.</span><span class="n">resource_consumption</span>
+        <span class="k">for</span> <span class="n">r_idx</span><span class="p">,</span> <span class="n">r_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">):</span>
+            <span class="n">resource_consumptions</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">r_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">consumption_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">r_name</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resource_consumptions</span></div>
+
+
+
+<div class="viewcode-block" id="resource_consumption_modes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.resource_consumption_modes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resource_consumption_modes</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">):</span>
+    <span class="c1"># Build an array resource_consumptions[i, r]</span>
+    <span class="n">max_nb_modes</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">resource_consumptions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">,</span> <span class="n">max_nb_modes</span><span class="p">,</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_resources</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">):</span>
+        <span class="n">modes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">mode_j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">modes</span><span class="p">):</span>
+            <span class="n">consumption_dict</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">mode_j</span><span class="p">]</span><span class="o">.</span><span class="n">resource_consumption</span>
+            <span class="k">for</span> <span class="n">r_idx</span><span class="p">,</span> <span class="n">r_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">):</span>
+                <span class="n">resource_consumptions</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">mode_j</span><span class="p">,</span> <span class="n">r_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">consumption_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">r_name</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="mi">0</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">resource_consumptions</span></div>
+
+
+
+<div class="viewcode-block" id="build_task_to_set_of_groups">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.build_task_to_set_of_groups">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_task_to_set_of_groups</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">):</span>
+    <span class="n">task_to_group_set</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+        <span class="n">group_id</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">task_to_group_set</span><span class="p">:</span>
+                <span class="n">task_to_group_set</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">task_to_group_set</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">task_to_group_set</span></div>
+
+
+
+<div class="viewcode-block" id="post_process_schedule">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.post_process_schedule">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">post_process_schedule</span><span class="p">(</span>
+    <span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">ScheduleSolution</span><span class="p">,</span>
+    <span class="n">keep_min_time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">keep_strict_order_task</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="c1"># resource_to_index = {r: i for i, r in enumerate(flex_problem.resources)}</span>
+    <span class="n">capacity</span> <span class="o">=</span> <span class="n">init_capacity_resource</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">)</span>
+    <span class="n">resource_consumptions</span> <span class="o">=</span> <span class="n">resource_consumption</span><span class="p">(</span>
+        <span class="n">flex_problem</span><span class="o">=</span><span class="n">flex_problem</span><span class="p">,</span> <span class="n">solution</span><span class="o">=</span><span class="n">solution</span>
+    <span class="p">)</span>
+    <span class="n">task_to_group_set</span> <span class="o">=</span> <span class="n">build_task_to_set_of_groups</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">)</span>
+    <span class="n">tasks_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">new_schedule</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">current_group</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">successors_task</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successors</span>
+    <span class="n">predecessors_task</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">successors_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">successors_task</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">successors_task</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">predecessors_task</span><span class="p">:</span>
+                    <span class="n">predecessors_task</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">predecessors_task</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">successors_group</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successors_group_tasks</span>
+    <span class="n">predecessors_group</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">successors_group</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">successors_group</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">successors_group</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">predecessors_group</span><span class="p">:</span>
+                    <span class="n">predecessors_group</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">predecessors_group</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">successor_with_res_release_at_start_of_successor</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">flex_problem</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successor_with_res_release_at_start_of_successor</span>
+    <span class="p">)</span>
+    <span class="n">successor_generic_with_res_release_at_start_of_successor_generic</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successor_generic_with_res_release_at_start_of_successor_generic</span>
+    <span class="n">scheduled_task</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">scheduled_group</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">cur_end_time</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">index_task</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i_task</span> <span class="ow">in</span> <span class="n">tasks_order</span><span class="p">:</span>
+        <span class="n">id_task</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">index_to_task_id</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scheduling...&quot;</span><span class="p">,</span> <span class="n">id_task</span><span class="p">)</span>
+        <span class="n">min_time</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span><span class="o">.</span><span class="n">min_starting_date</span>
+        <span class="k">if</span> <span class="n">min_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">min_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cons</span> <span class="o">=</span> <span class="n">resource_consumptions</span><span class="p">[</span><span class="n">i_task</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">if</span> <span class="n">id_task</span> <span class="ow">in</span> <span class="n">predecessors_task</span><span class="p">:</span>
+            <span class="n">min_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">min_time</span><span class="p">,</span>
+                <span class="nb">max</span><span class="p">([</span><span class="n">new_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">predecessors_task</span><span class="p">[</span><span class="n">id_task</span><span class="p">]]),</span>
+            <span class="p">)</span>  <span class="c1"># Max time of predecessors</span>
+        <span class="k">if</span> <span class="n">id_task</span> <span class="ow">in</span> <span class="n">task_to_group_set</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">task_to_group_set</span><span class="p">[</span><span class="n">id_task</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">predecessors_group</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">pred_g</span> <span class="ow">in</span> <span class="n">predecessors_group</span><span class="p">[</span><span class="n">g</span><span class="p">]:</span>
+                        <span class="n">min_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                            <span class="n">min_time</span><span class="p">,</span>
+                            <span class="nb">max</span><span class="p">(</span>
+                                <span class="p">[</span>
+                                    <span class="n">new_schedule</span><span class="p">[</span><span class="n">jj</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                                    <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span>
+                                        <span class="n">flex_problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">pred_g</span><span class="p">]</span>
+                                    <span class="p">]</span><span class="o">.</span><span class="n">tasks_group</span>
+                                <span class="p">]</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">solution</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i_task</span><span class="p">]]</span><span class="o">.</span><span class="n">duration</span>
+        <span class="n">duration_done</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">part</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cur_time</span> <span class="o">=</span> <span class="n">min_time</span>
+        <span class="k">if</span> <span class="n">keep_min_time</span><span class="p">:</span>
+            <span class="n">cur_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">min_time</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i_task</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">keep_strict_order_task</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">index_task</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">st_prev</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">tasks_order</span><span class="p">[</span><span class="n">index_task</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="n">id_task_prev</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">index_to_task_id</span><span class="p">[</span>
+                    <span class="n">tasks_order</span><span class="p">[</span><span class="n">index_task</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="p">]</span>
+                <span class="n">actual_st</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task_prev</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">cur_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="n">min_time</span><span class="p">,</span> <span class="n">actual_st</span> <span class="o">+</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i_task</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">st_prev</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">duration_done</span> <span class="o">==</span> <span class="n">duration</span><span class="p">:</span>
+            <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">min_time</span><span class="p">,</span> <span class="n">min_time</span><span class="p">))</span>
+        <span class="k">while</span> <span class="n">duration_done</span> <span class="o">&lt;</span> <span class="n">duration</span><span class="p">:</span>
+            <span class="n">next_start</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="n">i</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cur_time</span><span class="p">,</span> <span class="n">capacity</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">capacity</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">cons</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+            <span class="p">)</span>
+            <span class="n">next_end</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">j</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">next_start</span><span class="p">,</span> <span class="n">next_start</span> <span class="o">+</span> <span class="n">duration</span> <span class="o">-</span> <span class="n">duration_done</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">capacity</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">cons</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>
+                <span class="p">),</span>
+                <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">next_end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">next_end</span> <span class="o">=</span> <span class="n">next_start</span> <span class="o">+</span> <span class="n">duration</span> <span class="o">-</span> <span class="n">duration_done</span>
+            <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">next_start</span><span class="p">,</span> <span class="n">next_end</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">next_start</span><span class="p">,</span> <span class="n">next_end</span><span class="p">):</span>
+                <span class="n">capacity</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">-=</span> <span class="n">cons</span>
+            <span class="n">duration_done</span> <span class="o">+=</span> <span class="n">next_end</span> <span class="o">-</span> <span class="n">next_start</span>
+            <span class="n">cur_time</span> <span class="o">=</span> <span class="n">next_end</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">cur_end_time</span> <span class="o">=</span> <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">scheduled_task</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">id_task</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">id_task</span> <span class="ow">in</span> <span class="n">task_to_group_set</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">task_to_group_set</span><span class="p">[</span><span class="n">id_task</span><span class="p">]:</span>
+                <span class="n">group</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">g</span><span class="p">]]</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">t_id</span> <span class="ow">in</span> <span class="n">scheduled_task</span> <span class="k">for</span> <span class="n">t_id</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">):</span>
+                    <span class="n">scheduled_group</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="n">index_task</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">new_schedule</span></div>
+
+
+
+<div class="viewcode-block" id="build_graph_dependencies">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.build_graph_dependencies">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_graph_dependencies</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+
+    <span class="n">fsp</span> <span class="o">=</span> <span class="n">flex_problem</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="n">successors_task</span> <span class="o">=</span> <span class="n">fsp</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successors</span>
+    <span class="k">if</span> <span class="n">successors_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">successors_task</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">successors_task</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;classic&quot;</span><span class="p">)</span>
+    <span class="n">successors_group_tasks</span> <span class="o">=</span> <span class="n">fsp</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successors_group_tasks</span>
+    <span class="k">if</span> <span class="n">successors_group_tasks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">successors_group_tasks</span><span class="p">:</span>
+            <span class="n">gr</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">g</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">oth_g</span> <span class="ow">in</span> <span class="n">successors_group_tasks</span><span class="p">[</span><span class="n">g</span><span class="p">]:</span>
+                <span class="n">ogr</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">oth_g</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">i_gr</span> <span class="ow">in</span> <span class="n">gr</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">i_ogr</span> <span class="ow">in</span> <span class="n">ogr</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+                        <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">i_gr</span><span class="p">,</span> <span class="n">i_ogr</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;via_group&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="p">(</span>
+        <span class="n">t1</span><span class="p">,</span>
+        <span class="n">t2</span><span class="p">,</span>
+        <span class="n">res</span><span class="p">,</span>
+    <span class="p">)</span> <span class="ow">in</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successor_generic_with_res_release_at_start_of_successor_generic</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">t1</span><span class="o">.</span><span class="n">is_a_task</span><span class="p">:</span>
+            <span class="n">id_1</span> <span class="o">=</span> <span class="p">[</span><span class="n">t1</span><span class="o">.</span><span class="n">task_id</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span>
+                <span class="n">flex_problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">t1</span><span class="o">.</span><span class="n">group_id</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">id_1</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t2</span><span class="o">.</span><span class="n">is_a_task</span><span class="p">:</span>
+            <span class="n">id_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">t2</span><span class="o">.</span><span class="n">task_id</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span>
+                <span class="n">flex_problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">t2</span><span class="o">.</span><span class="n">group_id</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">id_2</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">id1</span> <span class="ow">in</span> <span class="n">id_1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">id2</span> <span class="ow">in</span> <span class="n">id_2</span><span class="p">:</span>
+                <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">id1</span><span class="p">,</span> <span class="n">id2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;constr&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">graph</span></div>
+
+
+
+<div class="viewcode-block" id="get_tasks_in_events">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.get_tasks_in_events">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_tasks_in_events</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">,</span>
+    <span class="n">event</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TaskGroupAbstraction</span><span class="p">,</span> <span class="n">TaskGroupAbstraction</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">RESOURCE_KEY</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+<span class="p">):</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">sink</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">event</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">is_a_task</span><span class="p">:</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">event</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">event</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">is_a_task</span><span class="p">:</span>
+        <span class="n">sink</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">event</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">is_a_task</span><span class="p">:</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span>
+                <span class="n">problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">event</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">group_id</span><span class="p">]</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">tasks_group</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">is_a_task</span><span class="p">:</span>
+        <span class="n">sink</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span>
+                <span class="n">problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">event</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">group_id</span><span class="p">]</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">tasks_group</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">source</span><span class="p">,</span> <span class="n">sink</span></div>
+
+
+
+<div class="viewcode-block" id="StateOfEvent">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.StateOfEvent">[docs]</a>
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StateOfEvent</span><span class="p">:</span>
+    <span class="n">event</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TaskGroupAbstraction</span><span class="p">,</span> <span class="n">TaskGroupAbstraction</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">RESOURCE_KEY</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]</span>
+    <span class="n">sink</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]</span>
+    <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">start_event_triggered</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">end_event_triggered</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="StateOfEvent.update_state_of_event">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.StateOfEvent.update_state_of_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_state_of_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">full_schedule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">t</span> <span class="ow">in</span> <span class="n">full_schedule</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_event_triggered</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">full_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span> <span class="ow">in</span> <span class="n">full_schedule</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_event_triggered</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">full_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">full_schedule</span><span class="p">]</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StateOfGroup">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.StateOfGroup">[docs]</a>
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StateOfGroup</span><span class="p">:</span>
+    <span class="n">event</span><span class="p">:</span> <span class="n">TasksGroups</span>
+    <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">start_event_triggered</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">end_event_triggered</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="StateOfGroup.update_state_of_event">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.StateOfGroup.update_state_of_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_state_of_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">full_schedule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">t</span> <span class="ow">in</span> <span class="n">full_schedule</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_event_triggered</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">full_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_event_triggered</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">full_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span> <span class="ow">in</span> <span class="n">full_schedule</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_event_triggered</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">full_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">tasks_group</span>
+                    <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">full_schedule</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PostprocessTool">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.PostprocessTool">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PostprocessTool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ScheduleSolution</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">flex_problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solution</span> <span class="o">=</span> <span class="n">solution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span> <span class="o">=</span> <span class="n">init_capacity_resource</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">)</span>  <span class="c1"># array (i_resource, time)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumption</span> <span class="o">=</span> <span class="n">resource_consumption</span><span class="p">(</span>
+            <span class="n">flex_problem</span><span class="o">=</span><span class="n">flex_problem</span><span class="p">,</span> <span class="n">solution</span><span class="o">=</span><span class="n">solution</span>
+        <span class="p">)</span>  <span class="c1"># array (i_task, i_resource)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph_dependencies</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">=</span><span class="n">flex_problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks_id_to_group</span> <span class="o">=</span> <span class="n">build_task_to_set_of_groups</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">t</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">predecessors</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nr_events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">successor_generic_with_res_release_at_start_of_successor_generic</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states_events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_events</span><span class="p">)):</span>
+            <span class="n">source</span><span class="p">,</span> <span class="n">sink</span> <span class="o">=</span> <span class="n">get_tasks_in_events</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_events</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">StateOfEvent</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_events</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">sink</span><span class="o">=</span><span class="n">sink</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_groups</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">type_of_group</span> <span class="o">==</span> <span class="n">GroupType</span><span class="o">.</span><span class="n">GROUP_TASK_NON_RELEASED_RESOURCE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state_groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">StateOfGroup</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+
+<div class="viewcode-block" id="PostprocessTool.post_process_left">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.PostprocessTool.post_process_left">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post_process_left</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">,</span>
+        <span class="n">solution</span><span class="p">:</span> <span class="n">ScheduleSolution</span><span class="p">,</span>
+        <span class="n">keep_min_time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">keep_strict_order_task</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># resource_to_index = {r: i for i, r in enumerate(flex_problem.resources)}</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span>
+        <span class="n">resource_consumptions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumption</span>
+        <span class="n">tasks_order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
+        <span class="n">tasks_order</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="o">-</span><span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task_id</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">sink</span>
+                    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_events</span>
+                <span class="p">)</span>
+                <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">new_schedule</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">scheduled_task</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">prev_id_task</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">currently_failed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_schedule</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">:</span>
+            <span class="n">i_task</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">j</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">tasks_order</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task_id</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_schedule</span>
+                    <span class="ow">and</span> <span class="n">j</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">currently_failed</span>
+                    <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+                        <span class="n">t</span> <span class="ow">in</span> <span class="n">new_schedule</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task_id</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span>
+                    <span class="p">)</span>
+                    <span class="c1"># and</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">id_task</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">index_to_task_id</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scheduling...&quot;</span><span class="p">,</span> <span class="n">id_task</span><span class="p">)</span>
+            <span class="n">min_time</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span><span class="o">.</span><span class="n">min_starting_date</span>
+            <span class="k">if</span> <span class="n">min_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">min_time</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cons</span> <span class="o">=</span> <span class="n">resource_consumptions</span><span class="p">[</span><span class="n">i_task</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="n">id_task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span><span class="p">[</span><span class="n">id_task</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">min_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="n">min_time</span><span class="p">,</span>
+                    <span class="nb">max</span><span class="p">([</span><span class="n">new_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span><span class="p">[</span><span class="n">id_task</span><span class="p">]]),</span>
+                <span class="p">)</span>  <span class="c1"># Max time of predecessors</span>
+            <span class="k">if</span> <span class="n">id_task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_id_to_group</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_id_to_group</span><span class="p">[</span><span class="n">id_task</span><span class="p">]:</span>
+                    <span class="n">group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">group_id_to_index</span><span class="p">[</span><span class="n">g</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">no_overlap</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">jj</span> <span class="ow">in</span> <span class="n">new_schedule</span> <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">):</span>
+                            <span class="c1"># avoid overlap..</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;prev&quot;</span><span class="p">,</span> <span class="n">min_time</span><span class="p">)</span>
+                            <span class="n">min_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                                <span class="n">min_time</span><span class="p">,</span>
+                                <span class="nb">max</span><span class="p">(</span>
+                                    <span class="p">[</span>
+                                        <span class="n">new_schedule</span><span class="p">[</span><span class="n">jj</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                                        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">tasks_group</span>
+                                        <span class="k">if</span> <span class="n">jj</span> <span class="ow">in</span> <span class="n">new_schedule</span>
+                                    <span class="p">]</span>
+                                <span class="p">),</span>
+                            <span class="p">)</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;new&quot;</span><span class="p">,</span> <span class="n">min_time</span><span class="p">)</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i_task</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">solution</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i_task</span><span class="p">]]</span><span class="o">.</span><span class="n">duration</span>
+            <span class="n">duration_done</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cur_time</span> <span class="o">=</span> <span class="n">min_time</span>
+            <span class="k">if</span> <span class="n">keep_min_time</span><span class="p">:</span>
+                <span class="n">cur_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">min_time</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i_task</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">keep_strict_order_task</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">prev_id_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">cur_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">min_time</span><span class="p">,</span> <span class="n">new_schedule</span><span class="p">[</span><span class="n">prev_id_task</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">duration_done</span> <span class="o">==</span> <span class="n">duration</span><span class="p">:</span>
+                <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">min_time</span><span class="p">,</span> <span class="n">min_time</span><span class="p">))</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">get_capacity_index_task</span><span class="p">(</span><span class="n">index_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">conso</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumption</span><span class="p">[</span><span class="n">index_task</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="n">nz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">conso</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">capa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity</span><span class="p">[:,</span> <span class="n">time</span><span class="p">])</span>
+                <span class="n">id_task_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_to_task_id</span><span class="p">[</span><span class="n">index_task</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_events</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">id_task_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">sink</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="p">(</span>
+                                <span class="n">event</span><span class="o">.</span><span class="n">end_event_triggered</span> <span class="ow">is</span> <span class="kc">None</span>
+                                <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">end_event_triggered</span> <span class="o">&gt;</span> <span class="n">time</span>
+                            <span class="p">):</span>
+                                <span class="c1"># print(&quot;End event trigerred Release&quot;, event.end_event_triggered)</span>
+                                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                                    <span class="n">id_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resource_id_to_index</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                                    <span class="k">if</span> <span class="n">id_r</span> <span class="ow">in</span> <span class="n">nz</span><span class="p">:</span>
+                                        <span class="n">capa</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span> <span class="o">-=</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="n">r</span><span class="p">]</span>
+                                        <span class="k">if</span> <span class="n">capa</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">cons</span><span class="p">[</span><span class="n">id_r</span><span class="p">]:</span>
+                                            <span class="k">pass</span>
+                                            <span class="c1"># print(&quot;Current task&quot;, id_task_)</span>
+                                            <span class="c1"># print(&quot;sink&quot;, event.sink)</span>
+                                            <span class="c1"># print(&quot;Current task schedule&quot;,</span>
+                                            <span class="c1">#       solution.schedule[index_task])</span>
+                                            <span class="c1"># for s in event.sink:</span>
+                                            <span class="c1">#     print(solution.schedule[self.problem.task_id_to_index[s]])</span>
+                <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_groups</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">id_task_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="p">(</span>
+                                <span class="n">event</span><span class="o">.</span><span class="n">end_event_triggered</span> <span class="ow">is</span> <span class="kc">None</span>
+                                <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">end_event_triggered</span> <span class="o">&gt;</span> <span class="n">time</span>
+                            <span class="p">):</span>
+                                <span class="c1"># print(&quot;End event trigerred Group&quot;, event.end_event_triggered)</span>
+                                <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">res_not_released</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                                    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">res_not_released</span><span class="p">:</span>
+                                        <span class="n">id_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">resource_id_to_index</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                                        <span class="k">if</span> <span class="n">id_r</span> <span class="ow">in</span> <span class="n">nz</span><span class="p">:</span>
+                                            <span class="n">capa</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span> <span class="o">-=</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">res_not_released</span><span class="p">[</span>
+                                                <span class="n">r</span>
+                                            <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">id_task_</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">no_overlap</span><span class="p">:</span>
+                            <span class="k">pass</span>  <span class="c1"># Do something here.</span>
+                <span class="k">return</span> <span class="n">capa</span>
+
+            <span class="n">failed</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">while</span> <span class="n">duration_done</span> <span class="o">&lt;</span> <span class="n">duration</span><span class="p">:</span>
+                <span class="n">next_start</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">i</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cur_time</span><span class="p">,</span> <span class="n">capacity</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                            <span class="n">get_capacity_index_task</span><span class="p">(</span><span class="n">index_task</span><span class="o">=</span><span class="n">i_task</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="n">cons</span>
+                        <span class="p">)</span>
+                        <span class="o">&gt;=</span> <span class="mi">0</span>
+                    <span class="p">),</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">next_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">tasks_order</span> <span class="o">=</span> <span class="n">tasks_order</span>
+                    <span class="n">currently_failed</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i_task</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">id_task</span> <span class="ow">in</span> <span class="n">new_schedule</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">ns</span><span class="p">,</span> <span class="n">ne</span> <span class="ow">in</span> <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">]:</span>
+                            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">ne</span><span class="p">):</span>
+                                <span class="n">capacity</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cons</span>
+                        <span class="n">new_schedule</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">id_task</span><span class="p">)</span>
+                        <span class="n">failed</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+                <span class="n">next_end</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">j</span>
+                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                            <span class="n">next_start</span><span class="p">,</span> <span class="n">next_start</span> <span class="o">+</span> <span class="n">duration</span> <span class="o">-</span> <span class="n">duration_done</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                            <span class="n">get_capacity_index_task</span><span class="p">(</span><span class="n">index_task</span><span class="o">=</span><span class="n">i_task</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">j</span><span class="p">)</span> <span class="o">-</span> <span class="n">cons</span>
+                        <span class="p">)</span>
+                        <span class="o">&lt;</span> <span class="mi">0</span>
+                    <span class="p">),</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">next_end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">next_end</span> <span class="o">=</span> <span class="n">next_start</span> <span class="o">+</span> <span class="n">duration</span> <span class="o">-</span> <span class="n">duration_done</span>
+                <span class="n">new_schedule</span><span class="p">[</span><span class="n">id_task</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">next_start</span><span class="p">,</span> <span class="n">next_end</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">next_start</span><span class="p">,</span> <span class="n">next_end</span><span class="p">):</span>
+                    <span class="n">capacity</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">-=</span> <span class="n">cons</span>
+                <span class="n">duration_done</span> <span class="o">+=</span> <span class="n">next_end</span> <span class="o">-</span> <span class="n">next_start</span>
+                <span class="n">cur_time</span> <span class="o">=</span> <span class="n">next_end</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">failed</span><span class="p">:</span>
+                <span class="n">currently_failed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">scheduled_task</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">id_task</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_groups</span><span class="p">:</span>
+                    <span class="n">e</span><span class="o">.</span><span class="n">update_state_of_event</span><span class="p">(</span><span class="n">new_schedule</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_events</span><span class="p">:</span>
+                    <span class="n">e</span><span class="o">.</span><span class="n">update_state_of_event</span><span class="p">(</span><span class="n">new_schedule</span><span class="p">)</span>
+                <span class="n">prev_id_task</span> <span class="o">=</span> <span class="n">id_task</span>
+        <span class="k">return</span> <span class="n">new_schedule</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="compute_equivalent_preemptive_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.compute_equivalent_preemptive_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_equivalent_preemptive_solution</span><span class="p">(</span>
+    <span class="n">flex_problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ScheduleSolution</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dont change the actual schedule but make the solution preemptive&quot;&quot;&quot;</span>
+    <span class="n">schedule</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">capacity</span> <span class="o">=</span> <span class="n">init_capacity_resource</span><span class="p">(</span><span class="n">flex_problem</span><span class="p">)</span>
+    <span class="n">resource_consumptions</span> <span class="o">=</span> <span class="n">resource_consumption</span><span class="p">(</span>
+        <span class="n">flex_problem</span><span class="o">=</span><span class="n">flex_problem</span><span class="p">,</span> <span class="n">solution</span><span class="o">=</span><span class="n">solution</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flex_problem</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">):</span>
+        <span class="n">st</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">end</span><span class="p">:</span>
+            <span class="n">schedule</span><span class="o">.</span><span class="n">append</span><span class="p">([(</span><span class="n">st</span><span class="p">,</span> <span class="n">end</span><span class="p">)])</span>
+            <span class="k">continue</span>
+        <span class="n">active_time</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">active_slots</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">start_slot</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">time</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">capacity</span><span class="p">[:,</span> <span class="n">time</span><span class="p">]</span> <span class="o">-</span> <span class="n">resource_consumptions</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># All resource here.</span>
+                <span class="n">active_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">start_slot</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">start_slot</span> <span class="o">=</span> <span class="n">time</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">start_slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">active_slots</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start_slot</span><span class="p">,</span> <span class="n">active_time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="n">start_slot</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">start_slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">active_slots</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start_slot</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
+        <span class="n">sum_</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">active_slots</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">sum_</span><span class="p">,</span> <span class="n">flex_problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
+        <span class="n">schedule</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">active_slots</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ScheduleSolutionPreemptive</span><span class="p">(</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">flex_problem</span><span class="p">,</span> <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span> <span class="n">modes</span><span class="o">=</span><span class="n">solution</span><span class="o">.</span><span class="n">modes</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.flex_scheduling.html#discrete_optimization.flex_scheduling.simulator.check_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_solution</span><span class="p">(</span><span class="n">solution</span><span class="p">:</span> <span class="n">ScheduleSolutionPreemptive</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">FlexProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;To rework, do some basic check (was used to debug the postpro methods..&quot;&quot;&quot;</span>
+    <span class="n">resource_consumption</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_resources</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">)):</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">duration</span>
+        <span class="n">sum_</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+        <span class="k">if</span> <span class="n">sum_</span> <span class="o">!=</span> <span class="n">duration</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem duration...&quot;</span><span class="p">,</span> <span class="n">sum_</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+        <span class="n">res_conso</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">resource_consumption</span>
+        <span class="k">for</span> <span class="n">ns</span><span class="p">,</span> <span class="n">ne</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">ne</span> <span class="o">&gt;</span> <span class="n">ns</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res_conso</span><span class="p">:</span>
+                    <span class="n">id_r</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">resource_id_to_index</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                    <span class="n">resource_consumption</span><span class="p">[</span><span class="n">id_r</span><span class="p">,</span> <span class="n">ns</span><span class="p">:</span><span class="n">ne</span><span class="p">]</span> <span class="o">+=</span> <span class="n">res_conso</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                            <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span><span class="o">.</span><span class="n">calendar_availability</span><span class="p">[</span><span class="n">ns</span><span class="p">:</span><span class="n">ne</span><span class="p">]</span>
+                            <span class="o">-</span> <span class="n">resource_consumption</span><span class="p">[</span><span class="n">id_r</span><span class="p">,</span> <span class="n">ns</span><span class="p">:</span><span class="n">ne</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="o">&lt;</span> <span class="mi">0</span>
+                    <span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="n">resource_consumption</span><span class="p">[</span><span class="n">id_r</span><span class="p">,</span> <span class="n">ns</span><span class="p">:</span><span class="n">ne</span><span class="p">],</span>
+                            <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span><span class="o">.</span><span class="n">calendar_availability</span><span class="p">[</span><span class="n">ns</span><span class="p">:</span><span class="n">ne</span><span class="p">],</span>
+                        <span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PROBLEM !&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">type_of_group</span> <span class="o">==</span> <span class="n">GroupType</span><span class="o">.</span><span class="n">GROUP_TASK_NON_RELEASED_RESOURCE</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">task_id_to_index</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">tasks_group</span><span class="p">]</span>
+            <span class="n">min_st</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">([</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">]))</span>
+            <span class="n">max_st</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">([</span><span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">res_not_released</span><span class="p">:</span>
+                <span class="n">id_r</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">resource_id_to_index</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">i</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_st</span><span class="p">,</span> <span class="n">max_st</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span><span class="o">.</span><span class="n">calendar_availability</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">:</span>
+                    <span class="n">resource_consumption</span><span class="p">[</span><span class="n">id_r</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">group</span><span class="o">.</span><span class="n">res_not_released</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">resource_consumption</span><span class="p">[</span><span class="n">id_r</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+                        <span class="o">-</span> <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span><span class="o">.</span><span class="n">calendar_availability</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                        <span class="o">&gt;</span> <span class="mi">0</span>
+                    <span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PROBLEM &quot;</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;PROBLEM with group consuming at time </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">,&quot;</span><span class="p">,</span>
+                            <span class="n">resource_consumption</span><span class="p">[</span><span class="n">id_r</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span>
+                            <span class="n">problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">id_r</span><span class="p">]</span><span class="o">.</span><span class="n">calendar_availability</span><span class="p">[</span><span class="n">j</span><span class="p">],</span>
+                        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

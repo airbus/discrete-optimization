@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem_preemptive</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PreemptiveRcpspProblem</span><span class="p">,</span>
+    <span class="n">PreemptiveRcpspSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solvers.cpsat</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSatRcpspSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiSkillToRcpsp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">MultiskillRcpspSolution</span><span class="p">,</span>
+    <span class="n">PreemptiveMultiskillRcpspSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.solvers.cp_mzn</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpMultiskillRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">,</span>
+    <span class="n">CpSolverName</span><span class="p">,</span>
+    <span class="n">stick_to_solution</span><span class="p">,</span>
+    <span class="n">stick_to_solution_preemptive</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MultimodeTranspositionMultiskillRcpspSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition.MultimodeTranspositionMultiskillRcpspSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultimodeTranspositionMultiskillRcpspSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+        <span class="n">multimode_problem</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">PreemptiveRcpspProblem</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">worker_type_to_worker</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">ParamsObjectiveFunction</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_multimode_rcpsp</span><span class="p">:</span> <span class="n">SolverDO</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit_number_of_mode_per_task</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_number_of_mode</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">check_resource_compliance</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">reconstruction_cp_time_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the multimode transposition solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: The multi-skill RCPSP problem to solve</span>
+<span class="sd">            multimode_problem: Pre-computed multimode RCPSP problem (optional)</span>
+<span class="sd">            worker_type_to_worker: Pre-computed worker type to worker mapping (optional)</span>
+<span class="sd">            params_objective_function: Parameters for objective function</span>
+<span class="sd">            solver_multimode_rcpsp: Solver for the multimode RCPSP problem</span>
+<span class="sd">            limit_number_of_mode_per_task: Whether to limit modes per task in transformation</span>
+<span class="sd">            max_number_of_mode: Maximum number of modes per task during transformation</span>
+<span class="sd">            check_resource_compliance: Whether to check resource compliance during transformation</span>
+<span class="sd">            reconstruction_cp_time_limit: Time limit (seconds) for CP-based reconstruction</span>
+<span class="sd">            **kwargs: Additional arguments for parent class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multimode_problem</span> <span class="o">=</span> <span class="n">multimode_problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">worker_type_to_worker</span> <span class="o">=</span> <span class="n">worker_type_to_worker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver_multimode_rcpsp</span> <span class="o">=</span> <span class="n">solver_multimode_rcpsp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">limit_number_of_mode_per_task</span> <span class="o">=</span> <span class="n">limit_number_of_mode_per_task</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_mode</span> <span class="o">=</span> <span class="n">max_number_of_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_resource_compliance</span> <span class="o">=</span> <span class="n">check_resource_compliance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reconstruction_cp_time_limit</span> <span class="o">=</span> <span class="n">reconstruction_cp_time_limit</span>
+
+<div class="viewcode-block" id="MultimodeTranspositionMultiskillRcpspSolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition.MultimodeTranspositionMultiskillRcpspSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve the multi-skill RCPSP using two-stage decomposition.</span>
+<span class="sd">        The idea is to transform MS-RCPSP to multi-mode RCPSP by abstracting employees as worker types.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ResultStorage containing the reconstructed multi-skill RCPSP solutions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Construct the multimode problem if not already given</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multimode_problem</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_type_to_worker</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Construct RCPSP problem by abstracting employees as worker types&quot;</span>
+            <span class="p">)</span>
+            <span class="n">algo</span> <span class="o">=</span> <span class="n">MultiSkillToRcpsp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+            <span class="n">rcpsp_problem</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">construct_rcpsp_by_worker_type</span><span class="p">(</span>
+                <span class="n">limit_number_of_mode_per_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">limit_number_of_mode_per_task</span><span class="p">,</span>
+                <span class="n">max_number_of_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_mode</span><span class="p">,</span>
+                <span class="n">check_resource_compliance</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">check_resource_compliance</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RCPSP Problem Info: </span><span class="si">{</span><span class="n">rcpsp_problem</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">multimode_problem</span> <span class="o">=</span> <span class="n">rcpsp_problem</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">worker_type_to_worker</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">worker_type_to_worker</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_multimode_rcpsp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Create an underlying solver for the multimode RCPSP problem if not provided</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solver_multimode_rcpsp</span> <span class="o">=</span> <span class="n">CpSatRcpspSolver</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multimode_problem</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Create an underlying solver for the multimode RCPSP problem&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Set the problem on the underlying solver if not already set</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_multimode_rcpsp</span><span class="o">.</span><span class="n">problem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solver_multimode_rcpsp</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">multimode_problem</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Set the problem on the given underlying solver&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Solve the multimode problem</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Solving the multi-mode RCPSP problem...&quot;</span><span class="p">)</span>
+        <span class="n">result_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver_multimode_rcpsp</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">solution</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">result_store</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+
+        <span class="c1"># Check if a solution was found</span>
+        <span class="k">if</span> <span class="n">solution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;No solution found by the multi-mode RCPSP solver. Returning empty result store.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">ResultStorage</span><span class="p">(</span>
+                <span class="n">list_solution_fits</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">mode_optim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_objective_register</span><span class="p">()</span><span class="o">.</span><span class="n">objective_sense</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Multi-mode RCPSP solution obtained with objective/fit: </span><span class="si">{</span><span class="n">fit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Rebuild the solution for the multiskill problem using the solution of the rcpsp problem</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Rebuild solution for the multiskill problem&quot;</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">rebuild_multiskill_solution_cp_based</span><span class="p">(</span>
+            <span class="n">multiskill_rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">multimode_rcpsp_problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multimode_problem</span><span class="p">,</span>
+            <span class="n">worker_type_to_worker</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">worker_type_to_worker</span><span class="p">,</span>
+            <span class="n">solution_rcpsp</span><span class="o">=</span><span class="n">solution</span><span class="p">,</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reconstruction_cp_time_limit</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="rebuild_multiskill_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition.rebuild_multiskill_solution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rebuild_multiskill_solution</span><span class="p">(</span>
+    <span class="n">multiskill_rcpsp_problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">multimode_rcpsp_problem</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">PreemptiveRcpspProblem</span><span class="p">],</span>
+    <span class="n">worker_type_to_worker</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+    <span class="n">solution_rcpsp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">PreemptiveRcpspSolution</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">MultiskillRcpspSolution</span><span class="p">,</span> <span class="n">PreemptiveMultiskillRcpspSolution</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function takes the schedule from the RCPSP solution and rebuilds the solution for the multiskill problem.</span>
+<span class="sd">    NOTE: need review, this function is currently not used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_horizon</span> <span class="o">=</span> <span class="n">multimode_rcpsp_problem</span><span class="o">.</span><span class="n">horizon</span>
+    <span class="n">resource_avail_in_time</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">multimode_rcpsp_problem</span><span class="o">.</span><span class="n">resources_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">multimode_rcpsp_problem</span><span class="o">.</span><span class="n">is_varying_resource</span><span class="p">():</span>
+            <span class="n">resource_avail_in_time</span><span class="p">[</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="n">multimode_rcpsp_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">][</span>
+                <span class="p">:</span> <span class="n">new_horizon</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resource_avail_in_time</span><span class="p">[</span><span class="n">res</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                <span class="n">new_horizon</span><span class="p">,</span> <span class="n">multimode_rcpsp_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">res</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">worker_avail_in_time</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">employees</span><span class="p">:</span>
+        <span class="n">worker_avail_in_time</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">calendar_employee</span><span class="p">[:</span> <span class="n">new_horizon</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">rcpsp_schedule</span> <span class="o">=</span> <span class="n">solution_rcpsp</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+    <span class="n">employee_usage</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">modes_dict</span> <span class="o">=</span> <span class="n">multimode_rcpsp_problem</span><span class="o">.</span><span class="n">build_mode_dict</span><span class="p">(</span><span class="n">solution_rcpsp</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">)</span>
+    <span class="n">sorted_tasks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rcpsp_schedule</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">solution_rcpsp</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">sorted_tasks</span><span class="p">:</span>
+        <span class="n">employee_usage</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ressource_requirements</span> <span class="o">=</span> <span class="n">multimode_rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span>
+            <span class="n">modes_dict</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">non_zeros_ressource_requirements</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">k</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ressource_requirements</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">worker_type_to_worker</span> <span class="ow">and</span> <span class="n">ressource_requirements</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_zeros_ressource_requirements</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">active_times</span> <span class="o">=</span> <span class="n">solution_rcpsp</span><span class="o">.</span><span class="n">get_active_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">non_zeros_ressource_requirements</span><span class="p">:</span>
+                <span class="n">number_worker</span> <span class="o">=</span> <span class="n">ressource_requirements</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                <span class="n">workers_available</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">w</span>
+                    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">worker_type_to_worker</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">worker_avail_in_time</span><span class="p">[</span><span class="n">w</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">active_times</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">workers_available</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">number_worker</span><span class="p">:</span>
+                    <span class="n">wavail</span> <span class="o">=</span> <span class="n">workers_available</span><span class="p">[:</span><span class="n">number_worker</span><span class="p">]</span>
+                    <span class="n">skills_needed_by_task</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">s</span>
+                        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">skills_set</span>
+                        <span class="ow">and</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                    <span class="p">]</span>
+                    <span class="n">non_zeros</span> <span class="o">=</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span>
+                        <span class="n">wavail</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">get_non_zero_skills</span><span class="p">()</span>
+                    <span class="n">skills_interest</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">non_zeros</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">skills_needed_by_task</span>
+                    <span class="p">]</span>
+                    <span class="n">employee_usage</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                        <span class="p">{</span><span class="n">emp</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">skills_interest</span><span class="p">)</span> <span class="k">for</span> <span class="n">emp</span> <span class="ow">in</span> <span class="n">wavail</span><span class="p">}</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">active_times</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wavail</span><span class="p">:</span>
+                            <span class="n">worker_avail_in_time</span><span class="p">[</span><span class="n">w</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution_rcpsp</span><span class="p">,</span> <span class="n">PreemptiveRcpspSolution</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                            <span class="n">solution_rcpsp</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;starts&quot;</span><span class="p">],</span>
+                            <span class="n">solution_rcpsp</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s2">&quot;ends&quot;</span><span class="p">],</span>
+                        <span class="p">):</span>
+                            <span class="n">at</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                            <span class="n">workers_available</span> <span class="o">=</span> <span class="p">[</span>
+                                <span class="n">w</span>
+                                <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">worker_type_to_worker</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">worker_avail_in_time</span><span class="p">[</span><span class="n">w</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">at</span><span class="p">)</span>
+                            <span class="p">]</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">workers_available</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">number_worker</span><span class="p">:</span>
+                                <span class="n">wavail</span> <span class="o">=</span> <span class="n">workers_available</span><span class="p">[:</span><span class="n">number_worker</span><span class="p">]</span>
+                                <span class="n">skills_needed_by_task</span> <span class="o">=</span> <span class="p">[</span>
+                                    <span class="n">s</span>
+                                    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span>
+                                        <span class="n">task</span>
+                                    <span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                                    <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">skills_set</span>
+                                    <span class="ow">and</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span>
+                                        <span class="n">s</span>
+                                    <span class="p">]</span>
+                                    <span class="o">&gt;</span> <span class="mi">0</span>
+                                <span class="p">]</span>
+                                <span class="n">non_zeros</span> <span class="o">=</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">employees</span><span class="p">[</span>
+                                    <span class="n">wavail</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                <span class="p">]</span><span class="o">.</span><span class="n">get_non_zero_skills</span><span class="p">()</span>
+                                <span class="n">skills_interest</span> <span class="o">=</span> <span class="p">[</span>
+                                    <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">non_zeros</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">skills_needed_by_task</span>
+                                <span class="p">]</span>
+                                <span class="k">for</span> <span class="n">emp</span> <span class="ow">in</span> <span class="n">wavail</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="n">emp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">employee_usage</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+                                        <span class="n">employee_usage</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">emp</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                                            <span class="s2">&quot;skills&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                                            <span class="s2">&quot;times&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                                        <span class="p">}</span>
+                                    <span class="n">employee_usage</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">emp</span><span class="p">][</span><span class="s2">&quot;skills&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span>
+                                        <span class="nb">set</span><span class="p">(</span><span class="n">skills_interest</span><span class="p">)</span>
+                                    <span class="p">]</span>
+                                    <span class="n">employee_usage</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">emp</span><span class="p">][</span><span class="s2">&quot;times&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)]</span>
+                                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">at</span><span class="p">:</span>
+                                    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wavail</span><span class="p">:</span>
+                                        <span class="n">worker_avail_in_time</span><span class="p">[</span><span class="n">w</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Problem finding a worker&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution_rcpsp</span><span class="p">,</span> <span class="n">PreemptiveRcpspSolution</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PreemptiveMultiskillRcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">multiskill_rcpsp_problem</span><span class="p">,</span>
+            <span class="n">modes</span><span class="o">=</span><span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">},</span>
+            <span class="n">employee_usage</span><span class="o">=</span><span class="n">employee_usage</span><span class="p">,</span>
+            <span class="n">schedule</span><span class="o">=</span><span class="n">rcpsp_schedule</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">MultiskillRcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">multiskill_rcpsp_problem</span><span class="p">,</span>
+            <span class="n">modes</span><span class="o">=</span><span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">multiskill_rcpsp_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">},</span>
+            <span class="n">employee_usage</span><span class="o">=</span><span class="n">employee_usage</span><span class="p">,</span>
+            <span class="n">schedule</span><span class="o">=</span><span class="n">rcpsp_schedule</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="rebuild_multiskill_solution_cp_based">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp_multiskill.solvers.html#discrete_optimization.rcpsp_multiskill.solvers.multimode_transposition.rebuild_multiskill_solution_cp_based">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rebuild_multiskill_solution_cp_based</span><span class="p">(</span>
+    <span class="n">multiskill_rcpsp_problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">multimode_rcpsp_problem</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">PreemptiveRcpspProblem</span>
+    <span class="p">],</span>  <span class="c1"># TODO: need review, currently unused</span>
+    <span class="n">worker_type_to_worker</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+        <span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+    <span class="p">],</span>  <span class="c1"># TODO: need review, currently unused</span>
+    <span class="n">solution_rcpsp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">PreemptiveRcpspSolution</span><span class="p">],</span>
+    <span class="n">time_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reconstructs a valid multi-skill RCPSP solution from the schedule from an RCPSP solution</span>
+<span class="sd">    by assigning specific employees to tasks.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        multiskill_rcpsp_problem: The multi-skill RCPSP problem</span>
+<span class="sd">        multimode_rcpsp_problem: The multimode RCPSP problem (for reference)</span>
+<span class="sd">        worker_type_to_worker: Mapping from worker types to employee sets</span>
+<span class="sd">        solution_rcpsp: The RCPSP solution to constrain to</span>
+<span class="sd">        time_limit: Time limit in seconds for CP solver</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ResultStorage: containing the reconstructed multi-skill RCPSP solutions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution_rcpsp</span><span class="p">,</span> <span class="n">RcpspSolution</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">CpMultiskillRcpspSolver</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">multiskill_rcpsp_problem</span><span class="p">,</span> <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+            <span class="n">add_calendar_constraint_unit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">fake_tasks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">one_ressource_per_task</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">exact_skills_need</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Constraint to stick to the solution of the RCPSP problem</span>
+        <span class="n">strings</span> <span class="o">=</span> <span class="n">stick_to_solution</span><span class="p">(</span><span class="n">solution_rcpsp</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">CpPreemptiveMultiskillRcpspSolver</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">multiskill_rcpsp_problem</span><span class="p">,</span> <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">CpSolverName</span><span class="o">.</span><span class="n">CHUFFED</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+            <span class="n">add_calendar_constraint_unit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">fake_tasks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">exact_skills_need</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">one_ressource_per_task</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">nb_preemptive</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">unit_usage_preemptive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">max_preempted</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Constraint to stick to the solution of the RCPSP problem</span>
+        <span class="n">strings</span> <span class="o">=</span> <span class="n">stick_to_solution_preemptive</span><span class="p">(</span><span class="n">solution_rcpsp</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="c1"># Solve the CP model</span>
+    <span class="n">result_store</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result_store</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
