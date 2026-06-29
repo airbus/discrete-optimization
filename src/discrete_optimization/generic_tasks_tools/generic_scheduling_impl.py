@@ -68,6 +68,9 @@ class GenericSchedulingImplProblem(
         unary_resources_availabilities: Optional[
             dict[UnaryResource, UnaryAvailabilityIntervals]
         ] = None,
+        unary_resources_task_compatibility: Optional[
+            dict[Task, set[UnaryResource]]
+        ] = None,
         skills: Optional[set[Skill]] = None,
         non_skill_cumulative_resources: Optional[
             dict[CumulativeResource, int | AvailabilityIntervals]
@@ -106,9 +109,10 @@ class GenericSchedulingImplProblem(
                 Default to no precedence constraints. Note that a consolidated version of it will
                 be constructed using the time lags constraints.
             unary_resources: available unary resources.  Default to none.
-            unary_resources_skills: skill values of each unary resource. Mssing key => skill value = 0
+            unary_resources_skills: skill values of each unary resource. Missing key => skill value = 0
             unary_resources_availabilities: availability of unary resources on the form of list of intervals (start, end)
                 Missing key => always available.
+            unary_resources_task_compatibility: maps a task to its compatible unary resources. Missing key => all unary resources allowed.
             skills: available skills
             non_skill_cumulative_resources: cumulative resources (excluding skills) availabilities.
                 Format: either int => always available at the given max capacity,
@@ -173,6 +177,10 @@ class GenericSchedulingImplProblem(
             ] = {}
         else:
             self.unary_resources_availabilities = unary_resources_availabilities
+        if unary_resources_task_compatibility is None:
+            self.unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = {}
+        else:
+            self.unary_resources_task_compatibility = unary_resources_task_compatibility
         if skills is None:
             self.skills: set[Skill] = set()
         else:
@@ -290,6 +298,17 @@ class GenericSchedulingImplProblem(
             return self.unary_resources_skills[unary_resource][skill]
         except KeyError:
             return 0
+
+    def is_compatible_task_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> bool:
+        compatible_unary_resources = self.unary_resources_task_compatibility.get(
+            task, None
+        )
+        if compatible_unary_resources is None:
+            return super().is_compatible_task_unary_resource(task, unary_resource)
+        else:
+            return unary_resource in compatible_unary_resources
 
     def get_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
