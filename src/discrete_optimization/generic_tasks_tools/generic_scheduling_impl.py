@@ -80,7 +80,7 @@ class GenericSchedulingImplProblem(
         start_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
         end_to_start_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
         end_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
-        no_overlap_sets: set[frozenset[Task]] = None,
+        no_overlap_sets: Optional[set[frozenset[Task]]] = None,
         objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
         custom_evaluate_fn: Optional[
             Callable[[GenericSchedulingImplSolution], int]
@@ -410,68 +410,6 @@ class GenericSchedulingImplProblem(
         assert isinstance(variable, GenericSchedulingImplSolution)
         return self.satisfy_partial(variable=variable)
 
-    def satisfy_partial(
-        self,
-        variable: GenericSchedulingImplSolution,
-        duration: bool = True,
-        calendar: bool = True,
-        non_renewable_capacity: bool = True,
-        precedence: bool = True,
-        skill: bool = True,
-        allocation: bool = True,
-        time_lags: bool = True,
-        time_windows: bool = True,
-    ) -> bool:
-        """Partial checks on solution.
-
-        One can switch off some checks by setting the corresponding parameter to False.
-
-        Args:
-            variable:
-            duration:
-            calendar:
-            non_renewable_capacity:
-            precedence:
-            skill:
-            allocation:
-            time_lags:
-            time_windows:
-
-        Returns:
-
-        """
-        return (
-            # duration consistency
-            (not duration or variable.check_duration_constraints())
-            # calendar resources capacity violations (unary resources + skills + cumulative resources)
-            and (
-                not calendar
-                or variable.check_all_calendar_resource_capacity_constraints()
-            )
-            # non-renewable resource violation
-            and (
-                not non_renewable_capacity
-                or variable.check_all_non_renewable_resource_capacity_constraints()
-            )
-            # precedence relations
-            and (not precedence or variable.check_precedence_constraints())
-            # skill constraints
-            and (
-                not skill
-                or (
-                    variable.check_skill_constraints()
-                    and variable.check_only_one_skill_per_task_and_unary_resource()
-                    # Check consistency between compatibility/allocation/skill usage
-                    and variable.check_skill_usage_and_allocation_consistency()
-                )
-            )
-            and (not allocation or variable.check_allocation_consistency())
-            # time lags
-            and (not time_lags or variable.check_time_lags())
-            # time window
-            and (not time_windows or variable.check_time_windows())
-        )
-
     def get_solution_type(self) -> type[Solution]:
         return GenericSchedulingImplSolution
 
@@ -572,7 +510,11 @@ class GenericSchedulingImplSolution(
 
     problem: GenericSchedulingImplProblem
 
-    def __init__(self, problem: GenericSchedulingImplProblem, raw_sol: RawSolution):
+    def __init__(
+        self,
+        problem: GenericSchedulingImplProblem,
+        raw_sol: RawSolution[Task, UnaryResource, Skill],
+    ):
         super().__init__(problem)
         self.raw_sol = raw_sol
 
