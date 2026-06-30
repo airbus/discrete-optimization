@@ -639,58 +639,72 @@ class DpSchedLotSizingSolver(DpSolver, WarmstartMixin):
         """
         Convert a LotSizingSolution to a sequence of DP transitions for warmstart.
 
-        The DP model expects transitions in a specific order:
-        - For each timestep: production(s), delivery(ies), advance_in_time
-        - Final timestep: production(s), delivery(ies), finish
+        DpSchedLotSizingSolver uses a scheduling-based DP model where:
+        - Each demand occurrence is a task with a deadline
+        - Transitions are produce_{i} where i is the index into all_items list
+        - advance_in_time is used for idle periods
+        - No deliver or finish transitions
         """
         if self.model is None:
             self.init_model()
 
-        # Sort productions and deliveries by time
+        # Rebuild the same all_items structure as in init_model
+        # This maps each demand occurrence to (item_type, occurrence_index)
+        all_items = sorted(self.deadlines.keys(), key=lambda x: self.deadlines[x])
+        item_to_index = {all_items[i]: i for i in range(len(all_items))}
+
+        # Sort productions by time
         sorted_productions = sorted(
             solution.productions, key=lambda p: (p.time, p.item_type)
         )
-        sorted_deliveries = sorted(
-            solution.deliveries, key=lambda p: (p.time, p.item_type)
-        )
 
-        # Group by time
-        actions_by_time = {}
-        for t in range(self.problem.horizon):
-            actions_by_time[t] = {
-                "productions": [p for p in sorted_productions if p.time == t],
-                "deliveries": [d for d in sorted_deliveries if d.time == t],
-            }
+        # Map productions to all_items indices
+        # We need to track how many of each item type we've seen
+        item_occurrence_counter = {item: 0 for item in self.problem.items_range}
 
-        # Build transition sequence
+        production_schedule = []  # List of (time, item_index)
+
+        for prod in sorted_productions:
+            item_type = prod.item_type
+            occurrence = item_occurrence_counter[item_type]
+
+            # Find the index in all_items
+            key = (item_type, occurrence)
+            if key not in item_to_index:
+                logger.warning(
+                    f"Warmstart: production for {key} not found in all_items"
+                )
+                self.initial_solution = None
+                return
+
+            item_index = item_to_index[key]
+            production_schedule.append((prod.time, item_index))
+            item_occurrence_counter[item_type] += 1
+
+        # Check if we have all items
+        if len(production_schedule) != len(all_items):
+            logger.warning(
+                f"Warmstart: solution has {len(production_schedule)} productions but model expects {len(all_items)}"
+            )
+            self.initial_solution = None
+            return
+
+        # Build transition sequence respecting the production schedule
+        # Sort by production time
+        production_schedule.sort(key=lambda x: x[0])
+
         transition_names = []
-        for t in range(self.problem.horizon):
-            # Add production transitions
-            for prod in actions_by_time[t]["productions"]:
-                trans_name = f"produce_{prod.item_type}_{prod.quantity}"
-                if trans_name not in self.transitions:
-                    logger.warning(
-                        f"Warmstart: transition '{trans_name}' not found in model"
-                    )
-                    return
-                transition_names.append(trans_name)
+        current_time = 0
 
-            # Add delivery transitions
-            for delivery in actions_by_time[t]["deliveries"]:
-                trans_name = f"deliver_{delivery.item_type}_{delivery.quantity}"
-                if trans_name not in self.transitions:
-                    logger.warning(
-                        f"Warmstart: transition '{trans_name}' not found in model"
-                    )
-                    return
-                transition_names.append(trans_name)
-
-            # Add time advancement (except for last timestep)
-            if t < self.problem.horizon - 1:
+        for prod_time, item_index in production_schedule:
+            # Add idle periods (advance_in_time) if needed
+            while current_time < prod_time:
                 transition_names.append("advance_in_time")
+                current_time += 1
 
-        # Add finish transition
-        transition_names.append("finish")
+            # Add production
+            transition_names.append(f"produce_{item_index}")
+            current_time += 1
 
         # Convert transition names to actual transition objects
         transitions_list = []

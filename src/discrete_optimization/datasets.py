@@ -120,7 +120,10 @@ FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
 
-LOT_SIZING_URL = "https://www.csplib.org/Problems/prob058/data/pspInstances.zip"
+LOT_SIZING_URLS = [
+    "https://www.csplib.org/Problems/prob058/data/pspInstances.zip",
+    "https://www.csplib.org/Problems/prob058/data/UniUD-LotSizingLargeInstances.zip",
+]
 
 ERROR_MSG_MISSING_DATASETS = (
     "\nYou probably have not downloaded the needed dataset.\n"
@@ -885,11 +888,12 @@ def fetch_data_lotsizing(data_home: Optional[str] = None):
     os.makedirs(lotsizing_dir, exist_ok=True)
 
     try:
-        # download dataset
-        local_file_path, headers = urlretrieve(LOT_SIZING_URL)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with zipfile.ZipFile(local_file_path) as zipf:
-                zipf.extractall(path=lotsizing_dir)
+        for lot_sizing_url in LOT_SIZING_URLS:
+            # download dataset
+            local_file_path, headers = urlretrieve(lot_sizing_url)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                with zipfile.ZipFile(local_file_path) as zipf:
+                    zipf.extractall(path=lotsizing_dir)
     finally:
         # remove temporary files
         urlcleanup()

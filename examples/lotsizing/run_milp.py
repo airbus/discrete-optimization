@@ -32,7 +32,8 @@ def run_milp():
 
     # Use a medium-hard instance (not the largest to keep it manageable)
     instance_file = [inst for inst in instances if "PSP_100_1" in inst][0]
-    instance_file = [inst for inst in instances if "PSP_200_3" in inst][0]
+    print(instances)
+    instance_file = [inst for inst in instances if "PSP_100_1.dzn" in inst][0]
 
     print(f"\nInstance: {instance_file}")
     problem = parse_file(instance_file)
@@ -56,7 +57,11 @@ def run_milp():
     result = solver.solve(
         time_limit=300,
         parameters_milp=params,
-        gurobi_solver_kwargs={"NoRelHeurTime": 30, "Heuristics": 0.2, "Threads": 1},
+        gurobi_solver_kwargs={
+            "NoRelHeurTime": 30,
+            "Heuristics": 0.2,
+            # "Threads": 1
+        },
         callbacks=[ProblemEvaluateLogger(logging.INFO, logging.INFO)],
     )
 
@@ -85,7 +90,7 @@ def run_milp_ws():
     print(f"Available instances: {len(instances)}")
 
     # Use a medium-hard instance (not the largest to keep it manageable)
-    instance_file = [inst for inst in instances if "PSP_100_1" in inst][0]
+    # instance_file = [inst for inst in instances if "PSP_100_1" in inst][0]
     instance_file = [inst for inst in instances if "PSP_200_3" in inst][0]
     print(f"\nInstance: {instance_file}")
     problem = parse_file(instance_file)
@@ -104,7 +109,7 @@ def run_milp_ws():
                     beta=0.7,  # Insert move probability
                     n_a=12049,  # Moves accepted at each temperature
                     n_s=60240,  # Moves sampled at each temperature
-                    max_iterations=10**7,
+                    max_iterations=10**8,
                     restart_after_no_improvement=0,
                 ),
             ),
@@ -140,4 +145,4 @@ def run_milp_ws():
 
 
 if __name__ == "__main__":
-    run_milp_ws()
+    run_milp()

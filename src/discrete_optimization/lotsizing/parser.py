@@ -7,6 +7,11 @@ from typing import Optional
 from discrete_optimization.datasets import ERROR_MSG_MISSING_DATASETS, get_data_home
 from discrete_optimization.lotsizing.problem import LotSizingProblem
 
+try:
+    import pymzn
+except ImportError:
+    pymzn = None
+
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
@@ -25,15 +30,15 @@ def get_data_available(
         data_folder = f"{data_home}/lotsizing"
 
     try:
-        instances_files = None
+        instances_files = []
         folders = os.listdir(data_folder)
         for f in folders:
             folder_path = os.path.join(data_folder, f)
             if os.path.isdir(folder_path):
-                instances_files = [
+                instances_files += [
                     os.path.join(folder_path, f)
                     for f in os.listdir(folder_path)
-                    if "psp" in f
+                    if "psp" in f or "dzn" in f
                 ]
     except FileNotFoundError as e:
         raise FileNotFoundError(str(e) + ERROR_MSG_MISSING_DATASETS)
@@ -41,7 +46,7 @@ def get_data_available(
 
 
 def parse_input_data(input_data: str) -> LotSizingProblem:
-    """Parse lot sizing problem from string data.
+    """Parse lot sizing problem from string data (txt format).
 
     Format:
         nbPeriods
@@ -123,8 +128,82 @@ def parse_input_data(input_data: str) -> LotSizingProblem:
     return problem
 
 
+def parse_dzn_file(file_path: str) -> LotSizingProblem:
+    """Parse lot sizing problem from .dzn MiniZinc data file.
+
+    Expected format:
+        Periods = <int>;
+        Items = <int>;
+        Demands = [|...|];  % Items x Periods matrix
+        StockingCosts = [<int>, ...];  % per item
+        SetupCosts = [|...|];  % Items x Items matrix
+    """
+    if pymzn is None:
+        raise ImportError(
+            "pymzn is required to parse .dzn files. Install it with: pip install pymzn"
+        )
+
+    # Parse the .dzn file
+    data = pymzn.dzn2dict(file_path)
+
+    # Extract data
+    nb_periods = data["Periods"]
+    nb_items = data["Items"]
+
+    # pymzn.dzn2dict flattens 2D arrays, so we need to reshape them
+    # Demands is stored as a flat list (Items x Periods) in row-major order
+    demands_flat = data["Demands"]
+    demands = [
+        demands_flat[i * nb_periods : (i + 1) * nb_periods] for i in range(nb_items)
+    ]
+
+    # StockingCosts is a list per item
+    stocking_costs = data["StockingCosts"]
+
+    # SetupCosts is stored as a flat list (Items x Items) in row-major order
+    setup_flat = data["SetupCosts"]
+    changeover_costs = [
+        setup_flat[i * nb_items : (i + 1) * nb_items] for i in range(nb_items)
+    ]
+
+    # Create the problem
+    capacity_machine = 1
+
+    # Stock capacity: sum of all demands should be enough
+    total_demand = sum(sum(d) for d in demands)
+    stock_capacity = total_demand
+
+    # No delay costs in this formulation (or set to high penalty)
+    delay_cost_per_type = [100000] * nb_items  # High penalty for delays
+
+    problem = LotSizingProblem(
+        nb_items_type=nb_items,
+        capacity_machine=capacity_machine,
+        changeover_costs=changeover_costs,
+        demands=demands,
+        stock_capacity=stock_capacity,
+        stock_cost_per_type_per_time_per_unit=stocking_costs,
+        delay_cost_per_type_per_time_per_unit=delay_cost_per_type,
+        allow_delays=False,
+        known_bound=None,  # .dzn files typically don't include optimal cost
+    )
+
+    return problem
+
+
 def parse_file(file_path: str) -> LotSizingProblem:
-    with open(file_path, "r", encoding="utf-8") as f:
-        input_data = f.read()
-        problem = parse_input_data(input_data)
-        return problem
+    """Parse lot sizing problem from file.
+
+    Automatically detects file format based on extension:
+    - .txt: plain text format
+    - .dzn: MiniZinc data format
+    """
+    _, ext = os.path.splitext(file_path)
+
+    if ext.lower() == ".dzn":
+        return parse_dzn_file(file_path)
+    else:
+        # Default to txt format
+        with open(file_path, "r", encoding="utf-8") as f:
+            input_data = f.read()
+            return parse_input_data(input_data)

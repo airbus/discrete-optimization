@@ -148,71 +148,86 @@ class _BaseLpLotSizingSolver(MilpSolver):
             for t in range(horizon)
             for tprime in range(t + 1, min(t + lookahead + 1, horizon))
         }
+        transition.update(
+            {
+                (("dummy", -1), (item0, t)): self.add_binary_variable(
+                    name=f"trans_dummy_to_{item0}_{t}"
+                )
+                for item0 in self.problem.items_range
+                for t in range(lookahead + 1)
+            }
+        )
+        transition.update(
+            {
+                ((item0, t), ("dummy", self.problem.horizon)): self.add_binary_variable(
+                    name=f"trans_{item0}_{t}_to_dummy"
+                )
+                for item0 in self.problem.items_range
+                for t in range(
+                    self.problem.horizon - lookahead - 1, self.problem.horizon
+                )
+            }
+        )
 
         # Helper: has any production at time t?
-        has_a_production = {
-            t: self.add_binary_variable(name=f"has_prod_{t}") for t in range(horizon)
-        }
-
-        for t in range(horizon):
-            # has_a_production[t] = 1 if sum(produce[item, t]) >= 1
-            # Using indicator: sum >= 1 iff has_a_production = 1
-            self.add_linear_constraint(
-                self.construct_linear_sum(
-                    [produce[item, t] for item in self.problem.items_range]
-                )
-                >= has_a_production[t]
-            )
-            # Also: if has_a_production=0, then sum = 0
-            self.add_linear_constraint(
-                self.construct_linear_sum(
-                    [produce[item, t] for item in self.problem.items_range]
-                )
-                <= len(self.problem.items_range) * has_a_production[t]
-            )
+        # has_a_production = {
+        #     t: self.add_binary_variable(name=f"has_prod_{t}") for t in range(horizon)
+        # }
+        #
+        # for t in range(horizon):
+        #     # has_a_production[t] = 1 if sum(produce[item, t]) >= 1
+        #     # Using indicator: sum >= 1 iff has_a_production = 1
+        #     self.add_linear_constraint(
+        #         self.construct_linear_sum(
+        #             [produce[item, t] for item in self.problem.items_range]
+        #         )
+        #         >= has_a_production[t]
+        #     )
+        #     # Also: if has_a_production=0, then sum = 0
+        #     self.add_linear_constraint(
+        #         self.construct_linear_sum(
+        #             [produce[item, t] for item in self.problem.items_range]
+        #         )
+        #         <= len(self.problem.items_range) * has_a_production[t]
+        #     )
 
         # Transition constraints
-        for orig, dest in transition:
-            item0, t = orig
-            item1, tprime = dest
+        # for orig, dest in transition:
+        #     if orig != ("dummy", -1):
+        #         # transition <= produce[orig]
+        #         self.add_linear_constraint(transition[orig, dest] <= produce[orig])
+        #     if dest != ("dummy", self.problem.horizon):
+        #         # transition <= produce[dest]
+        #         self.add_linear_constraint(transition[orig, dest] <= produce[dest])
 
-            if tprime == t + 1:
-                # Direct consecutive transition: transition = 1 iff both produce
-                # transition <= produce[orig]
-                self.add_linear_constraint(transition[orig, dest] <= produce[orig])
-                # transition <= produce[dest]
-                self.add_linear_constraint(transition[orig, dest] <= produce[dest])
-                # transition >= produce[orig] + produce[dest] - 1
+        nodes_ = set([x[0] for x in transition] + [x[1] for x in transition])
+        for node in nodes_:
+            incoming = [k for k in transition if k[1] == node]
+            outgoing = [k for k in transition if k[0] == node]
+            if node == ("dummy", -1):
                 self.add_linear_constraint(
-                    transition[orig, dest] >= produce[orig] + produce[dest] - 1
+                    self.construct_linear_sum([transition[k] for k in outgoing]) == 1
+                )
+            elif node == ("dummy", self.problem.horizon):
+                self.add_linear_constraint(
+                    self.construct_linear_sum([transition[k] for k in incoming]) == 1
                 )
             else:
-                # Transition with idle times in between
-                # transition = 1 iff produce[orig]=1 AND produce[dest]=1 AND all intermediate times are idle
-                idle_times = [1 - has_a_production[tau] for tau in range(t + 1, tprime)]
-                # transition <= produce[orig]
-                self.add_linear_constraint(transition[orig, dest] <= produce[orig])
-                # transition <= produce[dest]
-                self.add_linear_constraint(transition[orig, dest] <= produce[dest])
-                # transition <= each idle indicator
-                for idle in idle_times:
-                    self.add_linear_constraint(transition[orig, dest] <= idle)
-
-                # transition >= produce[orig] + produce[dest] + sum(idle) - (1 + len(idle))
                 self.add_linear_constraint(
-                    transition[orig, dest]
-                    >= produce[orig]
-                    + produce[dest]
-                    + self.construct_linear_sum(idle_times)
-                    - (1 + len(idle_times))
+                    self.construct_linear_sum([transition[k] for k in incoming])
+                    == produce[node]
+                )
+                self.add_linear_constraint(
+                    self.construct_linear_sum([transition[k] for k in outgoing])
+                    == produce[node]
                 )
 
         # Flow constraint: number of transitions = number of productions - 1
         # (creates a connected sequence)
-        self.add_linear_constraint(
-            self.construct_linear_sum([transition[x] for x in transition])
-            == self.construct_linear_sum([produce[x] for x in produce]) - 1
-        )
+        # self.add_linear_constraint(
+        #    self.construct_linear_sum([transition[x] for x in transition])
+        #    == self.construct_linear_sum([produce[x] for x in produce]) - 1
+        # )
 
         self.variables["transitions"] = transition
 
@@ -253,15 +268,17 @@ class _BaseLpLotSizingSolver(MilpSolver):
                 objectives.append(weight * stock_obj)
 
             if obj == "changeover":
-                self._create_changeover_variables(
-                    lookahead=min(5, self.problem.horizon)
+                max_lookahead = self.problem.horizon - sum(
+                    self.problem.total_demands_per_item.values()
                 )
+                self._create_changeover_variables(lookahead=max_lookahead)
                 transitions = self.variables["transitions"]
                 changeover_obj = self.construct_linear_sum(
                     [
                         self.problem.changeover_costs[key_0[0]][key_1[0]]
                         * transitions[key_0, key_1]
                         for key_0, key_1 in transitions
+                        if key_0[0] != "dummy" and key_1[0] != "dummy"
                     ]
                 )
                 self.variables["objectives"][obj] = changeover_obj

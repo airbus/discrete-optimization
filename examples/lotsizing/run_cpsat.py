@@ -83,33 +83,6 @@ def run_scheduling():
     print(problem.evaluate(sol), problem.satisfy(sol))
 
 
-def run_scheduling_ws():
-    instances = get_data_available()
-    instance_sizes = [(inst, os.path.getsize(inst)) for inst in instances]
-    instance_sizes.sort(key=lambda x: x[1], reverse=True)
-    instance = [inst for inst in instances if "PSP_100_1" in inst][0]
-    print(f"Available instances: {len(instances)}")
-    print(f"\nChosen instance: {instance}")
-    problem = parse_file(instance)
-    greedy_solver = GreedyLotSizingSolver(problem)
-    res = greedy_solver.solve(strategy=GreedyStrategy.EARLIEST_DEMAND_FIRST)
-    sol = res[-1][0]
-    print("Warm start : ", problem.evaluate(sol), problem.satisfy(sol))
-    solver = CpSatSchedLotSizingSolver(problem)
-    solver.init_model(relax_delays=True)
-    solver.set_warm_start(sol)
-    params_cp = ParametersCp.default_cpsat()
-    params_cp.nb_process = 10
-    res = solver.solve(
-        callbacks=[ProblemEvaluateLogger(logging.INFO, logging.INFO)],
-        parameters_cp=params_cp,
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
-        time_limit=1000,
-    )
-    sol = res[-1][0]
-    print(problem.evaluate(sol), problem.satisfy(sol))
-
-
 def run_scheduling_warm_start():
     """Run MILP solver on a lot sizing instance."""
     instances = get_data_available()
@@ -119,7 +92,7 @@ def run_scheduling_warm_start():
     print(f"Available instances: {len(instances)}")
 
     # Use a medium-hard instance (not the largest to keep it manageable)
-    instance_file = [inst for inst in instances if "PSP_100_1" in inst][0]
+    # instance_file = [inst for inst in instances if "PSP_100_1" in inst][0]
     instance_file = [inst for inst in instances if "PSP_200_3" in inst][0]
     print(f"\nInstance: {instance_file}")
     problem = parse_file(instance_file)
@@ -136,7 +109,7 @@ def run_scheduling_warm_start():
                     beta=0.7,  # Insert move probability
                     n_a=12049,  # Moves accepted at each temperature
                     n_s=60240,  # Moves sampled at each temperature
-                    max_iterations=10**7,
+                    max_iterations=5 * 10**7,
                     restart_after_no_improvement=0,
                 ),
             ),
@@ -169,4 +142,4 @@ def run_scheduling_warm_start():
 
 
 if __name__ == "__main__":
-    run_scheduling_ws()
+    run_scheduling_warm_start()
