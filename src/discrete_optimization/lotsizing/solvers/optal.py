@@ -94,7 +94,7 @@ class OptalSchedLotSizingSolver(OptalCpSolver):
             # Length is always 1 (unit production time)
             intervals_time[(item, nb)] = self.cp_model.interval_var(
                 start=(0, self.problem.horizon),
-                end=(deadline - 30, deadline),  # self.problem.horizon),
+                end=(0, self.problem.horizon),  # self.problem.horizon),
                 length=1,
                 optional=False,
                 name=f"prod_{item}_{nb}",

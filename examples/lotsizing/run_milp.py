@@ -33,7 +33,7 @@ def run_milp():
     # Use a medium-hard instance (not the largest to keep it manageable)
     instance_file = [inst for inst in instances if "PSP_100_1" in inst][0]
     print(instances)
-    instance_file = [inst for inst in instances if "PSP_100_1.dzn" in inst][0]
+    instance_file = [inst for inst in instances if "ps-400-10-80" in inst][0]
 
     print(f"\nInstance: {instance_file}")
     problem = parse_file(instance_file)

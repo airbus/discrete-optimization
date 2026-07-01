@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 
 import numpy as np
 
@@ -23,23 +22,17 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.encoding_register import (
     ListInteger,
 )
+from discrete_optimization.lotsizing.common.solution import ProductionItem
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class ProductionItem:
-    item_type: int
-    quantity: int
-    time: int
-
-
 class LotSizingSolution(Solution):
-    problem: LotSizingProblem
+    problem: Problem
 
     def __init__(
         self,
-        problem: LotSizingProblem,
+        problem: Problem,
         productions: list[ProductionItem] = None,
         deliveries: list[ProductionItem] = None,
         list_item_per_time: list[int] = None,
@@ -170,17 +163,25 @@ class LotSizingProblem(Problem):
             item: sum(self.demands[item]) for item in self.items_range
         }
         self.known_bound = known_bound
+        self.has_changeover = True
+        if self.changeover_costs is None:
+            self.has_changeover = False
+        else:
+            # if Dummy changeover costs.
+            if all([x == 0 for c in self.changeover_costs for x in c]):
+                self.has_changeover = False
 
     def evaluate(self, variable: LotSizingSolution) -> dict[str, float]:
         _, _, stock_cost, delay_cost = compute_stock_and_delays(self, variable)
         changeover_cost = 0
-        sorted_prod: list[ProductionItem] = sorted(
-            variable.productions, key=lambda p: p.time
-        )
-        for i in range(len(sorted_prod) - 1):
-            changeover_cost += self.changeover_costs[sorted_prod[i].item_type][
-                sorted_prod[i + 1].item_type
-            ]
+        if self.has_changeover:
+            sorted_prod: list[ProductionItem] = sorted(
+                variable.productions, key=lambda p: p.time
+            )
+            for i in range(len(sorted_prod) - 1):
+                changeover_cost += self.changeover_costs[sorted_prod[i].item_type][
+                    sorted_prod[i + 1].item_type
+                ]
 
         return {
             "delays": float(delay_cost),
@@ -208,9 +209,10 @@ class LotSizingProblem(Problem):
             logger.debug(f"Times not unique")
             return False
         for p in sorted_prod:
-            if p.quantity > self.capacity_machine:
-                logger.debug(f"Capacity exceeded")
-                return False
+            if self.capacity_machine is not None:
+                if p.quantity > self.capacity_machine:
+                    logger.debug(f"Capacity exceeded")
+                    return False
         return True
 
     def get_solution_type(self) -> type[Solution]:

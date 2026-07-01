@@ -20,16 +20,17 @@ def run():
     print(f"Available instances: {len(instances)}")
     print(f"\nLargest instance: {largest_instance}")
     print(f"File size: {largest_size:,} bytes")
-    largest_instance = [ist for ist in instances if "PSP_100_4" in ist][0]
+    largest_instance = [ist for ist in instances if "ps-400-10-80" in ist][0]
     problem = parse_file(largest_instance)
     solver = OptalSchedLotSizingSolver(problem)
     solver.init_model()
     # solver.set_warm_start_from_previous_run(s)
     params_cp = ParametersCp.default_cpsat()
-    params_cp.nb_process = 4
+    params_cp.nb_process = 10
     res = solver.solve(
         callbacks=[ProblemEvaluateLogger(logging.INFO, logging.INFO)],
         parameters_cp=params_cp,
+        preset="Large",
         time_limit=1000,
     )
     sol = res[-1][0]

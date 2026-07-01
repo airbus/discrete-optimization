@@ -61,7 +61,7 @@ def run_scheduling():
 
     largest_instance = instance_sizes[0][0]
     largest_size = instance_sizes[0][1]
-    largest_instance = [inst for inst in instances if "PSP_100_1" in inst][0]
+    largest_instance = [inst for inst in instances if "ps-400-10-80" in inst][0]
     print(f"Available instances: {len(instances)}")
     print(f"\nLargest instance: {largest_instance}")
     print(f"File size: {largest_size:,} bytes")
@@ -72,7 +72,7 @@ def run_scheduling():
     solver.init_model()
     # solver.set_warm_start_from_previous_run(s)
     params_cp = ParametersCp.default_cpsat()
-    params_cp.nb_process = 10
+    params_cp.nb_process = 12
     res = solver.solve(
         callbacks=[ProblemEvaluateLogger(logging.INFO, logging.INFO)],
         parameters_cp=params_cp,
@@ -142,4 +142,4 @@ def run_scheduling_warm_start():
 
 
 if __name__ == "__main__":
-    run_scheduling_warm_start()
+    run_scheduling()

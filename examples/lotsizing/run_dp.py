@@ -77,7 +77,7 @@ def run_sched():
 
     largest_instance = instance_sizes[5][0]
     largest_size = instance_sizes[5][1]
-    largest_instance = [inst for inst in instances if "pigment30b" in inst][0]
+    largest_instance = [inst for inst in instances if "ps-400-10-80" in inst][0]
 
     print(f"Available instances: {len(instances)}")
     print(f"\nLargest instance: {largest_instance}")
@@ -172,4 +172,4 @@ def run_sched_warmstart():
 
 
 if __name__ == "__main__":
-    run_sched_warmstart()
+    run_sched()
