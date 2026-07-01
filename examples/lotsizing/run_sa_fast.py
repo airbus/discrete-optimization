@@ -25,7 +25,7 @@ def run_fast_sa(iteration=10**6):
     instances = get_data_available()
 
     # Use a medium-hard instance
-    instance_file = [inst for inst in instances if "ps-400-10-80" in inst][0]
+    instance_file = [inst for inst in instances if "pigment20c.psp" in inst][0]
 
     print("=" * 70)
     print("FAST SA (numpy/numba) - High-Performance Solver")

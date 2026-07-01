@@ -529,8 +529,11 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         nodes = [("dummy", 0)] + keys  #
         arcs = []
         next_node_vars = {}
-        max_idle_time = self.problem.horizon - sum(
-            self.problem.total_demands_per_item.values()
+        # Maximum gap between consecutive productions in the circuit
+        # If horizon=20 and total_demands=19, there's 1 idle period total,
+        # but the gap can be 2 (e.g., productions at t=17 and t=19)
+        max_gap = (
+            self.problem.horizon - sum(self.problem.total_demands_per_item.values()) + 1
         )
         for i in range(len(nodes)):
             item_i, ind_i = nodes[i]
@@ -551,7 +554,7 @@ class CpSatSchedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
                 ).only_enforce_if(next_node_vars[(i, j)])
                 self.cp_model.add(
                     self.variables["starts"][(item_j, ind_j)]
-                    <= self.variables["starts"][(item_i, ind_i)] + max_idle_time
+                    <= self.variables["starts"][(item_i, ind_i)] + max_gap
                 ).only_enforce_if(next_node_vars[(i, j)])
         self.cp_model.add_circuit(arcs)
         cost = sum(
