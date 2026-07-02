@@ -49,8 +49,7 @@ MSPSPLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
 JSPLIB_REPO_URL = "https://github.com/tamy0612/JSPLIB"
 JSPLIB_REPO_URL_SHA1 = "eea2b60dd7e2f5c907ff7302662c61812eb7efdf"
 
-MSLIB_DATASET_URL = "https://github.com/MarioVanhoucke/MSLIB-Multi-Skilled-Resource-Constrained-Project-Library/releases/download/v2.1/MSLIB_v2_1.zip"
-
+MSLIB_DATASET_URL = "https://github.com/MarioVanhoucke/MSLIB-Multi-Skilled-Resource-Constrained-Project-Library/releases/download/v2.2/MSLIB_v2_2.zip"
 MMLIB_DATASET_URL = "https://www.projectmanagement.ugent.be/sites/default/files/datasets/MMRCPSP/MMLIB.zip"
 MMLIB_DATASET_RELATIVE_PATH = "MMLIB.zip"
 
