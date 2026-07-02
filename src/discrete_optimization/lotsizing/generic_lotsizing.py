@@ -226,3 +226,95 @@ class GenericLotSizingSolution(
             + self.compute_total_backlog_cost()
             + self.compute_total_changeover_cost()
         )
+
+    def get_cost_evolution(self) -> dict[str, list[float]]:
+        """Get cumulative cost evolution over time for all components.
+
+        Returns a dictionary with cumulative costs for each period:
+        - 'inventory': Cumulative inventory holding costs
+        - 'backlog': Cumulative backlog/delay costs
+        - 'setup': Cumulative setup costs
+        - 'production': Cumulative production costs
+        - 'changeover': Cumulative changeover costs
+        - 'total': Cumulative total cost
+
+        Returns:
+            Dictionary mapping cost component names to lists of cumulative costs
+        """
+        horizon = self.problem.horizon
+        items = self.problem.items_list
+
+        # Initialize cumulative totals
+        costs = {
+            "inventory": [],
+            "backlog": [],
+            "setup": [],
+            "production": [],
+            "changeover": [],
+            "total": [],
+        }
+
+        total_inv = 0.0
+        total_backlog = 0.0
+        total_setup = 0.0
+        total_production = 0.0
+        total_changeover = 0.0
+
+        # Track previous item for changeover detection
+        prev_item_produced = None
+
+        for t in range(horizon):
+            # Accumulate costs for this period
+            for item in items:
+                # Inventory cost
+                inv_level = self.get_inventory_level(item, t)
+                total_inv += inv_level * self.problem.get_inventory_cost_per_unit(
+                    item, t
+                )
+
+                # Backlog cost
+                backlog = self.get_backlog_quantity(item, t)
+                total_backlog += backlog * self.problem.get_backlog_cost_per_unit(
+                    item, t
+                )
+
+                # Setup cost
+                if self.has_setup(item, t):
+                    total_setup += self.problem.get_setup_cost(item, t)
+
+                # Production cost
+                qty = self.get_production_quantity(item, t)
+                total_production += qty * self.problem.get_production_cost_per_unit(
+                    item, t
+                )
+
+            # Changeover cost - detect item transitions
+            curr_item_produced = None
+            for item in items:
+                if self.get_production_quantity(item, t) > 0:
+                    curr_item_produced = item
+                    break
+
+            if prev_item_produced is not None and curr_item_produced is not None:
+                if prev_item_produced != curr_item_produced:
+                    total_changeover += self.problem.get_changeover_cost(
+                        prev_item_produced, curr_item_produced
+                    )
+
+            prev_item_produced = curr_item_produced
+
+            # Store cumulative costs for this period
+            costs["inventory"].append(total_inv)
+            costs["backlog"].append(total_backlog)
+            costs["setup"].append(total_setup)
+            costs["production"].append(total_production)
+            costs["changeover"].append(total_changeover)
+            costs["total"].append(
+                total_inv
+                + total_backlog
+                + total_setup
+                + total_production
+                + total_changeover
+            )
+
+        return costs

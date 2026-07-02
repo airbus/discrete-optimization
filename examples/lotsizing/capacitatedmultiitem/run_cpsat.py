@@ -1,5 +1,7 @@
 import logging
 
+from matplotlib import pyplot as plt
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.lotsizing.capacitatedmultiitem.parser import (
     get_data_available,
@@ -12,6 +14,11 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat import (
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy import (
     GreedyLotSizingSolver,
     GreedyStrategy,
+)
+from discrete_optimization.lotsizing.utils import (
+    plot_inventory_and_costs,
+    plot_production_schedule,
+    plot_solution_summary,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +46,10 @@ def main():
     print(solver.aggreg_from_sol(sol))
     print(problem.infos["known_bound"])
     print(problem.evaluate(sol), problem.satisfy(sol))
+    plot_solution_summary(problem, sol)
+    plot_inventory_and_costs(problem, sol)
+    plot_production_schedule(problem, sol)
+    plt.show()
 
 
 if __name__ == "__main__":

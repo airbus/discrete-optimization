@@ -92,7 +92,10 @@ class CpSatSingleItemSolver(OrtoolsCpSatSolver):
         # This is modeled as: X_t <= M * Y_t where M = total_demand
         for t in range(horizon):
             self.cp_model.Add(production_vars[t] <= total_demand * setup_vars[t])
-
+            self.cp_model.add(production_vars[t] > 0).only_enforce_if(setup_vars[t])
+            self.cp_model.add(production_vars[t] == 0).only_enforce_if(
+                setup_vars[t].Not()
+            )
         # Constraints: Inventory balance
         # I_t = I_{t-1} + X_t - d_t
         for t in range(horizon):

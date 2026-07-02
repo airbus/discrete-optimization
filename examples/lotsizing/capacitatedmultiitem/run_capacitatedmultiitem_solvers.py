@@ -5,17 +5,19 @@
 
 import logging
 
-from discrete_optimization.lotsizing.capacitatedmultiitem.parser import parse_file
+from discrete_optimization.lotsizing.capacitatedmultiitem.parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers import (
     ChangeoverModel,
-    CpSatLotSizingSolver,
+    CpSatCapacitatedLotSizingSolver,
     CpSatSchedulingCapacitatedLotSizing,
     GreedyLotSizingSolver,
     GreedyStrategy,
     GurobiCapacitatedLotSizingSolver,
     MathOptCapacitatedLotSizingSolver,
 )
-from discrete_optimization.lotsizing.parser import get_data_available
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,7 +78,7 @@ def test_all_solvers():
 
     for model_type in ChangeoverModel:
         print(f"\nCP-SAT {model_type.name}:")
-        solver = CpSatLotSizingSolver(problem)
+        solver = CpSatCapacitatedLotSizingSolver(problem)
         result = solver.solve(
             changeover_model=model_type,
             time_limit=30.0,
@@ -97,7 +99,7 @@ def test_all_solvers():
     print("\n" + "=" * 80)
     print("CP-SAT with Warmstart (30s time limit)")
     print("=" * 80)
-    solver = CpSatLotSizingSolver(problem)
+    solver = CpSatCapacitatedLotSizingSolver(problem)
     solver.init_model(changeover_model=ChangeoverModel.STATE_BASED)
     solver.set_warm_start(best_greedy_sol)
     result = solver.solve(time_limit=30.0)
