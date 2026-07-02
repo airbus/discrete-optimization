@@ -26,7 +26,6 @@ class ChangeoverCostsProblem(DemandsProblem[Item], Generic[Item]):
     Changeover costs depend on the production sequence.
     """
 
-    @abstractmethod
     def get_changeover_cost(self, from_item: Item, to_item: Item) -> float:
         """Get sequence-dependent changeover cost.
 
@@ -39,7 +38,13 @@ class ChangeoverCostsProblem(DemandsProblem[Item], Generic[Item]):
         Returns:
             Changeover cost c_ij (non-negative)
         """
-        ...
+        return self.get_changeover_array()[from_item][to_item]
+
+    @abstractmethod
+    def get_changeover_array(self) -> list: ...
+
+    def get_max_changeover_cost(self) -> float:
+        return max([x for y in self.get_changeover_array() for x in y])
 
     def has_changeover_costs(self) -> bool:
         """Check if changeover costs are significant.
@@ -121,9 +126,10 @@ class WithoutChangeoverCostsProblem(ChangeoverCostsProblem[Item], Generic[Item])
     All changeover costs are zero - sequence doesn't matter.
     """
 
-    def get_changeover_cost(self, from_item: Item, to_item: Item) -> float:
-        """No changeover cost."""
-        return 0.0
+    nb_items: int
+
+    def get_changeover_array(self) -> list:
+        return [[0 for _ in range(self.nb_items)] for _ in range(self.nb_items)]
 
     def has_changeover_costs(self) -> bool:
         """No changeover costs."""

@@ -27,11 +27,10 @@ class ChangeoverModel(Enum):
     """Modeling approach for changeover costs in CP-SAT solver."""
 
     STATE_BASED = "state_based"
-    TRANSITION_BASED = "transition_based"
     SHORTEST_PATH_BASED = "shortest_path_based"
 
 
-class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
+class CpSatCapacitatedLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
     """CP-SAT solver for capacitated multi-item lot sizing.
 
     Supports multiple changeover cost encodings:
@@ -187,13 +186,33 @@ class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             for t in range(horizon)
         }
 
+        # Boolean: is there any production at time t?
+        has_production = {
+            t: self.cp_model.NewBoolVar(name=f"has_prod_t{t}") for t in range(horizon)
+        }
+
+        for t in range(horizon):
+            # has_production[t] = OR(produce[i,t] for all i)
+            self.cp_model.AddMaxEquality(
+                has_production[t],
+                [produce[(item, t)] for item in self.problem.items_list],
+            )
+
         # Link item_produced to bool_productions
         for t in range(horizon):
+            if t == 0:
+                self.cp_model.Add(
+                    item_produced[t] == self.problem.nb_items
+                ).OnlyEnforceIf(has_production[t].Not())
+            # If item i is produced at t, then item_produced[t] = i
             for item in self.problem.items_list:
-                # If item produced at t, then item_produced[t] = item
                 self.cp_model.Add(item_produced[t] == item).OnlyEnforceIf(
                     produce[(item, t)]
                 )
+            if t >= 1:
+                self.cp_model.add(
+                    item_produced[t] == item_produced[t - 1]
+                ).only_enforce_if(has_production[t].Not())
 
         # Changeover cost variables
         changeover_costs_vars = []
@@ -201,7 +220,7 @@ class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             # Cost from item at t-1 to item at t
             cost_var = self.cp_model.NewIntVar(
                 lb=0,
-                ub=int(max(max(row) for row in self.problem._changeover_costs)),
+                ub=int(self.problem.get_max_changeover_cost()),
                 name=f"changeover_cost_{t}",
             )
 
@@ -232,84 +251,20 @@ class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
             self.cp_model.AddElement(index, flat_costs, cost_var)
             changeover_costs_vars.append(cost_var)
 
-        self.variables["changeover_costs"] = changeover_costs_vars
-
-    def _create_changeover_vars_transition_based(self):
-        """Create changeover variables using transition-based model.
-
-        Explicitly model transitions between production events.
-        O(n_items^2 * horizon^2) variables in worst case.
-        """
-        produce = self.variables["bool_productions"]
-        horizon = self.problem.horizon
-
-        # Binary variables: transition from (item0, t) to (item1, t')
-        lookahead = min(
-            10,
-            horizon
-            - sum(self.problem.get_total_demand(i) for i in self.problem.items_list),
-        )
-        lookahead = max(1, lookahead)
-
-        transition = {}
-        for item0 in self.problem.items_list:
-            for item1 in self.problem.items_list:
-                for t in range(horizon):
-                    for tprime in range(t + 1, min(t + lookahead + 1, horizon)):
-                        transition[(item0, t, item1, tprime)] = (
-                            self.cp_model.NewBoolVar(
-                                name=f"trans_{item0}_{t}_to_{item1}_{tprime}"
-                            )
-                        )
-
-        # Transition constraints
-        for item0, t, item1, tprime in transition:
-            # transition => produce[item0, t] AND produce[item1, tprime]
-            self.cp_model.AddImplication(
-                transition[(item0, t, item1, tprime)], produce[(item0, t)]
-            )
-            self.cp_model.AddImplication(
-                transition[(item0, t, item1, tprime)], produce[(item1, tprime)]
-            )
-
-        # Each production must have outgoing transition (except last)
-        for item in self.problem.items_list:
-            for t in range(horizon - lookahead):
-                outgoing = [
-                    transition[(item, t, item1, tprime)]
-                    for item1 in self.problem.items_list
-                    for tprime in range(t + 1, min(t + lookahead + 1, horizon))
-                    if (item, t, item1, tprime) in transition
-                ]
-                if outgoing:
-                    self.cp_model.Add(sum(outgoing) >= 1).OnlyEnforceIf(
-                        produce[(item, t)]
-                    )
-
-        # Changeover cost
-        changeover_cost_terms = []
-        for item0, t, item1, tprime in transition:
-            cost = int(self.problem.get_changeover_cost(item0, item1))
-            if cost > 0:
-                changeover_cost_terms.append(
-                    cost * transition[(item0, t, item1, tprime)]
-                )
-
-        changeover_cost_var = self.cp_model.NewIntVar(
+        # Total changeover cost
+        total_changeover_cost = self.cp_model.NewIntVar(
             lb=0,
-            ub=sum(
-                int(max(self.problem._changeover_costs[i]))
-                for i in range(self.problem.nb_items)
-            )
-            * horizon,
+            ub=int(max(max(row) for row in self.problem._changeover_costs)) * horizon,
             name="total_changeover_cost",
         )
-        if changeover_cost_terms:
-            self.cp_model.Add(changeover_cost_var == sum(changeover_cost_terms))
+        if changeover_costs_vars:
+            self.cp_model.Add(total_changeover_cost == sum(changeover_costs_vars))
         else:
-            self.cp_model.Add(changeover_cost_var == 0)
+            self.cp_model.Add(total_changeover_cost == 0)
 
-        self.variables["changeover_cost_var"] = changeover_cost_var
+        self.variables["item_produced"] = item_produced
+        self.variables["changeover_costs_vars"] = changeover_costs_vars
+        self.variables["total_changeover_cost"] = total_changeover_cost
 
     def _create_changeover_vars_shortest_path(self):
         """Create changeover variables using shortest path model.
@@ -325,7 +280,8 @@ class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         lookahead = min(
             10,
             horizon
-            - sum(self.problem.get_total_demand(i) for i in self.problem.items_list),
+            - sum(self.problem.get_total_demand(i) for i in self.problem.items_list)
+            + 1,
         )
         lookahead = max(1, lookahead)
 
@@ -412,7 +368,7 @@ class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         changeover_cost_var = self.cp_model.NewIntVar(
             lb=0,
             ub=sum(
-                int(max(self.problem._changeover_costs[i]))
+                int(max(self.problem.get_changeover_array()[i]))
                 for i in range(self.problem.nb_items)
             )
             * horizon,
@@ -486,12 +442,8 @@ class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         # Changeover cost
         if changeover_model == ChangeoverModel.STATE_BASED:
             self._create_changeover_vars_state_based()
-            if "changeover_costs" in self.variables:
-                objectives.extend(self.variables["changeover_costs"])
-        elif changeover_model == ChangeoverModel.TRANSITION_BASED:
-            self._create_changeover_vars_transition_based()
-            if "changeover_cost_var" in self.variables:
-                objectives.append(self.variables["changeover_cost_var"])
+            if "total_changeover_cost" in self.variables:
+                objectives.append(self.variables["total_changeover_cost"])
         elif changeover_model == ChangeoverModel.SHORTEST_PATH_BASED:
             self._create_changeover_vars_shortest_path()
             if "changeover_cost_var" in self.variables:
@@ -565,9 +517,10 @@ class CpSatLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         if self.variables.get("stock_cost_var") is not None:
             cpsat_stock_cost = cpsolvercb.Value(self.variables["stock_cost_var"])
 
-        if "changeover_costs" in self.variables:
-            for changeover_var in self.variables["changeover_costs"]:
-                cpsat_changeover_cost += cpsolvercb.Value(changeover_var)
+        if "total_changeover_cost" in self.variables:
+            cpsat_changeover_cost = cpsolvercb.Value(
+                self.variables["total_changeover_cost"]
+            )
         elif "changeover_cost_var" in self.variables:
             cpsat_changeover_cost = cpsolvercb.Value(
                 self.variables["changeover_cost_var"]

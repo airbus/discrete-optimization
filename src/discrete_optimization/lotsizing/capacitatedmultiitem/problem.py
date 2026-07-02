@@ -262,6 +262,16 @@ class CapacitatedMultiItemLSP(
         """List of item indices."""
         return self._items_list
 
+    @property
+    def capacity_machine(self) -> int:
+        """Production capacity per period."""
+        return self._capacity_machine
+
+    @property
+    def allow_backlog(self) -> bool:
+        """Whether backlog/delays are allowed."""
+        return self._allow_delays
+
     # DemandsProblem abstract methods
     def get_demand(self, item: int, period: int) -> int:
         """Get demand for item in period."""
@@ -271,6 +281,10 @@ class CapacitatedMultiItemLSP(
     def get_changeover_cost(self, from_item: int, to_item: int) -> float:
         """Get sequence-dependent changeover cost."""
         return float(self._changeover_costs[from_item, to_item])
+
+    def get_changeover_array(self) -> list:
+        """Get changeover costs as a 2D list."""
+        return self._changeover_costs.tolist()
 
     # InventoryCostsProblem abstract methods
     def get_inventory_cost_per_unit(self, item: int, period: int) -> float:

@@ -5,10 +5,14 @@
 
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat import (
     ChangeoverModel,
-    CpSatLotSizingSolver,
+    CpSatCapacitatedLotSizingSolver,
 )
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling import (
-    CpSatSchedulingLotSizingSolver,
+    CpSatSchedulingCapacitatedLotSizing,
+)
+from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp import (
+    DpCapacitatedLotSizingSolver,
+    DpSchedCapacitatedLotSizingSolver,
 )
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy import (
     GreedyLotSizingSolver,
@@ -16,17 +20,41 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy import 
     greedy_best,
 )
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp import (
-    GurobiLotSizingSolver,
-    MathOptLotSizingSolver,
+    GurobiCapacitatedLotSizingSolver,
+    MathOptCapacitatedLotSizingSolver,
+)
+from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp_milp import (
+    MilpCapacitatedLotSizingSolver,
+)
+from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.ls import (
+    LocalSearchAlgo,
+    LSLotSizingSolver,
+)
+from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.mutation import (
+    GPIInsertMutation,
+    GPIMixedMutation,
+    GPISwapMutation,
+)
+from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.sa_fast import (
+    SimulatedAnnealingLotSizingSolverFast,
 )
 
 __all__ = [
     "ChangeoverModel",
-    "CpSatLotSizingSolver",
-    "CpSatSchedulingLotSizingSolver",
+    "CpSatCapacitatedLotSizingSolver",
+    "CpSatSchedulingCapacitatedLotSizing",
+    "DpCapacitatedLotSizingSolver",
+    "DpSchedCapacitatedLotSizingSolver",
+    "GPIInsertMutation",
+    "GPIMixedMutation",
+    "GPISwapMutation",
     "GreedyLotSizingSolver",
     "GreedyStrategy",
-    "GurobiLotSizingSolver",
-    "MathOptLotSizingSolver",
+    "GurobiCapacitatedLotSizingSolver",
+    "LSLotSizingSolver",
+    "LocalSearchAlgo",
+    "MathOptCapacitatedLotSizingSolver",
+    "MilpCapacitatedLotSizingSolver",
+    "SimulatedAnnealingLotSizingSolverFast",
     "greedy_best",
 ]

@@ -9,11 +9,11 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.parser import parse_fi
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers import (
     ChangeoverModel,
     CpSatLotSizingSolver,
-    CpSatSchedulingLotSizingSolver,
+    CpSatSchedulingCapacitatedLotSizing,
     GreedyLotSizingSolver,
     GreedyStrategy,
-    GurobiLotSizingSolver,
-    MathOptLotSizingSolver,
+    GurobiCapacitatedLotSizingSolver,
+    MathOptCapacitatedLotSizingSolver,
 )
 from discrete_optimization.lotsizing.parser import get_data_available
 
@@ -115,7 +115,7 @@ def test_all_solvers():
     print("\n" + "=" * 80)
     print("CP-SAT Scheduling Solver (30s time limit)")
     print("=" * 80)
-    solver = CpSatSchedulingLotSizingSolver(problem)
+    solver = CpSatSchedulingCapacitatedLotSizing(problem)
     result = solver.solve(time_limit=30.0)
     if len(result) > 0:
         sol, fit = result.get_best_solution_fit()
@@ -135,7 +135,7 @@ def test_all_solvers():
     # MathOpt (CP-SAT backend)
     try:
         print("\nMathOpt (CP-SAT):")
-        solver = MathOptLotSizingSolver(problem)
+        solver = MathOptCapacitatedLotSizingSolver(problem)
         result = solver.solve(time_limit=30.0)
         if len(result) > 0:
             sol, fit = result.get_best_solution_fit()
@@ -152,7 +152,7 @@ def test_all_solvers():
     # Gurobi (if available)
     try:
         print("\nGurobi:")
-        solver = GurobiLotSizingSolver(problem)
+        solver = GurobiCapacitatedLotSizingSolver(problem)
         result = solver.solve(time_limit=30.0)
         if len(result) > 0:
             sol, fit = result.get_best_solution_fit()

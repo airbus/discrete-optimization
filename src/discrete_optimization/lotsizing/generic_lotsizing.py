@@ -12,6 +12,12 @@ Specific variants can disable features using "Without" mixins.
 
 from __future__ import annotations
 
+from collections.abc import Hashable
+from typing import Generic, TypeVar
+
+# Generic type for items/products
+# Usually int, but could be string, enum, or any hashable type
+Item = TypeVar("Item", bound=Hashable)
 from typing import Generic
 
 from discrete_optimization.generic_tools.do_problem import (

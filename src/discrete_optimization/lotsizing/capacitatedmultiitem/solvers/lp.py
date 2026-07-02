@@ -17,7 +17,7 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.problem import (
 )
 
 
-class _BaseLpLotSizingSolver(MilpSolver):
+class _BaseLpCapacitatedLotSizingSolver(MilpSolver):
     """Base MILP solver for capacitated multi-item lot sizing."""
 
     problem: CapacitatedMultiItemLSP
@@ -164,7 +164,7 @@ class _BaseLpLotSizingSolver(MilpSolver):
         total_demand = sum(
             self.problem.get_total_demand(item) for item in self.problem.items_list
         )
-        lookahead = min(10, max(1, horizon - total_demand))
+        lookahead = min(10, max(1, horizon - total_demand + 1))
 
         # Binary variables: transition from (item0, t) to (item1, t')
         transition = {}
@@ -317,13 +317,17 @@ class _BaseLpLotSizingSolver(MilpSolver):
         return var_values
 
 
-class MathOptLotSizingSolver(_BaseLpLotSizingSolver, OrtoolsMathOptMilpSolver):
+class MathOptCapacitatedLotSizingSolver(
+    _BaseLpCapacitatedLotSizingSolver, OrtoolsMathOptMilpSolver
+):
     """MathOpt-based MILP solver for capacitated multi-item lot sizing."""
 
     ...
 
 
-class GurobiLotSizingSolver(_BaseLpLotSizingSolver, GurobiMilpSolver):
+class GurobiCapacitatedLotSizingSolver(
+    _BaseLpCapacitatedLotSizingSolver, GurobiMilpSolver
+):
     """Gurobi-based MILP solver for capacitated multi-item lot sizing."""
 
     ...

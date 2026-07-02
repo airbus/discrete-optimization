@@ -5,8 +5,9 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling import (
-    CpSatSchedulingCapacitatedLotSizing,
+from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat import (
+    ChangeoverModel,
+    CpSatCapacitatedLotSizingSolver,
 )
 from discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy import (
     GreedyLotSizingSolver,
@@ -27,8 +28,8 @@ def main():
     print(problem.evaluate(sol), problem.satisfy(sol))
     p = ParametersCp.default_cpsat()
     p.nb_process = 12
-    solver = CpSatSchedulingCapacitatedLotSizing(problem)
-    solver.init_model()
+    solver = CpSatCapacitatedLotSizingSolver(problem)
+    solver.init_model(changeover_model=ChangeoverModel.SHORTEST_PATH_BASED)
     res = solver.solve(
         parameters_cp=p,
         time_limit=30,

@@ -19,7 +19,7 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.problem import (
 logger = logging.getLogger(__name__)
 
 
-class CpSatSchedulingLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
+class CpSatSchedulingCapacitatedLotSizing(OrtoolsCpSatSolver, WarmstartMixin):
     """CP-SAT scheduling solver for capacitated multi-item lot sizing.
 
     Uses interval variables to model production events:
@@ -102,9 +102,15 @@ class CpSatSchedulingLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
         arcs = []
         next_node_vars = {}
 
-        # Maximum idle time between productions
-        max_idle_time = self.problem.horizon - sum(
-            self.problem.get_total_demand(item) for item in self.problem.items_list
+        # Maximum gap between consecutive productions in the circuit
+        # If horizon=20 and total_demands=19, there's 1 idle period total,
+        # but the gap can be 2 (e.g., productions at t=17 and t=19)
+        max_gap = (
+            self.problem.horizon
+            - sum(
+                self.problem.get_total_demand(item) for item in self.problem.items_list
+            )
+            + 1
         )
 
         for i in range(len(nodes)):
@@ -135,10 +141,10 @@ class CpSatSchedulingLotSizingSolver(OrtoolsCpSatSolver, WarmstartMixin):
                         > self.variables["starts"][(item_i, nb_i)]
                     ).OnlyEnforceIf(next_var)
 
-                    # Limit idle time between productions
+                    # Limit gap between consecutive productions
                     self.cp_model.Add(
                         self.variables["starts"][(item_j, nb_j)]
-                        <= self.variables["starts"][(item_i, nb_i)] + max_idle_time
+                        <= self.variables["starts"][(item_i, nb_i)] + max_gap
                     ).OnlyEnforceIf(next_var)
 
         # Add circuit constraint

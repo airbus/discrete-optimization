@@ -21,10 +21,6 @@ from discrete_optimization.lotsizing.solvers.optal import OptalSchedLotSizingSol
 from discrete_optimization.lotsizing.solvers.sa_fast import (
     SimulatedAnnealingLotSizingSolverFast,
 )
-from discrete_optimization.lotsizing.solvers.sequential_horizon import (
-    SequentialHorizonSolver,
-    create_sequential_solver,
-)
 
 __all__ = [
     "CpSatLotSizingSolver",
@@ -38,6 +34,4 @@ __all__ = [
     "MilpLotSizingSolver",
     "OptalSchedLotSizingSolver",
     "SimulatedAnnealingLotSizingSolverFast",
-    "SequentialHorizonSolver",
-    "create_sequential_solver",
 ]
