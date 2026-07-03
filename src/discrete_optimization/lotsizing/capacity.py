@@ -63,32 +63,6 @@ class CapacitySolution(DemandsSolution[Item], Generic[Item]):
 
     problem: CapacityProblem[Item]
 
-    @abstractmethod
-    def get_production_quantity(self, item: Item, period: int) -> int:
-        """Get production quantity X_it.
-
-        Args:
-            item: Item identifier
-            period: Time period
-
-        Returns:
-            Production quantity (non-negative integer)
-        """
-        ...
-
-    @abstractmethod
-    def has_setup(self, item: Item, period: int) -> bool:
-        """Check if setup occurs (Y_it = 1).
-
-        Args:
-            item: Item identifier
-            period: Time period
-
-        Returns:
-            True if setup occurs
-        """
-        ...
-
     def get_total_production_time_used(self, period: int) -> float:
         """Compute total production time used in period.
 

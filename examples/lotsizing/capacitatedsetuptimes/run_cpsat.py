@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def run_cpsat():
-    problem = create_simple_instance(capacity=30, setup_time=2)
+    problem = create_simple_instance(capacity=15, setup_time=2)
     solver = CpSatSetupTimesSolver(problem)
     solver.init_model()
     res = solver.solve(

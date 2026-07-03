@@ -29,17 +29,18 @@ from discrete_optimization.generic_tools.encoding_register import ListInteger
 from discrete_optimization.lotsizing import (
     GenericLotSizingProblem,
     ProductionBasedSolution,
-)
-from discrete_optimization.lotsizing.changeover import (
     WithoutChangeoverCostsProblem,
     WithoutChangeoverCostsSolution,
-)
-from discrete_optimization.lotsizing.costs import (
     WithoutProductionCostsProblem,
     WithoutProductionCostsSolution,
     WithoutSetupCostsProblem,
     WithoutSetupCostsSolution,
+    WithoutStockLimitsProblem,
+    WithoutStockLimitsSolution,
+    WithParallelProductionProblem,
+    WithParallelProductionSolution,
 )
+from discrete_optimization.lotsizing.base import Item
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,8 @@ class CapacitatedSetupTimesSolution(
     WithoutSetupCostsSolution[int],
     WithoutProductionCostsSolution[int],
     WithoutChangeoverCostsSolution[int],
+    WithoutStockLimitsSolution[int],
+    WithParallelProductionSolution[int],
     # Production logic (auto-computes inventory/delivery/backlog)
     # ProductionBasedSolution inherits from GenericLotSizingSolution,
     # which already includes SetupTimesSolution - so we get setup time handling automatically!
@@ -81,6 +84,8 @@ class CapacitatedSetupTimesLSP(
     WithoutSetupCostsProblem[int],
     WithoutProductionCostsProblem[int],
     WithoutChangeoverCostsProblem[int],
+    WithoutStockLimitsProblem[int],
+    WithParallelProductionProblem[int],
     # Base class with all features (SetupTimesProblem is included via CapacityProblem in GenericLotSizingProblem)
     GenericLotSizingProblem[int],
 ):
@@ -99,6 +104,14 @@ class CapacitatedSetupTimesLSP(
     - Optional backlog/delays
     - No setup costs or production costs
     """
+
+    def get_stock_limit(self, item: Item, period: int) -> int | float:
+        if self.stock_capacity is None:
+            return float("inf")
+        return self.stock_capacity
+
+    def allows_parallel_production(self) -> bool:
+        return True
 
     def __init__(
         self,

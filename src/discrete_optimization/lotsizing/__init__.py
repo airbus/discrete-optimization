@@ -20,12 +20,17 @@ Mixins:
 - BacklogProblem/Solution: Backlogged demand
 - SetupTimesProblem/Solution: Setup times consuming capacity
 - ChangeoverCostsProblem/Solution: Sequence-dependent changeover costs
+- StockLimitsProblem/Solution: Inventory stock limits
+- ParallelProductionProblem/Solution: Parallel production constraints
 
 "Without" variants:
 - WithoutCapacityProblem/Solution: For uncapacitated problems
 - WithoutBacklogProblem/Solution: When backlog not allowed
 - WithoutSetupTimesProblem: When setup times don't consume capacity
 - WithoutChangeoverCostsProblem/Solution: Sequence-independent problems
+- WithoutStockLimitsProblem/Solution: Unlimited inventory capacity
+- WithoutParallelProductionProblem/Solution: Only one item per period
+- WithParallelProductionProblem/Solution: Multiple items per period allowed
 
 Example:
     >>> from discrete_optimization.lotsizing import (
@@ -100,6 +105,14 @@ from discrete_optimization.lotsizing.generic_lotsizing import (
 )
 
 # Production-based solution
+from discrete_optimization.lotsizing.parallel_production import (
+    ParallelProductionProblem,
+    ParallelProductionSolution,
+    WithoutParallelProductionProblem,
+    WithoutParallelProductionSolution,
+    WithParallelProductionProblem,
+    WithParallelProductionSolution,
+)
 from discrete_optimization.lotsizing.production_solution import (
     ProductionBasedSolution,
     ProductionDecision,
@@ -108,6 +121,12 @@ from discrete_optimization.lotsizing.setup_times import (
     SetupTimesProblem,
     SetupTimesSolution,
     WithoutSetupTimesProblem,
+)
+from discrete_optimization.lotsizing.stock_limits import (
+    StockLimitsProblem,
+    StockLimitsSolution,
+    WithoutStockLimitsProblem,
+    WithoutStockLimitsSolution,
 )
 
 __all__ = [
@@ -157,6 +176,18 @@ __all__ = [
     "ChangeoverCostsSolution",
     "WithoutChangeoverCostsProblem",
     "WithoutChangeoverCostsSolution",
+    # Stock limits
+    "StockLimitsProblem",
+    "StockLimitsSolution",
+    "WithoutStockLimitsProblem",
+    "WithoutStockLimitsSolution",
+    # Parallel production
+    "ParallelProductionProblem",
+    "ParallelProductionSolution",
+    "WithoutParallelProductionProblem",
+    "WithoutParallelProductionSolution",
+    "WithParallelProductionProblem",
+    "WithParallelProductionSolution",
     # Generic
     "GenericLotSizingProblem",
     "GenericLotSizingSolution",

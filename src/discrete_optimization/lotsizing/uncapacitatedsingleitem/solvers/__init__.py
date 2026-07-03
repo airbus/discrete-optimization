@@ -4,7 +4,7 @@
 """Solvers for uncapacitated single-item lot sizing problem."""
 
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat import (
-    CpSatSingleItemSolver,
+    CpSatUncapacitatedSingleItemSolver,
 )
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner import (
     WagnerWhitinSolver,
@@ -12,5 +12,5 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner i
 
 __all__ = [
     "WagnerWhitinSolver",
-    "CpSatSingleItemSolver",
+    "CpSatUncapacitatedSingleItemSolver",
 ]

@@ -10,7 +10,6 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem.problem import (
     UncapacitatedSingleItemLSP,
     UncapacitatedSingleItemSolution,
     generate_random_instance,
-    generate_wagner_whitin_example,
 )
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner import (
     WagnerWhitinSolver,
@@ -19,7 +18,6 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner i
 __all__ = [
     "UncapacitatedSingleItemLSP",
     "UncapacitatedSingleItemSolution",
-    "generate_wagner_whitin_example",
     "generate_random_instance",
     "WagnerWhitinSolver",
 ]

@@ -27,12 +27,18 @@ from discrete_optimization.lotsizing.changeover import (
 from discrete_optimization.lotsizing.generic_lotsizing import (
     GenericLotSizingProblem,
 )
+from discrete_optimization.lotsizing.parallel_production import (
+    WithoutParallelProductionProblem,
+)
 from discrete_optimization.lotsizing.production_solution import (
     ProductionBasedSolution,
     ProductionDecision,
 )
 from discrete_optimization.lotsizing.setup_times import (
     WithoutSetupTimesProblem,
+)
+from discrete_optimization.lotsizing.stock_limits import (
+    WithoutStockLimitsProblem,
 )
 
 
@@ -41,6 +47,8 @@ class UncapacitatedSingleItemLSP(
     WithoutBacklogProblem[int],
     WithoutChangeoverCostsProblem[int],
     WithoutSetupTimesProblem[int],
+    WithoutParallelProductionProblem[int],
+    WithoutStockLimitsProblem[int],
     GenericLotSizingProblem[int],
 ):
     """Uncapacitated single-item lot sizing problem (ULSP / Wagner-Whitin problem).
@@ -234,42 +242,6 @@ class UncapacitatedSingleItemSolution(
             f"nb_setups={sum(1 for p in self.productions if p.quantity > 0)}, "
             f"total_cost={self.compute_total_cost():.2f})"
         )
-
-
-# Example generator
-def generate_wagner_whitin_example(horizon: int = 4) -> UncapacitatedSingleItemLSP:
-    """Generate the classic Wagner-Whitin example from their 1958 paper.
-
-    This is a well-known example with known optimal solution:
-    - Horizon: 4 periods
-    - Demands: [4, 8, 6, 7]
-    - Setup cost: 15 (constant)
-    - Inventory cost: 1 (constant)
-    - Production cost: 1 (constant)
-
-    Optimal solution: Produce in periods 0, 1, 3
-    - Period 0: Produce 12 (satisfy periods 0, 1, 2)
-    - Period 1: Produce 0
-    - Period 2: Produce 0
-    - Period 3: Produce 13 (satisfy periods 3, 4 if extended)
-
-    Actually the classic example is:
-    - Period 1: produce 12 to satisfy demands of periods 1, 2, 3
-    - Period 4: produce 7 to satisfy demand of period 4
-
-    Total cost: 45 (setups: 30, inventory: 15)
-    """
-    demands = [4, 8, 6, 7]
-    setup_costs = [15.0] * 4
-    production_costs = [1.0] * 4
-    inventory_costs = [1.0] * 4
-
-    return UncapacitatedSingleItemLSP(
-        demands=demands,
-        setup_costs=setup_costs,
-        production_costs=production_costs,
-        inventory_costs=inventory_costs,
-    )
 
 
 def generate_random_instance(

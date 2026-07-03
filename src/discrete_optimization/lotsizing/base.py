@@ -101,3 +101,44 @@ class LotSizingSolution(Solution, Generic[Item]):
     """
 
     problem: LotSizingProblem[Item]
+
+    @abstractmethod
+    def get_inventory_level(self, item: Item, period: int):
+        """Get inventory level at end of period.
+
+        Args:
+            item: Item identifier
+            period: Time period
+
+        Returns:
+            Inventory level I_it (non-negative integer)
+        """
+        ...
+
+    @abstractmethod
+    def get_delivery_quantity(self, item: Item, period: int) -> int:
+        """Get quantity of item delivered to satisfy demand in period.
+
+        This may differ from production quantity due to inventory.
+
+        Args:
+            item: Item identifier
+            period: Time period
+
+        Returns:
+            Delivery quantity (amount used to satisfy demand in this period)
+        """
+        ...
+
+    @abstractmethod
+    def get_production_quantity(self, item: Item, period: int) -> int:
+        """Get production quantity X_it.
+
+        Args:
+            item: Item identifier
+            period: Time period
+
+        Returns:
+            Production quantity (non-negative integer)
+        """
+        ...

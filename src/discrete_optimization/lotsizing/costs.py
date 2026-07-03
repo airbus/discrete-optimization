@@ -99,19 +99,6 @@ class ProductionCostsSolution(DemandsSolution[Item], Generic[Item]):
 
     problem: ProductionCostsProblem[Item]
 
-    @abstractmethod
-    def get_production_quantity(self, item: Item, period: int) -> int:
-        """Get production quantity X_it.
-
-        Args:
-            item: Item identifier
-            period: Time period
-
-        Returns:
-            Production quantity (non-negative integer)
-        """
-        ...
-
     def compute_total_production_cost(self) -> float:
         """Compute total variable production cost.
 
@@ -153,19 +140,6 @@ class InventoryCostsSolution(DemandsSolution[Item], Generic[Item]):
     """Solution mixin for inventory cost computation."""
 
     problem: InventoryCostsProblem[Item]
-
-    @abstractmethod
-    def get_inventory_level(self, item: Item, period: int) -> int:
-        """Get inventory level at end of period.
-
-        Args:
-            item: Item identifier
-            period: Time period
-
-        Returns:
-            Inventory level I_it (non-negative integer)
-        """
-        ...
 
     def compute_total_inventory_cost(self) -> float:
         """Compute total inventory holding cost.

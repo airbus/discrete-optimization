@@ -10,13 +10,16 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem.problem import (
     generate_random_instance,
 )
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat import (
-    CpSatSingleItemSolver,
+    CpSatUncapacitatedSingleItemSolver,
 )
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner import (
     WagnerWhitinSolver,
 )
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp import (
     GurobiUncapacitatedSingleItemSolver,
+)
+from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar import (
+    ToulbarUncapacitatedSingleItemSolver,
 )
 from discrete_optimization.lotsizing.utils import (
     plot_inventory_and_costs,
@@ -25,19 +28,20 @@ from discrete_optimization.lotsizing.utils import (
     plt,
 )
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def solve_with(solver: SolverDO, **kwargs):
     solver.init_model(**kwargs)
     res = solver.solve(**kwargs)
+    print("status :", solver.status_solver)
     return res
 
 
 def script():
     problem = generate_random_instance(
-        horizon=20,
-        avg_demand=2,
+        horizon=30,
+        avg_demand=5,
         setup_cost=1,
         production_cost=5,
         inventory_cost=3,
@@ -63,11 +67,13 @@ def script():
         solver = WagnerWhitinSolver(problem)
         res = solve_with(solver)
     if solver_tag == "cpsat":
-        solver = CpSatSingleItemSolver(problem)
+        solver = CpSatUncapacitatedSingleItemSolver(problem)
         res = solve_with(
             solver, **dict(parameters_cp=ParametersCp.default_cpsat(), time_limit=30)
         )
-
+    if solver_tag == "toulbar":
+        solver = ToulbarUncapacitatedSingleItemSolver(problem)
+        res = solve_with(solver, **dict(time_limit=30))
     sol = res[-1][0]
     plot_production_schedule(problem, sol)
     plot_inventory_and_costs(problem, sol)

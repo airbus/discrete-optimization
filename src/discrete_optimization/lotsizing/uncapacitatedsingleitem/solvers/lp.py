@@ -3,7 +3,12 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any, Callable
 
-import gurobipy
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
 
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,

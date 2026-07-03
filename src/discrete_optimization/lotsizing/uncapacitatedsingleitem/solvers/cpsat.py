@@ -20,7 +20,7 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem.problem import (
 logger = logging.getLogger(__name__)
 
 
-class CpSatSingleItemSolver(OrtoolsCpSatSolver):
+class CpSatUncapacitatedSingleItemSolver(OrtoolsCpSatSolver):
     """CP-SAT solver for uncapacitated single-item lot sizing.
 
     This solver models the problem using:

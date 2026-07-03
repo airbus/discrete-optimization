@@ -86,21 +86,6 @@ class DemandsSolution(LotSizingSolution[Item], Generic[Item]):
 
     problem: DemandsProblem[Item]
 
-    @abstractmethod
-    def get_delivery_quantity(self, item: Item, period: int) -> int:
-        """Get quantity of item delivered to satisfy demand in period.
-
-        This may differ from production quantity due to inventory.
-
-        Args:
-            item: Item identifier
-            period: Time period
-
-        Returns:
-            Delivery quantity (amount used to satisfy demand in this period)
-        """
-        ...
-
     def check_demand_satisfaction(self, allow_delays: bool = False) -> bool:
         """Check whether all demands are eventually satisfied.
 

@@ -44,9 +44,17 @@ from discrete_optimization.lotsizing.costs import (
     SetupCostsProblem,
     SetupCostsSolution,
 )
+from discrete_optimization.lotsizing.parallel_production import (
+    ParallelProductionProblem,
+    ParallelProductionSolution,
+)
 from discrete_optimization.lotsizing.setup_times import (
     SetupTimesProblem,
     SetupTimesSolution,
+)
+from discrete_optimization.lotsizing.stock_limits import (
+    StockLimitsProblem,
+    StockLimitsSolution,
 )
 
 
@@ -58,6 +66,8 @@ class GenericLotSizingProblem(
     # Optional features
     BacklogProblem[Item],
     ChangeoverCostsProblem[Item],
+    StockLimitsProblem[Item],
+    ParallelProductionProblem[Item],
     # Capacity (extends DemandsProblem which extends LotSizingProblem)
     # SetupTimesProblem already extends CapacityProblem, so we get it transitively
     SetupTimesProblem[Item],
@@ -73,6 +83,8 @@ class GenericLotSizingProblem(
     - **With or without backlog**: Use WithoutBacklogProblem if backlog not allowed
     - **With or without setup times**: Use WithoutSetupTimesProblem if setup times don't consume capacity
     - **With or without changeover costs**: Use WithoutChangeoverCostsProblem for sequence-independent problems
+    - **With or without stock limits**: Use WithoutStockLimitsProblem if no inventory limits
+    - **With or without parallel production**: Use WithoutParallelProductionProblem if only one item per period
 
     Each feature can be disabled using the corresponding "Without" mixin.
 
@@ -81,6 +93,8 @@ class GenericLotSizingProblem(
     - CLSP (Capacitated Lot-Sizing Problem): Use CapacityProblem
     - CLSP with setup times: Use SetupTimesProblem
     - CLSP with backlog: Use BacklogProblem with is_backlog_allowed() = True
+    - CLSP with stock limits: Use StockLimitsProblem (or WithoutStockLimitsProblem to disable)
+    - CLSP with exclusive production: Use WithoutParallelProductionProblem
     """
 
     def get_objective_register(self) -> ObjectiveRegister:
@@ -150,6 +164,8 @@ class GenericLotSizingProblem(
         demands: bool = True,
         capacity: bool = True,
         backlog: bool = True,
+        stock_limits: bool = True,
+        parallel_production: bool = True,
     ) -> bool:
         """Partial constraint checking.
 
@@ -161,6 +177,8 @@ class GenericLotSizingProblem(
             demands: Check demand satisfaction
             capacity: Check capacity constraints
             backlog: Check backlog constraints
+            stock_limits: Check stock limit constraints
+            parallel_production: Check parallel production constraints
 
         Returns:
             True if selected constraints satisfied, False otherwise
@@ -177,6 +195,13 @@ class GenericLotSizingProblem(
             and (not capacity or variable.check_capacity_constraints())
             # Backlog constraints
             and (not backlog or variable.check_backlog_constraints())
+            # Stock limit constraints
+            and (not stock_limits or variable.check_stock_limit_constraints())
+            # Parallel production constraints
+            and (
+                not parallel_production
+                or variable.check_parallel_production_constraints()
+            )
         )
 
 
@@ -188,6 +213,8 @@ class GenericLotSizingSolution(
     BacklogSolution[Item],
     SetupTimesSolution[Item],
     ChangeoverCostsSolution[Item],
+    StockLimitsSolution[Item],
+    ParallelProductionSolution[Item],
     # SetupTimesSolution extends CapacitySolution
     # CapacitySolution extends DemandsSolution
     # DemandsSolution extends LotSizingSolution
@@ -200,7 +227,7 @@ class GenericLotSizingSolution(
     - Inventory and delivery computation
     - Backlog tracking
     - Cost computation for all components
-    - Constraint checking
+    - Constraint checking (capacity, stock limits, parallel production, etc.)
 
     Concrete implementations should inherit from this and provide:
     - get_production_quantity()

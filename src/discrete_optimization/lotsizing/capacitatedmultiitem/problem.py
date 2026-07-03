@@ -32,6 +32,7 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.encoding_register import ListInteger
 from discrete_optimization.lotsizing import (
     GenericLotSizingProblem,
+    Item,
     ProductionBasedSolution,
     ProductionDecision,
 )
@@ -40,6 +41,10 @@ from discrete_optimization.lotsizing.costs import (
     WithoutProductionCostsSolution,
     WithoutSetupCostsProblem,
     WithoutSetupCostsSolution,
+)
+from discrete_optimization.lotsizing.parallel_production import (
+    WithoutParallelProductionProblem,
+    WithoutParallelProductionSolution,
 )
 from discrete_optimization.lotsizing.setup_times import (
     WithoutSetupTimesProblem,
@@ -54,6 +59,7 @@ class CapacitatedMultiItemSolution(
     WithoutProductionCostsSolution[int],
     # Production logic (automatically provides inventory/delivery computation + all GenericLotSizingSolution methods)
     ProductionBasedSolution[int],
+    WithoutParallelProductionSolution[int],
 ):
     """Solution for capacitated multi-item lot sizing problem.
 
@@ -144,7 +150,7 @@ class CapacitatedMultiItemLSP(
     WithoutSetupCostsProblem[int],
     WithoutProductionCostsProblem[int],
     WithoutSetupTimesProblem[int],
-    # Base class with all features (includes InventoryCostsProblem, ChangeoverCostsProblem, CapacityProblem, DemandsProblem, BacklogProblem)
+    WithoutParallelProductionProblem[int],
     GenericLotSizingProblem[int],
 ):
     """Capacitated multi-item lot sizing problem with changeover costs.
@@ -166,6 +172,9 @@ class CapacitatedMultiItemLSP(
     Note: We DON'T inherit from SetupCostsProblem or ProductionCostsProblem
     because this problem variant doesn't have those costs.
     """
+
+    def get_stock_limit(self, item: Item, period: int) -> int | float:
+        return self.stock_capacity
 
     def __init__(
         self,
@@ -336,24 +345,24 @@ class CapacitatedMultiItemLSP(
         if not super().satisfy(solution):
             return False
 
-        # Check stock capacity (total inventory across all items)
-        total_stock = np.zeros(self.horizon, dtype=np.int64)
-        for item in self.items_list:
-            inventory = solution.get_inventory_level_array(item)
-            total_stock += inventory
-
-        if np.max(total_stock) > self.stock_capacity:
-            logger.debug(
-                f"Stock capacity exceeded: max={np.max(total_stock)}, "
-                f"capacity={self.stock_capacity}"
-            )
-            return False
-
-        # Check that production times are unique (at most one item per period)
-        production_times = [p.period for p in solution.productions]
-        if len(production_times) != len(set(production_times)):
-            logger.debug("Multiple items produced in same period")
-            return False
+        # # Check stock capacity (total inventory across all items)
+        # total_stock = np.zeros(self.horizon, dtype=np.int64)
+        # for item in self.items_list:
+        #     inventory = solution.get_inventory_level_array(item)
+        #     total_stock += inventory
+        #
+        # if np.max(total_stock) > self.stock_capacity:
+        #     logger.debug(
+        #         f"Stock capacity exceeded: max={np.max(total_stock)}, "
+        #         f"capacity={self.stock_capacity}"
+        #     )
+        #     return False
+        #
+        # # Check that production times are unique (at most one item per period)
+        # production_times = [p.period for p in solution.productions]
+        # if len(production_times) != len(set(production_times)):
+        #     logger.debug("Multiple items produced in same period")
+        #     return False
 
         return True
 

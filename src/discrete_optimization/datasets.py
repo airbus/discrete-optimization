@@ -51,7 +51,6 @@ JSPLIB_REPO_URL_SHA1 = "eea2b60dd7e2f5c907ff7302662c61812eb7efdf"
 
 MSLIB_DATASET_URL = "https://github.com/MarioVanhoucke/MSLIB-Multi-Skilled-Resource-Constrained-Project-Library/releases/download/v2.2/MSLIB_v2_2.zip"
 MSLIB_DATA_DIR = "MSLIB_v2_2"
-
 MMLIB_DATASET_URL = "https://www.projectmanagement.ugent.be/sites/default/files/datasets/MMRCPSP/MMLIB.zip"
 MMLIB_DATASET_RELATIVE_PATH = "MMLIB.zip"
 
@@ -390,7 +389,8 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
     os.rmdir(f"{rcpsp_multiskill_dir}/{MSLIB_DATA_DIR}")
 
     # unzip subfolders
-    for file in glob.glob(f"{rcpsp_multiskill_dir}/*.zip"):
+
+    for file in glob.glob(f"{rcpsp_multiskill_dir}/MSLIB_v2_2/*.zip"):
         with zipfile.ZipFile(file) as zipf:
             zipf.extractall(path=rcpsp_multiskill_dir)
         os.remove(file)
@@ -931,4 +931,5 @@ def fetch_all_datasets(data_home: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    fetch_all_datasets()
+    fetch_data_from_mslib()
+    # fetch_all_datasets()
