@@ -12,6 +12,9 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem.problem import (
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat import (
     CpSatUncapacitatedSingleItemSolver,
 )
+from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp import (
+    DpUncapacitatedLotSizingSolver,
+)
 from discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner import (
     WagnerWhitinSolver,
 )
@@ -31,9 +34,9 @@ from discrete_optimization.lotsizing.utils import (
 logging.basicConfig(level=logging.INFO)
 
 
-def solve_with(solver: SolverDO, **kwargs):
-    solver.init_model(**kwargs)
-    res = solver.solve(**kwargs)
+def solve_with(solver: SolverDO, solver_kwargs: dict):
+    solver.init_model(**solver_kwargs)
+    res = solver.solve(**solver_kwargs)
     print("status :", solver.status_solver)
     return res
 
@@ -47,13 +50,13 @@ def script():
         inventory_cost=3,
         seed=42,
     )
-    solver_tag = "cpsat"
+    solver_tag = "dp"
     if solver_tag == "gurobi":
         solver = GurobiUncapacitatedSingleItemSolver(problem)
         p = ParametersMilp.default()
         res = solve_with(
             solver,
-            **dict(
+            solver_kwargs=dict(
                 gurobi_solver_kwargs={
                     "NoRelHeurTime": 3,
                     "Heuristics": 0.2,
@@ -65,15 +68,23 @@ def script():
         )
     if solver_tag == "wagner":
         solver = WagnerWhitinSolver(problem)
-        res = solve_with(solver)
+        res = solve_with(solver, solver_kwargs=dict())
     if solver_tag == "cpsat":
         solver = CpSatUncapacitatedSingleItemSolver(problem)
         res = solve_with(
-            solver, **dict(parameters_cp=ParametersCp.default_cpsat(), time_limit=30)
+            solver,
+            solver_kwargs=dict(
+                parameters_cp=ParametersCp.default_cpsat(), time_limit=30
+            ),
         )
     if solver_tag == "toulbar":
         solver = ToulbarUncapacitatedSingleItemSolver(problem)
-        res = solve_with(solver, **dict(time_limit=30))
+        res = solve_with(solver, solver_kwargs=dict(time_limit=30))
+    if solver_tag == "dp":
+        solver = DpUncapacitatedLotSizingSolver(problem)
+        res = solve_with(
+            solver, solver_kwargs=dict(time_limit=30, solver="LNBS", threads=4)
+        )
     sol = res[-1][0]
     plot_production_schedule(problem, sol)
     plot_inventory_and_costs(problem, sol)

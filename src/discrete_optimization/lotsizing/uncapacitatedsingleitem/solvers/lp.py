@@ -191,7 +191,7 @@ class GurobiUncapacitatedSingleItemSolver(
 ):
     def convert_to_variable_values(
         self, solution: UncapacitatedSingleItemSolution
-    ) -> dict[gurobipy.Var, float]:
+    ) -> dict["gurobipy.Var", float]:
         dict_variable = {}
         for t in range(self.problem.horizon):
             prod_t = solution.get_production_quantity(
