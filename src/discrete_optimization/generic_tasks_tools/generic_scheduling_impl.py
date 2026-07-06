@@ -37,10 +37,10 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 
 # types for annotations
-Skill = str
-NonSkillCumulativeResource = str
-NonRenewableResource = str
-UnaryResource = str
+Skill = Hashable
+NonSkillCumulativeResource = Hashable
+NonRenewableResource = Hashable
+UnaryResource = Hashable
 Task = Hashable
 CumulativeResource = NonSkillCumulativeResource | Skill
 Resource = CumulativeResource | UnaryResource  # calendar resources
@@ -78,7 +78,7 @@ class GenericSchedulingImplProblem(
         ] = None,
         skills: Optional[set[Skill]] = None,
         non_skill_cumulative_resources: Optional[
-            dict[CumulativeResource, int | AvailabilityIntervals]
+            dict[NonSkillCumulativeResource, int | AvailabilityIntervals]
         ] = None,
         non_renewable_resources: Optional[dict[NonRenewableResource, int]] = None,
         time_windows: Optional[
