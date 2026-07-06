@@ -30,9 +30,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
 )
-from discrete_optimization.generic_tasks_tools.no_overlap import (
-    WithoutNoOverlapProblem,
-)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -2009,7 +2006,6 @@ class MultiskillRcpspProblem(
     GenericSchedulingProblem[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
-    WithoutNoOverlapProblem[Task],
 ):
     sgs: ScheduleGenerationScheme
     skills_set: set[str]
@@ -2252,6 +2248,15 @@ class MultiskillRcpspProblem(
     def update_resource_availabilities(self) -> None:
         super().update_resource_availabilities()
         self.get_resource_availabilities.cache_clear()
+
+    def get_no_overlap(self) -> set[frozenset[Task]]:
+        if self.do_special_constraints:
+            return {
+                frozenset(disjunctive_pair)
+                for disjunctive_pair in self.special_constraints.disjunctive_tasks
+            }
+        else:
+            return set()
 
     @property
     def tasks_list(self) -> list[Task]:

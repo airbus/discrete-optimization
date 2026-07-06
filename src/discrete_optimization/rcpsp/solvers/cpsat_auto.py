@@ -127,33 +127,6 @@ class CpSatAutoRcpspSolver(
                 # way 1
                 self.cp_model.add(score_task[task1] == score_task[task2])
 
-    def add_special_temporal_constraints(
-        self,
-    ):
-        """Add special temporal constraints not already taken into account by cpsat-auto."""
-        model = self.cp_model
-
-        # disjunctive_tasks: tasks cannot overlap (pairwise)
-        # Either end(t1) <= start(t2) OR end(t2) <= start(t1)
-        for t1, t2 in self.problem.special_constraints.disjunctive_tasks:
-            b = model.new_bool_var(f"disjunctive_{t1}_{t2}")
-            model.add(
-                self.get_task_start_or_end_variable(
-                    task=t1, start_or_end=StartOrEnd.END
-                )
-                <= self.get_task_start_or_end_variable(
-                    task=t2, start_or_end=StartOrEnd.START
-                )
-            ).only_enforce_if(b)
-            model.add(
-                self.get_task_start_or_end_variable(
-                    task=t2, start_or_end=StartOrEnd.END
-                )
-                <= self.get_task_start_or_end_variable(
-                    task=t1, start_or_end=StartOrEnd.START
-                )
-            ).only_enforce_if(~b)
-
     def init_model(self, **kwargs):
         """Init CP model."""
         include_special_constraints = kwargs.get(
@@ -162,7 +135,6 @@ class CpSatAutoRcpspSolver(
         super().init_model(**kwargs)
         if include_special_constraints:
             self.create_mode_pair_constraint()
-            self.add_special_temporal_constraints()
 
     def get_global_makespan_variable(self) -> LinearExprT:
         self.remove_constraints_on_objective()
