@@ -29,10 +29,6 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
 )
-from discrete_optimization.generic_tasks_tools.no_overlap import (
-    NoOverlapProblem,
-    WithoutNoOverlapProblem,
-)
 from discrete_optimization.generic_tasks_tools.skill import NoSkill, WithoutSkillProblem
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -77,11 +73,9 @@ class RcpspProblem(
     GenericSchedulingProblem[
         Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
     ],
-    WithoutNoOverlapProblem[Task],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
-    NoOverlapProblem[Task],
     WithoutAllocationProblem[Task],
 ):
     """Main class for RCPSP problem.
@@ -310,6 +304,15 @@ class RcpspProblem(
         )
         if self.do_special_constraints:
             self.predecessors = self.graph.predecessors_dict
+
+    def get_no_overlap(self) -> set[frozenset[Task]]:
+        if self.do_special_constraints:
+            return {
+                frozenset(disjunctive_pair)
+                for disjunctive_pair in self.special_constraints.disjunctive_tasks
+            }
+        else:
+            return set()
 
     def update_calendars(self):
         self.is_calendar = False

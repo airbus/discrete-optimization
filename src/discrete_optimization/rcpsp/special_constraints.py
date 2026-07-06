@@ -115,7 +115,7 @@ class SpecialConstraintsDescription:
         else:
             self.start_to_start_max_time_lag = start_to_start_max_time_lag
         if disjunctive_tasks is None:
-            self.disjunctive_tasks = []
+            self.disjunctive_tasks: list[tuple[Hashable, Hashable]] = []
         else:
             self.disjunctive_tasks = disjunctive_tasks
         self.dict_start_together: dict[Hashable, set[Hashable]] = {}
