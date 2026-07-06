@@ -320,10 +320,10 @@ class RcpspProblem(
             self.is_calendar = (
                 max(
                     (
-                        len(
-                            {self.resources[res]}
-                            if np.isscalar(self.resources[res])
-                            else set(self.resources[res])  # type: ignore
+                        1
+                        if np.isscalar(self.resources[res])
+                        else len(
+                            set(self.resources[res])  # type: ignore
                         )
                         for res in self.resources
                     )

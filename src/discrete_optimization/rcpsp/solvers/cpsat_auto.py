@@ -17,7 +17,6 @@ from ortools.sat.python.cp_model import (
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
-    UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
@@ -41,6 +40,9 @@ from discrete_optimization.rcpsp.solution import (
     NonSkillCumulativeResource,
 )
 from discrete_optimization.rcpsp.solvers import RcpspSolver
+from discrete_optimization.rcpsp.transformations.generic_scheduling_impl import (
+    transform_solution_from_raw_generic_to_rcpsp,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -143,20 +145,10 @@ class CpSatAutoRcpspSolver(
         )
 
     def convert_task_variables_to_solution(
-        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, NoUnaryResource, NoSkill]
     ) -> RcpspSolution:
-        schedule = {}
-        modes_dict = {}
-        for task, task_variable in raw_sol.task_variables.items():
-            schedule[task] = {
-                "start_time": task_variable.start,
-                "end_time": task_variable.end,
-            }
-            modes_dict[task] = task_variable.mode
-        return RcpspSolution(
-            problem=self.problem,
-            rcpsp_schedule=schedule,
-            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
+        return transform_solution_from_raw_generic_to_rcpsp(
+            raw_sol=raw_sol, problem=self.problem
         )
 
 
@@ -226,7 +218,7 @@ class CpSatAutoResourceRcpspSolver(CpSatAutoRcpspSolver):
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> RawSolution[Task, UnaryResource, NoSkill]:
+    ) -> RawSolution[Task, NoUnaryResource, NoSkill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -253,7 +245,7 @@ class CpSatAutoResourceRcpspSolver(CpSatAutoRcpspSolver):
         return raw_sol
 
     def convert_task_variables_to_solution(
-        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, NoUnaryResource, NoSkill]
     ) -> RcpspSolution:
         """Convert temporary solution to rcpsp format.
 
@@ -339,7 +331,7 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
 
     def retrieve_tasks_variables(
         self, cpsolvercb: CpSolverSolutionCallback
-    ) -> RawSolution[Task, UnaryResource, NoSkill]:
+    ) -> RawSolution[Task, NoUnaryResource, NoSkill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
@@ -366,7 +358,7 @@ class CpSatAutoCumulativeResourceRcpspSolver(CpSatAutoRcpspSolver):
         return raw_sol
 
     def convert_task_variables_to_solution(
-        self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
+        self, raw_sol: RawSolution[Task, NoUnaryResource, NoSkill]
     ) -> RcpspSolution:
         """Convert temporary solution to rcpsp format.
 
