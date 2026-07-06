@@ -29,7 +29,7 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
 )
-from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+from discrete_optimization.generic_tasks_tools.no_overlap import (
     NoOverlapProblem,
     WithoutNoOverlapProblem,
 )

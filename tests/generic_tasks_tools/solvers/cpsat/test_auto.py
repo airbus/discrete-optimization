@@ -21,7 +21,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
-from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+from discrete_optimization.generic_tasks_tools.no_overlap import (
     WithoutNoOverlapProblem,
 )
 from discrete_optimization.generic_tasks_tools.skill import (

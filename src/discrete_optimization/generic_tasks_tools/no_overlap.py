@@ -28,13 +28,27 @@ class NoOverlapProblem(SchedulingProblem[Task]):
         """
         ...
 
+    def get_forbidden_intervals(self, task: Task) -> list[tuple[int, int]]:
+        """Get fixed intervals that should not overlap with given task.
+
+        Default to empty list. To be overridden in child classes.
+
+        Args:
+            task:
+
+        Returns:
+            List of intervals (start, end) with start <= end (will not be checked)
+
+        """
+        return []
+
 
 class NoOverlapSolution(SchedulingSolution[Task]):
     """Solution for problem with precedence constraints."""
 
     problem: NoOverlapProblem[Task]
 
-    def check_no_overlap(self):
+    def check_no_overlap(self) -> bool:
         # Doesnt work perfectly for zero duration tasks,
         # this is more equivalent to cumulative with capacity 1.
         for tasks in self.problem.get_no_overlap():
@@ -46,10 +60,41 @@ class NoOverlapSolution(SchedulingSolution[Task]):
                 if end == st:
                     continue
                 if np.max(cumul_use[(st - min_start) : (end - min_start)]) == 1:
-                    logger.info(f"{task} has overlap inside {tasks}")
+                    logger.debug(f"Task {task} has overlap inside {tasks}")
                     return False
                 cumul_use[(st - min_start) : (end - min_start)] += 1
         return True
+
+    def check_forbidden_intervals(self) -> bool:
+        for task in self.problem.tasks_list:
+            intervals = self.problem.get_forbidden_intervals(task)
+            if len(intervals) > 0:
+                start1 = self.get_start_time(task)
+                end1 = self.get_end_time(task)
+                if any(
+                    _check_intervals_intersect(start1, end1, start2, end2)
+                    for start2, end2 in intervals
+                ):
+                    logger.debug(f"Task {task} overlaps with its forbidden intervals.")
+                    return False
+        return True
+
+
+def _check_intervals_intersect(start1: int, end1: int, start2: int, end2: int) -> bool:
+    """Check whether two intervals are intersecting
+
+    We assume that start1<end1 and start2<end2.
+
+    Args:
+        start1: start of first interval
+        end1: end of first interval
+        start2: start of second interval
+        end2: end of second interval
+
+    Returns:
+
+    """
+    return not ((end1 <= start2) or (end2 <= start1))
 
 
 class WithoutNoOverlapProblem(NoOverlapProblem[Task]):

@@ -84,6 +84,7 @@ class GenericSchedulingImplProblem(
         end_to_start_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
         end_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
         no_overlap_sets: Optional[set[frozenset[Task]]] = None,
+        forbidden_intervals: Optional[dict[Task, list[tuple[int, int]]]] = None,
         objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
         custom_evaluate_fn: Optional[
             Callable[[GenericSchedulingImplSolution], int]
@@ -134,6 +135,7 @@ class GenericSchedulingImplProblem(
                 task1, task2, offset meaning end(task1) + offset <= end(task2)
                 Note that using negative offset can model end-to-end max time lags.
             no_overlap_sets: a set of (set of tasks that should not overlap together)
+            forbidden_intervals: maps task to forbidden intervals that cannot overlap with it. Missing key => no forbidden intervals.
             objective: objective for the problem. Default to minimization of makespan.
                 Either an iterable of (objective, weight) so that the problem should *maximize* the aggregated objective
                 resulting from weighted sum of objectives, or a single objective in which case we use the corresponding
@@ -221,6 +223,10 @@ class GenericSchedulingImplProblem(
             self.no_overlap_sets = set()
         else:
             self.no_overlap_sets = no_overlap_sets
+        if forbidden_intervals is None:
+            self.forbidden_intervals = {}
+        else:
+            self.forbidden_intervals = forbidden_intervals
         if isinstance(objective, Objective):
             self.weighted_objectives: tuple[tuple[Objective, int], ...] = (
                 (objective, OBJECTIVE_DEFAULT_WEIGHTS[objective]),
@@ -320,6 +326,9 @@ class GenericSchedulingImplProblem(
 
     def get_no_overlap(self) -> set[frozenset[Task]]:
         return self.no_overlap_sets
+
+    def get_forbidden_intervals(self, task: Task) -> list[tuple[int, int]]:
+        return self.forbidden_intervals.get(task, [])
 
     @wrapt.lru_cache(maxsize=None)
     def get_resource_availabilities(

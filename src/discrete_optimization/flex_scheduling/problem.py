@@ -20,7 +20,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
-from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+from discrete_optimization.generic_tasks_tools.no_overlap import (
     WithoutNoOverlapProblem,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution

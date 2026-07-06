@@ -945,6 +945,8 @@ class GenericSchedulingAutoCpSatSolver(
             self.create_energy_constraints(branches=branches)
         # no overlap
         self.create_no_overlap_constraints()
+        # forbidden intervals
+        self.create_forbidden_intervals_constraints()
 
     def _set_objective(self) -> None:
         if self.objective == Objective.CUSTOM:

@@ -26,7 +26,7 @@ from discrete_optimization.generic_tasks_tools.multimode import (
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     SinglemodeSchedulingProblem,
 )
-from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+from discrete_optimization.generic_tasks_tools.no_overlap import (
     WithoutNoOverlapProblem,
 )
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
