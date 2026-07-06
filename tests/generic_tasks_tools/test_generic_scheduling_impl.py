@@ -243,3 +243,70 @@ def test_task_bounds_cpm(problem_wo_skills):
         "task-1": (0, 1, 3, 4),
         "task-2": (1, 5, 4, 8),
     }
+
+
+def test_no_overlap(caplog):
+    problem = GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 2,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        no_overlap_sets={frozenset({"task-1", "task-2"})},
+        forbidden_intervals={"task-1": [(4, 6)]},
+    )
+    # nok no overlap
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=1, end=3, mode=0),
+                "task-2": TaskVariable(start=2, end=6, mode=0),
+            }
+        ),
+    )
+    caplog.clear()
+    with caplog.at_level(level=logging.DEBUG):
+        assert not problem.satisfy(sol)
+    assert "overlap" in caplog.text
+
+    # nok forbidden intervals
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=4, end=6, mode=0),
+                "task-2": TaskVariable(start=0, end=4, mode=0),
+            }
+        ),
+    )
+    caplog.clear()
+    with caplog.at_level(level=logging.DEBUG):
+        assert not problem.satisfy(sol)
+    assert "forbidden" in caplog.text
+
+    # ok
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=1, end=3, mode=0),
+                "task-2": TaskVariable(start=3, end=7, mode=0),
+            }
+        ),
+    )
+    assert problem.satisfy(sol)
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=7, end=9, mode=0),
+                "task-2": TaskVariable(start=3, end=7, mode=0),
+            }
+        ),
+    )
+    assert problem.satisfy(sol)

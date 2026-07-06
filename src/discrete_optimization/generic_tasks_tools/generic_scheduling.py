@@ -17,7 +17,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
     Penalty,
 )
-from discrete_optimization.generic_tasks_tools.no_overlap_scheduling import (
+from discrete_optimization.generic_tasks_tools.no_overlap import (
     NoOverlapProblem,
     NoOverlapSolution,
 )
@@ -628,6 +628,7 @@ class GenericSchedulingProblem(
         time_lags: bool = True,
         time_windows: bool = True,
         no_overlap: bool = True,
+        forbidden_intervals: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -644,6 +645,7 @@ class GenericSchedulingProblem(
             time_lags:
             time_windows:
             no_overlap:
+            forbidden_intervals:
 
         Returns:
 
@@ -680,6 +682,8 @@ class GenericSchedulingProblem(
             and (not time_windows or variable.check_time_windows())
             # no overlap
             and (not no_overlap or variable.check_no_overlap())
+            # forbidden intervals
+            and (not forbidden_intervals or variable.check_forbidden_intervals())
         )
 
 

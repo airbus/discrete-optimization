@@ -232,6 +232,27 @@ def test_start_to_end_time_lag():
     assert problem.satisfy(solution)
 
 
+def test_no_overlap():
+    problem = GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 2,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        no_overlap_sets={frozenset({"task-1", "task-2"})},
+        forbidden_intervals={"task-1": [(1, 3)]},
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    sol: GenericSchedulingImplSolution = solver.solve().get_best_solution()
+    assert problem.satisfy(sol)
+    kpi = problem.evaluate(sol)
+    assert kpi["makespan"] == 6
+
+
 def test_rcpsp_simple():
     mode_details = {
         1: {1: {"duration": 0}},  # dummy start
