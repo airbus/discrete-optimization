@@ -45,6 +45,21 @@ class ProductionDecision:
         return self.quantity > 0
 
 
+@dataclass
+class DeliveryDecision:
+    """Represents a delivery decision.
+
+    Attributes:
+        item: Item/product type being delivered
+        period: Time period of delivery (0 to horizon-1)
+        quantity: Delivery quantity D_it
+    """
+
+    item: int  # Using int for simplicity, will be generic in solutions
+    period: int
+    quantity: int
+
+
 class ProductionBasedSolution(GenericLotSizingSolution[Item]):
     """Generic solution based on production decisions.
 
@@ -80,15 +95,20 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
         self,
         problem: LotSizingProblem[Item],
         productions: list[ProductionDecision],
+        deliveries: list[DeliveryDecision] | None = None,
     ):
         """Initialize production-based solution.
 
         Args:
             problem: The lot sizing problem instance
             productions: List of production decisions
+            deliveries: Optional list of delivery decisions. If provided, these will be used
+                       directly instead of being computed from production and demand.
+                       If None, deliveries will be computed automatically.
         """
         super().__init__(problem)
         self.productions = productions
+        self.deliveries = deliveries
 
         # Computed derived values (cached)
         self._inventory_levels: dict[Item, np.ndarray] | None = None
@@ -104,7 +124,7 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
 
         This implements the core lot sizing logic:
         1. Build production array from decisions
-        2. Compute deliveries (satisfy demands ASAP from stock)
+        2. Build delivery array from decisions (if provided) or compute from stock
         3. Compute inventory levels (stock - deliveries)
         4. Compute backlog (unsatisfied cumulative demand)
         """
@@ -137,6 +157,30 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
             )
             self._production_array[item] = prod_array
 
+        # Build delivery array if deliveries are provided
+        if self.deliveries is not None:
+            delivery_dict: dict[Item, dict[int, int]] = {
+                item: {t: 0 for t in range(self.problem.horizon)}
+                for item in self.problem.items_list
+            }
+
+            for deliv in self.deliveries:
+                item = (
+                    self.problem.get_item_from_index(deliv.item)
+                    if isinstance(deliv.item, int)
+                    else deliv.item
+                )
+                if item in delivery_dict:
+                    delivery_dict[item][deliv.period] = deliv.quantity
+
+            # Convert to numpy arrays
+            for item in self.problem.items_list:
+                deliv_array = np.array(
+                    [delivery_dict[item][t] for t in range(self.problem.horizon)],
+                    dtype=np.int64,
+                )
+                self._delivery_quantities[item] = deliv_array
+
         # Compute for each item
         for item in self.problem.items_list:
             self._compute_item_inventory_and_deliveries(item)
@@ -144,7 +188,8 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
     def _compute_item_inventory_and_deliveries(self, item: Item) -> None:
         """Compute inventory, deliveries, and backlog for a single item.
 
-        This implements a greedy delivery policy: deliver as much as possible
+        If deliveries were provided in __init__, use them directly.
+        Otherwise, implement a greedy delivery policy: deliver as much as possible
         from available stock to satisfy cumulative demand.
 
         Args:
@@ -152,7 +197,7 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
         """
         horizon = self.problem.horizon
 
-        # Get production and demand arrays
+        # Get production array
         production = self._production_array[item]
 
         # Get demands if problem has DemandsProblem mixin
@@ -167,8 +212,15 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
 
         # Initialize arrays
         inventory = np.zeros(horizon, dtype=np.int64)
-        deliveries = np.zeros(horizon, dtype=np.int64)
         backlog = np.zeros(horizon, dtype=np.int64)
+
+        # Check if deliveries were provided or need to be computed
+        if item in self._delivery_quantities:
+            # Deliveries already set from provided list
+            deliveries = self._delivery_quantities[item]
+        else:
+            # Need to compute deliveries
+            deliveries = np.zeros(horizon, dtype=np.int64)
 
         # Track cumulative quantities
         cumul_production = 0
@@ -182,15 +234,18 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
             # Update cumulative demand
             cumul_demand += int(demands[t])
 
-            # Compute stock available (production so far - delivered so far)
-            stock_available = cumul_production - cumul_delivered
+            if item not in self._delivery_quantities:
+                # Compute deliveries if not provided
+                # Compute stock available (production so far - delivered so far)
+                stock_available = cumul_production - cumul_delivered
 
-            # Compute how much we can deliver (limited by stock and remaining demand)
-            remaining_demand = cumul_demand - cumul_delivered
-            can_deliver = min(stock_available, remaining_demand)
+                # Compute how much we can deliver (limited by stock and remaining demand)
+                remaining_demand = cumul_demand - cumul_delivered
+                can_deliver = min(stock_available, remaining_demand)
 
-            deliveries[t] = can_deliver
-            cumul_delivered += can_deliver
+                deliveries[t] = can_deliver
+
+            cumul_delivered += int(deliveries[t])
 
             # Update inventory (stock remaining after delivery)
             inventory[t] = cumul_production - cumul_delivered
@@ -200,7 +255,8 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
 
         # Store computed values
         self._inventory_levels[item] = inventory
-        self._delivery_quantities[item] = deliveries
+        if item not in self._delivery_quantities:
+            self._delivery_quantities[item] = deliveries
         self._backlog_quantities[item] = backlog
 
     def invalidate_cache(self) -> None:
@@ -367,24 +423,26 @@ class ProductionBasedSolution(GenericLotSizingSolution[Item]):
         """Create a copy of this solution.
 
         Returns:
-            New solution with copied production decisions
+            New solution with copied production and delivery decisions
         """
         return ProductionBasedSolution(
             problem=self.problem,
             productions=list(self.productions),
+            deliveries=list(self.deliveries) if self.deliveries is not None else None,
         )
 
     def lazy_copy(self) -> ProductionBasedSolution:
-        """Create a lazy copy sharing production list.
+        """Create a lazy copy sharing production and delivery lists.
 
-        Warning: Modifying productions will affect both solutions.
+        Warning: Modifying productions or deliveries will affect both solutions.
 
         Returns:
-            New solution sharing production list
+            New solution sharing production and delivery lists
         """
         return ProductionBasedSolution(
             problem=self.problem,
             productions=self.productions,
+            deliveries=self.deliveries,
         )
 
     def __repr__(self) -> str:

@@ -1,14 +1,14 @@
 import logging
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.lp_tools import ParametersMilp, mathopt
 from discrete_optimization.lotsizing.capacitatedsetuptimes.parser import (
     create_simple_instance,
 )
 from discrete_optimization.lotsizing.capacitatedsetuptimes.problem import (
     CapacitatedSetupTimesSolution,
 )
-from discrete_optimization.lotsizing.capacitatedsetuptimes.solvers.cpsat import (
-    CpSatSetupTimesSolver,
+from discrete_optimization.lotsizing.generic_solver.milp.generic_lotsizing_milp import (
+    MathOptGenericLotSizingMilp,
 )
 from discrete_optimization.lotsizing.utils import (
     plot_inventory_and_costs,
@@ -20,14 +20,13 @@ from discrete_optimization.lotsizing.utils import (
 logging.basicConfig(level=logging.INFO)
 
 
-def run_cpsat():
+def run_milp():
     problem = create_simple_instance(capacity=15, setup_time=2)
-    solver = CpSatSetupTimesSolver(problem)
+    solver = MathOptGenericLotSizingMilp(problem)
     solver.init_model()
+    p = ParametersMilp.default()
     res = solver.solve(
-        time_limit=30,
-        parameters_cp=ParametersCp.default_cpsat(),
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+        parameters_milp=p, time_limit=30, mathopt_solver_type=mathopt.SolverType.CP_SAT
     )
     sol: CapacitatedSetupTimesSolution = res[-1][0]
     plot_solution_summary(problem, sol)
@@ -40,4 +39,4 @@ def run_cpsat():
 
 
 if __name__ == "__main__":
-    run_cpsat()
+    run_milp()

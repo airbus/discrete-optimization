@@ -63,7 +63,6 @@ class GenericLotSizingProblem(
     SetupCostsProblem[Item],
     ProductionCostsProblem[Item],
     InventoryCostsProblem[Item],
-    # Optional features
     BacklogProblem[Item],
     ChangeoverCostsProblem[Item],
     StockLimitsProblem[Item],

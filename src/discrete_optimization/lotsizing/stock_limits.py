@@ -14,6 +14,8 @@ import logging
 from abc import abstractmethod
 from typing import Generic
 
+from pandas.core.indexes import period
+
 from discrete_optimization.lotsizing.base import Item
 from discrete_optimization.lotsizing.demands import DemandsProblem, DemandsSolution
 
@@ -35,7 +37,7 @@ class StockLimitsProblem(DemandsProblem[Item], Generic[Item]):
     """
 
     @abstractmethod
-    def get_stock_limit(self, item: Item, period: int) -> int | float:
+    def get_stock_limit_for_item(self, item: Item, period: int) -> int | float:
         """Get maximum inventory/stock limit for item in period.
 
         Args:
@@ -47,16 +49,34 @@ class StockLimitsProblem(DemandsProblem[Item], Generic[Item]):
         """
         ...
 
+    @abstractmethod
+    def get_overall_stock_limit(self, period: int) -> int | float: ...
+
+    def has_overall_stock_limit(self, period: int) -> bool:
+        val = self.get_overall_stock_limit(period)
+        if val is not None and val != float("inf"):
+            return True
+        else:
+            return False
+
+    def has_stock_limit_for_item(self, item: Item, period: int) -> bool:
+        val = self.get_stock_limit_for_item(item, period)
+        if val is not None and val != float("inf"):
+            return True
+        else:
+            return False
+
     def has_stock_limits(self) -> bool:
         """Check if stock limits are active (any limit is finite).
 
         Returns:
             True if any stock limit is not infinite
         """
-        for item in self.items_list:
-            for t in range(self.horizon):
-                limit = self.get_stock_limit(item, t)
-                if limit != float("inf"):
+        for t in range(self.horizon):
+            if self.has_overall_stock_limit(period):
+                return True
+            for item in self.items_list:
+                if self.has_stock_limit_for_item(item=item, period=t):
                     return True
         return False
 
@@ -77,11 +97,13 @@ class StockLimitsSolution(DemandsSolution[Item], Generic[Item]):
         Returns:
             True if all stock limits satisfied, False otherwise
         """
-        for item in self.problem.items_list:
-            for t in range(self.problem.horizon):
+        for t in range(self.problem.horizon):
+            overall_inventory = 0
+            overall_limit = self.problem.get_overall_stock_limit(period=t)
+            for item in self.problem.items_list:
                 inventory = self.get_inventory_level(item, t)
-                limit = self.problem.get_stock_limit(item, t)
-
+                limit = self.problem.get_stock_limit_for_item(item, t)
+                overall_inventory += inventory
                 # Use small tolerance for floating point comparison
                 if inventory > limit + 1e-6:
                     logger.debug(
@@ -89,6 +111,16 @@ class StockLimitsSolution(DemandsSolution[Item], Generic[Item]):
                         f"inventory {inventory} > limit {limit}"
                     )
                     return False
+                if inventory < 0:
+                    logger.debug(f"Negative inventory for item {item} in period {t}")
+                    return False
+                if overall_limit > overall_limit + 1e-6:
+                    logger.debug(
+                        f"Overall stock limit exceeded in period {t}: "
+                        f"inventory {overall_inventory} > limit {overall_limit}"
+                    )
+                    return False
+
         return True
 
     def get_stock_limit_violations(self) -> list[tuple[Item, int, float]]:
@@ -101,7 +133,7 @@ class StockLimitsSolution(DemandsSolution[Item], Generic[Item]):
         for item in self.problem.items_list:
             for t in range(self.problem.horizon):
                 inventory = self.get_inventory_level(item, t)
-                limit = self.problem.get_stock_limit(item, t)
+                limit = self.problem.get_stock_limit_for_item(item, t)
 
                 excess = inventory - limit
                 if excess > 1e-6:
@@ -118,7 +150,7 @@ class StockLimitsSolution(DemandsSolution[Item], Generic[Item]):
         max_util = 0.0
         for item in self.problem.items_list:
             for t in range(self.problem.horizon):
-                limit = self.problem.get_stock_limit(item, t)
+                limit = self.problem.get_stock_limit_for_item(item, t)
                 if limit > 0 and limit != float("inf"):
                     inventory = self.get_inventory_level(item, t)
                     utilization = inventory / limit
@@ -136,8 +168,11 @@ class WithoutStockLimitsProblem(StockLimitsProblem[Item], Generic[Item]):
     Use this when there are no warehouse capacity or storage constraints.
     """
 
-    def get_stock_limit(self, item: Item, period: int) -> float:
+    def get_stock_limit_for_item(self, item: Item, period: int) -> float:
         """Infinite stock limit - no constraint."""
+        return float("inf")
+
+    def get_overall_stock_limit(self, period: int) -> int | float:
         return float("inf")
 
     def has_stock_limits(self) -> bool:

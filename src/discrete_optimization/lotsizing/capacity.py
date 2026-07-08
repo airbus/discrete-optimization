@@ -10,6 +10,7 @@ between uncapacitated and capacitated variants.
 from __future__ import annotations
 
 import logging
+import math
 from abc import abstractmethod
 from typing import Generic
 
@@ -56,6 +57,20 @@ class CapacityProblem(DemandsProblem[Item], Generic[Item]):
             Available capacity (non-negative, may be infinite for uncapacitated)
         """
         ...
+
+    def has_constant_capacity(self):
+        return set([self.get_available_production_time(t) for t in self.horizon])
+
+    def get_max_production_quantity(self, item: Item, period: int) -> int:
+        return int(
+            math.floor(
+                self.get_available_production_time(period)
+                / self.get_production_time_per_unit(item, period)
+            )
+        )
+
+    def has_capacity_limits(self) -> bool:
+        return True
 
 
 class CapacitySolution(DemandsSolution[Item], Generic[Item]):
@@ -128,6 +143,9 @@ class WithoutCapacityProblem(CapacityProblem[Item], Generic[Item]):
     This is the "Without" variant following the generic_tasks_tools pattern.
     Use this when the problem is uncapacitated (ULSP - Uncapacitated Lot-Sizing Problem).
     """
+
+    def has_capacity_limits(self) -> bool:
+        return False
 
     def get_production_time_per_unit(self, item: Item, period: int) -> float:
         """No time per unit constraint in uncapacitated problems."""

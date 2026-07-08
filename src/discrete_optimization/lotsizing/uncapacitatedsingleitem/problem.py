@@ -42,6 +42,18 @@ from discrete_optimization.lotsizing.stock_limits import (
 )
 
 
+class Testttt(
+    WithoutCapacityProblem[int],
+    WithoutBacklogProblem[int],
+    WithoutChangeoverCostsProblem[int],
+    WithoutSetupTimesProblem[int],
+    WithoutParallelProductionProblem[int],
+    WithoutStockLimitsProblem[int],
+    GenericLotSizingProblem[int],
+):
+    pass
+
+
 class UncapacitatedSingleItemLSP(
     WithoutCapacityProblem[int],
     WithoutBacklogProblem[int],
@@ -81,6 +93,9 @@ class UncapacitatedSingleItemLSP(
         Y_t: setup indicator (1 if production, 0 otherwise)
         I_t: inventory at end of period t
     """
+
+    def allows_lost_demand(self) -> bool:
+        return False
 
     def __init__(
         self,

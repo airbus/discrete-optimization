@@ -18,6 +18,7 @@ def create_simple_instance(
     capacity: float = 10.0,
     setup_time: float = 2.0,
     allow_delays: bool = True,
+    seed: int = 0,
 ) -> CapacitatedSetupTimesLSP:
     """Create a simple test instance with setup times.
 
@@ -32,6 +33,7 @@ def create_simple_instance(
         CapacitatedSetupTimesLSP instance
     """
     # Simple demands pattern
+    np.random.seed(seed)
     demands = np.random.randint(1, 5, size=(nb_items, horizon))
 
     # Constant setup times

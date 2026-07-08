@@ -146,7 +146,6 @@ class CapacitatedMultiItemSolution(
 
 
 class CapacitatedMultiItemLSP(
-    # Override features we DON'T have (these must come BEFORE GenericLotSizingProblem)
     WithoutSetupCostsProblem[int],
     WithoutProductionCostsProblem[int],
     WithoutSetupTimesProblem[int],
@@ -173,7 +172,13 @@ class CapacitatedMultiItemLSP(
     because this problem variant doesn't have those costs.
     """
 
-    def get_stock_limit(self, item: Item, period: int) -> int | float:
+    def allows_lost_demand(self) -> bool:
+        return False
+
+    def get_overall_stock_limit(self, period: int) -> int | float:
+        return self.stock_capacity
+
+    def get_stock_limit_for_item(self, item: Item, period: int) -> int | float:
         return self.stock_capacity
 
     def __init__(
@@ -185,7 +190,7 @@ class CapacitatedMultiItemLSP(
         changeover_costs: npt.NDArray[np.int_] | list[list[int]],
         stock_cost_per_type: npt.NDArray[np.float64] | list[float],
         stock_capacity: int | None = None,
-        allow_delays: bool = False,
+        allow_delays: bool = True,
         delay_cost_per_type: npt.NDArray[np.float64] | list[float] | None = None,
         **kwargs: Any,
     ):

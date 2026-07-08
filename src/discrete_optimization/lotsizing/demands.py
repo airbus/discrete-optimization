@@ -52,6 +52,14 @@ class DemandsProblem(LotSizingProblem[Item], Generic[Item]):
         """
         return sum(self.get_demand(item, t) for t in range(self.horizon))
 
+    def is_binary_demand_item(self, item: Item) -> bool:
+        return all(
+            int(self.get_demand(item, period=t)) in {0, 1} for t in range(self.horizon)
+        )
+
+    def is_binary_demand(self):
+        return all(self.is_binary_demand_item(item=item) for item in self.items_list)
+
     def get_cumulative_demands(self, item: Item) -> np.ndarray:
         """Get cumulative demand for item over time.
 
@@ -77,6 +85,9 @@ class DemandsProblem(LotSizingProblem[Item], Generic[Item]):
             for t in range(self.horizon)
         )
 
+    @abstractmethod
+    def allows_lost_demand(self) -> bool: ...
+
 
 class DemandsSolution(LotSizingSolution[Item], Generic[Item]):
     """Solution mixin for demand-based problems.
@@ -91,11 +102,20 @@ class DemandsSolution(LotSizingSolution[Item], Generic[Item]):
 
         Args:
             allow_delays: If False, demands must be satisfied on time (no backlog).
-                         If True, backlog is allowed but total satisfaction required.
+                          If True, backlog is allowed but total satisfaction required.
 
         Returns:
             True if demands are satisfied according to policy, False otherwise
         """
+        if not self.problem.allows_lost_demand():
+            for item in self.problem.items_list:
+                total_delivery = self.get_total_delivery_quantity(item)
+                if total_delivery < self.problem.get_total_demand(item):
+                    logger.debug(
+                        f"Some demands not satisfied: {item}, "
+                        f"{total_delivery} vs {self.problem.get_total_demand(item)}"
+                    )
+                    return False
         for item in self.problem.items_list:
             cumul_delivery = 0
             cumul_demand = 0
@@ -118,7 +138,6 @@ class DemandsSolution(LotSizingSolution[Item], Generic[Item]):
                     f"total delivered {cumul_delivery} < total demand {cumul_demand}"
                 )
                 return False
-
         return True
 
     def get_total_unmet_demand(self) -> int:

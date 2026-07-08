@@ -9,6 +9,7 @@ production capacity (in addition to production time).
 
 from __future__ import annotations
 
+import math
 from abc import abstractmethod
 from typing import Generic
 
@@ -38,6 +39,27 @@ class SetupTimesProblem(CapacityProblem[Item], Generic[Item]):
             Setup time (non-negative)
         """
         ...
+
+    def get_max_production_quantity(self, item: Item, period: int) -> int:
+        # Overriding.
+        if self.get_production_time_per_unit(
+            item, period
+        ) == 0 or self.get_available_production_time(period) == float("inf"):
+            return float("inf")
+        return int(
+            math.floor(
+                (
+                    self.get_available_production_time(period)
+                    - self.get_setup_time(item, period)
+                )
+                / self.get_production_time_per_unit(item, period)
+            )
+        )
+
+    def has_constant_setup(self, item: Item):
+        setups = [self.get_setup_time(item, period) for period in self.horizon]
+        set_ = set(setups)
+        return len(set_) == 1
 
 
 class SetupTimesSolution(CapacitySolution[Item], Generic[Item]):

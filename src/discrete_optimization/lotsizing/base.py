@@ -130,6 +130,22 @@ class LotSizingSolution(Solution, Generic[Item]):
         """
         ...
 
+    def get_total_production_quantity(self, item: Item) -> int:
+        return sum(
+            [
+                self.get_production_quantity(item=item, period=t)
+                for t in range(self.problem.horizon)
+            ]
+        )
+
+    def get_total_delivery_quantity(self, item: Item) -> int:
+        return sum(
+            [
+                self.get_delivery_quantity(item=item, period=t)
+                for t in range(self.problem.horizon)
+            ]
+        )
+
     @abstractmethod
     def get_production_quantity(self, item: Item, period: int) -> int:
         """Get production quantity X_it.

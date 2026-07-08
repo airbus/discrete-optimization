@@ -129,7 +129,7 @@ def parse_input_data(input_data: str) -> CapacitatedMultiItemLSP:
         changeover_costs=changeover_costs,
         stock_cost_per_type=stock_cost_per_type,
         stock_capacity=None,  # Will be set to sum of demands
-        allow_delays=False,  # Hard constraint: no backlog allowed
+        allow_delays=True,  # Soft constraint
         delay_cost_per_type=delay_cost_per_type,  # But high penalty in objective
         known_bound=optimal_cost,
     )
@@ -195,7 +195,7 @@ def parse_dzn_file(file_path: str) -> CapacitatedMultiItemLSP:
         changeover_costs=changeover_costs,
         stock_cost_per_type=stocking_costs,
         stock_capacity=None,  # Will be set to sum of demands
-        allow_delays=False,  # Hard constraint: no backlog allowed
+        allow_delays=True,  # Soft constraint
         delay_cost_per_type=delay_cost_per_type,  # But high penalty in objective
     )
 

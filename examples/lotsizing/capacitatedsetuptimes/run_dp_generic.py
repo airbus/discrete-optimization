@@ -1,14 +1,13 @@
 import logging
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.lotsizing.capacitatedsetuptimes.parser import (
     create_simple_instance,
 )
 from discrete_optimization.lotsizing.capacitatedsetuptimes.problem import (
     CapacitatedSetupTimesSolution,
 )
-from discrete_optimization.lotsizing.capacitatedsetuptimes.solvers.cpsat import (
-    CpSatSetupTimesSolver,
+from discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver import (
+    GenericLotSizingDp,
 )
 from discrete_optimization.lotsizing.utils import (
     plot_inventory_and_costs,
@@ -20,14 +19,15 @@ from discrete_optimization.lotsizing.utils import (
 logging.basicConfig(level=logging.INFO)
 
 
-def run_cpsat():
+def run_dp():
     problem = create_simple_instance(capacity=15, setup_time=2)
-    solver = CpSatSetupTimesSolver(problem)
+    solver = GenericLotSizingDp(problem)
+    solver.allow_backorder = False
+    solver.penalty_advance_time = 0
     solver.init_model()
     res = solver.solve(
+        solver="LNBS",
         time_limit=30,
-        parameters_cp=ParametersCp.default_cpsat(),
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
     sol: CapacitatedSetupTimesSolution = res[-1][0]
     plot_solution_summary(problem, sol)
@@ -40,4 +40,4 @@ def run_cpsat():
 
 
 if __name__ == "__main__":
-    run_cpsat()
+    run_dp()

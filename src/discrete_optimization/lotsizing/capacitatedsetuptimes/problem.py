@@ -105,7 +105,10 @@ class CapacitatedSetupTimesLSP(
     - No setup costs or production costs
     """
 
-    def get_stock_limit(self, item: Item, period: int) -> int | float:
+    def allows_lost_demand(self) -> bool:
+        return False
+
+    def get_stock_limit_for_item(self, item: Item, period: int) -> int | float:
         if self.stock_capacity is None:
             return float("inf")
         return self.stock_capacity
@@ -266,18 +269,18 @@ class CapacitatedSetupTimesLSP(
         if not super().satisfy(solution):
             return False
 
-        # Check stock capacity (total inventory across all items)
-        total_stock = np.zeros(self.horizon, dtype=np.int64)
-        for item in self.items_list:
-            inventory = solution.get_inventory_level_array(item)
-            total_stock += inventory
-
-        if np.max(total_stock) > self.stock_capacity:
-            logger.debug(
-                f"Stock capacity exceeded: max={np.max(total_stock)}, "
-                f"capacity={self.stock_capacity}"
-            )
-            return False
+        # # Check stock capacity (total inventory across all items)
+        # total_stock = np.zeros(self.horizon, dtype=np.int64)
+        # for item in self.items_list:
+        #     inventory = solution.get_inventory_level_array(item)
+        #     total_stock += inventory
+        #
+        # if np.max(total_stock) > self.stock_capacity:
+        #     logger.debug(
+        #         f"Stock capacity exceeded: max={np.max(total_stock)}, "
+        #         f"capacity={self.stock_capacity}"
+        #     )
+        #     return False
         return True
 
     def get_solution_type(self) -> type[Solution]:

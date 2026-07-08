@@ -7,8 +7,8 @@ from discrete_optimization.lotsizing.capacitatedsetuptimes.parser import (
 from discrete_optimization.lotsizing.capacitatedsetuptimes.problem import (
     CapacitatedSetupTimesSolution,
 )
-from discrete_optimization.lotsizing.capacitatedsetuptimes.solvers.cpsat import (
-    CpSatSetupTimesSolver,
+from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling import (
+    GenericLotSizingCpsatScheduling,
 )
 from discrete_optimization.lotsizing.utils import (
     plot_inventory_and_costs,
@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 
 def run_cpsat():
     problem = create_simple_instance(capacity=15, setup_time=2)
-    solver = CpSatSetupTimesSolver(problem)
+    solver = GenericLotSizingCpsatScheduling(problem)
     solver.init_model()
     res = solver.solve(
         time_limit=30,
