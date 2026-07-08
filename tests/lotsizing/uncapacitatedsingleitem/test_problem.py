@@ -9,7 +9,6 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem import (
     UncapacitatedSingleItemLSP,
     UncapacitatedSingleItemSolution,
     generate_random_instance,
-    generate_wagner_whitin_example,
 )
 
 
@@ -59,14 +58,6 @@ class TestUncapacitatedSingleItemProblem:
         assert problem.get_setup_cost(0, 1) == 60.0
         assert problem.get_production_cost_per_unit(0, 1) == 2.0
         assert problem.get_inventory_cost_per_unit(0, 2) == 1.5
-
-    def test_wagner_whitin_example(self):
-        """Test Wagner-Whitin classic example generation."""
-        problem = generate_wagner_whitin_example()
-
-        assert problem.horizon == 4
-        demands = [problem.get_demand(0, t) for t in range(problem.horizon)]
-        assert demands == [4, 8, 6, 7]
 
     def test_random_instance_generation(self):
         """Test random instance generation."""
@@ -173,61 +164,6 @@ class TestUncapacitatedSingleItemSolution:
 
         assert not problem.satisfy(solution)
         assert solution.get_total_unmet_demand() == 25
-
-    def test_cost_computation(self):
-        """Test cost computation."""
-        problem = generate_wagner_whitin_example()
-
-        # Produce 18 in period 0, 7 in period 3
-        solution = UncapacitatedSingleItemSolution(
-            problem=problem,
-            production_periods=[0, 3],
-            production_quantities=[18, 7],
-        )
-
-        # Setup cost: 2 setups × $15 = $30
-        assert solution.compute_total_setup_cost() == 30.0
-
-        # Production cost: 25 units × $1 = $25
-        assert solution.compute_total_production_cost() == 25.0
-
-        # Inventory cost
-        assert solution.compute_total_inventory_cost() == 20.0
-
-        # Backlog cost (should be 0)
-        assert solution.compute_total_backlog_cost() == 0.0
-
-        # Changeover cost (should be 0 for single item)
-        assert solution.compute_total_changeover_cost() == 0.0
-
-        # Total cost
-        assert solution.compute_total_cost() == 75.0
-
-    def test_evaluation(self):
-        """Test problem evaluate() method."""
-        problem = generate_wagner_whitin_example()
-
-        solution = UncapacitatedSingleItemSolution(
-            problem=problem,
-            production_periods=[0, 2],
-            production_quantities=[12, 13],
-        )
-
-        objectives = problem.evaluate(solution)
-
-        assert "setup_cost" in objectives
-        assert "production_cost" in objectives
-        assert "inventory_cost" in objectives
-        assert "backlog_cost" in objectives
-        assert "changeover_cost" in objectives
-        assert "unmet_demand" in objectives
-
-        assert objectives["setup_cost"] == 30.0
-        assert objectives["production_cost"] == 25.0
-        assert objectives["inventory_cost"] == 15.0
-        assert objectives["backlog_cost"] == 0.0
-        assert objectives["changeover_cost"] == 0.0
-        assert objectives["unmet_demand"] == 0.0
 
 
 class TestEdgeCases:

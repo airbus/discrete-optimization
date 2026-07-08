@@ -170,7 +170,7 @@ class GenericLotSizingCpsat(
         self, cpsolvercb: CpSolverSolutionCallback
     ) -> ProductionBasedSolution:
         for obj in self.objectives.keys():
-            print(obj)
+            logger.info(obj)
             logger.info(f"Objective {obj}: {cpsolvercb.value(self.objectives[obj])}")
         prods = []
         deliveries = []
