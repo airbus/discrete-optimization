@@ -39,7 +39,7 @@ def test_sa_2opt():
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
-            temperature=100, restart_handler=res, coefficient=0.99999
+            initial_temperature=100, restart_handler=res, cooling_factor=0.99999
         ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
         params_objective_function=params_objective_function,
@@ -65,7 +65,7 @@ def test_sa_partial_shuffle():
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
-            temperature=100, restart_handler=res, coefficient=0.99999
+            initial_temperature=100, restart_handler=res, cooling_factor=0.99999
         ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
         params_objective_function=params_objective_function,
@@ -90,7 +90,7 @@ def test_sa_swap():
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
-            temperature=100, restart_handler=res, coefficient=0.99999
+            initial_temperature=100, restart_handler=res, cooling_factor=0.99999
         ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
         params_objective_function=params_objective_function,
@@ -116,7 +116,7 @@ def test_sa_twoopttbasic():
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
-            temperature=100, restart_handler=res, coefficient=0.99999
+            initial_temperature=100, restart_handler=res, cooling_factor=0.99999
         ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
         params_objective_function=params_objective_function,

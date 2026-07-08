@@ -68,9 +68,9 @@ def test_sa_warm_start(random_seed):
         nb_iteration_no_improvement=nb_iteration_no_improvement_max
     )
     temperature_handler = TemperatureSchedulingFactor(
-        temperature=initial_temperature,
+        initial_temperature=initial_temperature,
         restart_handler=restart_handler,
-        coefficient=coefficient_temperature,
+        cooling_factor=coefficient_temperature,
     )
     sa = SimulatedAnnealing(
         problem=rcpsp_problem,

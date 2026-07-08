@@ -63,6 +63,7 @@ class DpUncapacitatedLotSizingSolver(DpSolver, WarmstartMixin):
         ]
         self.transition_name = {}
         self.transition_objects = {}
+
         for quantity in range(1, total_demand + 1):
             trans_name = f"produce_{quantity}"
             tr = dp.Transition(

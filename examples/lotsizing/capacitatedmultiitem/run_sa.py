@@ -31,7 +31,7 @@ def main():
         beta=0.7,
         n_a=12049,
         n_s=60240,
-        max_iterations=10e7,
+        max_iterations=10e6,
     )
     solver.init_model()
     res = solver.solve(
