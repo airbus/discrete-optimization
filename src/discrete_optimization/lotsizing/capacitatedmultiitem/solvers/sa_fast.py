@@ -511,29 +511,24 @@ class SimulatedAnnealingLotSizingSolverFast(SolverDO):
         log_interval = kwargs.get("log_interval", 10000)
 
         # Generate initial solution
-        print("=" * 70, flush=True)
-        print("FAST SA (numpy/numba) - Starting", flush=True)
-        print("=" * 70, flush=True)
-        print(
-            f"Problem: {self.problem.nb_items} items, {self.problem.horizon} periods",
-            flush=True,
+        logger.info("=" * 70)
+        logger.info("FAST SA (numpy/numba) - Starting")
+        logger.info("=" * 70)
+        logger.info(
+            f"Problem: {self.problem.nb_items} items, {self.problem.horizon} periods"
         )
-        print(f"Max iterations: {self.max_iterations:,}", flush=True)
-        print(
-            f"Parameters: T0={self.T0}, alpha={self.alpha}, beta={self.beta}",
-            flush=True,
-        )
-        print(f"Cooling thresholds: n_s={self.n_s:,}, n_a={self.n_a:,}", flush=True)
+        logger.info(f"Max iterations: {self.max_iterations:,}")
+        logger.info(f"Parameters: T0={self.T0}, alpha={self.alpha}, beta={self.beta}")
+        logger.info(f"Cooling thresholds: n_s={self.n_s:,}, n_a={self.n_a:,}")
         if self.restart_after_no_improvement > 0:
-            print(
-                f"Restart: enabled (every {self.restart_after_no_improvement:,} iter without improvement)",
-                flush=True,
+            logger.info(
+                f"Restart: enabled (every {self.restart_after_no_improvement:,} iter without improvement)"
             )
         else:
-            print(f"Restart: disabled", flush=True)
-        print("", flush=True)
+            logger.info(f"Restart: disabled")
+        logger.info("")
 
-        print("Generating initial solution...", flush=True)
+        logger.info("Generating initial solution...")
         seed = kwargs.get("seed", random.randint(0, 2**31 - 1))
         initial_solution = generate_initial_solution_numba(
             self.demands_np, self.problem.nb_items, self.problem.horizon, seed
@@ -548,21 +543,19 @@ class SimulatedAnnealingLotSizingSolverFast(SolverDO):
             self.problem.horizon,
         )
 
-        print(f"Initial cost: {initial_cost:.2f}", flush=True)
-        print("", flush=True)
-        print("Running JIT-compiled SA main loop...", flush=True)
-        print(
-            "(First run includes compilation overhead, subsequent runs use cached code)",
-            flush=True,
+        logger.info(f"Initial cost: {initial_cost:.2f}")
+        logger.info("")
+        logger.info("Running JIT-compiled SA main loop...")
+        logger.info(
+            "(First run includes compilation overhead, subsequent runs use cached code)"
         )
-        print("", flush=True)
+        logger.info("")
 
         # Print header for live progress
-        print(
-            f"{'Iteration':<12} {'Current Cost':>14} {'Best Cost':>12} {'Temp':>10} {'Improvements':>14} {'Time (s)':>10} {'Iter/s':>12}",
-            flush=True,
+        logger.info(
+            f"{'Iteration':<12} {'Current Cost':>14} {'Best Cost':>12} {'Temp':>10} {'Improvements':>14} {'Time (s)':>10} {'Iter/s':>12}"
         )
-        print("-" * 100, flush=True)
+        logger.info("-" * 100)
 
         # Run main SA loop in chunks to get live progress
         start_time = time.time()
@@ -645,36 +638,33 @@ class SimulatedAnnealingLotSizingSolverFast(SolverDO):
                 last_iter, last_current, last_best, last_temp, last_improvements = (
                     progress_log[-1]
                 )
-                print(
+                logger.info(
                     f"{int(last_iter + iterations_done - this_chunk):>12,}  "
                     f"{last_current:>14.2f}  "
                     f"{last_best:>12.2f}  "
                     f"{last_temp:>10.4f}  "
                     f"{int(last_improvements):>14}  "
                     f"{elapsed:>10.2f}  "
-                    f"{iter_per_sec:>12,.0f}",
-                    flush=True,
+                    f"{iter_per_sec:>12,.0f}"
                 )
 
         # Final output
         elapsed_total = time.time() - start_time
-        print("", flush=True)
-        print("=" * 70, flush=True)
-        print("FAST SA - Completed", flush=True)
-        print("=" * 70, flush=True)
-        print(f"Total time: {elapsed_total:.2f}s", flush=True)
-        print(
-            f"Average iterations/sec: {self.max_iterations / elapsed_total:,.0f}",
-            flush=True,
+        logger.info("")
+        logger.info("=" * 70)
+        logger.info("FAST SA - Completed")
+        logger.info("=" * 70)
+        logger.info(f"Total time: {elapsed_total:.2f}s")
+        logger.info(
+            f"Average iterations/sec: {self.max_iterations / elapsed_total:,.0f}"
         )
-        print(f"Best cost: {best_cost:.2f}", flush=True)
-        print(f"Initial cost: {initial_cost:.2f}", flush=True)
-        print(
-            f"Improvement: {initial_cost - best_cost:.2f} ({(initial_cost - best_cost) / initial_cost * 100:.1f}%)",
-            flush=True,
+        logger.info(f"Best cost: {best_cost:.2f}")
+        logger.info(f"Initial cost: {initial_cost:.2f}")
+        logger.info(
+            f"Improvement: {initial_cost - best_cost:.2f} ({(initial_cost - best_cost) / initial_cost * 100:.1f}%)"
         )
-        print(f"Number of improvements found: {n_improvements_total}", flush=True)
-        print("", flush=True)
+        logger.info(f"Number of improvements found: {n_improvements_total}")
+        logger.info("")
 
         # Convert best solution to LotSizingSolution
         best_sol = self._solution_to_lotsizing(best_solution)

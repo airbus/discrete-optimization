@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 """Toulbar solvers for capacitated multi-item lot sizing problem."""
 
+import logging
 from typing import Any
 
 from discrete_optimization.generic_tools.do_problem import Solution
@@ -18,6 +19,8 @@ try:
     toulbar_available = True
 except ImportError:
     toulbar_available = False
+
+logger = logging.getLogger(__name__)
 
 
 class ToulbarCapacitatedLotSizingSolver(ToulbarSolver):
@@ -37,10 +40,10 @@ class ToulbarCapacitatedLotSizingSolver(ToulbarSolver):
             list_item_per_time=solution_from_toulbar2[0][: self.problem.horizon],
         )
 
-        print(f"\n=== Solution evaluation ===")
-        print(f"problem.evaluate(sol): {self.problem.evaluate(sol)}")
-        print(f"problem.satisfy(sol): {self.problem.satisfy(sol)}")
-        print(f"Toulbar cost: {solution_from_toulbar2[1]}")
+        logger.info("\n=== Solution evaluation ===")
+        logger.info(f"problem.evaluate(sol): {self.problem.evaluate(sol)}")
+        logger.info(f"problem.satisfy(sol): {self.problem.satisfy(sol)}")
+        logger.info(f"Toulbar cost: {solution_from_toulbar2[1]}")
 
         return sol
 

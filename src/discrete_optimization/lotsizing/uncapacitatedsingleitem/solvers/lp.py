@@ -1,6 +1,7 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 from typing import Any, Callable
 
 try:
@@ -20,6 +21,8 @@ from discrete_optimization.lotsizing.uncapacitatedsingleitem.problem import (
     UncapacitatedSingleItemLSP,
     UncapacitatedSingleItemSolution,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class _BaseLpUncapacitatedSingleItemSolver(MilpSolver):
@@ -169,8 +172,8 @@ class _BaseLpUncapacitatedSingleItemSolver(MilpSolver):
                 production_periods.append(t)
                 production_quantity.append(val)
         for t in self.variables["inventory"]:
-            print(
-                "Inventory",
+            logger.info(
+                "Inventory %s: %s",
                 t,
                 get_var_value_for_current_solution(self.variables["inventory"][t]),
             )

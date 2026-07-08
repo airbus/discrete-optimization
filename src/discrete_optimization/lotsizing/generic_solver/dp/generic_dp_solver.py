@@ -80,6 +80,13 @@ class GenericLotSizingDp(DpSolver, WarmstartMixin):
             ]
             for item in self.problem.items_list
         ]
+        production_cost = [
+            [
+                int(self.problem.get_production_cost_per_unit(item, t))
+                for t in range(self.problem.horizon)
+            ]
+            for item in self.problem.items_list
+        ]
         dummy_capa = 1000
         if self.problem.has_capacity_limits():
             dummy_capa = int(self.problem.get_available_production_time(period=0))
@@ -102,13 +109,17 @@ class GenericLotSizingDp(DpSolver, WarmstartMixin):
             )
             for item in self.problem.items_list
         ]
+        self.production_cost = [
+            self.model.add_int_table(production_cost[item])
+            for item in range(len(production_cost))
+        ]
         self.cumulated_demands = [
             self.model.add_int_table(cumul_demands[item])
-            for item in self.problem.items_list
+            for item in range(len(production_cost))
         ]
         self.cumulated_demands_look = [
             self.model.add_int_table(demands_with_lookahead[item])
-            for item in self.problem.items_list
+            for item in range(len(production_cost))
         ]
         self.cumulated_deliveries = [
             self.model.add_int_state_fun(cumul_prod[item] - stock[item])
