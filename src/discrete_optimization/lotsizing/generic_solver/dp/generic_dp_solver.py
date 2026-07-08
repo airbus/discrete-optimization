@@ -417,6 +417,7 @@ class GenericLotSizingDp(DpSolver, WarmstartMixin):
                         self.current_time_element <= self.problem.horizon - 1
                     )
                     cost += self.changeover_matrix[self.current_item, item]
+                    cost += self.production_cost[item][self.current_time_element] * prod
                     # we advance in time by scheduling
                     effects.append(
                         (self.current_time_element, self.current_time_element + 1)
@@ -476,6 +477,7 @@ class GenericLotSizingDp(DpSolver, WarmstartMixin):
                         )
                 else:
                     effects.append((self.current_item, item))
+                    cost += self.production_cost[item][self.current_time_element] * prod
                     for item_ in self.problem.items_list:
                         if item_ == item:
                             effects.append(
