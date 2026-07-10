@@ -19,7 +19,6 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     BlockingMode,
     FlexibleGapBlockingConstraint,
-    OverlapHandling,
     SpanBlockingConstraint,
 )
 from discrete_optimization.rcpsp.problem import RcpspProblem
@@ -31,20 +30,21 @@ def generate_setup_time_blocking(
     setup_ratio: float = 0.2,
     resource_subset: Optional[list[str]] = None,
     seed: Optional[int] = None,
-    blocking_intensity: float = 0.8,
+    blocking_intensity: float = 0.5,
 ) -> RcpspWithResourceBlocking:
     """Generate RCPSP with setup time blocking between consecutive tasks.
 
     Creates blocking constraints representing setup/changeover times between tasks
-    that consume the same resources. The setup period blocks a significant portion
-    of resource capacity to create visible schedule impact.
+    that consume the same resources. Since blocking is ADDITIVE (task + blocking <= capacity),
+    the blocking amount is carefully chosen to avoid infeasibilities.
 
     Args:
         base_problem: Original RCPSP problem
         setup_ratio: Ratio of setup time to average task duration (default 0.2 = 20%)
         resource_subset: Resources affected by setup (None = all renewable resources)
         seed: Random seed for reproducibility
-        blocking_intensity: Fraction of resource capacity to block (default 0.8 = 80%)
+        blocking_intensity: Fraction of AVAILABLE capacity to block (default 0.5 = 50%)
+                          Available capacity = total capacity - max task consumption
 
     Returns:
         RcpspWithResourceBlocking with gap blocking constraints for setup times
@@ -54,7 +54,7 @@ def generate_setup_time_blocking(
         >>> from discrete_optimization.rcpsp.blocking_generator import generate_setup_time_blocking
         >>> files = get_data_available()
         >>> base_problem = parse_file(files[0])
-        >>> problem_with_setup = generate_setup_time_blocking(base_problem, blocking_intensity=0.9)
+        >>> problem_with_setup = generate_setup_time_blocking(base_problem, blocking_intensity=0.7)
     """
     if seed is not None:
         random.seed(seed)
@@ -66,6 +66,16 @@ def generate_setup_time_blocking(
             for r in base_problem.resources_list
             if r not in base_problem.non_renewable_resources
         ]
+
+    # Compute max task consumption per resource to avoid infeasibilities
+    max_consumption = {}
+    for resource in resource_subset:
+        max_cons = 0
+        for task in base_problem.tasks_list:
+            if task in base_problem.mode_details:
+                task_mode = base_problem.mode_details[task].get(1, {})
+                max_cons = max(max_cons, task_mode.get(resource, 0))
+        max_consumption[resource] = max_cons
 
     blocking_constraints: list[FlexibleGapBlockingConstraint] = []
 
@@ -88,12 +98,18 @@ def generate_setup_time_blocking(
                 task_usage = task_mode.get(resource, 0)
                 succ_usage = succ_mode.get(resource, 0)
                 if task_usage > 0 and succ_usage > 0:
-                    # Block a large fraction of total capacity to force impact
                     capacity = base_problem.resources[resource]
                     if isinstance(capacity, list):
                         capacity = min(capacity)
-                    # Block blocking_intensity of total capacity (aggressive!)
-                    setup_amount = max(1, int(capacity * blocking_intensity))
+
+                    # ADDITIVE blocking: ensure task + blocking <= capacity
+                    # Available capacity = total - max task that could run during gap
+                    available = capacity - max_consumption.get(resource, 0)
+                    if available <= 0:
+                        continue  # No room for blocking
+
+                    # Block a fraction of available capacity
+                    setup_amount = max(1, int(available * blocking_intensity))
                     shared_resources[resource] = setup_amount
 
             if shared_resources:
@@ -106,7 +122,6 @@ def generate_setup_time_blocking(
                     shared_resources,
                     BlockingConstraintMetadata(
                         mode=BlockingMode.RESERVATION,
-                        overlap_handling=OverlapHandling.EXCLUSIVE,
                         description=f"Setup time between task {task} and {successor}",
                     ),
                 )
@@ -132,20 +147,22 @@ def generate_batch_blocking(
     batch_size: int = 3,
     resource_name: Optional[str] = None,
     seed: Optional[int] = None,
-    blocking_intensity: float = 0.5,
+    blocking_intensity: float = 0.4,
 ) -> RcpspWithResourceBlocking:
     """Generate RCPSP with span blocking for batch processing.
 
     Creates span blocking constraints where groups of tasks must reserve
-    a significant portion of resources for their entire execution span.
-    This models batch processing with dedicated resource reservation.
+    a portion of resources for their entire execution span. Since blocking is
+    ADDITIVE (task + blocking <= capacity), the blocking amount is carefully
+    chosen to avoid infeasibilities.
 
     Args:
         base_problem: Original RCPSP problem
         batch_size: Number of tasks per batch
         resource_name: Resource to block (None = first renewable resource)
         seed: Random seed for batch generation
-        blocking_intensity: Fraction of capacity to block (default 0.5 = 50%)
+        blocking_intensity: Fraction of AVAILABLE capacity to block (default 0.4 = 40%)
+                          Available capacity = total capacity - max batch task consumption
 
     Returns:
         RcpspWithResourceBlocking with span blocking constraints for batches
@@ -155,7 +172,7 @@ def generate_batch_blocking(
         >>> from discrete_optimization.rcpsp.blocking_generator import generate_batch_blocking
         >>> files = get_data_available()
         >>> base_problem = parse_file(files[0])
-        >>> problem_with_batches = generate_batch_blocking(base_problem, blocking_intensity=0.7)
+        >>> problem_with_batches = generate_batch_blocking(base_problem, blocking_intensity=0.6)
     """
     if seed is not None:
         random.seed(seed)
@@ -197,15 +214,29 @@ def generate_batch_blocking(
         if len(batch_tasks) < 2:
             continue  # Skip single-task batches
 
-        # Block a significant fraction of capacity
-        blocking_amount = max(1, int(capacity * blocking_intensity))
+        # Compute max consumption within this batch
+        max_batch_consumption = 0
+        for task in batch_tasks:
+            if task in base_problem.mode_details:
+                task_mode = base_problem.mode_details[task].get(1, {})
+                max_batch_consumption = max(
+                    max_batch_consumption, task_mode.get(resource_name, 0)
+                )
+
+        # ADDITIVE blocking: ensure batch_tasks + blocking <= capacity
+        # Available capacity = total - max task in batch
+        available = capacity - max_batch_consumption
+        if available <= 0:
+            continue  # No room for blocking
+
+        # Block a fraction of available capacity
+        blocking_amount = max(1, int(available * blocking_intensity))
 
         constraint: SpanBlockingConstraint = (
             frozenset(batch_tasks),
             {resource_name: blocking_amount},
             BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
-                overlap_handling=OverlapHandling.EXCLUSIVE,
                 description=f"Batch {batch_idx + 1} reservation for {resource_name}",
             ),
         )

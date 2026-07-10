@@ -154,6 +154,24 @@ class ResourceBlockingCpSatSolver(
             )
             self.cp_model.Add(group_end >= task_end)
 
+    def _get_tasks_from_entity(self, entity: SchedulingEntity) -> set[Task]:
+        """Extract all tasks involved in a scheduling entity.
+
+        Args:
+            entity: The scheduling entity
+
+        Returns:
+            Set of tasks involved in this entity
+        """
+        if isinstance(entity, TaskEntity):
+            return {entity.task}
+        elif isinstance(entity, TaskModeEntity):
+            return {entity.task}
+        elif isinstance(entity, GroupEntity):
+            return set(entity.tasks)
+        else:
+            return set()
+
     def create_flexible_gap_blocking_intervals(self) -> None:
         """Create interval variables for flexible gap blocking constraints.
 
@@ -178,6 +196,11 @@ class ResourceBlockingCpSatSolver(
                 self.constrain_group_entity_times(entity1)
             if isinstance(entity2, GroupEntity):
                 self.constrain_group_entity_times(entity2)
+
+            # Get all tasks involved in this blocking constraint
+            involved_tasks = self._get_tasks_from_entity(
+                entity1
+            ) | self._get_tasks_from_entity(entity2)
 
             # Get time variables for the gap boundaries
             gap_start = self.get_entity_time_variable(entity1, ref1)
@@ -225,18 +248,15 @@ class ResourceBlockingCpSatSolver(
                 )
                 self.cp_model.AddImplication(gap_is_present, mode_present)
 
-            # Store blocking intervals per resource
+            # Store blocking intervals per resource with metadata and involved tasks
             for resource, demand in resources.items():
                 if resource not in self._blocking_intervals:
                     self._blocking_intervals[resource] = []
 
-                # Handle blocking mode
-                if metadata.mode == BlockingMode.ACTIVE:
-                    # Active mode: only block when entity1 is active
-                    # This is already handled by the gap_interval presence
-                    pass
-
-                self._blocking_intervals[resource].append((gap_interval, demand))
+                # Store interval with its metadata and tasks for later processing
+                self._blocking_intervals[resource].append(
+                    (gap_interval, demand, metadata, involved_tasks)
+                )
 
     def create_span_blocking_intervals(self) -> None:
         """Create interval variables for span blocking constraints.
@@ -293,11 +313,14 @@ class ResourceBlockingCpSatSolver(
                 name=f"blocking_span_{i_constraint}",
             )
 
-            # Store blocking intervals per resource
+            # Store blocking intervals per resource with metadata
             for resource, demand in resources.items():
                 if resource not in self._blocking_intervals:
                     self._blocking_intervals[resource] = []
-                self._blocking_intervals[resource].append((span_interval, demand))
+                # Store interval with its metadata and task set for overlap handling
+                self._blocking_intervals[resource].append(
+                    (span_interval, demand, metadata, tasks)
+                )
 
     def get_blocking_intervals(
         self, resource: CumulativeResource
@@ -312,21 +335,62 @@ class ResourceBlockingCpSatSolver(
         """
         return self._blocking_intervals.get(resource, [])
 
+    def get_task_intervals_with_identification(
+        self, resource: CumulativeResource
+    ) -> list[tuple[IntervalVar, LinearExprT, Task]]:
+        """Get resource consumption intervals with task identification.
+
+        Returns:
+            List of (interval, demand, task) tuples
+        """
+        intervals_with_tasks = []
+
+        for task in self.problem.tasks_list:
+            interval = self.get_task_interval(task=task)
+            demand = self.get_cumulative_resource_demand_variable(
+                task=task, resource=resource
+            )
+
+            # Only include if demand is positive
+            if not isinstance(demand, int) or demand > 0:
+                intervals_with_tasks.append((interval, demand, task))
+
+        return intervals_with_tasks
+
     def create_cumulative_constraint_including_blocking(
         self, resource: CumulativeResource
     ) -> None:
-        """
+        """Create cumulative constraints including blocking intervals.
+
+        Blocking is ALWAYS ADDITIVE: task consumption + blocking consumption.
+
+        Creates TWO cumulative constraints to properly handle BlockingMode:
+
+        Constraint 1 (WITHOUT calendar):
+            - All task intervals
+            - ALL blocking intervals (RESERVATION + ACTIVE)
+            - NO fake tasks (calendar gaps)
+            Purpose: Enforces RESERVATION blocking even during unavailable periods
+
+        Constraint 2 (WITH calendar):
+            - All task intervals
+            - ONLY ACTIVE blocking intervals
+            - Fake tasks (calendar gaps)
+            Purpose: Enforces ACTIVE blocking only during available periods
 
         Args:
             resource: The cumulative resource to constrain
         """
         # Get task consumption intervals
-        task_intervals_and_demands = super().get_resource_consumption_intervals(
-            resource
-        )
+        task_intervals = [
+            (interval, demand)
+            for interval, demand, _ in self.get_task_intervals_with_identification(
+                resource
+            )
+        ]
 
         # Get fake tasks for calendar gaps
-        fake_tasks_intervals_and_demands = [
+        fake_tasks_intervals = [
             (
                 self.cp_model.NewFixedSizeIntervalVar(
                     start=start,
@@ -340,52 +404,89 @@ class ResourceBlockingCpSatSolver(
             )
         ]
 
-        # Get blocking intervals for this resource
-        blocking_intervals_and_demands = self.get_blocking_intervals(resource)
+        # Separate blocking intervals by mode
+        blocking_data = self._blocking_intervals.get(resource, [])
+        reservation_blocking = []
+        active_blocking = []
 
-        # Combine ALL intervals (tasks + fake tasks + blocking)
-        all_intervals_and_demands = (
-            task_intervals_and_demands
-            + fake_tasks_intervals_and_demands
-            + blocking_intervals_and_demands
-        )
-
-        # Filter out zero-demand intervals
-        intervals = [
-            interval
-            for interval, demand in all_intervals_and_demands
-            if not isinstance(demand, int) or demand > 0
-        ]
-        demands = [
-            demand
-            for interval, demand in all_intervals_and_demands
-            if not isinstance(demand, int) or demand > 0
-        ]
+        for blocking_entry in blocking_data:
+            if len(blocking_entry) >= 3:
+                interval, demand, metadata = blocking_entry[:3]
+                if metadata.mode == BlockingMode.RESERVATION:
+                    reservation_blocking.append((interval, demand))
+                else:  # ACTIVE
+                    active_blocking.append((interval, demand))
 
         # Get resource capacity
         capacity = self.problem.get_resource_max_capacity(resource)
 
-        # Create THE cumulative constraint (replaces standard constraint for this resource)
-        if len(intervals) > 0:
-            if capacity == 1 and all(
-                isinstance(value, int) and value == 1 for value in demands
-            ):
-                # Special case: capacity 1 with unit demands
+        # CONSTRAINT 1: Tasks + ALL blocking (RESERVATION + ACTIVE) - NO calendar
+        # This enforces RESERVATION blocking even during unavailable periods
+        intervals_no_calendar = []
+        intervals_no_calendar.extend(task_intervals)
+        intervals_no_calendar.extend(reservation_blocking)
+        intervals_no_calendar.extend(active_blocking)
+
+        intervals_1 = [
+            interval
+            for interval, demand in intervals_no_calendar
+            if not isinstance(demand, int) or demand > 0
+        ]
+        demands_1 = [
+            demand
+            for interval, demand in intervals_no_calendar
+            if not isinstance(demand, int) or demand > 0
+        ]
+
+        if len(intervals_1) > 0:
+            if capacity == 1 and all(isinstance(v, int) and v == 1 for v in demands_1):
                 if self.use_no_overlap_for_capa_1 or not self.use_cumulative_for_capa_1:
-                    self.cp_model.add_no_overlap(intervals)
+                    self.cp_model.add_no_overlap(intervals_1)
                 if self.use_cumulative_for_capa_1:
                     self.cp_model.add_cumulative(
-                        intervals=intervals,
-                        demands=demands,
-                        capacity=capacity,
+                        intervals=intervals_1, demands=demands_1, capacity=capacity
                     )
             else:
-                # General case
                 self.cp_model.add_cumulative(
-                    intervals=intervals,
-                    demands=demands,
-                    capacity=capacity,
+                    intervals=intervals_1, demands=demands_1, capacity=capacity
                 )
+
+        # CONSTRAINT 2: Tasks + ACTIVE blocking + calendar - NO RESERVATION blocking
+        # This enforces ACTIVE blocking only during available periods (constrained by calendar)
+        if active_blocking or fake_tasks_intervals:
+            intervals_with_calendar = []
+            intervals_with_calendar.extend(task_intervals)
+            intervals_with_calendar.extend(active_blocking)
+            intervals_with_calendar.extend(fake_tasks_intervals)
+
+            intervals_2 = [
+                interval
+                for interval, demand in intervals_with_calendar
+                if not isinstance(demand, int) or demand > 0
+            ]
+            demands_2 = [
+                demand
+                for interval, demand in intervals_with_calendar
+                if not isinstance(demand, int) or demand > 0
+            ]
+
+            if len(intervals_2) > 0:
+                if capacity == 1 and all(
+                    isinstance(v, int) and v == 1 for v in demands_2
+                ):
+                    if (
+                        self.use_no_overlap_for_capa_1
+                        or not self.use_cumulative_for_capa_1
+                    ):
+                        self.cp_model.add_no_overlap(intervals_2)
+                    if self.use_cumulative_for_capa_1:
+                        self.cp_model.add_cumulative(
+                            intervals=intervals_2, demands=demands_2, capacity=capacity
+                        )
+                else:
+                    self.cp_model.add_cumulative(
+                        intervals=intervals_2, demands=demands_2, capacity=capacity
+                    )
 
     def create_resource_blocking_constraints(self) -> None:
         """Create all resource blocking interval variables.

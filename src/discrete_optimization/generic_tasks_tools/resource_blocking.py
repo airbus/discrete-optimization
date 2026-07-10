@@ -32,6 +32,9 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
 )
 from discrete_optimization.generic_tasks_tools.entities import SchedulingEntity
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.multimode import (
+    MultimodeSolution,
+)
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
 )
@@ -53,38 +56,26 @@ class BlockingMode(Enum):
     ACTIVE = "active"
 
 
-class OverlapHandling(Enum):
-    """Strategy for handling overlapping resource consumption.
-
-    Attributes:
-        EXCLUSIVE: Don't count blocking during task execution (default, safest).
-            Total = task consumption (blocking ignored during overlap).
-        ADDITIVE: Add task and blocking consumption.
-            Total = task consumption + blocking consumption.
-        MAXIMUM: Take maximum of task and blocking consumption.
-            Total = max(task consumption, blocking consumption).
-        SEPARATE: Use different resource names for tasks and blocking.
-            No overlap issue - tracked separately.
-    """
-
-    EXCLUSIVE = "exclusive"
-    ADDITIVE = "additive"
-    MAXIMUM = "maximum"
-    SEPARATE = "separate"
-
-
 @dataclass(frozen=True)
 class BlockingConstraintMetadata:
     """Metadata for a blocking constraint.
 
+    Resource blocking intervals are ALWAYS ADDITIVE with task consumption.
+    The blocking demand is added on top of task consumption during the blocking period.
+    Users should adjust their blocking demands accordingly:
+    - If a task uses 2 units and blocking adds 1 unit, total consumption = 3 units
+    - Ensure resource capacity can accommodate task + blocking consumption
+
     Attributes:
-        mode: Calendar awareness mode (RESERVATION or ACTIVE)
-        overlap_handling: Strategy for overlapping consumption
+        mode: Calendar awareness mode controlling interaction with resource availability:
+            - RESERVATION: Blocking can span unavailable periods (nights, weekends).
+                          Resource is reserved even when "OFF". Enforced without calendar constraints.
+            - ACTIVE: Blocking only during available periods. Resource must be "ON".
+                     Enforced with calendar constraints.
         description: Optional human-readable description of the constraint
     """
 
     mode: BlockingMode = BlockingMode.RESERVATION
-    overlap_handling: OverlapHandling = OverlapHandling.EXCLUSIVE
     description: str = ""
 
 
@@ -178,7 +169,7 @@ class ResourceBlockingProblem(
 
 
 class ResourceBlockingSolution(
-    SchedulingSolution[Task], Generic[Task, CumulativeResource, OtherCalendarResource]
+    MultimodeSolution[Task], Generic[Task, CumulativeResource, OtherCalendarResource]
 ):
     """
     Mixin for solutions to problems with resource blocking constraints.
@@ -188,7 +179,8 @@ class ResourceBlockingSolution(
     - Check constraint satisfaction with calendar awareness
     - Handle overlap between blocking and task execution
 
-    Should be mixed with SchedulingSolution or subclass.
+    Should be mixed with SchedulingSolution subclass.
+    Inherits from MultimodeSolution to ensure get_mode() is always available.
     """
 
     problem: ResourceBlockingProblem[Task, CumulativeResource, OtherCalendarResource]
@@ -200,9 +192,12 @@ class ResourceBlockingSolution(
     ) -> np.ndarray:
         """Compute resource consumption from all blocking constraints.
 
+        Blocking is always ADDITIVE: consumption from blocking is added to task consumption.
+        This means total resource usage = task consumption + blocking consumption.
+
         This method:
         1. Computes blocking periods from flexible gap and span constraints
-        2. Applies overlap handling strategies when blocking overlaps with tasks
+        2. Adds blocking consumption for each period (ADDITIVE behavior)
         3. Validates ACTIVE mode constraints against resource calendar
 
         Args:
@@ -212,6 +207,7 @@ class ResourceBlockingSolution(
         Returns:
             Array of length horizon with blocking consumption at each time point.
             Note: This is blocking consumption only. Task consumption is computed separately.
+            Total consumption should be verified: task_consumption + blocking_consumption <= capacity
 
         Raises:
             ValueError: If ACTIVE mode blocking spans resource unavailable period
@@ -261,17 +257,8 @@ class ResourceBlockingSolution(
                     resource, start_time, end_time, entity1, entity2
                 )
 
-            # Apply blocking consumption based on overlap handling
-            self._apply_blocking_consumption(
-                consumption,
-                start_time,
-                end_time,
-                amount,
-                metadata.overlap_handling,
-                entity1,
-                entity2,
-                resource,
-            )
+            # Apply blocking consumption (ADDITIVE: always adds to consumption)
+            consumption[start_time:end_time] += amount
 
         # Process span blocking constraints
         for tasks, resources, metadata in self.problem.get_span_blocking_constraints():
@@ -310,7 +297,7 @@ class ResourceBlockingSolution(
         end_time: int,
         entity1: SchedulingEntity,
         entity2: SchedulingEntity,
-    ) -> None:
+    ) -> bool:
         """Validate ACTIVE mode blocking against resource calendar.
 
         Args:
@@ -320,11 +307,10 @@ class ResourceBlockingSolution(
             entity1: First entity in constraint
             entity2: Second entity in constraint
 
-        Raises:
-            ValueError: If resource unavailable during any part of blocking period
+        Returns:
+            True if valid, False if resource unavailable during blocking period
         """
-        # Get calendar from problem (CalendarResourceProblem provides get_resource_calendar)
-        # CumulativeResourceProblem inherits from CalendarResourceProblem
+        # Get calendar from problem
         calendar = self.problem.get_resource_calendar(resource)  # type: ignore
 
         # Check each time point in blocking period
@@ -332,12 +318,13 @@ class ResourceBlockingSolution(
             if t >= len(calendar):
                 break
             if calendar[t] == 0:
-                raise ValueError(
+                logger.warning(
                     f"ACTIVE blocking constraint violated: resource {resource} "
                     f"is unavailable at time {t}, but blocking from {entity1} to {entity2} "
-                    f"spans [{start_time}, {end_time}). Use BlockingMode.RESERVATION if blocking "
-                    f"should continue through unavailable periods."
+                    f"spans [{start_time}, {end_time})"
                 )
+                return False
+        return True
 
     def _validate_active_blocking_span(
         self,
@@ -345,7 +332,7 @@ class ResourceBlockingSolution(
         start_time: int,
         end_time: int,
         tasks: frozenset[Task],
-    ) -> None:
+    ) -> bool:
         """Validate ACTIVE mode span blocking against resource calendar.
 
         Args:
@@ -354,10 +341,10 @@ class ResourceBlockingSolution(
             end_time: End of blocking span
             tasks: Tasks defining the span
 
-        Raises:
-            ValueError: If resource unavailable during any part of span
+        Returns:
+            True if valid, False if resource unavailable during span
         """
-        # Get calendar from problem (CalendarResourceProblem provides get_resource_calendar)
+        # Get calendar from problem
         calendar = self.problem.get_resource_calendar(resource)  # type: ignore
 
         # Check each time point in span
@@ -365,146 +352,242 @@ class ResourceBlockingSolution(
             if t >= len(calendar):
                 break
             if calendar[t] == 0:
-                raise ValueError(
+                logger.warning(
                     f"ACTIVE span blocking constraint violated: resource {resource} "
                     f"is unavailable at time {t}, but span of tasks {tasks} "
-                    f"covers [{start_time}, {end_time}). Use BlockingMode.RESERVATION if blocking "
-                    f"should continue through unavailable periods."
+                    f"covers [{start_time}, {end_time})"
                 )
-
-    def _apply_blocking_consumption(
-        self,
-        consumption: np.ndarray,
-        start_time: int,
-        end_time: int,
-        amount: int,
-        overlap_handling: OverlapHandling,
-        entity1: SchedulingEntity,
-        entity2: SchedulingEntity,
-        resource: CumulativeResource,
-    ) -> None:
-        """Apply blocking consumption based on overlap handling strategy.
-
-        Args:
-            consumption: Array to update with blocking consumption
-            start_time: Start of blocking period
-            end_time: End of blocking period
-            amount: Amount of resource blocked
-            overlap_handling: Strategy for handling overlaps
-            entity1: First entity in constraint
-            entity2: Second entity in constraint
-            resource: The resource being blocked
-        """
-        solution: SchedulingSolution = self  # type: ignore
-
-        if overlap_handling == OverlapHandling.EXCLUSIVE:
-            # Add blocking only where no tasks from entities are running
-            for t in range(start_time, end_time):
-                # Check if any task from entity1 or entity2 is running at time t
-                running = False
-                for task in entity1.get_tasks() | entity2.get_tasks():
-                    task_start = solution.get_start_time(task)
-                    task_end = solution.get_end_time(task)
-                    if task_start <= t < task_end:
-                        running = True
-                        break
-
-                if not running:
-                    consumption[t] += amount
-
-        elif overlap_handling == OverlapHandling.ADDITIVE:
-            # Simply add blocking consumption (may cause capacity violation)
-            consumption[start_time:end_time] += amount
-
-        elif overlap_handling == OverlapHandling.MAXIMUM:
-            # Take maximum of current and blocking consumption
-            consumption[start_time:end_time] = np.maximum(
-                consumption[start_time:end_time], amount
-            )
-
-        elif overlap_handling == OverlapHandling.SEPARATE:
-            # SEPARATE means different resource names - no overlap by definition
-            # Just add the consumption
-            consumption[start_time:end_time] += amount
+                return False
+        return True
 
     def check_blocking_constraints(self) -> bool:
         """Check if all blocking constraints are satisfied.
 
-        This includes:
-        - ACTIVE mode constraints: resource available during blocking
-        - Capacity constraints: total consumption (tasks + blocking) <= capacity
+        Mirrors the two-constraint approach from CP-SAT solver:
+
+        Check 1 (RESERVATION constraint - no calendar):
+            - Tasks + ALL blocking (RESERVATION + ACTIVE) <= base capacity
+            - This allows RESERVATION blocking to span unavailable periods
+
+        Check 2 (ACTIVE constraint - with calendar):
+            - Tasks + ACTIVE blocking <= calendar capacity at each time
+            - ACTIVE mode: Validate blocking only occurs during available periods
 
         Returns:
             True if all constraints satisfied, False otherwise
         """
         solution: SchedulingSolution = self  # type: ignore
-
-        # Get horizon from problem if available
         horizon = getattr(self.problem, "horizon", 10000)
 
-        try:
-            # Validate all flexible gap blocking constraints
-            for (
-                entity1,
-                point1,
-                entity2,
-                point2,
-                resources,
-                metadata,
-            ) in self.problem.get_flexible_gap_blocking_constraints():
-                # Skip inactive conditional entities
-                if not entity1.is_active(solution) or not entity2.is_active(solution):
-                    continue
+        # STEP 1: Validate ACTIVE mode calendar constraints
+        # ACTIVE blocking can only occur when resource is available
+        for (
+            entity1,
+            point1,
+            entity2,
+            point2,
+            resources,
+            metadata,
+        ) in self.problem.get_flexible_gap_blocking_constraints():
+            if not entity1.is_active(solution) or not entity2.is_active(solution):
+                continue
 
-                # Get blocking period
-                start_time = (
-                    entity1.get_start_time(solution)
-                    if point1 == StartOrEnd.START
-                    else entity1.get_end_time(solution)
+            start_time = (
+                entity1.get_start_time(solution)
+                if point1 == StartOrEnd.START
+                else entity1.get_end_time(solution)
+            )
+            end_time = (
+                entity2.get_start_time(solution)
+                if point2 == StartOrEnd.START
+                else entity2.get_end_time(solution)
+            )
+
+            if end_time <= start_time:
+                continue
+
+            if metadata.mode == BlockingMode.ACTIVE:
+                for resource in resources:
+                    if not self._validate_active_blocking(
+                        resource, start_time, end_time, entity1, entity2
+                    ):
+                        return False
+
+        # Validate span blocking ACTIVE mode
+        for tasks, resources, metadata in self.problem.get_span_blocking_constraints():
+            if len(tasks) == 0:
+                continue
+
+            start_time = min(solution.get_start_time(t) for t in tasks)
+            end_time = max(solution.get_end_time(t) for t in tasks)
+
+            if end_time <= start_time:
+                continue
+
+            if metadata.mode == BlockingMode.ACTIVE:
+                for resource in resources:
+                    if not self._validate_active_blocking_span(
+                        resource, start_time, end_time, tasks
+                    ):
+                        return False
+
+        # STEP 2: Validate capacity constraints (mirroring CP-SAT two-constraint approach)
+        # CP-SAT creates TWO constraints:
+        # 1. tasks + reservation_blocking + active_blocking <= capacity (no calendar/fake_tasks)
+        # 2. tasks + active_blocking + fake_tasks <= capacity (with calendar)
+        #
+        # Since fake_tasks[t] = capacity - calendar[t], constraint 2 becomes:
+        # tasks + active_blocking <= calendar[t]
+
+        for resource in self.problem.cumulative_resources_list:
+            capacity = self.problem.get_resource_max_capacity(resource)
+            task_consumption = self._compute_task_consumption(resource, horizon)
+
+            # Compute blocking by mode
+            reservation_blocking = self._compute_blocking_by_mode(
+                resource, horizon, BlockingMode.RESERVATION
+            )
+            active_blocking = self._compute_blocking_by_mode(
+                resource, horizon, BlockingMode.ACTIVE
+            )
+
+            # CHECK 1 (mirrors CP-SAT constraint 1):
+            # Tasks + RESERVATION blocking + ACTIVE blocking <= base capacity
+            # No calendar/fake_tasks - allows RESERVATION to span unavailable periods
+            for t in range(horizon):
+                total = (
+                    task_consumption[t] + reservation_blocking[t] + active_blocking[t]
                 )
-                end_time = (
-                    entity2.get_start_time(solution)
-                    if point2 == StartOrEnd.START
-                    else entity2.get_end_time(solution)
-                )
+                if total > capacity:
+                    logger.warning(
+                        f"Constraint 1 violated for {resource} at time {t}: "
+                        f"task={task_consumption[t]} + reservation={reservation_blocking[t]} "
+                        f"+ active={active_blocking[t]} = {total} > capacity={capacity}"
+                    )
+                    return False
 
-                if end_time <= start_time:
-                    continue
+            # CHECK 2 (mirrors CP-SAT constraint 2):
+            # Tasks + ACTIVE blocking + fake_tasks <= capacity
+            # Equivalent to: Tasks + ACTIVE blocking <= calendar[t]
+            # This enforces that ACTIVE blocking respects calendar availability
+            calendar = self.problem.get_resource_calendar(resource)
 
-                # Validate ACTIVE mode for each resource
-                if metadata.mode == BlockingMode.ACTIVE:
-                    for resource in resources:
-                        self._validate_active_blocking(
-                            resource, start_time, end_time, entity1, entity2
-                        )
+            for t in range(min(horizon, len(calendar))):
+                calendar_capacity = calendar[t]
+                total = task_consumption[t] + active_blocking[t]
 
-            # Validate span blocking constraints
-            for (
-                tasks,
-                resources,
-                metadata,
-            ) in self.problem.get_span_blocking_constraints():
-                if len(tasks) == 0:
-                    continue
+                if total > calendar_capacity:
+                    logger.warning(
+                        f"Constraint 2 violated for {resource} at time {t}: "
+                        f"task={task_consumption[t]} + active={active_blocking[t]} "
+                        f"= {total} > calendar_capacity={calendar_capacity}"
+                    )
+                    return False
 
-                start_time = min(solution.get_start_time(t) for t in tasks)
-                end_time = max(solution.get_end_time(t) for t in tasks)
+        return True
 
-                if end_time <= start_time:
-                    continue
+    def _compute_task_consumption(
+        self, resource: CumulativeResource, horizon: int
+    ) -> np.ndarray:
+        """Compute resource consumption from tasks.
 
-                # Validate ACTIVE mode for each resource
-                if metadata.mode == BlockingMode.ACTIVE:
-                    for resource in resources:
-                        self._validate_active_blocking_span(
-                            resource, start_time, end_time, tasks
-                        )
+        Args:
+            resource: The resource to compute consumption for
+            horizon: Time horizon
 
-            return True
+        Returns:
+            Array of length horizon with task consumption at each time point
+        """
+        consumption = np.zeros(horizon, dtype=int)
 
-        except ValueError as e:
-            logger.warning(f"Blocking constraint check failed: {e}")
-            return False
+        for task in self.problem.tasks_list:
+            start = self.get_start_time(task)
+            end = self.get_end_time(task)
+            mode = self.get_mode(task)
+
+            # Get consumption amount
+            amount = self.problem.get_cumulative_resource_consumption(
+                resource, task, mode
+            )
+
+            if amount > 0 and start < end:
+                consumption[start:end] += amount
+
+        return consumption
+
+    def _compute_blocking_by_mode(
+        self, resource: CumulativeResource, horizon: int, mode: BlockingMode
+    ) -> np.ndarray:
+        """Compute blocking consumption for a specific mode.
+
+        Args:
+            resource: The resource to compute consumption for
+            horizon: Time horizon
+            mode: The blocking mode to filter by (RESERVATION or ACTIVE)
+
+        Returns:
+            Array of length horizon with blocking consumption at each time point
+        """
+        consumption = np.zeros(horizon, dtype=int)
+        solution: SchedulingSolution = self  # type: ignore
+
+        # Process flexible gap blocking constraints
+        for (
+            entity1,
+            point1,
+            entity2,
+            point2,
+            resources,
+            metadata,
+        ) in self.problem.get_flexible_gap_blocking_constraints():
+            # Skip if wrong mode or resource not in constraint
+            if metadata.mode != mode or resource not in resources:
+                continue
+
+            # Skip inactive entities
+            if not entity1.is_active(solution) or not entity2.is_active(solution):
+                continue
+
+            # Get blocking period
+            start_time = (
+                entity1.get_start_time(solution)
+                if point1 == StartOrEnd.START
+                else entity1.get_end_time(solution)
+            )
+            end_time = (
+                entity2.get_start_time(solution)
+                if point2 == StartOrEnd.START
+                else entity2.get_end_time(solution)
+            )
+
+            if end_time <= start_time:
+                continue
+
+            # Add blocking consumption
+            amount = resources[resource]
+            consumption[start_time:end_time] += amount
+
+        # Process span blocking constraints
+        for tasks, resources, metadata in self.problem.get_span_blocking_constraints():
+            # Skip if wrong mode or resource not in constraint
+            if metadata.mode != mode or resource not in resources:
+                continue
+
+            if len(tasks) == 0:
+                continue
+
+            # Compute span
+            start_time = min(solution.get_start_time(t) for t in tasks)
+            end_time = max(solution.get_end_time(t) for t in tasks)
+
+            if end_time <= start_time:
+                continue
+
+            # Add blocking consumption
+            amount = resources[resource]
+            consumption[start_time:end_time] += amount
+
+        return consumption
 
     def satisfy(self) -> bool:
         """Check if solution satisfies all constraints including blocking.
