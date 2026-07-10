@@ -96,7 +96,7 @@ class AnyShopSolution(
     ],
     WithoutNonRenewableResourceSolution[Task],
     WithoutAllocationSolution[Task],
-    WithoutResourceBlockingSolution[Task, NonSkillCumulativeResource],
+    WithoutResourceBlockingSolution[Task, NonSkillCumulativeResource, NoUnaryResource],
 ):
     problem: "CommonShopProblem"
     schedule: list[list[tuple[int, int]]]

@@ -10,7 +10,6 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     BlockingMode,
-    OverlapHandling,
 )
 from discrete_optimization.rcpsp.blocking_generator import (
     generate_batch_blocking,
@@ -43,7 +42,6 @@ def test_rcpsp_with_blocking_creation():
             {"R1": 1},
             BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
-                overlap_handling=OverlapHandling.EXCLUSIVE,
                 description="Setup between task 2 and 3",
             ),
         )
@@ -104,7 +102,6 @@ def test_setup_blocking_affects_schedule():
             {"R1": 1},  # Block 1 unit during setup
             BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
-                overlap_handling=OverlapHandling.EXCLUSIVE,
             ),
         )
     ]
@@ -149,7 +146,6 @@ def test_span_blocking_forces_reservation():
             {"R1": 1},
             BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
-                overlap_handling=OverlapHandling.EXCLUSIVE,
                 description="Batch reservation",
             ),
         )
@@ -286,7 +282,6 @@ def test_blocking_constraints_validation():
             {"R1": 3},  # Block significant resource
             BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
-                overlap_handling=OverlapHandling.EXCLUSIVE,
             ),
         )
     ]

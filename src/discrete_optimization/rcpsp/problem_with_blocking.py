@@ -40,7 +40,7 @@ class RcpspWithResourceBlocking(RcpspProblem):
     Example:
         >>> from discrete_optimization.rcpsp.problem_with_blocking import RcpspWithResourceBlocking
         >>> from discrete_optimization.generic_tasks_tools.resource_blocking import (
-        ...     BlockingMode, OverlapHandling, BlockingConstraintMetadata,
+        ...     BlockingMode, BlockingConstraintMetadata,
         ... )
         >>> from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
         >>> from discrete_optimization.generic_tasks_tools.entities import TaskEntity
@@ -61,7 +61,6 @@ class RcpspWithResourceBlocking(RcpspProblem):
         ...         {"R1": 1},  # 1 unit of R1 blocked during setup
         ...         BlockingConstraintMetadata(
         ...             mode=BlockingMode.RESERVATION,
-        ...             overlap_handling=OverlapHandling.EXCLUSIVE,
         ...             description="Setup time between task 2 and 3"
         ...         ),
         ...     )
@@ -150,3 +149,19 @@ class RcpspWithResourceBlocking(RcpspProblem):
     def get_span_blocking_constraints(self) -> list[SpanBlockingConstraint]:
         """Return span blocking constraints."""
         return self._span_blocking_constraints
+
+    def satisfy(self, variable) -> bool:  # type: ignore
+        """Check if solution satisfies all constraints including blocking.
+
+        Args:
+            variable: The solution to check
+
+        Returns:
+            True if solution satisfies all constraints
+        """
+        # Check standard RCPSP constraints first
+        if not super().satisfy(variable):
+            return False
+
+        # Check blocking constraints (from ResourceBlockingSolution mixin)
+        return variable.check_blocking_constraints()
