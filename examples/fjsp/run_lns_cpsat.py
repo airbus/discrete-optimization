@@ -88,6 +88,7 @@ def run_lnscpsat_fjsp():
 def run_lns_generic():
     files = get_data_available()
     file = [f for f in files if "Behnke55.fjs" in f][0]
+    file = get_data_available()[16]
     print(file)
     problem = parse_file(file)
     solver = CpSatFjspSolver(problem=problem)
@@ -118,7 +119,7 @@ def run_lns_generic():
             # WarmStartCallbackLns()
         ],
         skip_initial_solution_provider=True,
-        nb_iteration_lns=20,
+        nb_iteration_lns=100,
         parameters_cp=p,
         time_limit_subsolver_iter0=10,
         time_limit_subsolver=10,

@@ -31,6 +31,7 @@ def run_cpsat_fjsp():
     )
     solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default_cpsat()
+    solver.init_model(duplicate_temporal_var=True, add_cumulative_constraint=True)
     p.nb_process = 10
     res = solver.solve(
         parameters_cp=p,
@@ -44,6 +45,7 @@ def run_cpsat_fjsp():
     sol = res.get_best_solution_fit()[0]
     assert problem.satisfy(sol)
     print(problem.evaluate(sol))
+    print(solver.status_solver)
 
 
 def run_cpsat_fjsp_warm_start():

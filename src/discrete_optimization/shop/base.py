@@ -23,6 +23,10 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    WithoutResourceBlockingProblem,
+    WithoutResourceBlockingSolution,
+)
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
     WithoutSkillProblem,
@@ -92,6 +96,7 @@ class AnyShopSolution(
     ],
     WithoutNonRenewableResourceSolution[Task],
     WithoutAllocationSolution[Task],
+    WithoutResourceBlockingSolution[Task, NonSkillCumulativeResource],
 ):
     problem: "CommonShopProblem"
     schedule: list[list[tuple[int, int]]]
@@ -171,6 +176,7 @@ class CommonShopProblem(
     ],
     WithoutNonRenewableResourceProblem[Task],
     WithoutAllocationProblem[Task],
+    WithoutResourceBlockingProblem[Task, NonSkillCumulativeResource, NoUnaryResource],
 ):
     n_machines: int
     n_jobs: int
