@@ -26,6 +26,10 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Penalty,
     RawSolution,
 )
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    FlexibleGapBlockingConstraint,
+    SpanBlockingConstraint,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -90,6 +94,10 @@ class GenericSchedulingImplProblem(
         end_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
         no_overlap_sets: Optional[set[frozenset[Task]]] = None,
         forbidden_intervals: Optional[dict[Task, list[tuple[int, int]]]] = None,
+        flexible_gap_blocking_constraints: Optional[
+            list[FlexibleGapBlockingConstraint]
+        ] = None,
+        span_blocking_constraints: Optional[list[SpanBlockingConstraint]] = None,
         objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
         custom_evaluate_fn: Optional[
             Callable[[GenericSchedulingImplSolution], int]
@@ -141,6 +149,12 @@ class GenericSchedulingImplProblem(
                 Note that using negative offset can model end-to-end max time lags.
             no_overlap_sets: a set of (set of tasks that should not overlap together)
             forbidden_intervals: maps task to forbidden intervals that cannot overlap with it. Missing key => no forbidden intervals.
+            flexible_gap_blocking_constraints: list of blocking constraints between entity points.
+                Each constraint is (entity1, point1, entity2, point2, resources, metadata).
+                Default to no blocking constraints.
+            span_blocking_constraints: list of span blocking constraints.
+                Each constraint is (tasks, resources, metadata) where tasks is a frozenset.
+                Default to no blocking constraints.
             objective: objective for the problem. Default to minimization of makespan.
                 Either an iterable of (objective, weight) so that the problem should *maximize* the aggregated objective
                 resulting from weighted sum of objectives, or a single objective in which case we use the corresponding
@@ -232,6 +246,16 @@ class GenericSchedulingImplProblem(
             self.forbidden_intervals = {}
         else:
             self.forbidden_intervals = forbidden_intervals
+        if flexible_gap_blocking_constraints is None:
+            self.flexible_gap_blocking_constraints: list[
+                FlexibleGapBlockingConstraint
+            ] = []
+        else:
+            self.flexible_gap_blocking_constraints = flexible_gap_blocking_constraints
+        if span_blocking_constraints is None:
+            self.span_blocking_constraints: list[SpanBlockingConstraint] = []
+        else:
+            self.span_blocking_constraints = span_blocking_constraints
         if isinstance(objective, Objective):
             self.weighted_objectives: tuple[tuple[Objective, int], ...] = (
                 (objective, OBJECTIVE_DEFAULT_WEIGHTS[objective]),
@@ -334,6 +358,16 @@ class GenericSchedulingImplProblem(
 
     def get_forbidden_intervals(self, task: Task) -> list[tuple[int, int]]:
         return self.forbidden_intervals.get(task, [])
+
+    def get_flexible_gap_blocking_constraints(
+        self,
+    ) -> list[FlexibleGapBlockingConstraint]:
+        """Return flexible gap blocking constraints."""
+        return self.flexible_gap_blocking_constraints
+
+    def get_span_blocking_constraints(self) -> list[SpanBlockingConstraint]:
+        """Return span blocking constraints."""
+        return self.span_blocking_constraints
 
     @wrapt.lru_cache(maxsize=None)
     def get_resource_availabilities(
