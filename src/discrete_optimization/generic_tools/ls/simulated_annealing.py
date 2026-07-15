@@ -263,17 +263,6 @@ class TemperatureSchedulingThresholdBased(TemperatureScheduling):
         n_moves_accepted_before_cooling: Number of accepted moves before cooling (n_a)
                                         Temperature cools when this threshold is reached
                                         (if reached before n_moves_sampled)
-
-    Example:
-        >>> # Paper's parameters for lot-sizing
-        >>> scheduler = TemperatureSchedulingThresholdBased(
-        ...     initial_temperature=37.0,
-        ...     restart_handler=restart_handler,
-        ...     cooling_factor=0.99,
-        ...     n_moves_sampled_before_cooling=60240,
-        ...     n_moves_accepted_before_cooling=12049
-        ... )
-
     Note:
         Temperature cools when EITHER threshold is reached (OR condition).
         Typically n_moves_accepted < n_moves_sampled, so high acceptance early
