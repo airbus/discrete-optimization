@@ -650,3 +650,481 @@ def get_end_bounds_from_additional_constraint(
                     )
                     ub = min(ub, ubs + max_duration)
     return int(lb), int(ub)
+
+
+def plot_resource_view_with_blocking(
+    rcpsp_problem: RcpspProblem,
+    rcpsp_sol: RcpspSolution,
+    list_resource: Optional[list[str]] = None,
+    title_figure: str = "",
+    x_lim: Optional[list[int]] = None,
+    fig: Optional[plt.Figure] = None,
+    ax: Optional[npt.NDArray[np.object_]] = None,
+    show_task_labels: bool = True,
+    show_constraint_labels: bool = True,
+) -> plt.Figure:
+    """Plot resource consumption including blocking constraints.
+
+    This function visualizes three layers of resource consumption:
+    1. Task consumption (solid blocks)
+    2. Gap blocking constraints (diagonal hatching)
+    3. Span blocking constraints (cross hatching)
+
+    Args:
+        rcpsp_problem: RCPSP problem with blocking constraints
+        rcpsp_sol: Solution to visualize
+        list_resource: Resources to plot (default: all)
+        title_figure: Figure title
+        x_lim: Time axis limits [min, max]
+        fig: Matplotlib figure to reuse
+        ax: Matplotlib axes to reuse
+        show_task_labels: Whether to show task names on blocks
+        show_constraint_labels: Whether to show constraint descriptions
+
+    Returns:
+        Matplotlib figure
+    """
+    from discrete_optimization.generic_tasks_tools.resource_blocking import (
+        BlockingMode,
+        ResourceBlockingProblem,
+        ResourceBlockingSolution,
+    )
+
+    # Check if problem has blocking constraints
+    has_blocking = isinstance(rcpsp_problem, ResourceBlockingProblem)
+
+    if not has_blocking:
+        logger.warning(
+            "Problem does not have blocking constraints, using standard plot"
+        )
+        return plot_ressource_view(
+            rcpsp_problem, rcpsp_sol, list_resource, title_figure, x_lim, fig, ax
+        )
+
+    modes_dict = rcpsp_problem.build_mode_dict(rcpsp_sol.rcpsp_modes)
+    if list_resource is None:
+        list_resource = rcpsp_problem.resources_list
+
+    # Create figure if needed
+    if ax is None:
+        fig, ax = plt.subplots(nrows=len(list_resource), figsize=(14, 6), sharex=True)
+        if len(list_resource) == 1:
+            ax = [ax]
+        fig.suptitle(title_figure or "Resource View with Blocking Constraints")
+
+    # Get solution as blocking solution
+    blocking_sol: ResourceBlockingSolution = rcpsp_sol  # type: ignore
+
+    # Determine time range
+    makespan = rcpsp_sol.rcpsp_schedule[rcpsp_problem.sink_task]["end_time"]
+    horizon = min(rcpsp_problem.horizon, makespan + 10)
+
+    # Collect all annotations across all resources (for legend)
+    all_gap_annotations = []
+    all_span_annotations = []
+
+    # Process each resource
+    for i, resource in enumerate(list_resource):
+        # 1. Compute consumption arrays
+        task_consumption = np.zeros(horizon, dtype=int)
+        gap_blocking_reservation = np.zeros(horizon, dtype=int)
+        gap_blocking_active = np.zeros(horizon, dtype=int)
+        span_blocking_reservation = np.zeros(horizon, dtype=int)
+        span_blocking_active = np.zeros(horizon, dtype=int)
+
+        # Task consumption
+        for task in rcpsp_sol.rcpsp_schedule:
+            start = rcpsp_sol.rcpsp_schedule[task]["start_time"]
+            end = rcpsp_sol.rcpsp_schedule[task]["end_time"]
+            cons = rcpsp_problem.mode_details[task][modes_dict[task]].get(resource, 0)
+            if cons > 0 and start < end:
+                task_consumption[start:end] += cons
+
+        # Gap blocking constraints
+        gap_constraints = rcpsp_problem.get_flexible_gap_blocking_constraints()
+        gap_annotations = []  # (start, end, label, mode)
+
+        for entity1, point1, entity2, point2, resources, metadata in gap_constraints:
+            if resource not in resources:
+                continue
+            if not entity1.is_active(blocking_sol) or not entity2.is_active(
+                blocking_sol
+            ):
+                continue
+
+            # Compute blocking period
+            from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+
+            start_time = (
+                entity1.get_start_time(blocking_sol)
+                if point1 == StartOrEnd.START
+                else entity1.get_end_time(blocking_sol)
+            )
+            end_time = (
+                entity2.get_start_time(blocking_sol)
+                if point2 == StartOrEnd.START
+                else entity2.get_end_time(blocking_sol)
+            )
+
+            if end_time <= start_time:
+                continue
+
+            amount = resources[resource]
+
+            # Add to appropriate array
+            if metadata.mode == BlockingMode.RESERVATION:
+                gap_blocking_reservation[start_time:end_time] += amount
+            else:
+                gap_blocking_active[start_time:end_time] += amount
+
+            # Store annotation (only for first resource, to avoid duplicates in legend)
+            entity1_str = _entity_to_string(entity1)
+            entity2_str = _entity_to_string(entity2)
+            label = metadata.description or f"Gap: {entity1_str} → {entity2_str}"
+            gap_annotations.append((start_time, end_time, label, metadata.mode))
+
+            # Also add to global list (check if not already added)
+            annotation_tuple = (start_time, end_time, label, metadata.mode)
+            if annotation_tuple not in all_gap_annotations:
+                all_gap_annotations.append(annotation_tuple)
+
+        # Span blocking constraints
+        span_constraints = rcpsp_problem.get_span_blocking_constraints()
+        span_annotations = []  # (start, end, label, mode)
+
+        for entity, resources, metadata in span_constraints:
+            if resource not in resources:
+                continue
+
+            tasks = entity.get_tasks()
+            if len(tasks) == 0:
+                continue
+
+            # Compute span
+            start_time = min(blocking_sol.get_start_time(t) for t in tasks)
+            end_time = max(blocking_sol.get_end_time(t) for t in tasks)
+
+            if end_time <= start_time:
+                continue
+
+            amount = resources[resource]
+
+            # Add to appropriate array
+            if metadata.mode == BlockingMode.RESERVATION:
+                span_blocking_reservation[start_time:end_time] += amount
+            else:
+                span_blocking_active[start_time:end_time] += amount
+
+            # Store annotation
+            entity_str = _entity_to_string(entity)
+            label = metadata.description or f"Span: {entity_str}"
+            span_annotations.append((start_time, end_time, label, metadata.mode))
+
+            # Also add to global list (check if not already added)
+            annotation_tuple = (start_time, end_time, label, metadata.mode)
+            if annotation_tuple not in all_span_annotations:
+                all_span_annotations.append(annotation_tuple)
+
+        # 2. Plot stacked consumption
+        times = np.arange(horizon)
+
+        # Base: task consumption
+        ax[i].fill_between(
+            times,
+            0,
+            task_consumption,
+            step="post",
+            color="steelblue",
+            alpha=0.5,
+            label="Task consumption",
+        )
+
+        # Layer 1: Gap blocking (RESERVATION)
+        base1 = task_consumption.copy()
+        ax[i].fill_between(
+            times,
+            base1,
+            base1 + gap_blocking_reservation,
+            step="post",
+            color="orange",
+            alpha=0.4,
+            hatch="///",
+            edgecolor="darkorange",
+            label="Gap blocking (RESERVATION)",
+        )
+
+        # Layer 2: Gap blocking (ACTIVE)
+        base2 = base1 + gap_blocking_reservation
+        ax[i].fill_between(
+            times,
+            base2,
+            base2 + gap_blocking_active,
+            step="post",
+            color="red",
+            alpha=0.4,
+            hatch="\\\\\\",
+            edgecolor="darkred",
+            label="Gap blocking (ACTIVE)",
+        )
+
+        # Layer 3: Span blocking (RESERVATION)
+        base3 = base2 + gap_blocking_active
+        ax[i].fill_between(
+            times,
+            base3,
+            base3 + span_blocking_reservation,
+            step="post",
+            color="purple",
+            alpha=0.3,
+            hatch="...",
+            edgecolor="darkviolet",
+            label="Span blocking (RESERVATION)",
+        )
+
+        # Layer 4: Span blocking (ACTIVE)
+        base4 = base3 + span_blocking_reservation
+        ax[i].fill_between(
+            times,
+            base4,
+            base4 + span_blocking_active,
+            step="post",
+            color="magenta",
+            alpha=0.3,
+            hatch="xxx",
+            edgecolor="darkmagenta",
+            label="Span blocking (ACTIVE)",
+        )
+
+        # 3. Plot total consumption line
+        total_consumption = (
+            task_consumption
+            + gap_blocking_reservation
+            + gap_blocking_active
+            + span_blocking_reservation
+            + span_blocking_active
+        )
+        ax[i].step(
+            times,
+            total_consumption,
+            where="post",
+            color="black",
+            linewidth=2,
+            label="Total consumption",
+        )
+
+        # 4. Plot capacity line
+        with_calendar = rcpsp_problem.is_varying_resource()
+        if not with_calendar:
+            ax[i].axhline(
+                y=rcpsp_problem.resources[resource],
+                linestyle="--",
+                color="darkgreen",
+                linewidth=2,
+                label=f"Capacity: {resource}",
+            )
+        else:
+            calendar = rcpsp_problem.resources[resource]  # type: ignore
+            calendar_array = np.array(
+                [calendar[min(t, len(calendar) - 1)] for t in times]
+            )  # type: ignore
+            ax[i].step(
+                times,
+                calendar_array,
+                where="post",
+                linestyle="--",
+                color="darkgreen",
+                linewidth=2,
+                label=f"Capacity: {resource}",
+            )
+
+        # 5. Add task labels
+        if show_task_labels:
+            sorted_tasks = sorted(
+                rcpsp_sol.rcpsp_schedule,
+                key=lambda x: rcpsp_sol.rcpsp_schedule[x]["start_time"],
+            )
+            for task in sorted_tasks:
+                start = rcpsp_sol.rcpsp_schedule[task]["start_time"]
+                end = rcpsp_sol.rcpsp_schedule[task]["end_time"]
+                cons = rcpsp_problem.mode_details[task][modes_dict[task]].get(
+                    resource, 0
+                )
+                if cons > 0 and end > start:
+                    # Find vertical position (middle of task consumption)
+                    y_pos = cons / 2
+                    x_pos = (start + end) / 2
+                    task_name = (
+                        rcpsp_problem.name_task.get(task, str(task))
+                        if hasattr(rcpsp_problem, "name_task")
+                        and rcpsp_problem.name_task
+                        else str(task)
+                    )
+                    ax[i].text(
+                        x_pos,
+                        y_pos,
+                        task_name,
+                        ha="center",
+                        va="center",
+                        fontsize=7,
+                        color="white",
+                        weight="bold",
+                        bbox=dict(
+                            boxstyle="round,pad=0.2",
+                            facecolor="steelblue",
+                            alpha=0.7,
+                            edgecolor="none",
+                        ),
+                    )
+
+        # 6. Add constraint annotations
+        if show_constraint_labels:
+            y_max = ax[i].get_ylim()[1]
+            annotation_y = y_max * 1.08
+
+            # Gap constraint annotations
+            for idx, (start, end, label, mode) in enumerate(gap_annotations):
+                mid = (start + end) / 2
+                color = "darkorange" if mode == BlockingMode.RESERVATION else "darkred"
+
+                # Draw span line at the bottom
+                ax[i].plot(
+                    [start, end],
+                    [annotation_y, annotation_y],
+                    color=color,
+                    lw=3,
+                    alpha=0.8,
+                )
+
+                # Add label with better visibility
+                ax[i].text(
+                    mid,
+                    annotation_y,
+                    f" G{idx + 1} ",
+                    ha="center",
+                    va="bottom",
+                    fontsize=9,
+                    color="white",
+                    weight="bold",
+                    bbox=dict(
+                        boxstyle="round,pad=0.4",
+                        facecolor=color,
+                        alpha=0.9,
+                        edgecolor="black",
+                        linewidth=1.5,
+                    ),
+                )
+
+            # Span constraint annotations
+            for idx, (start, end, label, mode) in enumerate(span_annotations):
+                mid = (start + end) / 2
+                color = (
+                    "darkviolet" if mode == BlockingMode.RESERVATION else "darkmagenta"
+                )
+                annotation_y_span = y_max * 1.20
+
+                # Draw span line
+                ax[i].plot(
+                    [start, end],
+                    [annotation_y_span, annotation_y_span],
+                    color=color,
+                    lw=3,
+                    alpha=0.8,
+                )
+
+                # Add label with better visibility
+                ax[i].text(
+                    mid,
+                    annotation_y_span,
+                    f" S{idx + 1} ",
+                    ha="center",
+                    va="bottom",
+                    fontsize=9,
+                    color="white",
+                    weight="bold",
+                    bbox=dict(
+                        boxstyle="round,pad=0.4",
+                        facecolor=color,
+                        alpha=0.9,
+                        edgecolor="black",
+                        linewidth=1.5,
+                    ),
+                )
+
+        # 7. Format axis
+        ax[i].set_ylabel(f"{resource}\n(units)", fontsize=9)
+        ax[i].grid(True, alpha=0.3)
+        ax[i].legend(loc="upper right", fontsize=7, ncol=2)
+
+        # Set y-limit to accommodate annotations
+        if show_constraint_labels and (gap_annotations or span_annotations):
+            current_ylim = ax[i].get_ylim()
+            ax[i].set_ylim(current_ylim[0], current_ylim[1] * 1.3)
+
+        if x_lim is None:
+            ax[i].set_xlim([0, horizon])
+        else:
+            ax[i].set_xlim(x_lim)
+
+    # 8. Add constraint legend as printed output (use global annotations)
+    if show_constraint_labels and (all_gap_annotations or all_span_annotations):
+        print("\n" + "=" * 80)
+        print("BLOCKING CONSTRAINT LEGEND")
+        print("=" * 80)
+
+        if all_gap_annotations:
+            print("\nGap Constraints (G):")
+            for idx, (start, end, label, mode) in enumerate(all_gap_annotations):
+                mode_str = mode.value.upper()
+                print(
+                    f"  G{idx + 1}: t=[{start:3d}-{end:3d}] {label} (mode: {mode_str})"
+                )
+
+        if all_span_annotations:
+            print("\nSpan Constraints (S):")
+            for idx, (start, end, label, mode) in enumerate(all_span_annotations):
+                mode_str = mode.value.upper()
+                print(
+                    f"  S{idx + 1}: t=[{start:3d}-{end:3d}] {label} (mode: {mode_str})"
+                )
+
+        print("=" * 80 + "\n")
+
+    ax[-1].set_xlabel("Time", fontsize=10)
+
+    # Adjust layout to prevent overlap
+    if fig is not None:
+        fig.tight_layout()
+
+    return fig  # type: ignore
+
+
+def _entity_to_string(entity) -> str:
+    """Convert scheduling entity to readable string.
+
+    Args:
+        entity: SchedulingEntity to convert
+
+    Returns:
+        Human-readable string representation
+    """
+    from discrete_optimization.generic_tasks_tools.entities import (
+        GroupEntity,
+        TaskEntity,
+        TaskModeEntity,
+    )
+
+    if isinstance(entity, TaskEntity):
+        return f"Task {entity.task}"
+    elif isinstance(entity, GroupEntity):
+        if entity.group_id is not None:
+            return f"Group {entity.group_id}"
+        else:
+            task_list = sorted(list(entity.tasks), key=str)
+            if len(task_list) <= 3:
+                return f"Group[{', '.join(str(t) for t in task_list)}]"
+            else:
+                return f"Group[{task_list[0]}, ..., {task_list[-1]}] ({len(task_list)} tasks)"
+    elif isinstance(entity, TaskModeEntity):
+        return f"Task {entity.task} (mode {entity.mode})"
+    else:
+        return str(entity)

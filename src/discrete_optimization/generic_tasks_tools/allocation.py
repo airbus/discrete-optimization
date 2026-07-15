@@ -135,6 +135,16 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
                         "but it is not compatible with it."
                     )
                     return False
+
+        for set_of_task in self.problem.get_same_unary_allocation():
+            set_unary = set(
+                [frozenset(self.get_task_allocation(t)) for t in set_of_task]
+            )
+            if len(set_unary) >= 2:
+                logger.debug(
+                    f"Tasks {set_of_task} don't have the same unary resource allocation"
+                )
+            return False
         return True
 
 
@@ -180,6 +190,23 @@ class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
 
         """
         return True
+
+    def compatible_unary_resources(self, task: Task) -> set[UnaryResource]:
+        return {
+            ur
+            for ur in self.unary_resources_list
+            if self.is_compatible_task_unary_resource(task, ur)
+        }
+
+    def get_same_unary_allocation(self) -> list[set[Task]]:
+        """
+        a element (t1, t2, t3..) of this means corresponds to task for which we want the same resource to
+        be allocated.
+        WARNING:
+        To be overriden if meaningful in the problem
+        :return:
+        """
+        return []
 
 
 class AllocationCpSolver(TasksCpSolver[Task], Generic[Task, UnaryResource]):

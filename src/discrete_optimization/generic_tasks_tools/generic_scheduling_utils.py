@@ -103,6 +103,8 @@ class Objective(Enum):
     """
     COST = "cost"
     """Cost of the solution taking into account mode choice and resources consumptions."""
+    DISPERSION_WORKLOAD = "dispersion_workload"
+
     CUSTOM = "custom_objective"
 
 

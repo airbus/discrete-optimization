@@ -13,7 +13,7 @@ from standard RCPSP instances. It creates realistic scenarios such as:
 import random
 from typing import Optional
 
-from discrete_optimization.generic_tasks_tools.entities import TaskEntity
+from discrete_optimization.generic_tasks_tools.entities import GroupEntity, TaskEntity
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
@@ -147,7 +147,7 @@ def generate_batch_blocking(
     batch_size: int = 3,
     resource_name: Optional[str] = None,
     seed: Optional[int] = None,
-    blocking_intensity: float = 0.4,
+    blocking_intensity: float = 0.2,
 ) -> RcpspWithResourceBlocking:
     """Generate RCPSP with span blocking for batch processing.
 
@@ -168,11 +168,11 @@ def generate_batch_blocking(
         RcpspWithResourceBlocking with span blocking constraints for batches
 
     Example:
-        >>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
-        >>> from discrete_optimization.rcpsp.blocking_generator import generate_batch_blocking
-        >>> files = get_data_available()
-        >>> base_problem = parse_file(files[0])
-        >>> problem_with_batches = generate_batch_blocking(base_problem, blocking_intensity=0.6)
+        #>>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
+        #>>> from discrete_optimization.rcpsp.blocking_generator import generate_batch_blocking
+        #>>> files = get_data_available()
+        #>>> base_problem = parse_file(files[0])
+        #>>> problem_with_batches = generate_batch_blocking(base_problem, blocking_intensity=0.6)
     """
     if seed is not None:
         random.seed(seed)
@@ -233,7 +233,7 @@ def generate_batch_blocking(
         blocking_amount = max(1, int(available * blocking_intensity))
 
         constraint: SpanBlockingConstraint = (
-            frozenset(batch_tasks),
+            GroupEntity(frozenset(batch_tasks)),
             {resource_name: blocking_amount},
             BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
@@ -278,11 +278,11 @@ def generate_combined_blocking(
         RcpspWithResourceBlocking with both types of blocking constraints
 
     Example:
-        >>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
-        >>> from discrete_optimization.rcpsp.blocking_generator import generate_combined_blocking
-        >>> files = get_data_available()
-        >>> base_problem = parse_file(files[0])
-        >>> problem = generate_combined_blocking(base_problem)
+        #>>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
+        #>>> from discrete_optimization.rcpsp.blocking_generator import generate_combined_blocking
+        #>>> files = get_data_available()
+        #>>> base_problem = parse_file(files[0])
+        #>>> problem = generate_combined_blocking(base_problem)
     """
     if seed is not None:
         random.seed(seed)

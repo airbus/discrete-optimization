@@ -534,6 +534,8 @@ class GenericSchedulingProblem(
                 )
             case Objective.COST:
                 return variable.compute_cost()
+            case Objective.DISPERSION_WORKLOAD:
+                return variable.compute_workload_dispersion()
             case _:
                 raise NotImplementedError()
 
@@ -637,6 +639,7 @@ class GenericSchedulingProblem(
         no_overlap: bool = True,
         forbidden_intervals: bool = True,
         resource_blocking: bool = True,
+        mode_constraints: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -695,6 +698,7 @@ class GenericSchedulingProblem(
             and (not forbidden_intervals or variable.check_forbidden_intervals())
             # resource blocking
             and (not resource_blocking or variable.check_blocking_constraints())
+            and (not mode_constraints or variable.check_mode_constraint())
         )
 
 
@@ -744,3 +748,13 @@ class GenericSchedulingSolution(
             )
             for task in self.problem.tasks_list
         )
+
+    def compute_workload_dispersion(self) -> int:
+        workload = [0 for i in range(len(self.problem.unary_resources_list))]
+        for task in self.problem.tasks_list:
+            urs = self.get_task_allocation(task)
+            duration = self.get_duration(task)
+            for ur in urs:
+                workload[self.problem.get_index_from_unary_resource(ur)] += duration
+        nz = [w for w in workload if w > 0]
+        return max(nz) - min(nz)

@@ -29,6 +29,7 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
 )
+from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     FlexibleGapBlockingConstraint,
     ResourceBlockingProblem,
@@ -357,6 +358,51 @@ class RcpspProblem(
     def update_resource_availabilities(self) -> None:
         super().update_resource_availabilities()
         self.get_resource_availabilities.cache_clear()
+
+    def get_mode_constraints(
+        self,
+    ) -> list[tuple[ModeConstraintType, list[tuple[Task, int]]]]:
+        constraints = []
+        if self.special_constraints is not None:
+            if self.special_constraints.pair_mode_constraint is not None:
+                pmc = self.special_constraints.pair_mode_constraint
+                if pmc.allowed_mode_assignment is not None:
+                    for t1, t2 in pmc.allowed_mode_assignment:
+                        for m1, m2 in pmc.allowed_mode_assignment[(t1, t2)]:
+                            constraints.append(
+                                (
+                                    ModeConstraintType.SORTED_IMPLICATION,
+                                    [(t1, m1), (t2, m2)],
+                                )
+                            )
+                if pmc.score_mode is not None:
+                    if pmc.same_score_mode is not None:
+                        for t1, t2 in pmc.same_score_mode:
+                            modes_1 = [
+                                (m, pmc.score_mode[t, m])
+                                for t, m in pmc.score_mode
+                                if t == t1
+                            ]
+                            modes_2 = [
+                                (m, pmc.score_mode[t, m])
+                                for t, m in pmc.score_mode
+                                if t == t2
+                            ]
+                            for m1, s1 in modes_1:
+                                x = next(
+                                    ((m2, s2) for m2, s2 in modes_2 if s2 == s1), None
+                                )
+                                if x is not None:
+                                    constraints.append(
+                                        (
+                                            ModeConstraintType.SORTED_IMPLICATION,
+                                            [(t1, m1), (t2, x[0])],
+                                        )
+                                    )
+
+                    same_score_mode: Optional[set[tuple[Hashable, Hashable]]] = (None,)
+                    score_mode: dict[tuple[Hashable, int], int] = (None,)
+        return constraints
 
     @property
     def tasks_list(self) -> list[Task]:

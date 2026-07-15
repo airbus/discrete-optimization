@@ -90,7 +90,7 @@ FlexibleGapBlockingConstraint = tuple[
 ]
 
 SpanBlockingConstraint = tuple[
-    frozenset[Hashable],  # tasks
+    SchedulingEntity,  # tasks
     dict[Hashable, int],  # resources
     BlockingConstraintMetadata,
 ]
@@ -148,7 +148,7 @@ class ResourceBlockingProblem(
         self,
     ) -> list[
         tuple[
-            frozenset[Task], dict[CumulativeResource, int], BlockingConstraintMetadata
+            SchedulingEntity, dict[CumulativeResource, int], BlockingConstraintMetadata
         ]
     ]:
         """Return span blocking constraints.
@@ -414,10 +414,10 @@ class ResourceBlockingSolution(
                         return False
 
         # Validate span blocking ACTIVE mode
-        for tasks, resources, metadata in self.problem.get_span_blocking_constraints():
-            if len(tasks) == 0:
+        for entity, resources, metadata in self.problem.get_span_blocking_constraints():
+            if len(entity.get_tasks()) == 0:
                 continue
-
+            tasks = entity.get_tasks()
             start_time = min(solution.get_start_time(t) for t in tasks)
             end_time = max(solution.get_end_time(t) for t in tasks)
 
@@ -568,11 +568,11 @@ class ResourceBlockingSolution(
             consumption[start_time:end_time] += amount
 
         # Process span blocking constraints
-        for tasks, resources, metadata in self.problem.get_span_blocking_constraints():
+        for entity, resources, metadata in self.problem.get_span_blocking_constraints():
             # Skip if wrong mode or resource not in constraint
             if metadata.mode != mode or resource not in resources:
                 continue
-
+            tasks = entity.get_tasks()
             if len(tasks) == 0:
                 continue
 

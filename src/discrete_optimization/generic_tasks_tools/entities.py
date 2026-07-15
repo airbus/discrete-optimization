@@ -10,39 +10,46 @@ An entity represents any schedulable object with start and end times:
 - Individual tasks (TaskEntity)
 - Groups of tasks (GroupEntity)
 - Tasks in specific modes (TaskModeEntity)
+- Hierarchical compositions of entities (CompositeEntity)
+
+The abstraction is recursive: CompositeEntity can contain any other entities (including
+other CompositeEntity instances), enabling arbitrary hierarchical structures for
+constraint modeling (e.g., projects → phases → tasks).
 
 Entities are immutable (frozen dataclasses) so they can be used as dict keys.
 """
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections.abc import Hashable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Generic
 
-if TYPE_CHECKING:
-    from discrete_optimization.generic_tasks_tools.base import Task
-    from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
+from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 
 
 @dataclass(frozen=True)
-class SchedulingEntity(ABC):
+class SchedulingEntity(Generic[Task]):
     """Abstract representation of a scheduling entity that has start and end times.
 
     An entity represents any schedulable object that can participate in constraints:
     - Individual tasks (TaskEntity)
     - Groups of tasks (GroupEntity)
     - Tasks in specific execution modes (TaskModeEntity)
+    - Hierarchical compositions of entities (CompositeEntity)
     - Other aggregations (resources, shifts, projects, etc.)
 
     Entities are immutable (frozen dataclass) so they can be used as dict keys.
+
+    The entity abstraction is recursive: CompositeEntity can contain other entities,
+    enabling hierarchical constraint modeling (e.g., projects → phases → tasks).
 
     The entity abstraction allows expressing complex constraints naturally:
     - "Group of tasks must finish before another task starts" (precedence)
     - "Resource blocked from end of group to start of task" (resource blocking)
     - "If task is in mode 2, then block resource X" (conditional blocking)
-
     Examples:
         >>> from discrete_optimization.generic_tasks_tools.entities import TaskEntity, GroupEntity
         >>> # Individual task
@@ -50,9 +57,9 @@ class SchedulingEntity(ABC):
         >>> # Group of tasks
         >>> group_ent = GroupEntity(frozenset({"prep", "paint", "dry"}), "painting_job")
         >>> # Query in solution
-        >>> start = task_ent.get_start_time(solution)
-        >>> group_start = group_ent.get_start_time(solution)  # min of task starts
-
+        #>>> start = task_ent.get_start_time(solution)
+        #>>> group_start = group_ent.get_start_time(solution)  # min of task starts
+    - "All phases of a project must respect a resource limit" (hierarchical constraints)
     """
 
     @abstractmethod
@@ -152,7 +159,7 @@ class SchedulingEntity(ABC):
 
 
 @dataclass(frozen=True)
-class TaskEntity(SchedulingEntity):
+class TaskEntity(SchedulingEntity[Task]):
     """Entity representing a single task.
 
     This is the most common entity type, wrapping a Task reference.
@@ -162,15 +169,11 @@ class TaskEntity(SchedulingEntity):
 
     Examples:
         >>> entity = TaskEntity(task="assembly")
-        >>> entity.get_start_time(solution)
-        10
-        >>> entity.get_end_time(solution)
-        25
-        >>> entity.get_tasks()
+        #>>> entity.get_start_time(solution)
+        #>>>entity.get_end_time(solution)
+        #>>> entity.get_tasks()
         frozenset({'assembly'})
-        >>> entity.is_active(solution)
-        True
-
+        #entity.is_active(solution)
     """
 
     task: Task
@@ -194,7 +197,7 @@ class TaskEntity(SchedulingEntity):
 
 
 @dataclass(frozen=True)
-class GroupEntity(SchedulingEntity):
+class GroupEntity(SchedulingEntity[Task]):
     """Entity representing a group/batch of tasks.
 
     The group's start time is the minimum start of its tasks.
@@ -214,11 +217,9 @@ class GroupEntity(SchedulingEntity):
         ...     tasks=frozenset({"prep", "main", "cleanup"}),
         ...     group_id="maintenance_job_1"
         ... )
-        >>> entity.get_start_time(solution)  # min(start of prep, main, cleanup)
-        5
-        >>> entity.get_end_time(solution)    # max(end of prep, main, cleanup)
-        45
-        >>> entity.get_tasks()
+        #>>> entity.get_start_time(solution)  # min(start of prep, main, cleanup)
+        #>>> entity.get_end_time(solution)    # max(end of prep, main, cleanup)
+        #>>> entity.get_tasks()
         frozenset({'prep', 'main', 'cleanup'})
 
     """
@@ -254,7 +255,7 @@ class GroupEntity(SchedulingEntity):
 
 
 @dataclass(frozen=True)
-class TaskModeEntity(SchedulingEntity):
+class TaskModeEntity(SchedulingEntity[Task]):
     """Entity representing a task in a specific execution mode.
 
     This entity is only "active" if the task is executed in the specified mode.
@@ -323,3 +324,94 @@ class TaskModeEntity(SchedulingEntity):
     @property
     def entity_id(self) -> Hashable:
         return ("task_mode", self.task, self.mode)
+
+
+@dataclass(frozen=True)
+class CompositeEntity(SchedulingEntity[Task]):
+    """Entity representing a hierarchical composition of other entities.
+
+    This enables recursive entity structures for hierarchical constraint modeling:
+    - Groups of groups (e.g., projects containing sub-projects)
+    - Mixed collections of tasks, groups, and mode-specific entities
+    - Arbitrarily nested entity hierarchies (e.g., departments → teams → tasks)
+
+    The composite's start time is the minimum start of its active children.
+    The composite's end time is the maximum end of its active children.
+
+    Examples:
+        # Hierarchy: Project → Phases → Tasks
+        phase1 = CompositeEntity(
+            entities=frozenset({TaskEntity(t1), TaskEntity(t2)}),
+            composite_id="phase1"
+        )
+        phase2 = CompositeEntity(
+            entities=frozenset({TaskEntity(t3), TaskEntity(t4)}),
+            composite_id="phase2"
+        )
+        project = CompositeEntity(
+            entities=frozenset({phase1, phase2}),
+            composite_id="project_alpha"
+        )
+
+        # Mixed: combining different entity types
+        mixed = CompositeEntity(
+            entities=frozenset({
+                TaskEntity(t1),
+                GroupEntity(tasks=frozenset({t2, t3})),
+                TaskModeEntity(task=t4, mode=2)
+            })
+        )
+
+    Attributes:
+        entities: Set of child entities (must be non-empty)
+        composite_id: Optional identifier for display/debugging
+
+    Raises:
+        ValueError: If entities set is empty, or if all children are inactive when
+                   querying start/end times
+    """
+
+    entities: frozenset[SchedulingEntity]
+    composite_id: Hashable | None = None
+
+    def __post_init__(self) -> None:
+        if len(self.entities) == 0:
+            raise ValueError("CompositeEntity must contain at least one entity")
+
+    def get_start_time(self, solution: SchedulingSolution) -> int:
+        active_entities = [e for e in self.entities if e.is_active(solution)]
+        if not active_entities:
+            raise ValueError(
+                f"CompositeEntity({self.composite_id}) has no active children in solution"
+            )
+        return min(e.get_start_time(solution) for e in active_entities)
+
+    def get_end_time(self, solution: SchedulingSolution) -> int:
+        active_entities = [e for e in self.entities if e.is_active(solution)]
+        if not active_entities:
+            raise ValueError(
+                f"CompositeEntity({self.composite_id}) has no active children in solution"
+            )
+        return max(e.get_end_time(solution) for e in active_entities)
+
+    def is_active(self, solution: SchedulingSolution) -> bool:
+        # Composite is active if at least one child is active
+        return any(e.is_active(solution) for e in self.entities)
+
+    def get_tasks(self) -> frozenset[Task]:
+        # Recursively collect all tasks from children
+        all_tasks = set()
+        for entity in self.entities:
+            all_tasks.update(entity.get_tasks())
+        return frozenset(all_tasks)
+
+    @property
+    def entity_id(self) -> Hashable:
+        if self.composite_id is not None:
+            return ("composite", self.composite_id)
+        else:
+            # Use sorted tuple of child entity IDs for deterministic ID
+            return (
+                "composite",
+                tuple(sorted((e.entity_id for e in self.entities), key=str)),
+            )

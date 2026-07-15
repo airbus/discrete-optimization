@@ -22,6 +22,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 )
 from discrete_optimization.generic_tasks_tools.multimode import (
     SinglemodeSolution,
+    WithoutModeConstraintSingleModeProblem,
 )
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     SinglemodeSchedulingProblem,
@@ -133,6 +134,7 @@ class AllocSchedulingProblem(
     WithoutNoOverlapProblem[Task],
     WithoutResourceBlockingProblem[Task, NonSkillCumulativeResource, UnaryResource],
     SinglemodeSchedulingProblem[Task],
+    WithoutModeConstraintSingleModeProblem[Task],
 ):
     def __init__(
         self,
@@ -191,6 +193,10 @@ class AllocSchedulingProblem(
 
         self.horizon_start_shift = horizon_start_shift
         self.update_problem()
+
+    def get_same_unary_allocation(self) -> list[set[Task]]:
+        """Overridden from base AllocationProblem class"""
+        return self.same_allocation
 
     @property
     def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
@@ -976,6 +982,7 @@ def transform_to_multimode_rcpsp(
             )
             for team in problem.calendar_team
         }
+        resources["teams"] = sum([resources[t] for t in resources])
     else:
         resources = {team: 1 for team in problem.calendar_team}
     non_renewable_resources: list[str] = []
@@ -992,6 +999,7 @@ def transform_to_multimode_rcpsp(
             mode_details[activity][modes[j]] = {
                 "duration": problem.tasks_data[activity].duration_task,
                 subset_teams[j]: 1,
+                "teams": 1,
             }  # "consume" this team
             ac_mode_to_team[(activity, modes[j])] = subset_teams[j]
     mode_details["source"] = {1: {"duration": 0}}
