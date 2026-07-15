@@ -102,9 +102,9 @@ class LsGenericRcpspSolver(GenericRcpspSolver):
                 mutator=mixed_mutation,
                 restart_handler=res,
                 temperature_handler=TemperatureSchedulingFactor(
-                    temperature=kwargs["temperature"],
+                    initial_temperature=kwargs["temperature"],
                     restart_handler=res,
-                    coefficient=kwargs.get("decay_temperature", 0.9999),
+                    cooling_factor=kwargs.get("decay_temperature", 0.9999),
                 ),
                 mode_mutation=ModeMutation.MUTATE,
                 params_objective_function=self.params_objective_function,

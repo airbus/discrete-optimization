@@ -6,7 +6,7 @@ import logging
 from typing import Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import BoundsProviderMixin, SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -128,5 +128,45 @@ class ProblemEvaluateLogger(Callback):
                     msg=f"Iteration #{self.nb_iteration}, \nlast sol evaluate={solver.problem.evaluate(res[-1][0])}, "
                     f"\n Satisfy={solver.problem.satisfy(res[-1][0])}",
                     level=self.step_verbosity_level,
+                )
+                self.current_res_len = nb_res
+
+
+class ObjectiveBoundLogger(Callback):
+    def __init__(
+        self,
+        step_verbosity_level: int = logging.DEBUG,
+        end_verbosity_level: int = logging.INFO,
+    ):
+        """
+
+        Args:
+            step_verbosity_level:
+            end_verbosity_level:
+        """
+        self.step_verbosity_level = step_verbosity_level
+        self.end_verbosity_level = end_verbosity_level
+        self.nb_iteration = 0
+        self.current_res_len = 0
+
+    def on_solve_end(self, res: ResultStorage, solver: SolverDO):
+        if len(res) > 0 and isinstance(solver, BoundsProviderMixin):
+            logger.log(
+                msg=f"Obj={solver.get_current_best_internal_objective_value()}, "
+                f"Bound={(solver.get_current_best_internal_objective_bound(),)}",
+                level=self.end_verbosity_level,
+            )
+
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: SolverDO
+    ) -> Optional[bool]:
+        self.nb_iteration += 1
+        nb_res = len(res)
+        if nb_res > 0:
+            if nb_res > self.current_res_len:
+                logger.log(
+                    msg=f"Obj={solver.get_current_best_internal_objective_value()}, "
+                    f"Bound={(solver.get_current_best_internal_objective_bound(),)}",
+                    level=self.end_verbosity_level,
                 )
                 self.current_res_len = nb_res

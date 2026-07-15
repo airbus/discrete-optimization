@@ -51,7 +51,6 @@ JSPLIB_REPO_URL_SHA1 = "eea2b60dd7e2f5c907ff7302662c61812eb7efdf"
 
 MSLIB_DATASET_URL = "https://github.com/MarioVanhoucke/MSLIB-Multi-Skilled-Resource-Constrained-Project-Library/releases/download/v2.2/MSLIB_v2_2.zip"
 MSLIB_DATA_DIR = "MSLIB_v2_2"
-
 MMLIB_DATASET_URL = "https://www.projectmanagement.ugent.be/sites/default/files/datasets/MMRCPSP/MMLIB.zip"
 MMLIB_DATASET_RELATIVE_PATH = "MMLIB.zip"
 
@@ -120,6 +119,10 @@ FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
 
+LOT_SIZING_URLS = [
+    "https://www.csplib.org/Problems/prob058/data/pspInstances.zip",
+    "https://www.csplib.org/Problems/prob058/data/UniUD-LotSizingLargeInstances.zip",
+]
 
 ERROR_MSG_MISSING_DATASETS = (
     "\nYou probably have not downloaded the needed dataset.\n"
@@ -874,6 +877,29 @@ def fetch_data_from_multibatching(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_lotsizing(data_home: Optional[str] = None):
+    """Fetch lot-sizing dataset from csplib website"""
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get rcpsp_multiskill data directory
+    lotsizing_dir = f"{data_home}/lotsizing"
+    os.makedirs(lotsizing_dir, exist_ok=True)
+
+    try:
+        for lot_sizing_url in LOT_SIZING_URLS:
+            # download dataset
+            local_file_path, headers = urlretrieve(lot_sizing_url)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                with zipfile.ZipFile(local_file_path) as zipf:
+                    zipf.extractall(path=lotsizing_dir)
+    finally:
+        # remove temporary files
+        urlcleanup()
+    for folder in glob.glob(f"{lotsizing_dir}/__MACOSX"):
+        shutil.rmtree(folder)
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -900,6 +926,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_rcalb_l(data_home=data_home)
     fetch_data_from_ovensched_repo(data_home=data_home)
     fetch_data_from_multibatching(data_home=data_home)
+    fetch_data_lotsizing(data_home=data_home)
 
 
 if __name__ == "__main__":

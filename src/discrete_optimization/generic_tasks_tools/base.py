@@ -37,7 +37,7 @@ class TasksProblem(Problem, Generic[Task]):
 
 
 class TasksSolution(Solution, Generic[Task]):
-    """Base class for sheduling/allocation solutions."""
+    """Base class for scheduling/allocation solutions."""
 
     problem: TasksProblem[Task]
 

@@ -75,7 +75,7 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
         retrieve_stats: bool = False,
         **kwargs: Any,
     ) -> ResultStorage:
-        """Solve the problem with a CpSat solver drom ortools library.
+        """Solve the problem with a CpSat solver from ortools library.
 
         Args:
             callbacks: list of callbacks used to hook into the various stage of the solve

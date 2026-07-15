@@ -84,9 +84,9 @@ def test_sa_with_callbacks(caplog, random_seed):
         nb_iteration_no_improvement=nb_iteration_no_improvement_max
     )
     temperature_handler = TemperatureSchedulingFactor(
-        temperature=initial_temperature,
+        initial_temperature=initial_temperature,
         restart_handler=restart_handler,
-        coefficient=coefficient_temperature,
+        cooling_factor=coefficient_temperature,
     )
 
     class SleepCallback(Callback):
@@ -164,9 +164,9 @@ def test_sa_with_optuna_callback(random_seed):
             nb_iteration_no_improvement=nb_iteration_no_improvement_max
         )
         temperature_handler = TemperatureSchedulingFactor(
-            temperature=initial_temperature,
+            initial_temperature=initial_temperature,
             restart_handler=restart_handler,
-            coefficient=coefficient_temperature,
+            cooling_factor=coefficient_temperature,
         )
 
         sa = SimulatedAnnealing(
