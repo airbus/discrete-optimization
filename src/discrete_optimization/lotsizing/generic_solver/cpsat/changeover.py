@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from enum import Enum
 
-from discrete_optimization.lotsizing.generic_solver.cpsat.lotsing_solver_cpsat import (
+from discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat import (
     Item,
     LotSizingCpSatSolver,
 )

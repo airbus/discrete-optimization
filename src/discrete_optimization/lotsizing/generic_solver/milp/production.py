@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 """Production constraints and costs for MILP generic lot sizing solver."""
 
-from discrete_optimization.lotsizing.generic_solver.milp.lotsing_solver_milp import (
+from discrete_optimization.lotsizing.generic_solver.milp.lotsizing_solver_milp import (
     Item,
     LotSizingMilpSolver,
 )

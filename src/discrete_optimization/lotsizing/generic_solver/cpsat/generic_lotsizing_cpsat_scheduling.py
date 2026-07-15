@@ -32,7 +32,7 @@ from discrete_optimization.lotsizing.generic_lotsizing import (
     GenericLotSizingProblem,
     Item,
 )
-from discrete_optimization.lotsizing.generic_solver.cpsat.lotsing_solver_cpsat import (
+from discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat import (
     LotSizingCpSatSolver,
 )
 from discrete_optimization.lotsizing.production_solution import (
