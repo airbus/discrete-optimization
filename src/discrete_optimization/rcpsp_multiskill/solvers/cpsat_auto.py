@@ -22,12 +22,14 @@ from discrete_optimization.rcpsp_multiskill.problem import (
     NB_EMPLOYEES_LB,
     CumulativeResource,
     MultiskillRcpspProblem,
-    MultiskillRcpspSolution,
     NonRenewableResource,
     NonSkillCumulativeResource,
     Skill,
     Task,
     UnaryResource,
+)
+from discrete_optimization.rcpsp_multiskill.transformations.generic_scheduling_impl import (
+    transform_solution_from_raw_generic_to_rcpsp_ms,
 )
 
 logger = logging.getLogger(__name__)
@@ -63,25 +65,8 @@ class CpSatAutoMultiskillRcpspSolver(
         Returns:
 
         """
-        modes_dict = {}
-        schedule = {}
-        employee_usage = {}
-        for task, task_variable in raw_sol.task_variables.items():
-            schedule[task] = {
-                "start_time": task_variable.start,
-                "end_time": task_variable.end,
-            }
-            modes_dict[task] = task_variable.mode
-            employee_usage[task] = {
-                worker: skills
-                for worker, skills in task_variable.allocated.items()
-                if len(skills) > 0
-            }
-        sol = MultiskillRcpspSolution(
-            problem=self.problem,
-            schedule=schedule,
-            modes=modes_dict,
-            employee_usage=employee_usage,
+        sol = transform_solution_from_raw_generic_to_rcpsp_ms(
+            raw_sol=raw_sol, problem=self.problem
         )
         sol._internal_obj = raw_sol.metadata
         return sol
@@ -103,7 +88,9 @@ class CpSatAutoMultiskillRcpspSolver(
             the task variables for the intermediate solution
 
         """
-        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
+        raw_sol: RawSolution[Task, UnaryResource, Skill] = (
+            super().retrieve_tasks_variables(cpsolvercb)
+        )
 
         # internal objective
         raw_sol.metadata["makespan"] = cpsolvercb.value(
