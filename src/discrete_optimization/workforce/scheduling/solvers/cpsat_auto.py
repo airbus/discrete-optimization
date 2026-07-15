@@ -267,45 +267,6 @@ class CPSatAutoAllocSchedulingSolver(
         self.variables = {}
         self.variables["objectives"] = {}
 
-        # Same allocation constraints
-        for common_tasks in self.problem.same_allocation:
-            common_teams = [
-                team
-                for team in self.problem.unary_resources_list
-                if all(
-                    self.is_compatible_task_unary_resource(
-                        task=task, unary_resource=team
-                    )
-                    for task in common_tasks
-                )
-            ]
-
-            for team in common_teams:
-                self.cp_model.add_allowed_assignments(
-                    [
-                        self.get_task_unary_resource_is_present_variable(
-                            task=task, unary_resource=team
-                        )
-                        for task in common_tasks
-                    ],
-                    [
-                        tuple([1] * len(common_tasks)),
-                        tuple([0] * len(common_tasks)),
-                    ],
-                )
-            # Redundant
-            list_common_tasks = list(common_tasks)
-            for team in common_teams:
-                for i_task in range(len(list_common_tasks) - 1):
-                    self.cp_model.add(
-                        self.get_task_unary_resource_is_present_variable(
-                            task=list_common_tasks[i_task], unary_resource=team
-                        )
-                        == self.get_task_unary_resource_is_present_variable(
-                            task=list_common_tasks[i_task + 1], unary_resource=team
-                        )
-                    )
-
         # Overlap constraints
         if additional_constraints is not None:
             for team in self.problem.unary_resources_list:

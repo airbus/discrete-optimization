@@ -26,6 +26,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Penalty,
     RawSolution,
 )
+from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     FlexibleGapBlockingConstraint,
     SpanBlockingConstraint,
@@ -98,6 +99,10 @@ class GenericSchedulingImplProblem(
             list[FlexibleGapBlockingConstraint]
         ] = None,
         span_blocking_constraints: Optional[list[SpanBlockingConstraint]] = None,
+        mode_constraints: Optional[
+            list[tuple[ModeConstraintType, list[tuple[Task, int]]]]
+        ] = None,
+        same_unary_allocation: Optional[list[set[Task]]] = None,
         objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
         custom_evaluate_fn: Optional[
             Callable[[GenericSchedulingImplSolution], int]
@@ -256,6 +261,14 @@ class GenericSchedulingImplProblem(
             self.span_blocking_constraints: list[SpanBlockingConstraint] = []
         else:
             self.span_blocking_constraints = span_blocking_constraints
+        if mode_constraints is None:
+            self.mode_constraints = []
+        else:
+            self.mode_constraints = mode_constraints
+        if same_unary_allocation is None:
+            self.same_unary_allocation: list[set[Task]] = []
+        else:
+            self.same_unary_allocation = same_unary_allocation
         if isinstance(objective, Objective):
             self.weighted_objectives: tuple[tuple[Objective, int], ...] = (
                 (objective, OBJECTIVE_DEFAULT_WEIGHTS[objective]),
@@ -368,6 +381,14 @@ class GenericSchedulingImplProblem(
     def get_span_blocking_constraints(self) -> list[SpanBlockingConstraint]:
         """Return span blocking constraints."""
         return self.span_blocking_constraints
+
+    def get_mode_constraints(
+        self,
+    ) -> list[tuple[ModeConstraintType, list[tuple[Task, int]]]]:
+        return self.mode_constraints
+
+    def get_same_unary_allocation(self) -> list[set[Task]]:
+        return self.same_unary_allocation
 
     @wrapt.lru_cache(maxsize=None)
     def get_resource_availabilities(

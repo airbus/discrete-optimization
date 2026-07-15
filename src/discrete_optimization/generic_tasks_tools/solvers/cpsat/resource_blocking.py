@@ -4,7 +4,7 @@
 
 from typing import Any, Generic
 
-from ortools.sat.python.cp_model import IntervalVar, LinearExprT
+from ortools.sat.python.cp_model import IntervalVar, IntVar
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.entities import (
@@ -14,10 +14,14 @@ from discrete_optimization.generic_tasks_tools.entities import (
     TaskModeEntity,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    CumulativeResource,
+    GenericSchedulingProblem,
+)
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    BlockingConstraintMetadata,
     BlockingMode,
     CumulativeResource,
-    ResourceBlockingProblem,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
     CumulativeResource,
@@ -47,86 +51,21 @@ class ResourceBlockingCpSatSolver(
     for blocking intervals without double-counting consumption.
     """
 
-    problem: ResourceBlockingProblem[Task, CumulativeResource, OtherCalendarResource]
+    problem: GenericSchedulingProblem
     _blocking_intervals: dict
+    _starts_entity: dict[SchedulingEntity, IntVar]
+    _ends_entity: dict[SchedulingEntity, IntVar]
+    _durations_entity: dict[SchedulingEntity, IntVar]
+    _intervals_entity: dict[SchedulingEntity, IntVar]
+    _bounds_entity: dict[SchedulingEntity, IntVar]
 
     def init_model(self, **kwargs: Any) -> None:
         """Initialize model and reset blocking interval storage."""
         super().init_model(**kwargs)
         self._blocking_intervals: dict[
-            CumulativeResource, list[tuple[IntervalVar, int]]
+            CumulativeResource,
+            list[tuple[IntervalVar, int, BlockingConstraintMetadata]],
         ] = {}
-
-    def get_entity_start_variable(self, entity: SchedulingEntity) -> LinearExprT:
-        """Get the start time variable for a scheduling entity.
-
-        Args:
-            entity: The scheduling entity (TaskEntity, GroupEntity, etc.)
-
-        Returns:
-            LinearExprT representing the start time
-        """
-        if isinstance(entity, TaskEntity):
-            return self.get_task_start_or_end_variable(
-                task=entity.task, start_or_end=StartOrEnd.START
-            )
-        elif isinstance(entity, GroupEntity):
-            # For groups, start is min of task starts
-            return self.cp_model.NewIntVar(
-                lb=0,
-                ub=self.get_makespan_upper_bound(),
-                name=f"group_start_{entity.entity_id}",
-            )
-        elif isinstance(entity, TaskModeEntity):
-            return self.get_task_start_or_end_variable(
-                task=entity.task, start_or_end=StartOrEnd.START
-            )
-        else:
-            raise NotImplementedError(f"Unsupported entity type: {type(entity)}")
-
-    def get_entity_end_variable(self, entity: SchedulingEntity) -> LinearExprT:
-        """Get the end time variable for a scheduling entity.
-
-        Args:
-            entity: The scheduling entity (TaskEntity, GroupEntity, etc.)
-
-        Returns:
-            LinearExprT representing the end time
-        """
-        if isinstance(entity, TaskEntity):
-            return self.get_task_start_or_end_variable(
-                task=entity.task, start_or_end=StartOrEnd.END
-            )
-        elif isinstance(entity, GroupEntity):
-            # For groups, end is max of task ends
-            return self.cp_model.NewIntVar(
-                lb=0,
-                ub=self.get_makespan_upper_bound(),
-                name=f"group_end_{entity.entity_id}",
-            )
-        elif isinstance(entity, TaskModeEntity):
-            return self.get_task_start_or_end_variable(
-                task=entity.task, start_or_end=StartOrEnd.END
-            )
-        else:
-            raise NotImplementedError(f"Unsupported entity type: {type(entity)}")
-
-    def get_entity_time_variable(
-        self, entity: SchedulingEntity, start_or_end: StartOrEnd
-    ) -> LinearExprT:
-        """Get start or end time variable for an entity.
-
-        Args:
-            entity: The scheduling entity
-            start_or_end: Whether to get start or end time
-
-        Returns:
-            LinearExprT representing the time
-        """
-        if start_or_end == StartOrEnd.START:
-            return self.get_entity_start_variable(entity)
-        else:
-            return self.get_entity_end_variable(entity)
 
     def constrain_group_entity_times(self, entity: GroupEntity) -> None:
         """Add constraints for group entity start/end times.
@@ -137,22 +76,22 @@ class ResourceBlockingCpSatSolver(
         Args:
             entity: The group entity
         """
-        group_start = self.get_entity_start_variable(entity)
-        group_end = self.get_entity_end_variable(entity)
-
-        # group_start <= min(task starts)
-        for task in entity.tasks:
-            task_start = self.get_task_start_or_end_variable(
-                task=task, start_or_end=StartOrEnd.START
-            )
-            self.cp_model.Add(group_start <= task_start)
-
-        # group_end >= max(task ends)
-        for task in entity.tasks:
-            task_end = self.get_task_start_or_end_variable(
-                task=task, start_or_end=StartOrEnd.END
-            )
-            self.cp_model.Add(group_end >= task_end)
+        group_start = self._starts_entity[entity]
+        group_end = self._ends_entity[entity]
+        self.cp_model.AddMinEquality(
+            group_start,
+            [
+                self.get_task_start_or_end_variable(task, StartOrEnd.START)
+                for task in entity.tasks
+            ],
+        )
+        self.cp_model.AddMaxEquality(
+            group_end,
+            [
+                self.get_task_start_or_end_variable(task, StartOrEnd.END)
+                for task in entity.tasks
+            ],
+        )
 
     def _get_tasks_from_entity(self, entity: SchedulingEntity) -> set[Task]:
         """Extract all tasks involved in a scheduling entity.
@@ -172,6 +111,150 @@ class ResourceBlockingCpSatSolver(
         else:
             return set()
 
+    def get_lb_ub_entity(self, entity: SchedulingEntity) -> tuple[int, int, int, int]:
+        """Return lbstart, ubstart, lbend, ubend"""
+        if isinstance(entity, (TaskEntity, TaskModeEntity)):
+            lbs = self.problem.get_task_start_or_end_lower_bound(
+                entity.task, StartOrEnd.START
+            )
+            ubs = self.problem.get_task_start_or_end_upper_bound(
+                entity.task, StartOrEnd.START
+            )
+            lbe = self.problem.get_task_start_or_end_lower_bound(
+                entity.task, StartOrEnd.END
+            )
+            ube = self.problem.get_task_start_or_end_upper_bound(
+                entity.task, StartOrEnd.END
+            )
+            return lbs, ubs, lbe, ube
+
+        lb_start = [
+            self.problem.get_task_start_or_end_lower_bound(
+                task=task, start_or_end=StartOrEnd.START
+            )
+            for task in entity.get_tasks()
+        ]
+        ub_start = [
+            self.problem.get_task_start_or_end_upper_bound(
+                task=task, start_or_end=StartOrEnd.START
+            )
+            for task in entity.get_tasks()
+        ]
+        lb_end = [
+            self.problem.get_task_start_or_end_lower_bound(
+                task=task, start_or_end=StartOrEnd.END
+            )
+            for task in entity.get_tasks()
+        ]
+        ub_end = [
+            self.problem.get_task_start_or_end_upper_bound(
+                task=task, start_or_end=StartOrEnd.END
+            )
+            for task in entity.get_tasks()
+        ]
+        return min(lb_start), max(ub_start), min(lb_end), max(ub_end)
+
+    def get_lb_ub_size(
+        self,
+        entity1: SchedulingEntity,
+        start_or_end1: StartOrEnd,
+        entity2: SchedulingEntity,
+        start_or_end2: StartOrEnd,
+    ):
+        lbs1, ubs1, lbe1, ube1 = self.get_lb_ub_entity(entity1)
+        lbs2, ubs2, lbe2, ube2 = self.get_lb_ub_entity(entity2)
+        if start_or_end1 == StartOrEnd.START:
+            if start_or_end2 == StartOrEnd.START:
+                return max(0, lbs2 - ubs1), max(0, ubs2 - lbs1)
+            if start_or_end2 == StartOrEnd.END:
+                return max(0, lbe2 - ubs1), max(0, ube2 - lbs1)
+        if start_or_end1 == StartOrEnd.END:
+            if start_or_end2 == StartOrEnd.START:
+                return max(0, lbs2 - ube1), max(0, ubs2 - lbe1)
+            if start_or_end2 == StartOrEnd.END:
+                return max(0, lbe2 - ube1), max(0, ube2 - lbe1)
+        return None, None
+
+    def create_entity_intervals(self) -> None:
+        self._starts_entity = {}
+        self._ends_entity = {}
+        self._durations_entity = {}
+        self._intervals_entity = {}
+        all_entities = []
+        for (
+            entity_1,
+            _,
+            entity_2,
+            _,
+            _,
+            _,
+        ) in self.problem.get_flexible_gap_blocking_constraints():
+            all_entities.append(entity_1)
+            all_entities.append(entity_2)
+        for entity, _, _ in self.problem.get_span_blocking_constraints():
+            all_entities.append(entity)
+
+        for entity in all_entities:
+            if entity not in self._starts_entity:
+                tasks = self._get_tasks_from_entity(entity)
+                if len(tasks) == 1:
+                    self._starts_entity[entity] = self.get_task_start_or_end_variable(
+                        task=entity.task, start_or_end=StartOrEnd.START
+                    )
+                    self._ends_entity[entity] = self.get_task_start_or_end_variable(
+                        task=entity.task, start_or_end=StartOrEnd.END
+                    )
+                    self._durations_entity[entity] = (
+                        self._ends_entity[entity] - self._starts_entity[entity]
+                    )
+                    self._intervals_entity[entity] = self.get_task_interval(entity.task)
+                else:
+                    lb_start = [
+                        self.problem.get_task_start_or_end_lower_bound(
+                            task=task, start_or_end=StartOrEnd.START
+                        )
+                        for task in tasks
+                    ]
+                    ub_start = [
+                        self.problem.get_task_start_or_end_upper_bound(
+                            task=task, start_or_end=StartOrEnd.START
+                        )
+                        for task in tasks
+                    ]
+                    lb_end = [
+                        self.problem.get_task_start_or_end_lower_bound(
+                            task=task, start_or_end=StartOrEnd.END
+                        )
+                        for task in tasks
+                    ]
+                    ub_end = [
+                        self.problem.get_task_start_or_end_upper_bound(
+                            task=task, start_or_end=StartOrEnd.END
+                        )
+                        for task in tasks
+                    ]
+                    min_lb_start = min(lb_start)
+                    max_ub_start = max(ub_start)
+                    min_lb_end = min(lb_end)
+                    max_ub_end = max(ub_end)
+                    self._starts_entity[entity] = self.cp_model.NewIntVar(
+                        lb=min_lb_start, ub=max_ub_start, name=f"start_{entity.tasks}"
+                    )
+                    self._ends_entity[entity] = self.cp_model.NewIntVar(
+                        lb=min_lb_end, ub=max_ub_end, name=f"end_{entity.tasks}"
+                    )
+                    self._durations_entity[entity] = self.cp_model.NewIntVar(
+                        lb=max(0, min_lb_end - max_ub_start),
+                        ub=max(0, max_ub_end - min_lb_start),
+                        name=f"duration_{entity.tasks}",
+                    )
+                    self._intervals_entity[entity] = self.cp_model.NewIntervalVar(
+                        start=self._starts_entity[entity],
+                        end=self._ends_entity[entity],
+                        size=self._durations_entity[entity],
+                        name=f"interval_{entity.tasks}",
+                    )
+
     def create_flexible_gap_blocking_intervals(self) -> None:
         """Create interval variables for flexible gap blocking constraints.
 
@@ -190,42 +273,31 @@ class ResourceBlockingCpSatSolver(
                 resources,
                 metadata,
             ) = constraint
-
-            # Handle group entities
-            if isinstance(entity1, GroupEntity):
-                self.constrain_group_entity_times(entity1)
-            if isinstance(entity2, GroupEntity):
-                self.constrain_group_entity_times(entity2)
-
-            # Get all tasks involved in this blocking constraint
-            involved_tasks = self._get_tasks_from_entity(
-                entity1
-            ) | self._get_tasks_from_entity(entity2)
-
             # Get time variables for the gap boundaries
-            gap_start = self.get_entity_time_variable(entity1, ref1)
-            gap_end = self.get_entity_time_variable(entity2, ref2)
-
+            gap_start = (
+                self._starts_entity[entity1]
+                if ref1 == StartOrEnd.START
+                else self._ends_entity[entity1]
+            )
+            gap_end = (
+                self._starts_entity[entity2]
+                if ref2 == StartOrEnd.START
+                else self._ends_entity[entity2]
+            )
+            lb_size, ub_size = self.get_lb_ub_size(entity1, ref1, entity2, ref2)
             # Create a variable for the gap size
             # The gap may be 0 or positive (we'll enforce positive later)
             gap_size = self.cp_model.NewIntVar(
-                lb=0,
-                ub=self.get_makespan_upper_bound(),
+                lb=lb_size,
+                ub=ub_size,
                 name=f"gap_size_{i_constraint}",
             )
-
             # Create a boolean variable for gap validity (positive duration)
             gap_is_present = self.cp_model.NewBoolVar(f"gap_valid_{i_constraint}")
-
             # Constrain gap_size = gap_end - gap_start when gap is present
             self.cp_model.Add(gap_size == gap_end - gap_start).OnlyEnforceIf(
                 gap_is_present
             )
-
-            # Constraint: gap is only present if gap_end > gap_start (positive duration)
-            self.cp_model.Add(gap_end > gap_start).OnlyEnforceIf(gap_is_present)
-            self.cp_model.Add(gap_end <= gap_start).OnlyEnforceIf(gap_is_present.Not())
-
             # Create interval variable for the gap
             gap_interval = self.cp_model.NewOptionalIntervalVar(
                 start=gap_start,
@@ -234,28 +306,30 @@ class ResourceBlockingCpSatSolver(
                 is_present=gap_is_present,
                 name=f"blocking_gap_{entity1.entity_id}_{ref1}_to_{entity2.entity_id}_{ref2}",
             )
+            if not isinstance(entity1, TaskModeEntity) and not isinstance(
+                entity2, TaskModeEntity
+            ):
+                self.cp_model.Add(gap_is_present == 1)
 
             # For TaskModeEntity, only block when task is in the specified mode
             if isinstance(entity1, TaskModeEntity):
                 mode_present = self.get_task_mode_is_present_variable(
                     task=entity1.task, mode=entity1.mode
                 )
-                self.cp_model.AddImplication(gap_is_present, mode_present)
+                self.cp_model.AddImplication(mode_present, gap_is_present)
 
             if isinstance(entity2, TaskModeEntity):
                 mode_present = self.get_task_mode_is_present_variable(
                     task=entity2.task, mode=entity2.mode
                 )
-                self.cp_model.AddImplication(gap_is_present, mode_present)
-
+                self.cp_model.AddImplication(mode_present, gap_is_present)
             # Store blocking intervals per resource with metadata and involved tasks
             for resource, demand in resources.items():
                 if resource not in self._blocking_intervals:
                     self._blocking_intervals[resource] = []
-
                 # Store interval with its metadata and tasks for later processing
                 self._blocking_intervals[resource].append(
-                    (gap_interval, demand, metadata, involved_tasks)
+                    (gap_interval, demand, metadata)
                 )
 
     def create_span_blocking_intervals(self) -> None:
@@ -267,95 +341,15 @@ class ResourceBlockingCpSatSolver(
         for i_constraint, constraint in enumerate(
             self.problem.get_span_blocking_constraints()
         ):
-            tasks, resources, metadata = constraint
-
-            # Create variables for span start and end
-            span_start = self.cp_model.NewIntVar(
-                lb=0,
-                ub=self.get_makespan_upper_bound(),
-                name=f"span_start_{i_constraint}",
-            )
-            span_end = self.cp_model.NewIntVar(
-                lb=0,
-                ub=self.get_makespan_upper_bound(),
-                name=f"span_end_{i_constraint}",
-            )
-
-            # Create a variable for the span size
-            span_size = self.cp_model.NewIntVar(
-                lb=0,
-                ub=self.get_makespan_upper_bound(),
-                name=f"span_size_{i_constraint}",
-            )
-
-            # Constrain span_size = span_end - span_start
-            self.cp_model.Add(span_size == span_end - span_start)
-
-            # span_start = min(task starts)
-            for task in tasks:
-                task_start = self.get_task_start_or_end_variable(
-                    task=task, start_or_end=StartOrEnd.START
-                )
-                self.cp_model.Add(span_start <= task_start)
-
-            # span_end = max(task ends)
-            for task in tasks:
-                task_end = self.get_task_start_or_end_variable(
-                    task=task, start_or_end=StartOrEnd.END
-                )
-                self.cp_model.Add(span_end >= task_end)
-
-            # Create interval for the span
-            span_interval = self.cp_model.NewIntervalVar(
-                start=span_start,
-                size=span_size,
-                end=span_end,
-                name=f"blocking_span_{i_constraint}",
-            )
-
+            entity, resources, metadata = constraint
             # Store blocking intervals per resource with metadata
             for resource, demand in resources.items():
                 if resource not in self._blocking_intervals:
                     self._blocking_intervals[resource] = []
                 # Store interval with its metadata and task set for overlap handling
                 self._blocking_intervals[resource].append(
-                    (span_interval, demand, metadata, tasks)
+                    (self._intervals_entity[entity], demand, metadata)
                 )
-
-    def get_blocking_intervals(
-        self, resource: CumulativeResource
-    ) -> list[tuple[IntervalVar, int]]:
-        """Get all blocking intervals for a given resource.
-
-        Args:
-            resource: The resource
-
-        Returns:
-            List of (interval, demand) tuples for blocking constraints
-        """
-        return self._blocking_intervals.get(resource, [])
-
-    def get_task_intervals_with_identification(
-        self, resource: CumulativeResource
-    ) -> list[tuple[IntervalVar, LinearExprT, Task]]:
-        """Get resource consumption intervals with task identification.
-
-        Returns:
-            List of (interval, demand, task) tuples
-        """
-        intervals_with_tasks = []
-
-        for task in self.problem.tasks_list:
-            interval = self.get_task_interval(task=task)
-            demand = self.get_cumulative_resource_demand_variable(
-                task=task, resource=resource
-            )
-
-            # Only include if demand is positive
-            if not isinstance(demand, int) or demand > 0:
-                intervals_with_tasks.append((interval, demand, task))
-
-        return intervals_with_tasks
 
     def create_cumulative_constraint_including_blocking(
         self, resource: CumulativeResource
@@ -382,12 +376,7 @@ class ResourceBlockingCpSatSolver(
             resource: The cumulative resource to constrain
         """
         # Get task consumption intervals
-        task_intervals = [
-            (interval, demand)
-            for interval, demand, _ in self.get_task_intervals_with_identification(
-                resource
-            )
-        ]
+        task_intervals = self.get_resource_consumption_intervals(resource)
 
         # Get fake tasks for calendar gaps
         fake_tasks_intervals = [
@@ -410,12 +399,11 @@ class ResourceBlockingCpSatSolver(
         active_blocking = []
 
         for blocking_entry in blocking_data:
-            if len(blocking_entry) >= 3:
-                interval, demand, metadata = blocking_entry[:3]
-                if metadata.mode == BlockingMode.RESERVATION:
-                    reservation_blocking.append((interval, demand))
-                else:  # ACTIVE
-                    active_blocking.append((interval, demand))
+            interval, demand, metadata = blocking_entry
+            if metadata.mode == BlockingMode.RESERVATION:
+                reservation_blocking.append((interval, demand))
+            else:  # ACTIVE
+                active_blocking.append((interval, demand))
 
         # Get resource capacity
         capacity = self.problem.get_resource_max_capacity(resource)
@@ -495,6 +483,10 @@ class ResourceBlockingCpSatSolver(
         resource constraints are created (so that create_calendar_resources_constraint
         can check for blocking intervals).
         """
+        self.create_entity_intervals()
+        for entity in self._starts_entity:
+            if isinstance(entity, GroupEntity):
+                self.constrain_group_entity_times(entity)
         self.create_flexible_gap_blocking_intervals()
         self.create_span_blocking_intervals()
 

@@ -419,7 +419,6 @@ def consolidate_availability_intervals(
         for start, end, value in intervals
         if start < (new_end := min(end, horizon))  # remove empty intervals
     ]
-
     # sort intervals
     intervals = sorted(
         intervals,

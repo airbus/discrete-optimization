@@ -5,7 +5,7 @@
 
 import pytest
 
-from discrete_optimization.generic_tasks_tools.entities import TaskEntity
+from discrete_optimization.generic_tasks_tools.entities import GroupEntity, TaskEntity
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
@@ -142,7 +142,7 @@ def test_span_blocking_forces_reservation():
     # Span blocking: reserve R1 for entire span of tasks 2, 3
     span_constraints = [
         (
-            frozenset([2, 3]),
+            GroupEntity(frozenset([2, 3])),
             {"R1": 1},
             BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,

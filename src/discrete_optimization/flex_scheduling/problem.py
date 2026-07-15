@@ -466,7 +466,7 @@ class FlexProblem(
             ):
                 constraint = SpanBlockingConstraint(
                     (
-                        frozenset(group.tasks_group),
+                        GroupEntity(frozenset(group.tasks_group)),
                         group.res_not_released,
                         BlockingConstraintMetadata(
                             description=f"Group {group.name or group.id} span blocking"
