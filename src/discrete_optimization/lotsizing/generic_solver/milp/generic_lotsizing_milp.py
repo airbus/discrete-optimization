@@ -434,15 +434,6 @@ class GurobiGenericLotSizingMilp(GenericLotSizingMilp[Item], GurobiMilpSolver):
     This solver supports warm-starting from an initial solution via the
     convert_to_variable_values method, which maps production, inventory,
     and delivery decisions to Gurobi variable values.
-
-    Example:
-        >>> solver = GurobiGenericLotSizingMilp(problem)
-        >>> solver.init_model()
-        >>> result = solver.solve(
-        ...     parameters_milp=params,
-        ...     use_mipstart=True,
-        ...     initial_solution=initial_solution
-        ... )
     """
 
     def convert_to_variable_values(
