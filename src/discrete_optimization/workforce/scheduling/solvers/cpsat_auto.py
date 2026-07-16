@@ -6,7 +6,6 @@ import time
 from collections.abc import Iterable
 from typing import Any, Optional, Union
 
-import numpy as np
 from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
     IntVar,
@@ -56,6 +55,9 @@ from discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb impo
     BaseAllocSchedulingLowerBoundProvider,
     BoundResourceViaRelaxedProblem,
     LBoundAllocScheduling,
+)
+from discrete_optimization.workforce.scheduling.transformations.generic_scheduling_impl import (
+    transform_solution_from_raw_generic_to_wf_sched,
 )
 from discrete_optimization.workforce.scheduling.utils import (
     compute_equivalent_teams_scheduling_problem,
@@ -182,17 +184,8 @@ class CPSatAutoAllocSchedulingSolver(
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, NoSkill]
     ) -> AllocSchedulingSolution:
-        schedule = np.zeros((self.problem.number_tasks, 2), dtype=int)
-        allocation = -np.ones(self.problem.number_tasks, dtype=int)
-        for i_task in range(self.problem.number_tasks):
-            task = self.problem.index_to_task[i_task]
-            task_variable = raw_sol.task_variables[task]
-            schedule[i_task, 0] = task_variable.start
-            schedule[i_task, 1] = task_variable.end
-            for team in task_variable.allocated:
-                allocation[i_task] = self.problem.teams_to_index[team]
-        sol = AllocSchedulingSolution(
-            problem=self.problem, schedule=schedule, allocation=allocation
+        sol = transform_solution_from_raw_generic_to_wf_sched(
+            raw_sol=raw_sol, problem=self.problem
         )
         sol._intern_obj = raw_sol.metadata
         return sol
