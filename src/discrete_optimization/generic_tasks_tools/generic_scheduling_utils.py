@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Container
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Generic
@@ -54,6 +55,26 @@ class RawSolution(Generic[Task, UnaryResource, Skill]):
     ) -> RawSolution[Task, UnaryResource, Skill]:
         return RawSolution(
             task_variables=self.task_variables | other.task_variables,
+        )
+
+    def take_subset(
+        self, tasks: Container[Task]
+    ) -> RawSolution[Task, UnaryResource, Skill]:
+        """Take a subset of the solution by keeping only variables associated to given tasks
+
+        Args:
+            tasks: subset of tasks to keep
+
+        Returns:
+            The raw solution with variables for given tasks. Any metadata is dropped.
+
+        """
+        return RawSolution(
+            task_variables={
+                task: task_variable
+                for task, task_variable in self.task_variables.items()
+                if task in tasks
+            }
         )
 
 
