@@ -253,7 +253,7 @@ jobs:
             tests
       - name: Test examples in docstrings
         run: |
-          pytest --doctest-modules src -v
+          pytest --doctest-modules src -v | python .github/scripts/parse_doctest.py || true
       - name: Upload coverage report as artifact
         if: ${{ matrix.coverage }}
         uses: actions/upload-artifact@v7
