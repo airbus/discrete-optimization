@@ -117,6 +117,9 @@ jobs:
           - coverage: true  # coverage only for one entry of the matrix
             os: "ubuntu-latest"
             python-version: "3.13"
+    env:
+      JOB_NAME: test (${{ matrix.os }}, ${{ matrix.python-version }})
+    name: test (${{ matrix.os }}, ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -252,8 +255,13 @@ jobs:
             -v --durations=0 --durations-min=2 \
             tests
       - name: Test examples in docstrings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_JOB_NAME: ${{ env.JOB_NAME }}
+          TARGET_STEP_NAME: "Test examples in docstrings"
         run: |
-          pytest --doctest-modules src -v
+          # Use unbuffered output (-u) so line logging indices accurately sync with stdout
+          pytest --doctest-modules src -v | python -u .github/scripts/parse_doctest.py || true
       - name: Upload coverage report as artifact
         if: ${{ matrix.coverage }}
         uses: actions/upload-artifact@v7
