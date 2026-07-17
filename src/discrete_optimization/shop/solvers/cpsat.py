@@ -26,6 +26,9 @@ from discrete_optimization.shop.base import (
     NoUnaryResource,
     Task,
 )
+from discrete_optimization.shop.transformations.to_generic_scheduling import (
+    transform_solution_from_raw_generic_to_shop,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -79,23 +82,6 @@ class CpSatShopSolver(CommonShopCpSatSolver):
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, NoUnaryResource, NoSkill]
     ) -> AnyShopSolution:
-        schedule_and_machine = [
-            [
-                (
-                    (task_var := raw_sol.task_variables[j, k]).start,
-                    task_var.end,
-                    self.problem.mode2machine[j, k][task_var.mode],
-                    task_var.mode,
-                )
-                for k, sub_job in enumerate(job.subjobs)
-            ]
-            for j, job in enumerate(self.problem.list_jobs)
-        ]
-        return AnyShopSolution(
-            problem=self.problem,
-            schedule=[
-                [(x[0], x[1]) for x in sched_i] for sched_i in schedule_and_machine
-            ],
-            machine_index=[[x[2] for x in sched_i] for sched_i in schedule_and_machine],
-            recipe_index=[[x[3] for x in sched_i] for sched_i in schedule_and_machine],
+        return transform_solution_from_raw_generic_to_shop(
+            raw_sol=raw_sol, problem=self.problem
         )

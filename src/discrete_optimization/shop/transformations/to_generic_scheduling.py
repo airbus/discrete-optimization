@@ -4,28 +4,46 @@
 
 """Transformation from CommonShopProblem (JSP/FJSP/OSP) to GenericSchedulingImpl."""
 
-from typing import Optional
-
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
-    GenericSchedulingImplProblem,
-    GenericSchedulingImplSolution,
+    Skill,
+    UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
-    TaskVariable,
 )
-from discrete_optimization.generic_tools.transformation.problem_transformation import (
-    ProblemTransformation,
+from discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl import (
+    ToGenericSchedulingImpl,
 )
 from discrete_optimization.shop.base import AnyShopSolution, CommonShopProblem, Task
 
 
+def transform_solution_from_raw_generic_to_shop(
+    raw_sol: RawSolution[Task, UnaryResource, Skill], problem: CommonShopProblem
+) -> AnyShopSolution:
+    schedule_and_machine = [
+        [
+            (
+                (task_var := raw_sol.task_variables[j, k]).start,
+                task_var.end,
+                problem.mode2machine[j, k][task_var.mode],
+                task_var.mode,
+            )
+            for k, sub_job in enumerate(job.subjobs)
+        ]
+        for j, job in enumerate(problem.list_jobs)
+    ]
+    return AnyShopSolution(
+        problem=problem,
+        schedule=[[(x[0], x[1]) for x in sched_i] for sched_i in schedule_and_machine],
+        machine_index=[[x[2] for x in sched_i] for sched_i in schedule_and_machine],
+        recipe_index=[[x[3] for x in sched_i] for sched_i in schedule_and_machine],
+    )
+
+
 class ShopToGenericSchedulingTransformation(
-    ProblemTransformation[
+    ToGenericSchedulingImpl[
         CommonShopProblem,
         AnyShopSolution,
-        GenericSchedulingImplProblem,
-        GenericSchedulingImplSolution,
     ]
 ):
     """Transform CommonShopProblem to GenericSchedulingImplProblem.
@@ -44,136 +62,11 @@ class ShopToGenericSchedulingTransformation(
 
     """
 
-    def __init__(self):
-        """Initialize transformation."""
-        pass
-
-    def transform_problem(
-        self, source_problem: CommonShopProblem
-    ) -> GenericSchedulingImplProblem:
-        """Transform CommonShopProblem to GenericSchedulingImplProblem.
-
-        Args:
-            source_problem: CommonShopProblem instance (JSP/FJSP/OSP)
-
-        Returns:
-            Equivalent GenericSchedulingImplProblem
-
-        """
-        # Build durations_per_mode: task -> mode -> duration
-        durations_per_mode: dict[Task, dict[int, int]] = {}
-
-        for job_idx, job in enumerate(source_problem.list_jobs):
-            for subjob_idx, subjob in enumerate(job.subjobs):
-                task = (job_idx, subjob_idx)
-                durations_per_mode[task] = {}
-
-                # Each recipe option becomes a mode
-                for mode_idx, recipe in enumerate(subjob.recipes):
-                    durations_per_mode[task][mode_idx] = recipe.processing_time
-
-        # Build resource_consumptions: task -> mode -> resource -> consumption
-        resource_consumptions: dict[Task, dict[int, dict[str, int]]] = {}
-
-        for job_idx, job in enumerate(source_problem.list_jobs):
-            for subjob_idx, subjob in enumerate(job.subjobs):
-                task = (job_idx, subjob_idx)
-                resource_consumptions[task] = {}
-
-                # Each recipe option consumes the corresponding machine
-                for mode_idx, recipe in enumerate(subjob.recipes):
-                    machine_resource = f"M{recipe.machine_index}"
-                    resource_consumptions[task][mode_idx] = {machine_resource: 1}
-
-        # Build non_skill_cumulative_resources: machines with capacity 1
-        non_skill_cumulative_resources = {
-            f"M{machine}": 1 for machine in range(source_problem.n_machines)
-        }
-
-        # Get successors from problem's precedence constraints
-        successors = source_problem.get_precedence_constraints()
-
-        # Get no-overlap sets (tasks within same job)
-        no_overlap_sets = source_problem.get_no_overlap()
-
-        return GenericSchedulingImplProblem(
-            horizon=source_problem.horizon,
-            durations_per_mode=durations_per_mode,
-            resource_consumptions=resource_consumptions,
-            successors=successors,
-            non_skill_cumulative_resources=non_skill_cumulative_resources,
-            no_overlap_sets=no_overlap_sets,
-        )
-
-    def back_transform_solution(
+    def transform_solution_from_raw_generic_to_specific(
         self,
-        solution: GenericSchedulingImplSolution,
+        raw_sol: RawSolution[Task, UnaryResource, Skill],
         source_problem: CommonShopProblem,
     ) -> AnyShopSolution:
-        """Transform GenericSchedulingImplSolution back to CommonShopProblem solution.
-
-        Args:
-            solution: GenericSchedulingImplSolution
-            source_problem: Original CommonShopProblem
-
-        Returns:
-            Equivalent CommonShopProblem solution
-
-        """
-        # Build shop schedule from GenericSchedulingImplSolution
-        shop_schedule = [[None] * len(job.subjobs) for job in source_problem.list_jobs]
-        machine_index = [[None] * len(job.subjobs) for job in source_problem.list_jobs]
-
-        for job_idx, job in enumerate(source_problem.list_jobs):
-            for subjob_idx in range(len(job.subjobs)):
-                task = (job_idx, subjob_idx)
-
-                start = solution.get_start_time(task)
-                end = solution.get_end_time(task)
-                mode = solution.get_mode(task)
-
-                # Get machine from the chosen mode/recipe
-                machine_id = job.subjobs[subjob_idx].recipes[mode].machine_index
-
-                shop_schedule[job_idx][subjob_idx] = (start, end)
-                machine_index[job_idx][subjob_idx] = machine_id
-
-        return AnyShopSolution(
-            problem=source_problem,
-            schedule=shop_schedule,
-            machine_index=machine_index,
+        return transform_solution_from_raw_generic_to_shop(
+            raw_sol=raw_sol, problem=source_problem
         )
-
-    def forward_transform_solution(
-        self,
-        solution: AnyShopSolution,
-        target_problem: GenericSchedulingImplProblem,
-    ) -> Optional[GenericSchedulingImplSolution]:
-        """Transform CommonShopProblem solution to GenericSchedulingImplSolution.
-
-        Args:
-            solution: CommonShopProblem solution
-            target_problem: Target GenericSchedulingImplProblem
-
-        Returns:
-            Equivalent GenericSchedulingImplSolution for warm-start
-
-        """
-        # Build task_variables dict
-        task_variables: dict[Task, TaskVariable] = {}
-
-        for job_idx, job_schedule in enumerate(solution.schedule):
-            for subjob_idx, (start, end) in enumerate(job_schedule):
-                task = (job_idx, subjob_idx)
-                mode = solution.get_mode(task)
-
-                task_variables[task] = TaskVariable(
-                    start=start,
-                    end=end,
-                    mode=mode,
-                    allocated={},  # No unary resources in shop problems
-                )
-
-        raw_sol = RawSolution(task_variables=task_variables)
-
-        return GenericSchedulingImplSolution(problem=target_problem, raw_sol=raw_sol)
