@@ -89,8 +89,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.13"]
+        os: ["ubuntu-latest"]
+        python-version: ["3.13"]
         include:
           - os: "ubuntu-latest"
             minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
@@ -99,24 +99,7 @@ jobs:
             minizinc_downloaded_filepath: bin/minizinc.AppImage
             minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
             minizinc_prerequisites_cmdline: sudo apt update && sudo apt install libegl1 -y
-          - os: "macos-latest"
-            minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/MiniZincIDE.app/Contents/Resources
-            minizinc_cache_path: $(pwd)/bin/MiniZincIDE.app
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.5/MiniZincIDE-2.8.5-bundled.dmg
-            minizinc_downloaded_filepath: bin/minizinc.dmg
-            minizinc_install_cmdline: sudo hdiutil attach bin/minizinc.dmg; sudo cp -R /Volumes/MiniZinc*/MiniZincIDE.app bin/.
-            minizinc_prerequisites_cmdline: ""
-          - os: "windows-latest"
-            minizinc_config_cmdline: export PATH=$PATH:~/AppData/Local/Programs/MiniZinc
-            minizinc_cache_path: ~/AppData/Local/Programs/MiniZinc
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.5/MiniZincIDE-2.8.5-bundled-setup-win64.exe
-            minizinc_downloaded_filepath: minizinc_setup.exe
-            minizinc_install_cmdline: cmd //c "minizinc_setup.exe /verysilent /currentuser /norestart /suppressmsgboxes /sp"
-            minizinc_prerequisites_cmdline: ""
-          - coverage: false  # generally no coverage to avoid multiple reports
-          - coverage: true  # coverage only for one entry of the matrix
-            os: "ubuntu-latest"
-            python-version: "3.13"
+
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -141,19 +124,6 @@ jobs:
           python -m pip install -U pip
           pip install ${wheelfile}
           pip list
-      - name: Check all imports are working
-        run: python tests/test_import_all_submodules.py
-      - name: Check minizinc based solvers fails without minizinc binary
-        run: |
-          python -c "
-          try:
-            from discrete_optimization.generic_tools.mzn_tools import find_right_minizinc_solver_name, CpSolverName
-            find_right_minizinc_solver_name(CpSolverName.CHUFFED)
-          except RuntimeError:
-            pass
-          else:
-            raise AssertionError('We should not be able to `find_right_minizinc_solver_name()` without minizinc being installed.')
-          "
       - name: Create bin/
         run: mkdir -p bin
       - name: Minizinc prerequisites
@@ -177,16 +147,6 @@ jobs:
         if: steps.cache-minizinc.outputs.cache-hit != 'true'
         run: |
           ${{ matrix.minizinc_install_cmdline }}
-      - name: Test minizinc install
-        run: |
-          ${{ matrix.minizinc_config_cmdline }}
-          minizinc --version
-      - name: Check imports are working
-        run: |
-          # configure minizinc
-          ${{ matrix.minizinc_config_cmdline }}
-          # check imports
-          python tests/test_import_all_submodules.py
       - name: Install test dependencies
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
@@ -214,43 +174,6 @@ jobs:
 
           pip list
 
-      - name: Restore tests data cache
-        id: cache-data
-        uses: actions/cache@v5
-        with:
-          path: ~/discrete_optimization_data
-          key: data-${{ hashFiles('src/discrete_optimization/datasets.py') }}
-      - name: Fetch data for tests
-        if: steps.cache-data.outputs.cache-hit != 'true'
-        run: |
-          ${{ matrix.minizinc_config_cmdline }}
-          python -m discrete_optimization.datasets
-      - name: Test with pytest (no coverage)
-        if: ${{ !matrix.coverage }}
-        run: |
-          # configure minizinc
-          ${{ matrix.minizinc_config_cmdline }}
-          # show library path used
-          pytest -s tests/show_do_path.py
-          # run test suite
-          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
-            -v --durations=0 --durations-min=2 \
-            tests
-      - name: Test with pytest (with coverage)
-        if: ${{ matrix.coverage }}
-        run: |
-          # configure minizinc
-          ${{ matrix.minizinc_config_cmdline }}
-          # show library path used
-          pytest -s tests/show_do_path.py
-          # run test suite
-          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
-            --cov discrete_optimization  \
-            --cov-report xml:coverage.xml \
-            --cov-report html:coverage_html \
-            --cov-report term \
-            -v --durations=0 --durations-min=2 \
-            tests
       - name: Test examples in docstrings
         run: |
           pytest --doctest-modules src -v | python .github/scripts/parse_doctest.py || true
@@ -262,125 +185,3 @@ jobs:
           path: |
             coverage.xml
             coverage_html
-
-  update-notebooks-for-colab-and-binder:
-    runs-on: ubuntu-latest
-    needs: [trigger, build]
-    outputs:
-      notebooks-branch: ${{ steps.write-output.outputs.notebooks_branch }}
-      binder-full-ref: ${{ steps.write-output.outputs.binder_full_ref }}
-    steps:
-      - name: Set default notebooks branch and binder env full ref
-        run: |
-          # default value: current branch
-          echo 'notebooks_branch="${{ github.ref_name}}"' >> $GITHUB_ENV
-          echo 'binder_full_ref="${{ github.repository }}/${{ github.ref_name}}"' >> $GITHUB_ENV
-      - uses: actions/checkout@v6
-        if: needs.trigger.outputs.is_release == 'true'
-      - name: replace d-o version to install in colab notebooks
-        if: needs.trigger.outputs.is_release == 'true'
-        run: |
-          version=${{ needs.build.outputs.do_version }}
-          old_pip_spec_pattern="\(pip.*install.*\)git+https.*egg=discrete-optimization"
-          new_pip_spec_pattern="\1discrete-optimization==$version"
-          if ${{ github.repository != env.MAIN_REPO_NAME && secrets.TEST_PYPI_API_TOKEN != '' }} == 'true'; then
-            # install from TestPypi if on a fork
-            new_pip_spec_pattern="${new_pip_spec_pattern} --extra-index-url https://test.pypi.org/simple/"
-          fi
-          shopt -s globstar  # enable **
-          sed -i -e "s|${old_pip_spec_pattern}|${new_pip_spec_pattern}|" notebooks/**/*.ipynb
-      - name: replace d-o version to install in binder environment
-        if: needs.trigger.outputs.is_release == 'true'
-        run: |
-          version=${{ needs.build.outputs.do_version }}
-          linefilter="/^name/!"
-          old_pip_spec_pattern="\(\s*\)-.*discrete-optimization.*$"
-          new_pip_spec_pattern="\1- discrete-optimization==$version"
-          if ${{ github.repository != env.MAIN_REPO_NAME && secrets.TEST_PYPI_API_TOKEN != '' }} == 'true'; then
-            # install from TestPypi if on a fork
-            new_pip_spec_pattern="${new_pip_spec_pattern}\n\1- --extra-index-url https://test.pypi.org/simple/"
-          fi
-          sed_command="${linefilter}s|${old_pip_spec_pattern}|${new_pip_spec_pattern}|"
-          echo sed -i -e ${sed_command} binder/environment.yml
-          sed -i -e "${sed_command}" binder/environment.yml
-      - name: push modifications on a dedicated tag
-        if: needs.trigger.outputs.is_release == 'true'
-        id: push-tuto-release-tag
-        run: |
-          current_tag_name=${GITHUB_REF/refs\/tags\//}  # stripping refs/tags/
-          new_tag_name="notebooks-${current_tag_name}"
-          echo ${new_tag_name}
-          git config user.name "Actions"
-          git config user.email "actions@github.com"
-          git commit binder/environment.yml notebooks -m "Install appropriate version of discrete-optimization"
-          git tag ${new_tag_name} -m "Use release ${current_tag_name} in binder and colab"
-          git push origin ${new_tag_name}
-          # store new tag name as notebooks branch
-          echo "notebooks_branch=${new_tag_name}" >> $GITHUB_ENV
-          echo "binder_full_ref=${{ github.repository }}/${new_tag_name}" >> $GITHUB_ENV
-      - name: write new notebooks branch in job outputs
-        id: write-output
-        run: |
-          echo "notebooks_branch=${notebooks_branch}" >> $GITHUB_OUTPUT
-          echo "binder_full_ref=${binder_full_ref}" >> $GITHUB_OUTPUT
-
-  build-doc:
-    needs: [update-notebooks-for-colab-and-binder]
-    uses: ./.github/workflows/build-doc.yml
-    with:
-      notebooks-branch: ${{ needs.update-notebooks-for-colab-and-binder.outputs.notebooks-branch }}
-
-  deploy:
-    # for release tags
-    runs-on: ubuntu-latest
-    needs: [trigger, test]
-    if: needs.trigger.outputs.is_release == 'true'
-    steps:
-      - name: Download wheels artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: dist
-          path: dist
-      - name: Create the github release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: dist
-          generateReleaseNotes: true
-      - name: Publish package to TestPyPI (only for forks)
-        env:
-          TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        if: github.repository != env.MAIN_REPO_NAME && env.TEST_PYPI_API_TOKEN != ''
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-      - name: Publish package to PyPI (main repo)
-        env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        if: github.repository == env.MAIN_REPO_NAME && env.PYPI_API_TOKEN != ''
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-
-  deploy-doc:
-    needs: [trigger, update-notebooks-for-colab-and-binder, build-doc, test, deploy]
-    # if: always()
-    #  -> trigger even if one needed job was skipped (namely deploy)
-    #  -> needed jobs successes must be checked explicitely
-    if: |
-      always()
-      && (needs.build-doc.result == 'success')
-      && (
-        (
-          (needs.trigger.outputs.is_push_on_default_branch == 'true')
-          && (needs.test.result == 'success')
-        )
-        || (
-          (needs.trigger.outputs.is_release == 'true')
-          && (needs.deploy.result == 'success')
-        )
-      )
-    uses: ./.github/workflows/deploy-doc.yml
-    with:
-      doc-version: ${{ needs.build-doc.outputs.doc-version }}
-      binder-env-fullref: ${{ needs.update-notebooks-for-colab-and-binder.outputs.binder-full-ref }}

@@ -155,7 +155,7 @@ class RcpspProblem(
         >>> problem = RcpspProblem(
         ...     resources=resources,
         ...     non_renewable_resources=non_renewable_resources,
-        ...     mode_details=mode_details,
+        ...     # mode_details=mode_details,  # forget a parameter
         ...     successors=successors,
         ...     horizon=20, # Maximum time allowed for the project
         ...     source_task="source",

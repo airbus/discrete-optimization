@@ -45,6 +45,7 @@ Example:
     ...     DemandsArrayProblem[int],
     ...     WithoutCapacityProblem[int],
     ...     GenericLotSizingProblem[int],
+    ...     MissingMixin,
     ... ):
     ...     pass
 """
