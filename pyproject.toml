@@ -47,7 +47,7 @@ dependencies = [
     "sortedcontainers>=2.4",
     "deprecation",
     "typing-extensions>=4.4",
-    "cpmpy>=0.9.9",
+    "cpmpy>=0.9.9,<1.0.0",
     "scipy",
     "numpy>=1.21",
     "clingo>=5.6",
